@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
+// AI-code-start lines:1 tool:Codex
+import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(scriptDir, '..');
@@ -45,6 +47,12 @@ const DELIVERY_GUARD_ASSETS = [
   'scripts/check-change.mjs',
   'scripts/finalize-change.mjs',
 ];
+// AI-code-start lines:5 tool:Codex
+// 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
+const RUNTIME_INTEGRITY_ASSETS = [
+  'scripts/runtime-integrity.mjs',
+  'runtime/openspec-integrity.json',
+];
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -59,6 +67,11 @@ function validatePlugin(errors) {
   }
   if (!manifest.description || !manifest.author?.name) errors.push('plugin manifest 缺少描述或作者');
   if (manifest.skills !== './skills/') errors.push('plugin skills 路径必须为 ./skills/');
+  // AI-code-start lines:4 tool:Codex
+  const releaseVersion = String(manifest.version || '').split('+', 1)[0];
+  const packageVersion = readJson(path.join(repositoryRoot, 'package.json')).version;
+  if (releaseVersion !== packageVersion) errors.push(`plugin 与根 package 版本不一致：${releaseVersion} / ${packageVersion}`);
+  if (releaseVersion !== WORKFLOW_VERSION) errors.push(`plugin 与受管工作流版本不一致：${releaseVersion} / ${WORKFLOW_VERSION}`);
   if (!Array.isArray(manifest.interface?.defaultPrompt) || manifest.interface.defaultPrompt.length > 3) {
     errors.push('plugin defaultPrompt 必须是最多 3 项的数组');
   }
@@ -147,6 +160,13 @@ function validateDeliveryGuardAssets(errors) {
   }
 }
 
+// AI-code-start lines:5 tool:Codex
+function validateRuntimeIntegrityAssets(errors) {
+  for (const file of RUNTIME_INTEGRITY_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
+  }
+}
+
 const errors = [];
 try {
   validatePlugin(errors);
@@ -161,6 +181,8 @@ try {
   validateRequirementMigrationAssets(errors);
   // AI-code-start lines:1 tool:Codex
   validateDeliveryGuardAssets(errors);
+  // AI-code-start lines:1 tool:Codex
+  validateRuntimeIntegrityAssets(errors);
 } catch (error) {
   errors.push(error.message);
 }

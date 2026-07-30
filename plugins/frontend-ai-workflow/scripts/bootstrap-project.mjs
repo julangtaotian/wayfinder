@@ -14,7 +14,7 @@ import {
 } from './workflow-layout.mjs';
 
 // AI-code-start lines:1 tool:Codex
-export const WORKFLOW_VERSION = '0.10.0';
+export const WORKFLOW_VERSION = '0.11.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');

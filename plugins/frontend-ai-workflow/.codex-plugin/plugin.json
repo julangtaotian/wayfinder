@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.10.0+codex.20260729101719",
-  "description": "Reusable frontend project onboarding, secure deep analysis, governed requirement revision, OpenSpec 1.7 planning, layered validation, and hard-gated change completion.",
+  "version": "0.11.0+codex.20260730025513",
+  "description": "Reusable frontend project onboarding, governed requirement delivery, multi-framework verification, and integrity-checked OpenSpec 1.7 planning.",
   "author": {
     "name": "lvshuai"
   },
@@ -17,7 +17,7 @@
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect a frontend repository, create durable project guidance and requirement templates, drive an OpenSpec 1.7 state-aware change lifecycle, validate workflow health, and safely upgrade managed sections without overwriting project-owned content.",
+    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.7 change lifecycle, verify runtime integrity, and safely upgrade managed sections without overwriting project-owned content.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [

@@ -1,18 +1,31 @@
 # bundled-openspec-runtime Specification
 
 ## Purpose
-TBD - created by archiving change upgrade-openspec-1-7. Update Purpose after archive.
+定义插件如何固定、调用和核验内置 OpenSpec 运行时，并保护项目规划根、历史规划数据与受管升级的兼容边界。
 ## Requirements
 ### Requirement: 插件必须固定使用可核验的内置 OpenSpec 运行时
-系统 MUST 从官方 npm 包构建并固定使用 `@fission-ai/openspec@1.7.0` 的生产运行时，MUST NOT 探测、调用或自行升级全局 OpenSpec，且发布物 MUST 保留可核验的版本、入口、生产依赖和许可证。（D-01、D-02；A-01、A-09）
+
+系统 MUST 从官方 npm 包构建并固定使用 `@fission-ai/openspec@1.7.0` 的生产运行时，MUST NOT 探测、调用或自行升级全局 OpenSpec，且发布物 MUST 保留可核验的版本、入口、生产包、声明许可证和按包树计算的 SHA-256 清单。清单 MUST 使用稳定排序且不得包含绝对路径或生成时间；默认操作 MUST 只校验，只有显式 `--write` 才能重建清单。（D-05、D-06；A-05、A-06）
 
 #### Scenario: 内置运行时完整
+
 - **WHEN** 插件执行版本、状态、指令、校验或归档命令
 - **THEN** 所有调用都使用插件目录内版本为 1.7.0 的入口，并强制关闭运行时版本检查
 
 #### Scenario: 候选运行时核验失败
+
 - **WHEN** 官方包版本、入口、许可证、生产依赖或严格兼容验证任一不满足要求
-- **THEN** 升级停止并保留可恢复的 1.6.0 运行时，不发布部分替换结果
+- **THEN** 升级停止并保留可恢复的既有运行时，不发布部分替换结果
+
+#### Scenario: 完整性清单可重复生成
+
+- **WHEN** 同一运行时内容连续两次显式生成完整性清单
+- **THEN** 两次结果逐字一致，并包含根运行时及全部生产包的名称、版本、声明许可证和 SHA-256
+
+#### Scenario: 运行时内容与清单不一致
+
+- **WHEN** 运行时包被增加、删除，或者任一受核验文件内容、版本、入口或许可证发生变化
+- **THEN** 默认完整性检查返回非零状态并定位发生漂移的项目，且不自动改写清单
 
 ### Requirement: 项目操作必须保护规划根目录边界
 系统 MUST 校验 OpenSpec 返回的规划根来源；在用户没有明确选择机器级 Store 时，本地项目操作 MUST NOT 写入 `root.source=global_default`，也 MUST NOT 由动态 guidance 改变已选择根目录。（D-05、D-08；A-05、A-06）
@@ -35,4 +48,3 @@ TBD - created by archiving change upgrade-openspec-1-7. Update Purpose after arc
 #### Scenario: 升级已有项目
 - **WHEN** 用户预览或显式执行工作流升级
 - **THEN** 预览保持只读，写入只更新受管区块并逐字保留项目内容、历史需求、变更和规格
-

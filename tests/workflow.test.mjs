@@ -25,6 +25,15 @@ import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-projec
 import { validateRequirementDecisions } from '../plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs';
 // AI-code-start lines:1 tool:Codex
 import { previewRequirementUpgrade } from '../plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs';
+// AI-code-start lines:6 tool:Codex
+import {
+  buildRuntimeIntegrityManifest,
+  formatRuntimeIntegrityManifest,
+  verifyRuntimeIntegrity,
+  writeRuntimeIntegrity,
+} from '../plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs';
+// AI-code-start lines:1 tool:Codex
+import { buildVerificationSteps, runVerification } from '../scripts/verify.mjs';
 
 const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 const expectedPublicSkills = [
@@ -74,6 +83,79 @@ function createVueFixture(t) {
     'node_modules/ignored.js': "throw new Error('依赖目录不应被扫描');\n",
   };
   for (const [file, content] of Object.entries(fixtureFiles)) writeFixtureFile(root, file, content);
+  return root;
+}
+
+// AI-code-start lines:71 tool:Codex
+// 支持矩阵只创建识别和工作流所需的真实文件，不安装或执行任何第三方依赖。
+const SUPPORTED_PROJECT_MATRIX = [
+  {
+    id: 'vue2-vite-pnpm',
+    preset: 'vue2-vite',
+    packageManager: 'pnpm',
+    lockfile: 'pnpm-lock.yaml',
+    dependencies: { vue: '^2.7.16' },
+    devDependencies: { vite: '^5.4.0', '@vitejs/plugin-vue2': '^2.3.0' },
+    sourceFile: 'src/views/Home.vue',
+  },
+  {
+    id: 'vue-webpack-yarn',
+    preset: 'vue-webpack',
+    packageManager: 'yarn',
+    lockfile: 'yarn.lock',
+    dependencies: { vue: '^3.5.0' },
+    devDependencies: { webpack: '^5.95.0', 'webpack-cli': '^5.1.0' },
+    sourceFile: 'src/views/Home.vue',
+  },
+  {
+    id: 'react-vite-npm',
+    preset: 'react-vite',
+    packageManager: 'npm',
+    lockfile: 'package-lock.json',
+    dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' },
+    devDependencies: { vite: '^6.0.0' },
+    sourceFile: 'src/pages/Home.jsx',
+  },
+  {
+    id: 'react-webpack-yarn',
+    preset: 'react-webpack',
+    packageManager: 'yarn',
+    lockfile: 'yarn.lock',
+    dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' },
+    devDependencies: { webpack: '^5.95.0', 'webpack-cli': '^5.1.0' },
+    sourceFile: 'src/pages/Home.jsx',
+  },
+];
+
+function expectedScriptCommand(packageManager, scriptName) {
+  if (packageManager === 'yarn') return `yarn ${scriptName}`;
+  if (packageManager === 'pnpm') return `pnpm run ${scriptName}`;
+  return `npm run ${scriptName}`;
+}
+
+function createMatrixFixture(t, fixture) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), `misleading-${fixture.id}-`));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  writeFixtureFile(root, fixture.lockfile, fixture.packageManager === 'npm' ? '{}\n' : '# fixture lockfile\n');
+  writeFixtureFile(root, 'package.json', `${JSON.stringify({
+    name: fixture.id,
+    scripts: {
+      dev: fixture.devDependencies.vite ? 'vite' : 'webpack serve',
+      build: fixture.devDependencies.vite ? 'vite build' : 'webpack --mode production',
+      test: 'node --test',
+      lint: 'eslint .',
+    },
+    dependencies: fixture.dependencies,
+    devDependencies: fixture.devDependencies,
+  }, null, 2)}\n`);
+  writeFixtureFile(root, fixture.sourceFile, fixture.sourceFile.endsWith('.vue')
+    ? '<template><main>Fixture</main></template>\n'
+    : "export function Home() { return 'Fixture'; }\n");
+  writeFixtureFile(root, 'src/components/Shared.js', "export const shared = 'fixture';\n");
+  writeFixtureFile(root, 'src/request/http.js', "export const request = (url) => url;\n");
+  writeFixtureFile(root, 'src/router/index.js', 'export const routes = [];\n');
+  writeFixtureFile(root, 'src/store/index.js', 'export const state = {};\n');
+  writeFixtureFile(root, 'tests/existing.spec.js', "export default 'fixture';\n");
   return root;
 }
 
@@ -207,6 +289,55 @@ test('识别 Vue 3 + Vite 项目及真实命令', (t) => {
   assert.equal(result.commandSemantics.releaseBuild.command, 'npm run build');
   assert.equal(result.commandSemantics.releaseBuild.source, 'default-fallback');
   assert.equal(result.paths.views, 'src/views');
+});
+
+// AI-code-start lines:47 tool:Codex
+test('受支持框架与包管理器矩阵完成识别、初始化、升级和检查', (t) => {
+  for (const fixture of SUPPORTED_PROJECT_MATRIX) {
+    const root = createMatrixFixture(t, fixture);
+    const inspection = inspectProject(root);
+    const expectedDevCommand = expectedScriptCommand(fixture.packageManager, 'dev');
+
+    assert.equal(inspection.preset, fixture.preset, fixture.id);
+    assert.equal(inspection.packageManager, fixture.packageManager, fixture.id);
+    assert.equal(inspection.commands.dev, expectedDevCommand, fixture.id);
+    assert.equal(inspection.commandSemantics.lint.status, 'verified', fixture.id);
+
+    const preview = runBootstrap({ target: root });
+    assert.equal(preview.ok, true, fixture.id);
+    assert.equal(preview.write, false, fixture.id);
+    assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false, fixture.id);
+
+    const applied = runBootstrap({ target: root, write: true });
+    assert.equal(applied.ok, true, fixture.id);
+    const agentsPath = path.join(root, 'AGENTS.md');
+    const customized = fs.readFileSync(agentsPath, 'utf8')
+      .replace('## 工作流', '## 临时旧工作流')
+      .concat(`\n项目保留内容：${fixture.id}\n`);
+    fs.writeFileSync(agentsPath, customized, 'utf8');
+
+    const repeated = runBootstrap({ target: root, write: true });
+    assert.equal(repeated.actions.find((item) => item.file === 'AGENTS.md').action, 'skip', fixture.id);
+    assert.match(fs.readFileSync(agentsPath, 'utf8'), /## 临时旧工作流/, fixture.id);
+
+    const upgraded = runUpdate({ target: root, write: true });
+    assert.equal(upgraded.ok, true, fixture.id);
+    const nextAgents = fs.readFileSync(agentsPath, 'utf8');
+    assert.match(nextAgents, /## 工作流/, fixture.id);
+    assert.doesNotMatch(nextAgents, /## 临时旧工作流/, fixture.id);
+    assert.match(nextAgents, new RegExp(`项目保留内容：${fixture.id}`), fixture.id);
+
+    const checked = checkProject(root);
+    assert.equal(checked.ok, true, fixture.id);
+    assert.equal(checked.preset, fixture.preset, fixture.id);
+    assert.equal(checked.commands.dev, expectedDevCommand, fixture.id);
+  }
+
+  const misleadingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vue-vite-project-'));
+  t.after(() => fs.rmSync(misleadingRoot, { recursive: true, force: true }));
+  writeFixtureFile(misleadingRoot, 'package.json', '{"name":"plain-project","scripts":{"build":"node --check index.js"}}\n');
+  writeFixtureFile(misleadingRoot, 'index.js', "export default 'plain';\n");
+  assert.equal(inspectProject(misleadingRoot).preset, 'generic-frontend');
 });
 
 // AI-code-start lines:92 tool:Codex
@@ -379,6 +510,42 @@ test('插件只公开团队自有技能', () => {
   assert.equal(skills.some((name) => name.startsWith('openspec-')), false);
 });
 
+// AI-code-start lines:34 tool:Codex
+test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () => {
+  const steps = buildVerificationSteps();
+  assert.deepEqual(steps.map((step) => step.id), [
+    'tests',
+    'structure',
+    'openspec',
+    'runtime-version',
+    'runtime-integrity',
+  ]);
+
+  const executed = [];
+  const messages = [];
+  const errors = [];
+  const failed = runVerification({
+    execute: (step) => {
+      executed.push(step.id);
+      return { status: step.id === 'openspec' ? 2 : 0 };
+    },
+    report: (message) => messages.push(message),
+    reportError: (message) => errors.push(message),
+  });
+  assert.equal(failed.ok, false);
+  assert.equal(failed.failedStep, 'openspec');
+  assert.deepEqual(failed.completed, ['tests', 'structure']);
+  assert.deepEqual(executed, ['tests', 'structure', 'openspec']);
+  assert.match(errors[0], /OpenSpec 全量严格校验/);
+
+  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  const workflow = fs.readFileSync('.github/workflows/validate.yml', 'utf8');
+  assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
+  assert.match(workflow, /node-version: 20\.19\.0/);
+  assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), ['npm run verify']);
+  assert.doesNotMatch(workflow, /npm test|npm run validate/);
+});
+
 test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   const root = createVueFixture(t);
   const preview = runBootstrap({ target: root });
@@ -441,6 +608,34 @@ test('已有无受管标记的 AGENTS.md 会被保留', (t) => {
   assert.equal(fs.readFileSync(agentsPath, 'utf8'), '# Existing Rules\n');
 });
 
+// AI-code-start lines:26 tool:Codex
+// 最小运行时 fixture 复现根包、生产依赖、许可证和入口，专门用于验证漂移分支。
+function createRuntimeIntegrityFixture(t) {
+  const runtimeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'openspec-runtime-'));
+  const integrityPath = path.join(path.dirname(runtimeRoot), `${path.basename(runtimeRoot)}-integrity.json`);
+  t.after(() => {
+    fs.rmSync(runtimeRoot, { recursive: true, force: true });
+    fs.rmSync(integrityPath, { force: true });
+  });
+  writeFixtureFile(runtimeRoot, 'package.json', `${JSON.stringify({
+    name: '@fission-ai/openspec',
+    version: '1.7.0',
+    license: 'MIT',
+    bin: { openspec: './bin/openspec.js' },
+    dependencies: { 'fixture-dependency': '1.0.0' },
+  }, null, 2)}\n`);
+  writeFixtureFile(runtimeRoot, 'bin/openspec.js', '#!/usr/bin/env node\n');
+  writeFixtureFile(runtimeRoot, 'LICENSE', 'MIT fixture license\n');
+  writeFixtureFile(runtimeRoot, 'node_modules/fixture-dependency/package.json', `${JSON.stringify({
+    name: 'fixture-dependency',
+    version: '1.0.0',
+    license: 'Apache-2.0',
+  }, null, 2)}\n`);
+  writeFixtureFile(runtimeRoot, 'node_modules/fixture-dependency/index.js', "export default 'fixture';\n");
+  writeFixtureFile(runtimeRoot, 'node_modules/fixture-dependency/LICENSE.txt', 'Apache fixture license\n');
+  return { runtimeRoot, integrityPath };
+}
+
 test('插件内置规划运行时可独立执行', () => {
   const runtime = inspectBundledOpenSpec();
   const result = runOpenSpecSync(['--version']);
@@ -463,6 +658,56 @@ test('插件内置规划运行时可独立执行', () => {
   assert.match(fs.readFileSync(path.join(pluginRoot, 'scripts', 'openspec-cli.mjs'), 'utf8'), /OPENSPEC_NO_UPDATE_CHECK: '1'/);
 });
 
+// AI-code-start lines:18 tool:Codex
+test('内置 OpenSpec 完整性清单可重复计算且不包含环境路径', () => {
+  const first = buildRuntimeIntegrityManifest();
+  const second = buildRuntimeIntegrityManifest();
+  const content = formatRuntimeIntegrityManifest(first);
+  const managed = fs.readFileSync(path.join(pluginRoot, 'runtime', 'openspec-integrity.json'), 'utf8');
+
+  assert.deepEqual(first, second);
+  assert.equal(content, managed);
+  assert.equal(first.runtime.version, BUNDLED_OPENSPEC_VERSION);
+  assert.equal(first.runtime.entrypoint, 'bin/openspec.js');
+  assert.ok(first.packages.length > 50);
+  assert.equal(first.packages[0].path, '.');
+  assert.ok(first.packages.every((item) => /^[a-f0-9]{64}$/u.test(item.treeSha256)));
+  assert.ok(first.packages.every((item) => item.license && item.fileCount > 0));
+  assert.doesNotMatch(content, new RegExp(process.cwd().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.doesNotMatch(content, /generatedAt|createdAt/);
+  assert.equal(verifyRuntimeIntegrity().ok, true);
+});
+
+// AI-code-start lines:28 tool:Codex
+test('运行时完整性默认只读并阻止内容与包集合漂移', (t) => {
+  const { runtimeRoot, integrityPath } = createRuntimeIntegrityFixture(t);
+  const missing = verifyRuntimeIntegrity({ runtimeRoot, integrityPath });
+  assert.equal(missing.ok, false);
+  assert.equal(fs.existsSync(integrityPath), false);
+
+  const written = writeRuntimeIntegrity({ runtimeRoot, integrityPath });
+  const baseline = fs.readFileSync(integrityPath, 'utf8');
+  assert.equal(written.packages, 2);
+  assert.equal(verifyRuntimeIntegrity({ runtimeRoot, integrityPath }).ok, true);
+
+  writeFixtureFile(runtimeRoot, 'node_modules/.bin/openspec', '可重建的命令链接替身\n');
+  assert.equal(verifyRuntimeIntegrity({ runtimeRoot, integrityPath }).ok, true);
+  writeRuntimeIntegrity({ runtimeRoot, integrityPath });
+  assert.equal(fs.readFileSync(integrityPath, 'utf8'), baseline);
+
+  writeFixtureFile(runtimeRoot, 'node_modules/fixture-dependency/index.js', "export default 'changed';\n");
+  const changed = verifyRuntimeIntegrity({ runtimeRoot, integrityPath });
+  assert.equal(changed.ok, false);
+  assert.match(changed.errors.join('\n'), /fixture-dependency/);
+
+  writeRuntimeIntegrity({ runtimeRoot, integrityPath });
+  writeFixtureFile(runtimeRoot, 'node_modules/extra-package/package.json', '{"name":"extra-package","version":"1.0.0","license":"MIT"}\n');
+  writeFixtureFile(runtimeRoot, 'node_modules/extra-package/index.js', "export default 'extra';\n");
+  const added = verifyRuntimeIntegrity({ runtimeRoot, integrityPath });
+  assert.equal(added.ok, false);
+  assert.match(added.errors.join('\n'), /新增未登记包：node_modules\/extra-package/);
+});
+
 test('健康检查使用插件内置规划运行时', (t) => {
   const root = createVueFixture(t);
   runBootstrap({ target: root, write: true });
@@ -470,7 +715,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
   const result = checkProject(root);
   assert.equal(result.ok, true);
   // AI-code-start lines:1 tool:Codex
-  assert.equal(result.version, '0.10.0');
+  assert.equal(result.version, '0.11.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);
