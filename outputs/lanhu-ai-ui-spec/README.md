@@ -7,8 +7,9 @@
 ## 输入范围
 
 - `1` 份入口说明，即本文件。
-- `3` 份基础规范。
+- `4` 份基础规范。
 - `26` 份组件、表单和选择器规范。
+- 共 `30` 份详细规范和本入口，即 `31` 个 Markdown 文件。
 - `183` 条已知 UI 场景。
 - `6` 个本地图标文件及 `1` 份图标清单。
 
@@ -17,7 +18,7 @@
 ## AI 读取顺序
 
 1. 先读取本文件。
-2. 读取 `foundations/` 下的颜色和通用尺寸规范。
+2. 读取 `foundations/` 下的颜色、通用尺寸和响应式布局规范；PC 后台右侧表单必须先读取响应式表单布局。
 3. 读取 `assets/icons/manifest.md`，确定图标语义和替换边界。
 4. 根据目标页面读取对应的 `components/`、`forms/`、`pickers/` 文档。
 5. 同一属性存在多处定义时，优先级为：目标场景明确值 > 当前组件明确值 > 基础规范。
@@ -40,7 +41,8 @@ lanhu-ai-ui-spec/
 ├── foundations/
 │   ├── colors-primary-functional.md
 │   ├── colors-assist.md
-│   └── component-sizing.md
+│   ├── component-sizing.md
+│   └── responsive-form-layout.md
 ├── components/
 │   ├── badge.md
 │   ├── button.md
@@ -81,6 +83,7 @@ lanhu-ai-ui-spec/
 - [主色与功能色](foundations/colors-primary-functional.md)
 - [辅助色与中性色](foundations/colors-assist.md)
 - [组件尺寸与样式基线](foundations/component-sizing.md)
+- [PC 端响应式表单布局](foundations/responsive-form-layout.md)
 - [组件图标资产清单](assets/icons/manifest.md)
 
 ## 组件规范

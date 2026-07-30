@@ -71,16 +71,16 @@ function localMarkdownLinks(filePath) {
     .filter(Boolean);
 }
 
-test('设计规范保持 30/29/26 的文档结构', () => {
+test('设计规范保持 31/30/26 的文档结构', () => {
   const detailFiles = markdownFiles(detailFolders);
   const componentFiles = markdownFiles(componentFolders);
-  assert.equal(detailFiles.length + 1, 30, '应包含 README 和 29 份详细规范');
-  assert.equal(detailFiles.length, 29, '详细规范数量必须为 29');
+  assert.equal(detailFiles.length + 1, 31, '应包含 README 和 30 份详细规范');
+  assert.equal(detailFiles.length, 30, '详细规范数量必须为 30');
   assert.equal(componentFiles.length, 26, '组件、表单和选择器规范数量必须为 26');
   assert.ok(fs.existsSync(path.join(specRoot, 'README.md')));
 });
 
-test('29 份详细规范具有稳定元数据和来源边界', () => {
+test('30 份详细规范具有稳定元数据和来源边界', () => {
   for (const filePath of markdownFiles(detailFolders)) {
     const content = read(filePath);
     const metadata = section(content, '规范元数据');
@@ -92,6 +92,246 @@ test('29 份详细规范具有稳定元数据和来源边界', () => {
     assert.match(metadata, /画板实测/u, `${relative(filePath)} 缺少画板实测来源规则`);
     assert.match(metadata, /研发补充/u, `${relative(filePath)} 缺少研发补充来源规则`);
     assert.match(metadata, /Web `@1x`/u, `${relative(filePath)} 缺少 @1x 测量基准`);
+  }
+});
+
+// AI-code-start lines:52 tool:Codex
+test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列规则', () => {
+  const filePath = path.join(specRoot, 'foundations', 'responsive-form-layout.md');
+  assert.ok(fs.existsSync(filePath), '缺少响应式表单布局规范');
+  const content = read(filePath);
+  const metadata = section(content, '规范元数据');
+  assert.match(metadata, /\| 文档类型 \| 基础布局规范 \|/u);
+  assert.match(metadata, /\| 画板数量 \| `12` \|/u);
+
+  const boardRows = tableRows(content, '12 张画板映射');
+  assert.equal(boardRows.length, 12, '响应式布局必须完整映射 12 张蓝湖画板');
+  const boardIds = boardRows.flatMap((row) => (
+    row.match(/[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/gu) || []
+  ));
+  assert.equal(boardIds.length, 12, '每张适配画板都必须保留稳定画板 ID');
+  assert.equal(new Set(boardIds).size, 12, '适配画板 ID 必须唯一');
+  // AI-code-start lines:33 tool:Codex
+  const boardNames = boardRows.map((row) => row.split('|')[1].trim().replaceAll('`', ''));
+  assert.equal(new Set(boardNames).size, 12, '规范化画板名称必须唯一');
+  for (const name of boardNames) {
+    assert.match(
+      name,
+      /^\d+ × \d+｜(?:\d+ 列｜(?:基础|空数据|数据|宽屏)|规则总览｜断点与间距)$/u,
+      `画板名称必须直接包含尺寸、列数和状态/用途：${name}`,
+    );
+  }
+  assert.doesNotMatch(
+    section(content, '12 张画板映射'),
+    /copy(?: 2)?/iu,
+    '画板映射不得继续暴露 copy 类源名称',
+  );
+  assert.deepEqual(
+    [...boardIds].sort(),
+    [
+      '10436508-e5fd-478b-adae-b2fd01e4ec45',
+      'c1536ab9-e041-4c34-90b4-4639a43f0194',
+      'd6856c9e-dced-4c3b-997f-b6ab126271ea',
+      '401ca327-5421-42a0-92ad-b8a1ab331598',
+      '2cf6429a-d06f-401b-9f73-fd753b53e6a6',
+      'd429b8d2-944a-4139-b986-73cb17e1a51e',
+      'f7be6a3e-6ddd-4eae-9ec0-e19a83d24594',
+      '63267d3b-3e33-44d0-b97c-a7b921f6f794',
+      '8a01e8fd-0f54-4606-a8ed-ead33c138f96',
+      'd2c81f73-427f-458a-b8b8-16503832277b',
+      '4b1cc8d7-f99e-4db4-b893-c5ff16cbad4c',
+      'd1880935-8424-4802-a62b-d154ee873ea8',
+    ].sort(),
+    '可读名称调整不得改变稳定画板 ID',
+  );
+  assert.doesNotMatch(content, /Element Plus|Element UI|iframe|library-project-screenshots/u, '正式规范不得混入验证专用实现细节');
+
+  const breakpointSection = section(content, '可执行断点');
+  const finiteRanges = [...breakpointSection.matchAll(
+    /\| `(\d+)px ≤ W < (\d+)px` \| `(\d+)` 列 \|/gu,
+  )].map((match) => [Number(match[1]), Number(match[2]), Number(match[3])]);
+  const openRange = breakpointSection.match(/\| `W ≥ (\d+)px` \| `(\d+)` 列 \|/u);
+  const ranges = [...finiteRanges, [Number(openRange?.[1]), Infinity, Number(openRange?.[2])]];
+  assert.deepEqual(ranges, [
+    [1024, 1440, 3],
+    [1440, 1920, 4],
+    [1920, Infinity, 6],
+  ]);
+  for (let index = 1; index < ranges.length; index += 1) {
+    assert.equal(ranges[index - 1][1], ranges[index][0], '响应式断点存在空档或重叠');
+  }
+
+  for (const expected of [
+    '`x=124px, y=48px`',
+    '`884px × 704px`',
+    '`#FAFBFC`',
+    '`#EEF1F5`',
+    '`16px`',
+    '`8px`',
+    '`1200px` 和 `2560px` 是拉伸检查点',
+    '`columnWidth = (A - (N - 1) × G) / N`',
+    '操作组不计入 3/4/6 个字段组的列数',
+    '蓝湖没有提供 `<1024px`',
+    '统一按 `1440px` 断点处理',
+    // AI-code-start lines:4 tool:Codex
+    '字段控件宽度占满所属等分列',
+    '主操作文字、边框或填充按按钮规范使用品牌色 `#FF6014`',
+    '直接保留组件库默认主色',
+    '不得超出当前视口与工作区右边界',
+    // AI-code-start lines:5 tool:Codex
+    '标签必须位于控件左侧',
+    '按当前标签文案的固有宽度占位',
+    '约 `12px`',
+    '与 `32px` 控件垂直居中',
+    '禁止把所有字段统一改成顶部标签',
+  ]) {
+    assert.ok(content.includes(expected), `响应式布局缺少可执行规则：${expected}`);
+  }
+
+  const readme = read(path.join(specRoot, 'README.md'));
+  assert.equal((readme.match(/^\| \d+ \|/gmu) || []).length, 45, 'README 必须映射 45 张画板');
+  assert.match(readme, /30.*详细 Markdown.*31.*Markdown 文件/u);
+  // AI-code-start lines:7 tool:Codex
+  const responsiveIndexRows = [...readme.matchAll(
+    /^\| (3[4-9]|4[0-5]) \| 后台适配规范 \/ `([^`]+)` \| \[响应式表单布局\]\(\.\/foundations\/responsive-form-layout\.md\) \|$/gmu,
+  )];
+  const responsiveIndexNames = responsiveIndexRows.map((match) => match[2]);
+  assert.equal(responsiveIndexNames.length, 12, 'README 必须保留 12 条响应式画板索引');
+  assert.deepEqual(responsiveIndexNames, boardNames, 'README 响应式画板名称和顺序必须与正文一致');
+  assert.doesNotMatch(responsiveIndexRows.map((match) => match[0]).join('\n'), /copy(?: 2)?/iu, 'README 响应式索引不得出现 copy 类名称');
+  assert.doesNotMatch(breakpointSection, /1400px ≤ W|W ≥ 1400px/u);
+});
+
+// AI-code-start lines:45 tool:Codex
+test('双组件库工程真实实现响应式表单专用入口', () => {
+  const projects = [
+    {
+      folder: 'validation-element-plus',
+      library: 'Element Plus',
+      packageName: 'element-plus',
+    },
+    {
+      folder: 'validation-element-ui',
+      library: 'Element UI',
+      packageName: 'element-ui',
+    },
+  ];
+  for (const project of projects) {
+    const projectRoot = path.join(specRoot, project.folder);
+    const app = read(path.join(projectRoot, 'src', 'App.vue'));
+    const layout = read(path.join(projectRoot, 'src', 'ResponsiveFormLayout.vue'));
+    // AI-code-start lines:1 tool:Codex
+    const harness = read(path.join(projectRoot, 'src', 'ResponsiveViewportHarness.vue'));
+    const packageJson = JSON.parse(read(path.join(projectRoot, 'package.json')));
+    assert.match(app, /search\.get\('layout'\) === 'responsive-form'/u);
+    assert.match(app, /<ResponsiveFormLayout v-(?:else-)?if="layoutMode"/u);
+    assert.match(app, new RegExp(`library-name="${project.library}"`, 'u'));
+    // AI-code-start lines:3 tool:Codex
+    assert.match(app, /search\.get\('harness'\) === '2560'/u);
+    assert.match(harness, /<iframe[\s\S]+src="\/\?layout=responsive-form&framed=1"/u);
+    assert.match(harness, /width: 2560px;[\s\S]+height: 900px;/u);
+    assert.ok(packageJson.dependencies[project.packageName], `${project.library} 未声明真实组件库`);
+
+    for (const tag of ['el-form', 'el-form-item', 'el-input', 'el-select', 'el-date-picker', 'el-button']) {
+      assert.match(layout, new RegExp(`<${tag}(?:\\s|>)`, 'u'), `${project.library} 缺少 ${tag}`);
+    }
+    // AI-code-start lines:8 tool:Codex
+    assert.match(layout, /label-position="left"/u, `${project.library} 未显式使用左侧标签`);
+    assert.doesNotMatch(layout, /label-position="top"/u, `${project.library} 仍在使用顶部标签`);
+    assert.match(layout, /padding:\s*0 12px 0 0;/u, `${project.library} 标签间距不是 12px`);
+    assert.match(layout, /height:\s*32px;[\s\S]*?align-items:\s*center;/u, `${project.library} 字段未按 32px 垂直居中`);
+    assert.ok(layout.includes('labelLeftOfControl'), `${project.library} 快照缺少标签方向`);
+    assert.ok(layout.includes('labelGap'), `${project.library} 快照缺少标签间距`);
+    assert.ok(layout.includes('verticalCenterDelta'), `${project.library} 快照缺少垂直中心差`);
+    assert.ok(layout.includes('singleLine'), `${project.library} 快照缺少单行判断`);
+    for (const expected of [
+      'left: 124px;',
+      'top: 48px;',
+      'right: 16px;',
+      'bottom: 16px;',
+      'column-gap: 8px;',
+      'grid-template-columns: repeat(3, minmax(0, 1fr));',
+      '@media (min-width: 1440px)',
+      '@media (min-width: 1920px)',
+      'data-operation-group="true"',
+      'window.__RESPONSIVE_FORM_VALIDATION__',
+    ]) {
+      assert.ok(layout.includes(expected), `${project.library} 缺少响应式实现：${expected}`);
+    }
+    const distFiles = fs.readdirSync(path.join(projectRoot, 'dist', 'assets'));
+    assert.ok(distFiles.some((name) => /^index-.+\.js$/u.test(name)), `${project.library} 缺少生产构建 JS`);
+    assert.ok(distFiles.some((name) => /^index-.+\.css$/u.test(name)), `${project.library} 缺少生产构建 CSS`);
+  }
+});
+
+// AI-code-start lines:45 tool:Codex
+test('双组件库五档真实视口测量和截图全部通过', () => {
+  const evidenceRoot = path.join(specRoot, 'validation-evidence', 'responsive-form-layout');
+  const measurementPath = path.join(evidenceRoot, 'library-project-measurements.json');
+  assert.ok(fs.existsSync(measurementPath), '缺少双组件库响应式测量 JSON');
+  const evidence = JSON.parse(read(measurementPath));
+  // AI-code-start lines:3 tool:Codex
+  const validationReport = read(path.join(evidenceRoot, 'library-project-validation.md'));
+  assert.match(validationReport, /3 \/ 3 \/ 4 \/ 6 \/ 6/u);
+  assert.match(validationReport, /横向溢出均为 `0px`/u);
+  const expectedColumns = new Map([
+    [1024, 3],
+    [1200, 3],
+    [1440, 4],
+    [1920, 6],
+    [2560, 6],
+  ]);
+  assert.deepEqual(Object.keys(evidence.libraries).sort(), ['element-plus', 'element-ui']);
+  for (const [library, result] of Object.entries(evidence.libraries)) {
+    assert.equal(result.samples.length, 5, `${library} 必须包含五档实际视口`);
+    assert.match(result.runtime, library === 'element-plus' ? /Element Plus/u : /Element UI/u);
+    for (const sample of result.samples) {
+      const expected = expectedColumns.get(sample.target.width);
+      assert.equal(sample.viewport.width, sample.target.width);
+      assert.equal(sample.viewport.height, sample.target.height);
+      assert.equal(sample.expanded.columns, expected);
+      assert.equal(sample.expanded.expectedColumns, expected);
+      assert.equal(sample.expanded.columnGap, 8);
+      assert.equal(sample.expanded.fieldCount, 8);
+      assert.equal(sample.collapsed.fieldCount, 5);
+      assert.equal(sample.collapsed.columns, expected);
+      assert.equal(sample.expanded.workspace.x, 124);
+      assert.equal(sample.expanded.workspace.y, 48);
+      assert.equal(sample.expanded.workspace.rightGap, 16);
+      assert.equal(sample.expanded.workspace.bottomGap, 16);
+      assert.equal(sample.expanded.workspace.background, 'rgb(250, 251, 252)');
+      assert.equal(sample.expanded.workspace.borderRadius, '4px');
+      assert.equal(sample.expanded.horizontalOverflow, 0);
+      assert.ok(Object.values(sample.expanded.components).every(Boolean));
+      // AI-code-start lines:14 tool:Codex
+      for (const field of sample.expanded.fieldRects) {
+        assert.ok(field.labelRect.width > 0, `${library} ${sample.target.width} ${field.key} 标签宽度无效`);
+        assert.ok(field.controlRect.width > 0, `${library} ${sample.target.width} ${field.key} 控件宽度无效`);
+        assert.ok(field.labelLeftOfControl, `${library} ${sample.target.width} ${field.key} 标签不在控件左侧`);
+        assert.ok(field.singleLine, `${library} ${sample.target.width} ${field.key} 标签与控件不在同一行`);
+        assert.ok(
+          Math.abs(field.labelGap - 12) <= 2,
+          `${library} ${sample.target.width} ${field.key} 标签间距超出 12±2px`,
+        );
+        assert.ok(
+          Math.abs(field.verticalCenterDelta) <= 2,
+          `${library} ${sample.target.width} ${field.key} 标签与控件未垂直居中`,
+        );
+      }
+      // AI-code-start lines:4 tool:Codex
+      const labelWidths = new Set(sample.expanded.fieldRects.map((field) => field.labelRect.width));
+      const controlWidths = new Set(sample.expanded.fieldRects.map((field) => field.controlRect.width));
+      assert.ok(labelWidths.size > 1, `${library} ${sample.target.width} 未验证不同文案的固有标签宽度`);
+      assert.ok(controlWidths.size > 1, `${library} ${sample.target.width} 控件未按标签宽度分配剩余空间`);
+      assert.ok(sample.interactions.expandCollapse);
+      assert.ok(sample.interactions.query);
+      assert.ok(sample.interactions.reset);
+      assert.ok(sample.reloadVerified);
+      assert.ok(fs.existsSync(path.join(repositoryRoot, sample.screenshot)));
+    }
+    const baseline = result.samples.find((sample) => sample.target.width === 1024);
+    assert.equal(baseline.expanded.workspace.width, 884);
+    assert.equal(baseline.expanded.workspace.height, 704);
   }
 });
 
@@ -1604,6 +1844,66 @@ test('Form 四组的 20 个完整场景通过双组件库视觉验收', () => {
 
 // AI-code-start lines:129 tool:Codex
 const pureSpecRoot = path.join(repositoryRoot, 'outputs', 'lanhu-ai-ui-spec');
+// AI-code-start lines:59 tool:Codex
+test('响应式表单布局同步到纯 AI 输入目录且不携带验证过程', () => {
+  const designPath = path.join(specRoot, 'foundations', 'responsive-form-layout.md');
+  const purePath = path.join(pureSpecRoot, 'foundations', 'responsive-form-layout.md');
+  const readmePath = path.join(pureSpecRoot, 'README.md');
+  assert.ok(fs.existsSync(purePath), '纯 AI 输入目录缺少响应式表单布局规范');
+
+  const designContent = read(designPath);
+  const pureContent = read(purePath);
+  const readme = read(readmePath);
+  const pureDetailFiles = ['foundations', 'components', 'forms', 'pickers'].flatMap((folder) => (
+    fs.readdirSync(path.join(pureSpecRoot, folder))
+      .filter((name) => name.endsWith('.md'))
+      .map((name) => path.join(pureSpecRoot, folder, name))
+  ));
+  assert.equal(pureDetailFiles.length, 30, '纯 AI 输入目录必须包含 30 份详细规范');
+  assert.match(readme, /`4` 份基础规范/u);
+  assert.match(readme, /`30` 份详细规范.*`31` 个 Markdown 文件/u);
+  assert.match(readme, /\[PC 端响应式表单布局\]\(foundations\/responsive-form-layout\.md\)/u);
+  assert.match(readme, /└── responsive-form-layout\.md/u);
+
+  for (const expected of [
+    '`1024px ≤ W < 1440px`',
+    '`1440px ≤ W < 1920px`',
+    '`W ≥ 1920px`',
+    '`x=124px, y=48px`',
+    '`884px × 704px`',
+    '`#FAFBFC`',
+    '`#EEF1F5`',
+    '`16px`',
+    '`8px`',
+    '标签必须位于控件左侧',
+    '按当前标签文案的固有宽度占位',
+    '约 `12px`',
+    '与 `32px` 控件垂直居中',
+    '操作组不计入 3/4/6 个字段组的列数',
+    '蓝湖没有提供 `<1024px`',
+  ]) {
+    assert.ok(designContent.includes(expected), `正式规范缺少可执行规则：${expected}`);
+    assert.ok(pureContent.includes(expected), `纯 AI 规范缺少可执行规则：${expected}`);
+  }
+
+  const designBoards = tableRows(designContent, '12 张画板映射');
+  const pureBoards = tableRows(pureContent, '12 张画板映射');
+  assert.equal(pureBoards.length, 12, '纯 AI 规范必须保留 12 张画板映射');
+  assert.deepEqual(pureBoards, designBoards, '纯 AI 规范的画板名称、ID 和用途不得漂移');
+  assert.doesNotMatch(
+    pureContent,
+    /https:\/\/lanhuapp\.com|还原状态|测量基准|验收环境|截图|证据路径|Element Plus|Element UI|library-project|双组件库|两套真实组件库/u,
+    '纯 AI 规范混入设计源外链或验证过程内容',
+  );
+
+  for (const filePath of [readmePath, purePath]) {
+    for (const target of localMarkdownLinks(filePath)) {
+      const resolved = path.resolve(path.dirname(filePath), target);
+      assert.ok(resolved.startsWith(`${pureSpecRoot}${path.sep}`), `纯 AI 规范链接越出目录：${target}`);
+      assert.ok(fs.existsSync(resolved), `纯 AI 规范本地链接不存在：${target}`);
+    }
+  }
+});
 const precisionSpecExpectations = {
   'components/frequent-components-32.md': [
     '两个输入框均为 `240px × 32px`',
