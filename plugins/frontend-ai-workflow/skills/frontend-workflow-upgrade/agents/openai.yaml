@@ -1,0 +1,4 @@
+interface:
+  display_name: "升级前端 AI 工作流"
+  short_description: "Upgrade managed workflow rules while preserving custom content"
+  default_prompt: "Use $frontend-workflow-upgrade to update managed workflow rules and preserve project customizations."

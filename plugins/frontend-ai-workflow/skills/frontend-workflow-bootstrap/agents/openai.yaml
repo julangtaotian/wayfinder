@@ -1,0 +1,4 @@
+interface:
+  display_name: "初始化前端 AI 工作流"
+  short_description: "Inspect and initialize shared frontend AI workflows"
+  default_prompt: "Use $frontend-workflow-bootstrap to inspect this repository and initialize its shared AI workflow."

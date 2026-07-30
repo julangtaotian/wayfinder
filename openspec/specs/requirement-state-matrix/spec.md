@@ -1,0 +1,28 @@
+# requirement-state-matrix Specification
+
+## Purpose
+TBD - created by archiving change strengthen-scenario-matrix-and-legacy-preview. Update Purpose after archive.
+## Requirements
+### Requirement: 需求交互状态矩阵
+
+系统 SHALL 为新需求提供由初始已有数据、用户操作、刷新、空态、错误态和卸载组成的交互状态矩阵。每一行 MUST 记录“覆盖”或“不适用”的决定、触发或前置条件、期望结果、验证方式和关联 `A-*` 验收；“不适用”行 MUST 写明具体理由。（D-01、D-02；A-01、A-02）
+
+#### Scenario: 筛选数据页面覆盖关键状态
+
+- **WHEN** 需求包含数据渲染、用户筛选和刷新行为
+- **THEN** 矩阵 SHALL 覆盖初始已有数据、用户操作、刷新、空态和错误态，并将覆盖项关联到可观察验收。（D-01、D-02；A-01、A-02）
+
+#### Scenario: 卸载状态不适用
+
+- **WHEN** 需求不涉及订阅、计时器、可取消请求或资源生命周期变化
+- **THEN** 矩阵 MAY 将卸载标为“不适用”，但 MUST 记录不适用理由。（D-01、D-02；A-02）
+
+### Requirement: 状态矩阵的兼容校验
+
+需求校验器 SHALL 校验已出现状态矩阵的结构、六个状态的唯一性、覆盖决定、验收关联与不适用理由。缺少状态矩阵的历史需求在规划和实施阶段 MUST 保持可读；完成阶段 SHALL 给出中文兼容警告而非阻断。（D-01、D-04；A-04）
+
+#### Scenario: 旧需求没有状态矩阵
+
+- **WHEN** 历史需求未包含状态矩阵
+- **THEN** 规划和实施校验 SHALL 不因该字段失败，并在完成校验中报告可迁移提醒。（D-04；A-04）
+

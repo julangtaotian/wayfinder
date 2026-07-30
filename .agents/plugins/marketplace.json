@@ -1,0 +1,20 @@
+{
+  "name": "frontend-ai-workflow",
+  "interface": {
+    "displayName": "Frontend AI Workflow"
+  },
+  "plugins": [
+    {
+      "name": "frontend-ai-workflow",
+      "source": {
+        "source": "local",
+        "path": "./plugins/frontend-ai-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

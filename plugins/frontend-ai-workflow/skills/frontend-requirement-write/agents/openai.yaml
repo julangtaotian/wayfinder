@@ -1,0 +1,4 @@
+interface:
+  display_name: "编写前端需求文档"
+  short_description: "Turn feature ideas into reviewable frontend requirements"
+  default_prompt: "Use $frontend-requirement-write to turn my feature description into a reviewable project requirement."

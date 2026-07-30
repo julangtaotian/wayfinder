@@ -1,0 +1,33 @@
+{
+  "name": "frontend-ai-workflow",
+  "version": "0.10.0+codex.20260729101719",
+  "description": "Reusable frontend project onboarding, secure deep analysis, governed requirement revision, OpenSpec 1.7 planning, layered validation, and hard-gated change completion.",
+  "author": {
+    "name": "lvshuai"
+  },
+  "license": "MIT",
+  "keywords": [
+    "frontend",
+    "workflow",
+    "openspec",
+    "requirements",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Frontend AI Workflow",
+    "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
+    "longDescription": "Inspect a frontend repository, create durable project guidance and requirement templates, drive an OpenSpec 1.7 state-aware change lifecycle, validate workflow health, and safely upgrade managed sections without overwriting project-owned content.",
+    "developerName": "lvshuai",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Initialize this frontend repository with the shared AI workflow.",
+      "Turn my feature description into a reviewable requirement document.",
+      "Move this frontend change through its next planning or delivery stage."
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "检查前端 AI 工作流"
+  short_description: "Audit workflow files, commands, and OpenSpec health"
+  default_prompt: "Use $frontend-workflow-check to audit this repository's AI workflow without changing files."

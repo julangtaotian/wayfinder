@@ -1,0 +1,31 @@
+# test-file-baseline-validation Specification
+
+## Purpose
+TBD - created by archiving change enforce-delivery-evidence. Update Purpose after archive.
+## Requirements
+### Requirement: 测试文件策略使用可用基线校验
+
+需求校验器 SHALL 解析新版测试文件策略中的“新建 / 复用”、目标路径和基线说明。策略为“复用”时，目标文件 MUST 存在；在可用 Git 索引中，目标文件 MUST 已受版本控制。策略为“新建”时，规划阶段 MUST 不将已受版本控制的同职责目标误标为新建。
+
+#### Scenario: 复用策略指向未跟踪的新文件
+
+- **WHEN** Git 索引可用且“复用”策略的目标文件未受版本控制
+- **THEN** 规划或实施阶段校验失败
+- **AND** 错误说明应要求将策略改为“新建”或选择已有专用测试
+
+#### Scenario: Git 基线不可用
+
+- **WHEN** 项目不是 Git 仓库或 Git 索引没有可用基线
+- **THEN** 校验保留目标文件存在性检查
+- **AND** 返回中文降级警告说明无法确认复用基线
+
+### Requirement: 完成阶段验证新建测试文件
+
+完成阶段校验 SHALL 要求测试文件策略的目标路径存在，不得仅以计划文本作为已完成测试证据。
+
+#### Scenario: 新建测试文件尚未创建
+
+- **WHEN** 需求状态为“已验收”但“新建”策略的目标测试路径不存在
+- **THEN** 完成阶段校验失败
+- **AND** 错误说明缺少目标测试文件
+

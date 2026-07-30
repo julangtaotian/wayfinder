@@ -1,0 +1,4 @@
+interface:
+  display_name: "前端变更流程"
+  short_description: "Orchestrate frontend changes from planning through delivery"
+  default_prompt: "Use $frontend-change to move this frontend change through the appropriate planning, implementation, and completion stage."
