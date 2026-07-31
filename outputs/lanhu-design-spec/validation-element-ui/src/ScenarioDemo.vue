@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:992 tool:Codex -->
 <template>
   <div class="scenario-demo" :class="[demoClass, evidenceStateClass]" :data-variant="variantName">
     <template v-if="componentId === 'badge'">

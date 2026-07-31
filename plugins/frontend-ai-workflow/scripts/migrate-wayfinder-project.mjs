@@ -1,7 +1,7 @@
-// AI-code-start lines:166 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseCliArgs } from './cli-arguments.mjs';
 import { runBootstrap, WORKFLOW_VERSION } from './bootstrap-project.mjs';
 import { assertSafeProjectRoot } from './collect-project-scope.mjs';
 import { inspectProject } from './inspect-project.mjs';
@@ -32,7 +32,6 @@ function formatMetadata(settings, inspection) {
     scopeIncludedFiles: settings.scopeIncludedFiles || '0',
     scopeExcludedFiles: settings.scopeExcludedFiles || '0',
     scopeIncludedBytes: settings.scopeIncludedBytes || '0',
-    // AI-code-start lines:4 tool:Codex
     scopeFingerprint: settings.scopeFingerprint || '未执行',
     scopeScannedAt: settings.scopeScannedAt || '未执行',
     scopeGitCommit: settings.scopeGitCommit || '不可用',
@@ -144,16 +143,18 @@ export function runWayfinderMigration({ target = process.cwd(), write = false } 
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), write: false };
-  for (let index = 0; index < argv.length; index += 1) {
-    if (argv[index] === '--target') {
-      args.target = argv[index + 1];
-      index += 1;
-    } else if (argv[index] === '--write') {
-      args.write = true;
-    }
-  }
-  return args;
+  return parseCliArgs(argv, {
+    defaults: {
+      target: process.cwd(),
+      write: false,
+    },
+    valueOptions: {
+      '--target': 'target',
+    },
+    booleanOptions: {
+      '--write': 'write',
+    },
+  });
 }
 
 function isEntryPoint() {

@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:594 tool:Codex -->
 <template>
   <section
     class="table-scenario"

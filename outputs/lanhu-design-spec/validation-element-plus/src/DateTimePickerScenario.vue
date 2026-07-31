@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:189 tool:Codex -->
 <template>
   <div
     class="date-time-spec-scene"

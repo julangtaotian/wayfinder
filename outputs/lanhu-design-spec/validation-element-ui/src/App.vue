@@ -1,8 +1,5 @@
-<!-- AI-code-start lines:137 tool:Codex -->
 <template>
-  <!-- AI-code-start lines:1 tool:Codex -->
   <ResponsiveViewportHarness v-if="harnessMode" />
-  <!-- AI-code-start lines:1 tool:Codex -->
   <ResponsiveFormLayout v-else-if="layoutMode" library-name="Element UI" />
   <div
     v-else
@@ -79,24 +76,18 @@
 <script>
 import manifest from './manifest.json';
 import ScenarioDemo from './ScenarioDemo.vue';
-// AI-code-start lines:1 tool:Codex
 import ResponsiveFormLayout from './ResponsiveFormLayout.vue';
-// AI-code-start lines:1 tool:Codex
 import ResponsiveViewportHarness from './ResponsiveViewportHarness.vue';
 
 export default {
   name: 'ValidationApp',
-  // AI-code-start lines:1 tool:Codex
-  // AI-code-start lines:1 tool:Codex
   components: { ScenarioDemo, ResponsiveFormLayout, ResponsiveViewportHarness },
   data() {
     const [hashViewId, hashSceneId] = window.location.hash.slice(1).split('/');
     const initialScenario = manifest.scenarios.find((item) => item.id === hashSceneId);
     const search = new URLSearchParams(window.location.search);
     return {
-      // AI-code-start lines:1 tool:Codex
       harnessMode: search.get('harness') === '2560',
-      // AI-code-start lines:1 tool:Codex
       layoutMode: search.get('layout') === 'responsive-form',
       manifest,
       activeViewId: initialScenario?.componentId || (manifest.componentViews.some((item) => item.id === hashViewId)

@@ -1,4 +1,3 @@
-// AI-code-start lines:221 tool:Codex
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -95,7 +94,6 @@ test('30 份详细规范具有稳定元数据和来源边界', () => {
   }
 });
 
-// AI-code-start lines:52 tool:Codex
 test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列规则', () => {
   const filePath = path.join(specRoot, 'foundations', 'responsive-form-layout.md');
   assert.ok(fs.existsSync(filePath), '缺少响应式表单布局规范');
@@ -111,7 +109,6 @@ test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列
   ));
   assert.equal(boardIds.length, 12, '每张适配画板都必须保留稳定画板 ID');
   assert.equal(new Set(boardIds).size, 12, '适配画板 ID 必须唯一');
-  // AI-code-start lines:33 tool:Codex
   const boardNames = boardRows.map((row) => row.split('|')[1].trim().replaceAll('`', ''));
   assert.equal(new Set(boardNames).size, 12, '规范化画板名称必须唯一');
   for (const name of boardNames) {
@@ -173,12 +170,10 @@ test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列
     '操作组不计入 3/4/6 个字段组的列数',
     '蓝湖没有提供 `<1024px`',
     '统一按 `1440px` 断点处理',
-    // AI-code-start lines:4 tool:Codex
     '字段控件宽度占满所属等分列',
     '主操作文字、边框或填充按按钮规范使用品牌色 `#FF6014`',
     '直接保留组件库默认主色',
     '不得超出当前视口与工作区右边界',
-    // AI-code-start lines:5 tool:Codex
     '标签必须位于控件左侧',
     '按当前标签文案的固有宽度占位',
     '约 `12px`',
@@ -191,7 +186,6 @@ test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列
   const readme = read(path.join(specRoot, 'README.md'));
   assert.equal((readme.match(/^\| \d+ \|/gmu) || []).length, 45, 'README 必须映射 45 张画板');
   assert.match(readme, /30.*详细 Markdown.*31.*Markdown 文件/u);
-  // AI-code-start lines:7 tool:Codex
   const responsiveIndexRows = [...readme.matchAll(
     /^\| (3[4-9]|4[0-5]) \| 后台适配规范 \/ `([^`]+)` \| \[响应式表单布局\]\(\.\/foundations\/responsive-form-layout\.md\) \|$/gmu,
   )];
@@ -202,7 +196,6 @@ test('响应式表单布局完整映射 12 张画板并提供连续的 3/4/6 列
   assert.doesNotMatch(breakpointSection, /1400px ≤ W|W ≥ 1400px/u);
 });
 
-// AI-code-start lines:45 tool:Codex
 test('双组件库工程真实实现响应式表单专用入口', () => {
   const projects = [
     {
@@ -220,13 +213,11 @@ test('双组件库工程真实实现响应式表单专用入口', () => {
     const projectRoot = path.join(specRoot, project.folder);
     const app = read(path.join(projectRoot, 'src', 'App.vue'));
     const layout = read(path.join(projectRoot, 'src', 'ResponsiveFormLayout.vue'));
-    // AI-code-start lines:1 tool:Codex
     const harness = read(path.join(projectRoot, 'src', 'ResponsiveViewportHarness.vue'));
     const packageJson = JSON.parse(read(path.join(projectRoot, 'package.json')));
     assert.match(app, /search\.get\('layout'\) === 'responsive-form'/u);
     assert.match(app, /<ResponsiveFormLayout v-(?:else-)?if="layoutMode"/u);
     assert.match(app, new RegExp(`library-name="${project.library}"`, 'u'));
-    // AI-code-start lines:3 tool:Codex
     assert.match(app, /search\.get\('harness'\) === '2560'/u);
     assert.match(harness, /<iframe[\s\S]+src="\/\?layout=responsive-form&framed=1"/u);
     assert.match(harness, /width: 2560px;[\s\S]+height: 900px;/u);
@@ -235,7 +226,6 @@ test('双组件库工程真实实现响应式表单专用入口', () => {
     for (const tag of ['el-form', 'el-form-item', 'el-input', 'el-select', 'el-date-picker', 'el-button']) {
       assert.match(layout, new RegExp(`<${tag}(?:\\s|>)`, 'u'), `${project.library} 缺少 ${tag}`);
     }
-    // AI-code-start lines:8 tool:Codex
     assert.match(layout, /label-position="left"/u, `${project.library} 未显式使用左侧标签`);
     assert.doesNotMatch(layout, /label-position="top"/u, `${project.library} 仍在使用顶部标签`);
     assert.match(layout, /padding:\s*0 12px 0 0;/u, `${project.library} 标签间距不是 12px`);
@@ -264,13 +254,11 @@ test('双组件库工程真实实现响应式表单专用入口', () => {
   }
 });
 
-// AI-code-start lines:45 tool:Codex
 test('双组件库五档真实视口测量和截图全部通过', () => {
   const evidenceRoot = path.join(specRoot, 'validation-evidence', 'responsive-form-layout');
   const measurementPath = path.join(evidenceRoot, 'library-project-measurements.json');
   assert.ok(fs.existsSync(measurementPath), '缺少双组件库响应式测量 JSON');
   const evidence = JSON.parse(read(measurementPath));
-  // AI-code-start lines:3 tool:Codex
   const validationReport = read(path.join(evidenceRoot, 'library-project-validation.md'));
   assert.match(validationReport, /3 \/ 3 \/ 4 \/ 6 \/ 6/u);
   assert.match(validationReport, /横向溢出均为 `0px`/u);
@@ -303,7 +291,6 @@ test('双组件库五档真实视口测量和截图全部通过', () => {
       assert.equal(sample.expanded.workspace.borderRadius, '4px');
       assert.equal(sample.expanded.horizontalOverflow, 0);
       assert.ok(Object.values(sample.expanded.components).every(Boolean));
-      // AI-code-start lines:14 tool:Codex
       for (const field of sample.expanded.fieldRects) {
         assert.ok(field.labelRect.width > 0, `${library} ${sample.target.width} ${field.key} 标签宽度无效`);
         assert.ok(field.controlRect.width > 0, `${library} ${sample.target.width} ${field.key} 控件宽度无效`);
@@ -318,7 +305,6 @@ test('双组件库五档真实视口测量和截图全部通过', () => {
           `${library} ${sample.target.width} ${field.key} 标签与控件未垂直居中`,
         );
       }
-      // AI-code-start lines:4 tool:Codex
       const labelWidths = new Set(sample.expanded.fieldRects.map((field) => field.labelRect.width));
       const controlWidths = new Set(sample.expanded.fieldRects.map((field) => field.controlRect.width));
       assert.ok(labelWidths.size > 1, `${library} ${sample.target.width} 未验证不同文案的固有标签宽度`);
@@ -461,7 +447,6 @@ test('验证报告包含 A-01 至 A-06 和失败优先结论', () => {
   assert.match(report, /最小补充清单/u);
 });
 
-// AI-code-start lines:16 tool:Codex
 test('实际截图完整保存 29 张原尺寸 PNG', () => {
   const actualRoot = path.join(specRoot, 'validation-evidence', 'actual');
   const files = fs.readdirSync(actualRoot).filter((name) => name.endsWith('.png')).sort();
@@ -479,7 +464,6 @@ test('实际截图完整保存 29 张原尺寸 PNG', () => {
   }
 });
 
-// AI-code-start lines:86 tool:Codex
 function tableRows(content, heading) {
   return section(content, heading)
     .split(/\r?\n/u)
@@ -567,7 +551,6 @@ test('修订后报告使用组件区域口径并保留旧基线说明', () => {
   assert.match(report, /可用于 AI 还原本套 UI 规范|尚不足以用于稳定还原/u);
 });
 
-// AI-code-start lines:95 tool:Codex
 const libraryValidationSuites = [
   {
     folder: 'validation-element-plus',
@@ -664,7 +647,6 @@ test('当前验证报告只以两套组件库作为 A-04 和 A-05 证据', () =>
   assert.match(report, /原生.*不得作为.*A-04.*A-05|A-04.*A-05.*不得.*原生/u);
 });
 
-// AI-code-start lines:112 tool:Codex
 const a05EvidenceRoot = path.join(specRoot, 'validation-evidence', 'a05-visual-matrix');
 const a05ManifestPath = path.join(a05EvidenceRoot, 'manifest.json');
 const a05MatrixPath = path.join(specRoot, 'validation-evidence', 'a05-visual-matrix.md');
@@ -778,7 +760,6 @@ test('Cascader 多选证据同时包含弹层、半选和禁用项', () => {
   }
 });
 
-// AI-code-start lines:215 tool:Codex
 test('两套证据模式移除侧栏列并按组件内容确定验收区域', () => {
   for (const suite of libraryValidationSuites) {
     const root = path.join(specRoot, suite.folder, 'src');
@@ -797,7 +778,6 @@ test('两套证据模式移除侧栏列并按组件内容确定验收区域', ()
 test('双组件库核心场景使用蓝湖文案与完整变体数据', () => {
   for (const suite of libraryValidationSuites) {
     const demo = read(path.join(specRoot, suite.folder, 'src', 'ScenarioDemo.vue'));
-    // AI-code-start lines:1 tool:Codex
     const scenarioSources = `${demo}\n${read(path.join(specRoot, suite.folder, 'src', 'PaginationProgress.vue'))}\n${read(path.join(specRoot, suite.folder, 'src', 'TransferUpload.vue'))}`;
     const theme = read(path.join(specRoot, suite.folder, 'src', 'theme.css'));
     const manifest = JSON.parse(read(path.join(specRoot, suite.folder, 'src', 'manifest.json')));
@@ -996,7 +976,6 @@ test('第三批组件源码保留多状态结构和证据展开顺序', () => {
   }
 });
 
-// AI-code-start lines:130 tool:Codex
 test('第四批视觉确认完整覆盖 Collapse、Dialog 应用建议与 Dialog', () => {
   const manifest = JSON.parse(read(a05ManifestPath));
   const reviewedComponents = new Set(['collapse', 'dialog-usage', 'dialog']);
@@ -1128,7 +1107,6 @@ test('第四批组件源码保留真实双库弹窗、双实例与尺寸契约',
   }
 });
 
-// AI-code-start lines:228 tool:Codex
 test('Table 规范完整覆盖四张画板和 24 条唯一场景', () => {
   const tablePath = path.join(specRoot, 'components', 'table.md');
   const content = read(tablePath);
@@ -1358,7 +1336,6 @@ test('Table 24 条场景在双组件库中真实实现并通过逐场景视觉�
   }
 });
 
-// AI-code-start lines:44 tool:Codex
 test('经典 Table 页面忠实还原蓝湖结构、数据、操作列和分页', () => {
   for (const suite of libraryValidationSuites) {
     const root = path.join(specRoot, suite.folder);
@@ -1404,7 +1381,6 @@ test('经典 Table 页面忠实还原蓝湖结构、数据、操作列和分页'
   }
 });
 
-// AI-code-start lines:80 tool:Codex
 test('高频 32px 集合的 18 个完整状态组通过双组件库视觉验收', () => {
   const content = read(path.join(specRoot, 'components', 'frequent-components-32.md'));
   for (const expected of [
@@ -1486,7 +1462,6 @@ test('高频 32px 集合的 18 个完整状态组通过双组件库视觉验收'
   }
 });
 
-// AI-code-start lines:86 tool:Codex
 test('Pagination 与 Progress 的 15 个完整场景通过双组件库视觉验收', () => {
   const paginationDoc = read(path.join(specRoot, 'components', 'pagination.md'));
   const progressDoc = read(path.join(specRoot, 'components', 'progress.md'));
@@ -1574,7 +1549,6 @@ test('Pagination 与 Progress 的 15 个完整场景通过双组件库视觉验�
   }
 });
 
-// AI-code-start lines:111 tool:Codex
 test('Transfer 与 Upload 的 13 个场景通过双组件库视觉验收', () => {
   const transferDoc = read(path.join(specRoot, 'components', 'transfer.md'));
   const uploadDoc = read(path.join(specRoot, 'components', 'upload.md'));
@@ -1687,7 +1661,6 @@ test('Transfer 与 Upload 的 13 个场景通过双组件库视觉验收', () =>
   }
 });
 
-// AI-code-start lines:153 tool:Codex
 test('Form 四组的 20 个完整场景通过双组件库视觉验收', () => {
   const formDocs = {
     defaultCn: read(path.join(specRoot, 'forms', 'form-default-cn.md')),
@@ -1842,9 +1815,7 @@ test('Form 四组的 20 个完整场景通过双组件库视觉验收', () => {
   }
 });
 
-// AI-code-start lines:129 tool:Codex
 const pureSpecRoot = path.join(repositoryRoot, 'outputs', 'lanhu-ai-ui-spec');
-// AI-code-start lines:59 tool:Codex
 test('响应式表单布局同步到纯 AI 输入目录且不携带验证过程', () => {
   const designPath = path.join(specRoot, 'foundations', 'responsive-form-layout.md');
   const purePath = path.join(pureSpecRoot, 'foundations', 'responsive-form-layout.md');
@@ -2033,7 +2004,6 @@ test('验收精确值同步进入两套纯 Markdown 且不携带验证实现细�
   }
 });
 
-// AI-code-start lines:30 tool:Codex
 function deliveryTextFiles(rootPath) {
   const textExtensions = new Set(['.md', '.html', '.vue', '.js', '.json', '.css']);
   const files = [];

@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:528 tool:Codex -->
 <template>
   <div
     class="responsive-project-shell"
@@ -226,7 +225,6 @@ export default {
       const fieldRects = [...grid.querySelectorAll('.responsive-form-field')]
         .map((field) => {
           const rect = field.getBoundingClientRect();
-          // AI-code-start lines:12 tool:Codex
           const labelElement = field.querySelector('.el-form-item__label');
           const controlElement = field.querySelector('.el-form-item__content');
           const labelBox = labelElement.getBoundingClientRect();
@@ -447,7 +445,6 @@ html.responsive-project-mode body {
   margin-bottom: 0;
 }
 
-/* AI-code-start lines:16 tool:Codex */
 .responsive-project-form .responsive-form-field .el-form-item__label {
   height: 32px;
   padding: 0 12px 0 0;

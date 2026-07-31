@@ -1,13 +1,10 @@
-// AI-code-start lines:293 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-// AI-code-start lines:1 tool:Codex
 import { spawnSync } from 'node:child_process';
 
 const DECISION_HEADERS = ['ID', '决策项', '状态', '取值', '来源'];
 const EVIDENCE_HEADERS = ['验收ID', '验收点', '关联决策', '验证方式', '证据位置', '断言结果'];
-// AI-code-start lines:7 tool:Codex
 const ENHANCED_EVIDENCE_HEADERS = [...EVIDENCE_HEADERS, '验证记录'];
 const VERIFICATION_RECORD_HEADERS = ['验证ID', '验证类型', '执行内容或环境', '执行日期', '结果', '证据位置'];
 const DECISION_STATUSES = new Set(['已确认', '项目默认', '暂定', '待确认']);
@@ -16,11 +13,9 @@ const VERIFICATION_METHODS = new Set(['自动', '人工', '自动+人工']);
 const REQUIREMENT_STATUSES = new Set(['草稿', '已确认', '实施中', '待验证', '已验收']);
 const VALIDATION_STAGES = new Set(['plan', 'implement', 'precomplete', 'complete']);
 const VERIFICATION_RESULTS = new Set(['计划', '未执行', '通过', '失败', '阻断']);
-// AI-code-start lines:3 tool:Codex
 const INTERACTION_STATE_HEADERS = ['状态', '覆盖决定', '触发或前置条件', '期望结果', '验证方式', '关联验收', '不适用理由'];
 const REQUIRED_INTERACTION_STATES = ['初始（已有数据）', '用户操作', '刷新', '空态', '错误态', '卸载'];
 const INTERACTION_COVERAGE_DECISIONS = new Set(['覆盖', '不适用']);
-// AI-code-start lines:3 tool:Codex
 const CHANGE_SCOPE_HEADERS = ['变更', '决策范围', '验收范围'];
 const DELIVERY_STAGES = new Set(['precomplete', 'complete']);
 const IMPLEMENTABLE_REQUIREMENT_STATUSES = new Set(['已确认', '实施中']);
@@ -120,7 +115,6 @@ function parseAcceptanceIds(content, errors) {
   return ids;
 }
 
-// AI-code-start lines:74 tool:Codex
 // 状态矩阵只校验已采用的新格式，历史需求缺失时保留兼容并给出可迁移提醒。
 function linkedAcceptanceIds(value) {
   return [...String(value || '').matchAll(/A-\d{2,}/gu)].map((match) => match[0]);
@@ -178,7 +172,6 @@ function parseInteractionStateMatrix(content, acceptanceIds, stage, errors, warn
   return { present: true, rows };
 }
 
-// AI-code-start lines:148 tool:Codex
 // 新旧验收映射并行解析，只有完成阶段才强制要求新版验证记录。
 function parseRequirementStatus(content, stage, errors, warnings) {
   const section = getSection(content, '基本信息');
@@ -193,7 +186,6 @@ function parseRequirementStatus(content, stage, errors, warnings) {
     if (stage === 'complete') errors.push(message);
     else warnings.push(message);
   }
-  // AI-code-start lines:12 tool:Codex
   if (stage === 'plan' && status !== '已确认') {
     errors.push(`规划阶段要求需求状态为“已确认”，当前为“${status}”`);
   }
@@ -332,7 +324,6 @@ function parseEvidenceMapping(content, decisions, acceptanceIds, verificationRec
   return { evidenceIds, enhanced, mappingRecords };
 }
 
-// AI-code-start lines:72 tool:Codex
 function linkedIds(value, prefix) {
   const pattern = new RegExp(`${prefix}-\\d{2,}`, 'gu');
   return [...String(value || '').matchAll(pattern)].map((match) => match[0]);
@@ -458,7 +449,6 @@ function validateTaskReferences(changePath, decisions, acceptanceIds, selectedSc
       taskAcceptanceIds = acceptanceReferences;
       if (!decisionIds.size) errors.push('tasks.md 缺少 D-* 决策引用');
       if (!acceptanceReferences.size) errors.push('tasks.md 缺少 A-* 验收引用');
-      // AI-code-start lines:8 tool:Codex
       if (selectedScope) {
         for (const task of taskRows(content)) {
           const taskDecisions = linkedIds(task, 'D');
@@ -481,7 +471,6 @@ function validateTaskReferences(changePath, decisions, acceptanceIds, selectedSc
     if (isBusinessPlan && !decisionIds.size) errors.push(`${label} 缺少 D-* 决策引用`);
     if (isSpecification && !acceptanceReferences.size) errors.push(`${label} 缺少 A-* 验收引用`);
   }
-  // AI-code-start lines:1 tool:Codex
   assertScopeCoverage(selectedScope, taskDecisionIds, taskAcceptanceIds, errors);
   return {
     taskPath: change.tasksPath,
@@ -490,7 +479,6 @@ function validateTaskReferences(changePath, decisions, acceptanceIds, selectedSc
   };
 }
 
-// AI-code-start lines:104 tool:Codex
 // Git 基线只用于核验测试策略，不会修改目标仓库或把无基线项目当作失败。
 function findProjectRoot(requirementPath) {
   let current = path.dirname(requirementPath);
@@ -512,7 +500,6 @@ function isGitTracked(root, relativePath) {
   return spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', relativePath], { encoding: 'utf8' }).status === 0;
 }
 
-// AI-code-start lines:40 tool:Codex
 function persistentEvidencePath(value) {
   const candidate = String(value || '').trim().replace(/^`|`$/gu, '');
   if (!candidate.includes('/') || /[\s：；，、]/u.test(candidate)) return null;
@@ -592,7 +579,6 @@ function validateCompletionState(content, changePath, acceptanceIds, stage, erro
   const acceptanceSection = getSection(content, '验收标准') || '';
   const unfinished = [...acceptanceSection.matchAll(/^\s*-\s*\[\s\]\s*\[(A-\d{2,})\]/gmu)].map((match) => match[1]);
   for (const id of unfinished) errors.push(`完成阶段存在未勾选验收：${id}`);
-  // AI-code-start lines:7 tool:Codex
   if (stage === 'precomplete') {
     const checked = new Set([...acceptanceSection.matchAll(/^\s*-\s*\[[xX]\]\s*\[(A-\d{2,})\]/gmu)].map((match) => match[1]));
     for (const id of acceptanceIds) {
@@ -613,7 +599,6 @@ function validateCompletionState(content, changePath, acceptanceIds, stage, erro
 export function validateRequirementDecisions(requirementPath, options = {}) {
   const errors = [];
   const warnings = [];
-  // AI-code-start lines:4 tool:Codex
   const stage = options.stage || 'plan';
   if (!VALIDATION_STAGES.has(stage)) errors.push(`校验阶段无效：${stage}；必须使用${[...VALIDATION_STAGES].join('、')}`);
   const resolvedRequirement = path.resolve(requirementPath || '');
@@ -633,13 +618,10 @@ export function validateRequirementDecisions(requirementPath, options = {}) {
   const content = fs.readFileSync(resolvedRequirement, 'utf8');
   const decisions = parseDecisionLedger(content, errors);
   const acceptanceIds = parseAcceptanceIds(content, errors);
-  // AI-code-start lines:1 tool:Codex
   const interactionStateMatrix = parseInteractionStateMatrix(content, acceptanceIds, stage, errors, warnings);
-  // AI-code-start lines:8 tool:Codex
   const requirementStatus = parseRequirementStatus(content, stage, errors, warnings);
   const verificationRecords = parseVerificationRecords(content, errors);
   const evidenceMapping = parseEvidenceMapping(content, decisions, acceptanceIds, verificationRecords, stage, errors);
-  // AI-code-start lines:5 tool:Codex
   const selectedChangeScope = parseSelectedChangeScope(
     content, options.changePath, decisions, acceptanceIds, stage, errors, warnings,
   );
@@ -661,7 +643,6 @@ export function validateRequirementDecisions(requirementPath, options = {}) {
     },
     verificationRecords: verificationRecords?.size || 0,
     evidenceFormat: evidenceMapping.enhanced ? 'enhanced' : 'legacy',
-    // AI-code-start lines:7 tool:Codex
     selectedChangeScope: selectedChangeScope ? {
       name: selectedChangeScope.name,
       decisions: selectedChangeScope.decisionIds.size,
@@ -682,7 +663,6 @@ function parseArgs(argv) {
     if (value === '--change') {
       args.changePath = argv[index + 1];
       index += 1;
-    // AI-code-start lines:3 tool:Codex
     } else if (value === '--stage') {
       args.stage = argv[index + 1];
       index += 1;

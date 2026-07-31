@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:898 tool:Codex -->
 <template>
   <div
     class="lanhu-form-scene"

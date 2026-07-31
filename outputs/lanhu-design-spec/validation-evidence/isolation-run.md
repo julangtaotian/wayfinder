@@ -23,6 +23,6 @@
 - 159 个场景都由带 `data-scenario-id` 的真实组件区域渲染，不只存在于 JSON。
 - 6 个 PNG 均复制到 `validation-ui/assets/icons/`，文件哈希与设计资产一致，并全部在 UI 代码中引用。
 - `index.html`、`styles.css`、`app.js` 不包含外部 HTTP/HTTPS 资源。
-- HTML、CSS 和 JavaScript 的 `AI-code-start` 行数标记与实际连续新增代码行数一致。
+- HTML、CSS 和 JavaScript 不包含 AI 行数或工具来源统计注释。
 
 隔离模型尝试启动本地预览服务时，端口绑定被隔离沙箱拒绝；这不影响生成结果。最终浏览器加载和可见状态检查由主流程在仓库内独立完成。

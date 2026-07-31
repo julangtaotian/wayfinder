@@ -1,4 +1,3 @@
-// AI-code-start lines:8 tool:Codex
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 

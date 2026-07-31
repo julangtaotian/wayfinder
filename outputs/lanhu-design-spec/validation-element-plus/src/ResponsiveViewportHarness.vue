@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:77 tool:Codex -->
 <template>
   <main class="responsive-viewport-harness">
     <header>

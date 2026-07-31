@@ -1,4 +1,3 @@
-// AI-code-start lines:327 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:495 tool:Codex -->
 <template>
   <div class="transfer-upload-spec">
     <div

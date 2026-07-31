@@ -3,7 +3,6 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// AI-code-start lines:1 tool:Codex
 export const BUNDLED_OPENSPEC_VERSION = '1.7.0';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -54,7 +53,6 @@ export function runOpenSpecSync(args = [], {
     };
   }
 
-  // AI-code-start lines:4 tool:Codex
   const runtimeEnv = {
     ...env,
     OPENSPEC_NO_UPDATE_CHECK: '1',
@@ -63,7 +61,6 @@ export function runOpenSpecSync(args = [], {
     cwd,
     encoding,
     stdio,
-    // AI-code-start lines:1 tool:Codex
     env: runtimeEnv,
   });
   return {

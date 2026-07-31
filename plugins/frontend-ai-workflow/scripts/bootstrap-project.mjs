@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseCliArgs } from './cli-arguments.mjs';
 import { inspectProject } from './inspect-project.mjs';
 import { BUNDLED_OPENSPEC_VERSION } from './openspec-cli.mjs';
-// AI-code-start lines:1 tool:Codex
 import { assertSafeProjectRoot, collectProjectScope } from './collect-project-scope.mjs';
-// AI-code-start lines:5 tool:Codex
 import {
   detectWorkflowLayout,
   findManagedRange,
@@ -13,21 +12,18 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-// AI-code-start lines:1 tool:Codex
 export const WORKFLOW_VERSION = '0.11.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
 
 const FILES = [
-  // AI-code-start lines:4 tool:Codex
   // Wayfinder 集中工作流元数据和项目导航，AGENTS 与 OpenSpec 保持外部约定位置。
   { source: 'AGENTS.md', target: 'AGENTS.md', managedKind: 'html', preserveManagedBlocks: ['deep-guardrails'], updateWhenDeep: true },
   { source: 'wayfinder/frontend.md', target: WAYFINDER_PATH, managedKind: 'html', managedBlocks: ['meta', 'scope'], requiredManagedBlocks: ['meta', 'scope', 'analysis'], updateWhenDeep: true },
   { source: 'openspec/config.yaml', target: 'openspec/config.yaml', managedKind: 'yaml' },
 ];
 
-// AI-code-start lines:12 tool:Codex
 function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallback) {
   if (scope) return scopeValue;
   if (preservedSettings?.[settingsKey] !== undefined) return preservedSettings[settingsKey];
@@ -45,7 +41,6 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     PACKAGE_MANAGER: inspection.packageManager,
     DEV_COMMAND: inspection.commands.dev,
     BUILD_COMMAND: inspection.commands.build,
-    // AI-code-start lines:2 tool:Codex
     RELEASE_BUILD_COMMAND: inspection.commandSemantics.releaseBuild.command,
     TEST_COMMAND: inspection.commands.test,
     LINT_COMMAND: inspection.commands.lint,
@@ -57,8 +52,6 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     ROUTER_PATH: inspection.paths.router,
     STORE_PATH: inspection.paths.store,
     TESTS_PATH: inspection.paths.tests,
-    // AI-code-start lines:5 tool:Codex
-    // AI-code-start lines:12 tool:Codex
     DEEP_ANALYSIS: deepAnalysis ? 'true' : 'false',
     SCOPE_VERSION: snapshotValue(scope, preservedSettings, scope?.version, 'scopeVersion', '未执行'),
     SCOPE_INCLUDED_FILES: snapshotValue(scope, preservedSettings, scope?.summary.includedFiles, 'scopeIncludedFiles', 0),
@@ -84,7 +77,6 @@ function renderTemplate(source, variables) {
   return rendered.endsWith('\n') ? rendered : `${rendered}\n`;
 }
 
-// AI-code-start lines:12 tool:Codex
 // 升级通用规则时保留深度扫描写入的项目专属硬约束，避免回退为占位内容。
 function mergePreservedBlocks(existing, rendered, descriptor) {
   let merged = rendered;
@@ -160,9 +152,7 @@ export function runBootstrap({
   contentOverrides = {},
 } = {}) {
   const inspection = inspectProject(target);
-  // AI-code-start lines:7 tool:Codex
   assertSafeProjectRoot(inspection.root);
-  // AI-code-start lines:12 tool:Codex
   // 旧布局只能由显式迁移调用接管，普通初始化和升级不得隐式产生两套上下文。
   const layout = detectWorkflowLayout(inspection.root);
   if (layout === 'legacy' && !allowLegacy) {
@@ -178,9 +168,7 @@ export function runBootstrap({
     };
   }
   const scope = deep ? collectProjectScope(inspection.root) : null;
-  // AI-code-start lines:1 tool:Codex
   const variables = templateVariables(inspection, scope, preservedScopeSettings);
-  // AI-code-start lines:1 tool:Codex
   const descriptors = FILES;
   const planned = descriptors.map((descriptor) =>
     planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides }),
@@ -207,24 +195,24 @@ function publicActions(actions) {
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), write: false, updateManaged: false, onlyManaged: false, deep: false };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--target') {
-      args.target = argv[index + 1];
-      index += 1;
-    } else if (arg === '--write') {
-      args.write = true;
-    } else if (arg === '--update-managed') {
-      args.updateManaged = true;
-    } else if (arg === '--only-managed') {
-      args.onlyManaged = true;
-    // AI-code-start lines:2 tool:Codex
-    } else if (arg === '--deep') {
-      args.deep = true;
-    }
-  }
-  return args;
+  return parseCliArgs(argv, {
+    defaults: {
+      target: process.cwd(),
+      write: false,
+      updateManaged: false,
+      onlyManaged: false,
+      deep: false,
+    },
+    valueOptions: {
+      '--target': 'target',
+    },
+    booleanOptions: {
+      '--write': 'write',
+      '--update-managed': 'updateManaged',
+      '--only-managed': 'onlyManaged',
+      '--deep': 'deep',
+    },
+  });
 }
 
 function isEntryPoint() {

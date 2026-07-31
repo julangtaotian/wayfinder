@@ -22,7 +22,7 @@
 
 不得使用外链脚本、外链字体、外部图片、HTTP 接口或构建工具。只引用 `output/` 内的本地文件和复制到 `output/assets/icons/` 的图标。
 
-新增 CSS、JavaScript 等代码必须遵守以下统计规则：每个连续新增代码块前使用该语言的注释写 `AI-code-start lines:<该连续代码块的准确行数> tool:Codex`；已经带标记的代码不得重复统计；Markdown 不加；`<!DOCTYPE html>` 前不加。新增代码中的必要说明使用中文注释。
+新增 CSS、JavaScript 等代码必须遵守仓库根目录 `AGENTS.md`；禁止生成 AI 行数或工具来源统计注释，确有维护价值的说明使用中文注释。
 
 ## 清单与覆盖要求
 

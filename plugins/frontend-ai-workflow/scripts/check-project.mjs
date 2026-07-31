@@ -1,10 +1,9 @@
-// AI-code-start lines:210 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { parseCliArgs } from './cli-arguments.mjs';
 import { inspectProject } from './inspect-project.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
-// AI-code-start lines:1 tool:Codex
 import { collectProjectScope } from './collect-project-scope.mjs';
 import {
   detectWorkflowLayout,
@@ -100,7 +99,6 @@ function checkWayfinder(root, errors) {
     if (!/^\d+$/.test(settings.scopeExcludedFiles || '')) errors.push('Wayfinder 缺少有效 scopeExcludedFiles');
     checkGuardrails(root, errors);
   }
-  // AI-code-start lines:9 tool:Codex
   return {
     enabled,
     scopeVersion: settings.scopeVersion || null,
@@ -163,7 +161,6 @@ function checkPlanningEngine(root, errors) {
   return { available: true, healthy, source: result.source, version: result.runtimeVersion };
 }
 
-// AI-code-start lines:31 tool:Codex
 function inspectCommandEvidence(inspection) {
   return Object.fromEntries(Object.entries(inspection.commands).map(([kind, command]) => [
     kind,
@@ -218,14 +215,12 @@ export function checkProject(target = process.cwd()) {
   if (!inspection.scriptNames.build) warnings.push('package.json 未配置构建脚本');
   if (!inspection.scriptNames.test) warnings.push('package.json 未配置测试脚本');
   if (!inspection.scriptNames.lint) warnings.push('package.json 未配置 lint 脚本');
-  // AI-code-start lines:3 tool:Codex
   if (inspection.commandSemantics.lint.status === 'unverified') {
     warnings.push(`lint 脚本语义未验证：${inspection.commandSemantics.lint.command}；请确认其是否执行静态检查。`);
   }
   if (!inspection.scriptNames.typecheck) warnings.push('package.json 未配置类型检查脚本');
 
   const planningEngine = checkPlanningEngine(inspection.root, errors);
-  // AI-code-start lines:3 tool:Codex
   deepAnalysis.freshness = checkAnalysisFreshness(inspection.root, deepAnalysis, warnings);
   const activeChanges = checkActiveChanges(inspection.root, warnings);
   return {
@@ -236,7 +231,6 @@ export function checkProject(target = process.cwd()) {
     version: deepAnalysis.version,
     preset: inspection.preset,
     commands: inspection.commands,
-    // AI-code-start lines:1 tool:Codex
     commandEvidence: inspectCommandEvidence(inspection),
     commandSemantics: inspection.commandSemantics,
     planningEngine,
@@ -248,14 +242,12 @@ export function checkProject(target = process.cwd()) {
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd() };
-  for (let index = 0; index < argv.length; index += 1) {
-    if (argv[index] === '--target') {
-      args.target = argv[index + 1];
-      index += 1;
-    }
-  }
-  return args;
+  return parseCliArgs(argv, {
+    defaults: { target: process.cwd() },
+    valueOptions: {
+      '--target': 'target',
+    },
+  });
 }
 
 function isEntryPoint() {

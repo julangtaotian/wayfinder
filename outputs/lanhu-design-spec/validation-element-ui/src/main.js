@@ -1,4 +1,3 @@
-// AI-code-start lines:23 tool:Codex
 import Vue from 'vue';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';

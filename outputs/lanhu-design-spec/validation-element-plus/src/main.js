@@ -1,4 +1,3 @@
-// AI-code-start lines:24 tool:Codex
 import { createApp, version as vueVersion } from 'vue';
 import ElementPlus, { version as elementPlusVersion } from 'element-plus';
 // 验收统一使用中文语言包，避免日期、时间等弹层混入英文默认文案。

@@ -3,17 +3,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-// AI-code-start lines:1 tool:Codex
 import { spawnSync } from 'node:child_process';
 import { inspectProject } from '../plugins/frontend-ai-workflow/scripts/inspect-project.mjs';
 import { runBootstrap } from '../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
-// AI-code-start lines:2 tool:Codex
 import { archiveTarget, checkChange, validatePlanningArtifacts, validatePlanningRoot } from '../plugins/frontend-ai-workflow/scripts/check-change.mjs';
 import { finalizeChange } from '../plugins/frontend-ai-workflow/scripts/finalize-change.mjs';
-// AI-code-start lines:1 tool:Codex
 import { runWayfinderMigration } from '../plugins/frontend-ai-workflow/scripts/migrate-wayfinder-project.mjs';
-// AI-code-start lines:1 tool:Codex
 import { collectProjectScope, PROJECT_SCOPE_VERSION } from '../plugins/frontend-ai-workflow/scripts/collect-project-scope.mjs';
 import {
   BUNDLED_OPENSPEC_VERSION,
@@ -21,18 +17,14 @@ import {
   runOpenSpecSync,
 } from '../plugins/frontend-ai-workflow/scripts/openspec-cli.mjs';
 import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-project.mjs';
-// AI-code-start lines:1 tool:Codex
 import { validateRequirementDecisions } from '../plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs';
-// AI-code-start lines:1 tool:Codex
 import { previewRequirementUpgrade } from '../plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs';
-// AI-code-start lines:6 tool:Codex
 import {
   buildRuntimeIntegrityManifest,
   formatRuntimeIntegrityManifest,
   verifyRuntimeIntegrity,
   writeRuntimeIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs';
-// AI-code-start lines:1 tool:Codex
 import { buildVerificationSteps, runVerification } from '../scripts/verify.mjs';
 
 const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
@@ -44,7 +36,6 @@ const expectedPublicSkills = [
   'frontend-workflow-upgrade',
 ];
 
-// AI-code-start lines:5 tool:Codex
 function writeFixtureFile(root, file, content) {
   const filePath = path.join(root, file);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -70,7 +61,6 @@ function createVueFixture(t) {
       devDependencies: { vite: '^6.0.0', vitest: '^2.0.0' },
     }, null, 2)}\n`,
   );
-  // AI-code-start lines:12 tool:Codex
   const fixtureFiles = {
     'src/router/index.js': "import Home from '../views/Home.vue';\nexport const routes = [{ path: '/', component: Home }];\n",
     'src/request/http.js': "export function request(url) { return url; }\n",
@@ -86,7 +76,6 @@ function createVueFixture(t) {
   return root;
 }
 
-// AI-code-start lines:71 tool:Codex
 // 支持矩阵只创建识别和工作流所需的真实文件，不安装或执行任何第三方依赖。
 const SUPPORTED_PROJECT_MATRIX = [
   {
@@ -159,7 +148,6 @@ function createMatrixFixture(t, fixture) {
   return root;
 }
 
-// AI-code-start lines:65 tool:Codex
 // 交付门槛 fixture 用 Git 索引模拟已有测试，避免把本轮新文件误写为复用。
 function initializeGitBaseline(root, relativePath = 'tests/existing.spec.js') {
   writeFixtureFile(root, relativePath, "export default 'existing';\n");
@@ -221,7 +209,6 @@ ${manualRecord}
 `;
 }
 
-// AI-code-start lines:64 tool:Codex
 // 固定六行矩阵让 fixture 能分别覆盖完整状态、不适用理由和历史兼容分支。
 function renderStateMatrixRequirement({ includeMatrix = true, unmountReason = '本次不涉及订阅、计时器或可取消请求。' } = {}) {
   const matrix = includeMatrix
@@ -264,7 +251,6 @@ ${matrix}
 `;
 }
 
-// AI-code-start lines:23 tool:Codex
 // 旧布局 fixture 用于验证显式迁移，不依赖已移除的旧版模板资产。
 function writeLegacyWorkflow(root, options = {}) {
   fs.rmSync(path.join(root, 'wayfinder'), { recursive: true, force: true });
@@ -283,7 +269,6 @@ test('识别 Vue 3 + Vite 项目及真实命令', (t) => {
   assert.equal(result.commands.dev, 'npm run dev');
   assert.equal(result.commands.build, 'npm run build');
   assert.equal(result.commands.test, 'npm run test');
-  // AI-code-start lines:4 tool:Codex
   // 只有默认构建时，交付构建必须明确显示为回退候选，避免夸大生产环境保证。
   assert.equal(result.commandSemantics.defaultBuild.command, 'npm run build');
   assert.equal(result.commandSemantics.releaseBuild.command, 'npm run build');
@@ -291,7 +276,6 @@ test('识别 Vue 3 + Vite 项目及真实命令', (t) => {
   assert.equal(result.paths.views, 'src/views');
 });
 
-// AI-code-start lines:47 tool:Codex
 test('受支持框架与包管理器矩阵完成识别、初始化、升级和检查', (t) => {
   for (const fixture of SUPPORTED_PROJECT_MATRIX) {
     const root = createMatrixFixture(t, fixture);
@@ -340,7 +324,6 @@ test('受支持框架与包管理器矩阵完成识别、初始化、升级和�
   assert.equal(inspectProject(misleadingRoot).preset, 'generic-frontend');
 });
 
-// AI-code-start lines:92 tool:Codex
 test('命令语义区分默认构建、交付构建和未验证 lint', (t) => {
   const root = createVueFixture(t);
   writeFixtureFile(root, 'package.json', `${JSON.stringify({
@@ -374,7 +357,6 @@ test('命令语义区分默认构建、交付构建和未验证 lint', (t) => {
   assert.equal(checked.commandSemantics.releaseBuild.command, 'npm run build:prod');
   assert.match(checked.warnings.join('\n'), /lint 脚本语义未验证/);
 
-  // AI-code-start lines:5 tool:Codex
   // 已识别工具应升级为已验证，确保“未知”与“已验证”状态均有稳定覆盖。
   const packageFile = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   packageFile.scripts.lint = 'eslint .';
@@ -394,10 +376,8 @@ test('完成阶段校验交付证据、人工视觉和测试 Git 基线', (t) =>
   assert.equal(complete.ok, true);
   assert.equal(complete.evidenceFormat, 'enhanced');
   assert.equal(complete.testFileStrategy.baselineAvailable, true);
-  // AI-code-start lines:1 tool:Codex
   assert.match(complete.warnings.join('\n'), /缺少交互状态矩阵/);
 
-  // AI-code-start lines:17 tool:Codex
   // 完成门槛必须同时核对需求验收勾选和变更任务，不允许只依赖验证记录。
   writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
     acceptanceChecked: false,
@@ -434,7 +414,6 @@ test('完成阶段校验交付证据、人工视觉和测试 Git 基线', (t) =>
   const noGitRequirement = path.join(noGitRoot, 'requirements', 'REQ-2026-001-no-git.md');
   writeFixtureFile(noGitRoot, 'tests/existing.spec.js', "export default 'existing';\n");
   writeFixtureFile(noGitRoot, 'openspec/changes/delivery/tasks.md', '- [x] [D-01] [A-01] 完成交付门槛。\n');
-  // AI-code-start lines:3 tool:Codex
   writeFixtureFile(noGitRoot, 'requirements/REQ-2026-001-no-git.md', renderDeliveryRequirement({
     status: '实施中',
   }));
@@ -446,7 +425,6 @@ test('完成阶段校验交付证据、人工视觉和测试 Git 基线', (t) =>
   assert.match(noGit.warnings.join('\n'), /无法确认测试文件 Git 基线/);
 });
 
-// AI-code-start lines:43 tool:Codex
 test('交互状态矩阵覆盖六类状态并兼容历史需求', (t) => {
   const root = createVueFixture(t);
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-003-state-matrix.md');
@@ -469,7 +447,6 @@ test('交互状态矩阵覆盖六类状态并兼容历史需求', (t) => {
   assert.deepEqual(legacy.interactionStateMatrix, { present: false, rows: 0 });
 });
 
-// AI-code-start lines:41 tool:Codex
 test('旧需求升级预览只报告活跃缺口且不改写源文件', (t) => {
   const root = createVueFixture(t);
   const legacyPath = path.join(root, 'requirements', 'REQ-2026-001-legacy.md');
@@ -510,7 +487,6 @@ test('插件只公开团队自有技能', () => {
   assert.equal(skills.some((name) => name.startsWith('openspec-')), false);
 });
 
-// AI-code-start lines:34 tool:Codex
 test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () => {
   const steps = buildVerificationSteps();
   assert.deepEqual(steps.map((step) => step.id), [
@@ -564,10 +540,8 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /sample-vue-app/);
   assert.match(agents, /npm run build/);
-  // AI-code-start lines:2 tool:Codex
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /交付构建命令：npm run build/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /静态检查命令：未配置（语义：missing）/);
-  // AI-code-start lines:3 tool:Codex
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /operations:/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /归档前必须通过插件完成预览/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.7\.0"/);
@@ -608,7 +582,6 @@ test('已有无受管标记的 AGENTS.md 会被保留', (t) => {
   assert.equal(fs.readFileSync(agentsPath, 'utf8'), '# Existing Rules\n');
 });
 
-// AI-code-start lines:26 tool:Codex
 // 最小运行时 fixture 复现根包、生产依赖、许可证和入口，专门用于验证漂移分支。
 function createRuntimeIntegrityFixture(t) {
   const runtimeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'openspec-runtime-'));
@@ -645,7 +618,6 @@ test('插件内置规划运行时可独立执行', () => {
   assert.equal(result.status, 0);
   assert.equal(result.source, 'bundled');
   assert.equal(result.stdout.trim(), BUNDLED_OPENSPEC_VERSION);
-  // AI-code-start lines:9 tool:Codex
   const runtimeManifest = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'runtime', 'openspec', 'package.json'), 'utf8'));
   assert.equal(BUNDLED_OPENSPEC_VERSION, '1.7.0');
   assert.equal(runtimeManifest.version, BUNDLED_OPENSPEC_VERSION);
@@ -658,7 +630,6 @@ test('插件内置规划运行时可独立执行', () => {
   assert.match(fs.readFileSync(path.join(pluginRoot, 'scripts', 'openspec-cli.mjs'), 'utf8'), /OPENSPEC_NO_UPDATE_CHECK: '1'/);
 });
 
-// AI-code-start lines:18 tool:Codex
 test('内置 OpenSpec 完整性清单可重复计算且不包含环境路径', () => {
   const first = buildRuntimeIntegrityManifest();
   const second = buildRuntimeIntegrityManifest();
@@ -678,7 +649,6 @@ test('内置 OpenSpec 完整性清单可重复计算且不包含环境路径', (
   assert.equal(verifyRuntimeIntegrity().ok, true);
 });
 
-// AI-code-start lines:28 tool:Codex
 test('运行时完整性默认只读并阻止内容与包集合漂移', (t) => {
   const { runtimeRoot, integrityPath } = createRuntimeIntegrityFixture(t);
   const missing = verifyRuntimeIntegrity({ runtimeRoot, integrityPath });
@@ -714,7 +684,6 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  // AI-code-start lines:1 tool:Codex
   assert.equal(result.version, '0.11.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
@@ -723,7 +692,6 @@ test('健康检查使用插件内置规划运行时', (t) => {
   assert.equal(result.planningEngine.version, BUNDLED_OPENSPEC_VERSION);
 });
 
-// AI-code-start lines:13 tool:Codex
 test('范围清单完整记账且结果稳定', (t) => {
   const root = createVueFixture(t);
   const limits = { maxFileBytes: 128, maxTotalBytes: 4096 };
@@ -739,7 +707,6 @@ test('范围清单完整记账且结果稳定', (t) => {
   assert.throws(() => collectProjectScope(path.parse(root).root), /拒绝在高风险目录扫描/);
 });
 
-// AI-code-start lines:28 tool:Codex
 test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
   const root = createVueFixture(t);
   const preview = runBootstrap({ target: root, deep: true });
@@ -758,7 +725,6 @@ test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
   assert.match(fs.readFileSync(frontendPath, 'utf8'), /frontend-ai-workflow:analysis:start/);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'docs', 'ai-context', 'frontend.md')), false);
-  // AI-code-start lines:3 tool:Codex
   // 常规升级不能意外将已完成深度扫描的项目降级为浅层工作流。
   runUpdate({ target: root, write: true });
   assert.match(fs.readFileSync(frontendPath, 'utf8'), /deepAnalysis: true/);
@@ -775,7 +741,6 @@ test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
   assert.equal(checked.deepAnalysis.scopeVersion, PROJECT_SCOPE_VERSION);
 });
 
-// AI-code-start lines:9 tool:Codex
 test('深度初始化不覆盖没有受管标记的 Wayfinder', (t) => {
   const root = createVueFixture(t);
   const frontendPath = path.join(root, 'wayfinder', 'frontend.md');
@@ -787,7 +752,6 @@ test('深度初始化不覆盖没有受管标记的 Wayfinder', (t) => {
   assert.equal(fs.readFileSync(frontendPath, 'utf8'), '# 项目自定义导航\n');
 });
 
-// AI-code-start lines:24 tool:Codex
 test('旧布局必须显式迁移并保留项目事实与硬约束', (t) => {
   const root = createVueFixture(t);
   runBootstrap({ target: root, deep: true, write: true });
@@ -819,13 +783,11 @@ test('旧布局必须显式迁移并保留项目事实与硬约束', (t) => {
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), false);
   assert.equal(checkProject(root).layout, 'wayfinder');
-  // AI-code-start lines:3 tool:Codex
   const repeated = runWayfinderMigration({ target: root });
   assert.equal(repeated.ok, false);
   assert.equal(repeated.actions[0].reason, '目标不是可迁移的旧工作流布局');
 });
 
-// AI-code-start lines:13 tool:Codex
 test('Wayfinder 迁移保留用户自定义的旧元数据与需求模板', (t) => {
   const root = createVueFixture(t);
   runBootstrap({ target: root, deep: true, write: true });
@@ -840,7 +802,6 @@ test('Wayfinder 迁移保留用户自定义的旧元数据与需求模板', (t) 
   assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), true);
 });
 
-// AI-code-start lines:18 tool:Codex
 test('深度项目约束会被升级保留且健康检查要求有效标记', (t) => {
   const root = createVueFixture(t);
   runBootstrap({ target: root, deep: true, write: true });
@@ -860,7 +821,6 @@ test('深度项目约束会被升级保留且健康检查要求有效标记', (t
   assert.match(checked.errors.join('\n'), /deep-guardrails/);
 });
 
-// AI-code-start lines:9 tool:Codex
 test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   const reference = fs.readFileSync(path.join(pluginRoot, 'references', 'deep-project-analysis.md'), 'utf8');
   const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-workflow-bootstrap', 'SKILL.md'), 'utf8');
@@ -875,7 +835,6 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(skill, /do not describe the result as complete/);
 });
 
-// AI-code-start lines:6 tool:Codex
 test('需求模板仅作为插件资产按需使用', () => {
   const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
   const template = path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md');
@@ -885,7 +844,6 @@ test('需求模板仅作为插件资产按需使用', () => {
   assert.match(skill, /requirements\/REQ-\*\.md/);
 });
 
-// AI-code-start lines:8 tool:Codex
 test('变更验证规则优先选择当前需求影响面的测试', () => {
   const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
 
@@ -895,7 +853,6 @@ test('变更验证规则优先选择当前需求影响面的测试', () => {
   assert.match(skill, /full project test command only/);
 });
 
-// AI-code-start lines:20 tool:Codex
 test('新功能测试策略保护生成基线并要求专用测试决策', () => {
   const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
@@ -918,7 +875,6 @@ test('新功能测试策略保护生成基线并要求专用测试决策', () =>
   assert.match(requirementTemplate, /## 验证记录/);
 });
 
-// AI-code-start lines:17 tool:Codex
 test('局部需求默认聚焦验证且最终交付不自动触发覆盖率', () => {
   const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
@@ -937,7 +893,6 @@ test('局部需求默认聚焦验证且最终交付不自动触发覆盖率', ()
   assert.match(openSpecTemplate, /全量测试或 coverage 必须注明/);
 });
 
-// AI-code-start lines:46 tool:Codex
 test('需求决策台账阻止未确认决策和无证据验收进入任务', (t) => {
   const root = createVueFixture(t);
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-001-decision-ledger.md');
@@ -985,7 +940,6 @@ test('需求决策台账阻止未确认决策和无证据验收进入任务', (t
   assert.match(unknown.errors.join('\n'), /未知决策：D-99/);
 });
 
-// AI-code-start lines:15 tool:Codex
 test('需求模板和工作流要求使用决策台账与验收证据映射', () => {
   const template = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md'), 'utf8');
   const agents = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
@@ -995,9 +949,7 @@ test('需求模板和工作流要求使用决策台账与验收证据映射', ()
 
   assert.match(template, /## 决策台账/);
   assert.match(template, /## 验收—证据映射/);
-  // AI-code-start lines:1 tool:Codex
   assert.match(template, /验证记录/);
-  // AI-code-start lines:5 tool:Codex
   assert.match(template, /## 交互状态矩阵/);
   assert.match(template, /初始（已有数据）/);
   assert.match(agents, /状态矩阵/);
@@ -1006,13 +958,11 @@ test('需求模板和工作流要求使用决策台账与验收证据映射', ()
   assert.match(template, /\[A-01\]/);
   assert.match(agents, /决策台账”是业务事实源/);
   assert.match(config, /已确认或项目默认的 D-\*/);
-  // AI-code-start lines:1 tool:Codex
   assert.match(config, /交付构建命令/);
   assert.match(requirementSkill, /validate-requirement-decisions/);
   assert.match(changeSkill, /--change <change-root>/);
 });
 
-// AI-code-start lines:31 tool:Codex
 test('决策校验阻止拆分规格绕过需求台账', (t) => {
   const root = createVueFixture(t);
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-002-spec-reference.md');
@@ -1038,7 +988,6 @@ test('决策校验阻止拆分规格绕过需求台账', (t) => {
   assert.match(result.errors.join('\n'), /specs\/form\/spec.md 缺少 A-\* 验收引用/);
 });
 
-// AI-code-start lines:212 tool:Codex
 function renderGovernedDeliveryRequirement({
   status = '待验证',
   changeName = 'delivery',
@@ -1069,7 +1018,6 @@ function writeManagedChange(root, {
   specPath = 'delivery-guard/spec.md',
 } = {}) {
   runBootstrap({ target: root, write: true });
-  // AI-code-start lines:2 tool:Codex
   const skipMetadata = skipSpecs ? 'skip_specs: true\n' : '';
   writeFixtureFile(root, `openspec/changes/${changeName}/.openspec.yaml`, `schema: spec-driven\ncreated: 2026-07-29\n${skipMetadata}`);
   writeFixtureFile(root, `openspec/changes/${changeName}/proposal.md`, `## Why
@@ -1112,7 +1060,6 @@ ${skipSpecs ? '- 无。本变更不改变可观察行为。' : '- `delivery-guar
 
 - 无。
 `);
-  // AI-code-start lines:11 tool:Codex
   if (!skipSpecs) writeFixtureFile(root, `openspec/changes/${changeName}/specs/${specPath}`, `## ADDED Requirements
 
 ### Requirement: 交付必须通过门槛
@@ -1251,14 +1198,12 @@ test('分层检查与完成入口阻止未完成变更并在成功后同步归�
   });
   assert.equal(completed.ok, true);
   assert.equal(completed.requirementStatus, '已验收');
-  // AI-code-start lines:2 tool:Codex
   assert.equal(completed.archiveRoot.source, 'nearest');
   assert.ok(Array.isArray(completed.archiveWarnings));
   assert.equal(fs.existsSync(path.join(root, 'openspec', 'changes', 'delivery')), false);
   assert.equal(fs.existsSync(path.join(root, 'openspec', 'changes', 'archive', completed.archiveResult.archivedAs)), true);
   assert.equal(fs.existsSync(path.join(root, 'openspec', 'specs', 'delivery-guard', 'spec.md')), true);
   assert.match(fs.readFileSync(requirementPath, 'utf8'), /- 状态：已验收/);
-  // AI-code-start lines:6 tool:Codex
   const archivedAudit = validateRequirementDecisions(requirementPath, {
     changePath: path.join(root, 'openspec', 'changes', 'archive', completed.archiveResult.archivedAs),
     stage: 'complete',
@@ -1267,7 +1212,6 @@ test('分层检查与完成入口阻止未完成变更并在成功后同步归�
   assert.equal(archivedAudit.selectedChangeScope.name, 'delivery');
 });
 
-// AI-code-start lines:31 tool:Codex
 test('OpenSpec 1.7 动态操作输入可见但不改变完成门禁', (t) => {
   const root = createVueFixture(t);
   initializeGitBaseline(root);
@@ -1294,7 +1238,6 @@ test('OpenSpec 1.7 动态操作输入可见但不改变完成门禁', (t) => {
   assert.equal(applyInstructions.root.source, 'nearest');
 });
 
-// AI-code-start lines:60 tool:Codex
 test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) => {
   const root = createVueFixture(t);
   initializeGitBaseline(root);
@@ -1360,7 +1303,6 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
   assert.match(incomplete.errors.join('\n'), /isComplete 必须为 true|design=ready|design=blocked/);
 });
 
-// AI-code-start lines:48 tool:Codex
 test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.7 实际路径', (t) => {
   const dateRoot = createVueFixture(t);
   initializeGitBaseline(dateRoot);
@@ -1409,7 +1351,6 @@ test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.7 实际路径
   assert.equal(fs.existsSync(path.join(nestedRoot, 'openspec', 'specs', 'platform', 'delivery-guard', 'spec.md')), true);
 });
 
-// AI-code-start lines:22 tool:Codex
 test('内部 OpenSpec 参考三方合并到 1.7 且保留插件硬门禁', () => {
   const referenceRoot = path.join(pluginRoot, 'references', 'openspec');
   const references = fs.readdirSync(referenceRoot)

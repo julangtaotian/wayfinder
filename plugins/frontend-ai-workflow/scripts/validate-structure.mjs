@@ -2,7 +2,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
-// AI-code-start lines:1 tool:Codex
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -23,7 +22,6 @@ const INTERNAL_WORKFLOW_REFERENCES = [
   'sync-specs.md',
   'update-change.md',
 ];
-// AI-code-start lines:6 tool:Codex
 // 深度模式依赖这些固定资产，缺失时插件不能承诺可审计的项目分析。
 const DEEP_ANALYSIS_ASSETS = [
   'scripts/collect-project-scope.mjs',
@@ -31,23 +29,19 @@ const DEEP_ANALYSIS_ASSETS = [
   'assets/templates/wayfinder/frontend.md',
   'references/deep-project-analysis.md',
 ];
-// AI-code-start lines:5 tool:Codex
 // 需求决策校验器是跨文档一致性的固定能力，必须随插件一起发布。
 const REQUIREMENT_DECISION_ASSETS = [
   'scripts/validate-requirement-decisions.mjs',
 ];
-// AI-code-start lines:5 tool:Codex
 // 旧需求预览与矩阵校验共同构成 P2 的安全迁移能力，发布时必须齐备。
 const REQUIREMENT_MIGRATION_ASSETS = [
   'scripts/preview-requirement-upgrade.mjs',
   'references/requirement-guidelines.md',
 ];
-// AI-code-start lines:5 tool:Codex
 const DELIVERY_GUARD_ASSETS = [
   'scripts/check-change.mjs',
   'scripts/finalize-change.mjs',
 ];
-// AI-code-start lines:5 tool:Codex
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
   'scripts/runtime-integrity.mjs',
@@ -67,7 +61,6 @@ function validatePlugin(errors) {
   }
   if (!manifest.description || !manifest.author?.name) errors.push('plugin manifest 缺少描述或作者');
   if (manifest.skills !== './skills/') errors.push('plugin skills 路径必须为 ./skills/');
-  // AI-code-start lines:4 tool:Codex
   const releaseVersion = String(manifest.version || '').split('+', 1)[0];
   const packageVersion = readJson(path.join(repositoryRoot, 'package.json')).version;
   if (releaseVersion !== packageVersion) errors.push(`plugin 与根 package 版本不一致：${releaseVersion} / ${packageVersion}`);
@@ -132,35 +125,30 @@ function validateSkills(errors) {
   }
 }
 
-// AI-code-start lines:5 tool:Codex
 function validateDeepAnalysisAssets(errors) {
   for (const file of DEEP_ANALYSIS_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少深度分析资产：${file}`);
   }
 }
 
-// AI-code-start lines:5 tool:Codex
 function validateRequirementDecisionAssets(errors) {
   for (const file of REQUIREMENT_DECISION_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少需求决策资产：${file}`);
   }
 }
 
-// AI-code-start lines:5 tool:Codex
 function validateRequirementMigrationAssets(errors) {
   for (const file of REQUIREMENT_MIGRATION_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少需求迁移资产：${file}`);
   }
 }
 
-// AI-code-start lines:5 tool:Codex
 function validateDeliveryGuardAssets(errors) {
   for (const file of DELIVERY_GUARD_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少交付门禁资产：${file}`);
   }
 }
 
-// AI-code-start lines:5 tool:Codex
 function validateRuntimeIntegrityAssets(errors) {
   for (const file of RUNTIME_INTEGRITY_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
@@ -173,15 +161,10 @@ try {
   validateRuntime(errors);
   validateMarketplace(errors);
   validateSkills(errors);
-  // AI-code-start lines:1 tool:Codex
   validateDeepAnalysisAssets(errors);
-  // AI-code-start lines:1 tool:Codex
   validateRequirementDecisionAssets(errors);
-  // AI-code-start lines:1 tool:Codex
   validateRequirementMigrationAssets(errors);
-  // AI-code-start lines:1 tool:Codex
   validateDeliveryGuardAssets(errors);
-  // AI-code-start lines:1 tool:Codex
   validateRuntimeIntegrityAssets(errors);
 } catch (error) {
   errors.push(error.message);

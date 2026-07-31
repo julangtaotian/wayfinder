@@ -1,4 +1,3 @@
-// AI-code-start lines:95 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 

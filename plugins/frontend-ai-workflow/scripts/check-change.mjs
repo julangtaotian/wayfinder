@@ -1,4 +1,3 @@
-// AI-code-start lines:157 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -55,7 +54,6 @@ function runEngineCheck(root, args, label, errors) {
   return { ok: true, executed: true, data: parseEngineJson(result.stdout) };
 }
 
-// AI-code-start lines:80 tool:Codex
 // OpenSpec 1.7 的 JSON 根信息属于安全边界，不能只把它当作展示字段。
 export function validatePlanningRoot(root, data, label, errors) {
   if (!data?.root || typeof data.root.path !== 'string' || typeof data.root.source !== 'string') {
@@ -131,7 +129,6 @@ export function validatePlanningArtifacts(statusData, changePath, requirementPat
 
 export function archiveTarget(root, changeName) {
   const date = new Date().toISOString().slice(0, 10);
-  // AI-code-start lines:2 tool:Codex
   const archiveName = /^\d{4}-\d{2}-\d{2}-/u.test(changeName) ? changeName : `${date}-${changeName}`;
   return path.join(root, 'openspec', 'changes', 'archive', archiveName);
 }
@@ -157,7 +154,6 @@ export function checkChange({
   warnings.push(...requirementValidation.warnings);
 
   const status = runEngineCheck(root, ['status', '--change', changeName, '--json'], '规划状态检查', errors);
-  // AI-code-start lines:3 tool:Codex
   if (status.ok) validatePlanningRoot(root, status.data, '规划状态检查', errors);
   const planningArtifacts = validatePlanningArtifacts(status.data, changePath, requirementPath, errors);
   const strictValidation = runEngineCheck(
@@ -166,14 +162,11 @@ export function checkChange({
     '严格 OpenSpec 校验',
     errors,
   );
-  // AI-code-start lines:1 tool:Codex
   if (strictValidation.ok) validatePlanningRoot(root, strictValidation.data, '严格 OpenSpec 校验', errors);
   const progress = taskProgress(changePath);
   let archive = null;
-  // AI-code-start lines:1 tool:Codex
   let archiveInstructions = null;
   if (stage === 'precomplete') {
-    // AI-code-start lines:8 tool:Codex
     const instructionResult = runEngineCheck(
       root,
       ['instructions', 'archive', '--change', changeName, '--json'],
@@ -205,7 +198,6 @@ export function checkChange({
       },
       openSpecStatus: { status: status.ok ? 'passed' : 'failed', executed: true },
       openSpecStrictValidation: { status: strictValidation.ok ? 'passed' : 'failed', executed: true },
-      // AI-code-start lines:5 tool:Codex
       archiveInstructions: {
         status: stage !== 'precomplete' ? 'not-run' : archiveInstructions ? 'passed' : 'failed',
         executed: stage === 'precomplete',
@@ -213,7 +205,6 @@ export function checkChange({
     },
     requirementValidation,
     planningStatus: status.data,
-    // AI-code-start lines:2 tool:Codex
     planningArtifacts,
     archiveInstructions,
     strictValidation: strictValidation.data,

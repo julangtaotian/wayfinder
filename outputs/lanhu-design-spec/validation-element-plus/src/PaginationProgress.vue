@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:614 tool:Codex -->
 <template>
   <div class="pagination-progress-spec">
     <div

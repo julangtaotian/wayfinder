@@ -1,4 +1,3 @@
-// AI-code-start lines:151 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,7 +8,6 @@ const REQUIREMENT_STATUSES = new Set(['草稿', '已确认', '实施中', '待�
 const STRUCTURE_CHECKS = [
   { field: 'decisionLedger', label: '决策台账', pattern: /^##\s+决策台账\s*$/mu },
   { field: 'evidenceMapping', label: '验收—证据映射', pattern: /^##\s+验收—证据映射\s*$/mu },
-  // AI-code-start lines:2 tool:Codex
   { field: 'changeScope', label: '关联变更范围', pattern: /^##\s+关联变更范围\s*$/mu },
   { field: 'revisionHistory', label: '修订记录', pattern: /^##\s+修订记录\s*$/mu },
 ];

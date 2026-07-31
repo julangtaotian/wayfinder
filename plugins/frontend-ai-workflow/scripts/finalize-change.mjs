@@ -1,4 +1,3 @@
-// AI-code-start lines:126 tool:Codex
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -69,7 +68,6 @@ export function finalizeChange({
 
   const rawArchiveResult = parseEngineJson(archived.stdout);
   const archiveResult = rawArchiveResult?.archive || rawArchiveResult;
-  // AI-code-start lines:2 tool:Codex
   const archiveRoot = rawArchiveResult?.root || null;
   const archiveWarnings = rawArchiveResult?.warnings || archiveResult?.warnings || [];
   try {
@@ -81,7 +79,6 @@ export function finalizeChange({
       check,
       actions,
       archiveResult,
-      // AI-code-start lines:2 tool:Codex
       archiveRoot,
       archiveWarnings,
       errors: [`变更已归档，但需求状态更新失败：${error.message}`],
@@ -93,7 +90,6 @@ export function finalizeChange({
     check,
     actions,
     archiveResult,
-    // AI-code-start lines:2 tool:Codex
     archiveRoot,
     archiveWarnings,
     requirementStatus: '已验收',

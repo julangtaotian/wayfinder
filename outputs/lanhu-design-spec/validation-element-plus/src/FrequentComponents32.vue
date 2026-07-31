@@ -1,4 +1,3 @@
-<!-- AI-code-start lines:437 tool:Codex -->
 <template>
   <div class="frequent-preview" :class="`frequent-scene-${index}`">
     <div v-if="index === 1" class="frequent-row frequent-buttons">

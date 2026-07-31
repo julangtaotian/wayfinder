@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { parseCliArgs } from './cli-arguments.mjs';
 
 const SCRIPT_ALIASES = {
   dev: ['dev', 'serve', 'start'],
@@ -9,7 +10,6 @@ const SCRIPT_ALIASES = {
   lint: ['lint'],
   typecheck: ['typecheck', 'type-check', 'check:types'],
 };
-// AI-code-start lines:3 tool:Codex
 const DEFAULT_BUILD_ALIASES = ['build'];
 const RELEASE_BUILD_ALIASES = ['build:prod', 'build:production', 'build:release'];
 const VERIFIED_LINT_PATTERN = /\b(?:eslint|stylelint|biome|oxlint)\b|\bvue-cli-service\s+lint\b/u;
@@ -88,7 +88,6 @@ function findScript(scripts, aliases) {
   return aliases.find((name) => Object.prototype.hasOwnProperty.call(scripts, name)) || null;
 }
 
-// AI-code-start lines:36 tool:Codex
 // 仅基于脚本文本给出可信度，不把未知包装脚本误判为静态检查能力。
 function describeCommand(packageManager, scriptName, source) {
   return {
@@ -162,12 +161,10 @@ export function inspectProject(target = process.cwd()) {
   const commands = Object.fromEntries(
     Object.entries(scriptNames).map(([kind, scriptName]) => [kind, packageCommand(packageManager, scriptName)]),
   );
-  // AI-code-start lines:1 tool:Codex
   const commandSemantics = inspectCommandSemantics(packageManager, scripts, scriptNames.build, scriptNames.lint);
   const paths = Object.fromEntries(
     Object.entries(PATH_CANDIDATES).map(([kind, candidates]) => [kind, findExistingPath(root, candidates)]),
   );
-  // AI-code-start lines:5 tool:Codex
   // Wayfinder 是插件项目导航的唯一长期文档，需求模板改为按需使用的插件资产。
   const managedFiles = [
     'AGENTS.md',
@@ -190,14 +187,12 @@ export function inspectProject(target = process.cwd()) {
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd() };
-  for (let index = 0; index < argv.length; index += 1) {
-    if (argv[index] === '--target') {
-      args.target = argv[index + 1];
-      index += 1;
-    }
-  }
-  return args;
+  return parseCliArgs(argv, {
+    defaults: { target: process.cwd() },
+    valueOptions: {
+      '--target': 'target',
+    },
+  });
 }
 
 function isEntryPoint() {

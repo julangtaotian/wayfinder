@@ -1,10 +1,8 @@
-// AI-code-start lines:250 tool:Codex
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-// AI-code-start lines:1 tool:Codex
 import { spawnSync } from 'node:child_process';
 
 export const PROJECT_SCOPE_VERSION = '2.0.0';
@@ -66,7 +64,6 @@ const DEFAULT_LIMITS = Object.freeze({
   maxTotalBytes: 20 * 1024 * 1024,
 });
 
-// AI-code-start lines:18 tool:Codex
 const ENV_TEMPLATE_PATTERN = /^\.env\.(?:example|sample|template)$/iu;
 const SENSITIVE_FILENAMES = new Set([
   '.env',
@@ -124,7 +121,6 @@ function sortByPath(items) {
   return [...items].sort((left, right) => left.path.localeCompare(right.path));
 }
 
-// AI-code-start lines:51 tool:Codex
 // 敏感判断只依赖路径，不读取文件内容，避免扫描规则本身造成凭据暴露。
 function sensitiveReason(filePath) {
   const base = path.basename(filePath).toLowerCase();
@@ -169,7 +165,6 @@ function sortByScanPriority(items) {
   });
 }
 
-// AI-code-start lines:10 tool:Codex
 // 工作流自身会持续更新，不能让任务勾选或 Wayfinder 自引用造成项目地图立即过期。
 function isFingerprintInput(file) {
   if (['AGENTS.md', '.ai-workflow.yaml', 'wayfinder/frontend.md'].includes(file.path)) return false;
@@ -247,11 +242,9 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
   const discoveredFiles = [];
   const excludedFiles = [];
   walkProject(root, root, discoveredFiles, excludedFiles);
-  // AI-code-start lines:5 tool:Codex
   const git = inspectGitScope(root);
   const eligibleFiles = [];
 
-  // AI-code-start lines:24 tool:Codex
   // 先完成纯路径与元数据过滤，只有安全候选才会进入内容读取阶段。
   for (const file of sortByPath(discoveredFiles)) {
     const sensitive = sensitiveReason(file.path);
@@ -274,7 +267,6 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
     eligibleFiles.push({ ...file, category: classifyPath(file.path) });
   }
 
-  // AI-code-start lines:30 tool:Codex
   // 总量不足时优先保留配置、源码与测试，最终报告仍按路径排序保持稳定。
   const includedFiles = [];
   let includedBytes = 0;
@@ -313,7 +305,6 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
       excludedDirectories: [...EXCLUDED_DIRECTORIES].sort(),
       limits: effectiveLimits,
     },
-    // AI-code-start lines:9 tool:Codex
     fingerprint: scopeFingerprint(stableFiles, effectiveLimits),
     git: {
       available: git.available,
