@@ -42,6 +42,10 @@ const DELIVERY_GUARD_ASSETS = [
   'scripts/check-change.mjs',
   'scripts/finalize-change.mjs',
 ];
+const PROJECT_PROFILE_ASSETS = [
+  'scripts/project-target-profile.mjs',
+  'references/project-detection.md',
+];
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
   'scripts/runtime-integrity.mjs',
@@ -149,6 +153,12 @@ function validateDeliveryGuardAssets(errors) {
   }
 }
 
+function validateProjectProfileAssets(errors) {
+  for (const file of PROJECT_PROFILE_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少项目画像资产：${file}`);
+  }
+}
+
 function validateRuntimeIntegrityAssets(errors) {
   for (const file of RUNTIME_INTEGRITY_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
@@ -165,6 +175,7 @@ try {
   validateRequirementDecisionAssets(errors);
   validateRequirementMigrationAssets(errors);
   validateDeliveryGuardAssets(errors);
+  validateProjectProfileAssets(errors);
   validateRuntimeIntegrityAssets(errors);
 } catch (error) {
   errors.push(error.message);

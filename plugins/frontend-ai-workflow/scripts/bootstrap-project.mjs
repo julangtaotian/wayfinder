@@ -32,12 +32,28 @@ function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallba
 
 function templateVariables(inspection, scope = null, preservedSettings = null) {
   const deepAnalysis = Boolean(scope) || preservedSettings?.deepAnalysis === 'true';
+  const targetEvidence = inspection.targetProfile.evidence.length
+    ? inspection.targetProfile.evidence.join('、')
+    : '未识别';
+  const platformFrameworks = inspection.targetProfile.platform.frameworks.length
+    ? inspection.targetProfile.platform.frameworks.join('、')
+    : '未识别';
+  const platformEvidence = inspection.targetProfile.platform.evidence.length
+    ? inspection.targetProfile.platform.evidence.join('、')
+    : '未识别';
   return {
     WORKFLOW_VERSION,
     OPENSPEC_VERSION: BUNDLED_OPENSPEC_VERSION,
     PROJECT_NAME: inspection.name,
     PRESET: inspection.preset,
     TECH_STACK: inspection.techStack.join('、'),
+    TARGET_FORM_FACTOR: inspection.targetProfile.formFactor,
+    TARGET_PROFILE_SOURCE: inspection.targetProfile.source,
+    TARGET_PROFILE_EVIDENCE: targetEvidence,
+    TARGET_PLATFORM_KIND: inspection.targetProfile.platform.kind,
+    TARGET_PLATFORM_FRAMEWORKS: platformFrameworks,
+    TARGET_PLATFORM_SOURCE: inspection.targetProfile.platform.source,
+    TARGET_PLATFORM_EVIDENCE: platformEvidence,
     PACKAGE_MANAGER: inspection.packageManager,
     DEV_COMMAND: inspection.commands.dev,
     BUILD_COMMAND: inspection.commands.build,

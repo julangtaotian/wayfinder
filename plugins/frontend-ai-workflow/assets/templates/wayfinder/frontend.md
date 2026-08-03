@@ -9,6 +9,13 @@ layout: "wayfinder"
 project: "{{PROJECT_NAME}}"
 preset: "{{PRESET}}"
 packageManager: "{{PACKAGE_MANAGER}}"
+targetFormFactor: "{{TARGET_FORM_FACTOR}}"
+targetProfileSource: "{{TARGET_PROFILE_SOURCE}}"
+targetProfileEvidence: "{{TARGET_PROFILE_EVIDENCE}}"
+targetPlatformKind: "{{TARGET_PLATFORM_KIND}}"
+targetPlatformFrameworks: "{{TARGET_PLATFORM_FRAMEWORKS}}"
+targetPlatformSource: "{{TARGET_PLATFORM_SOURCE}}"
+targetPlatformEvidence: "{{TARGET_PLATFORM_EVIDENCE}}"
 deepAnalysis: {{DEEP_ANALYSIS}}
 scopeVersion: "{{SCOPE_VERSION}}"
 scopeIncludedFiles: {{SCOPE_INCLUDED_FILES}}

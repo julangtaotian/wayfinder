@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
+import {
+  collectPlatformProjectEvidence,
+  detectTargetProfile,
+} from './project-target-profile.mjs';
 
 const SCRIPT_ALIASES = {
   dev: ['dev', 'serve', 'start'],
@@ -37,6 +41,16 @@ const TECH_PACKAGES = [
   ['element-ui', 'Element UI'],
   ['antd', 'Ant Design'],
   ['@mui/material', 'MUI'],
+  ['vant', 'Vant'],
+  ['antd-mobile', 'Ant Design Mobile'],
+  ['@nutui/nutui', 'NutUI'],
+  ['@dcloudio/uni-app', 'uni-app'],
+  ['@dcloudio/vite-plugin-uni', 'uni-app Vite Plugin'],
+  ['@tarojs/taro', 'Taro'],
+  ['@tarojs/cli', 'Taro CLI'],
+  ['@tarojs/vite-runner', 'Taro Vite Runner'],
+  ['@tarojs/webpack5-runner', 'Taro Webpack Runner'],
+  ['remax', 'Remax'],
   ['vitest', 'Vitest'],
   ['jest', 'Jest'],
   ['typescript', 'TypeScript'],
@@ -178,6 +192,10 @@ export function inspectProject(target = process.cwd()) {
     preset: detectPreset(packageJson),
     packageManager,
     techStack: techStack(packageJson),
+    targetProfile: detectTargetProfile(
+      dependencyMap(packageJson),
+      collectPlatformProjectEvidence(root),
+    ),
     scriptNames,
     commands,
     commandSemantics,

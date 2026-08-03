@@ -230,6 +230,7 @@ export function checkProject(target = process.cwd()) {
     migrationRequired: layout === 'legacy',
     version: deepAnalysis.version,
     preset: inspection.preset,
+    targetProfile: inspection.targetProfile,
     commands: inspection.commands,
     commandEvidence: inspectCommandEvidence(inspection),
     commandSemantics: inspection.commandSemantics,
