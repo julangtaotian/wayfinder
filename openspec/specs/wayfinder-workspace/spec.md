@@ -3,6 +3,16 @@
 ## Purpose
 TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpose after archive.
 ## Requirements
+### Requirement: 普通初始化明确标示识别基线边界
+
+普通初始化生成的 Wayfinder SHALL 保留未来深度刷新所需的受管区块，并 SHALL 用人类可读文案明确当前只生成可追溯识别基线、深度项目地图尚未启用，不得用裸 `false` 和零值让维护者误以为扫描失败或分析已经完成。
+
+#### Scenario: 普通初始化创建 Wayfinder
+
+- **WHEN** 用户在未请求项目理解或完整项目地图时执行普通初始化
+- **THEN** Wayfinder 元数据保留 `deepAnalysis: false`
+- **AND** 深度扫描范围明确显示“未启用（普通初始化仅生成可追溯的识别基线）”，分析区块继续保持待生成状态
+
 ### Requirement: 新项目使用精简的 Wayfinder 布局
 系统 SHALL 在普通初始化的首次写入中只创建 `AGENTS.md`、`openspec/config.yaml` 和 `wayfinder/frontend.md` 三项工作流产物。系统 SHALL 不创建 `.ai-workflow.yaml`、`requirements/_template.md` 或旧 `docs/ai-context/frontend.md`。
 
@@ -30,4 +40,3 @@ TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpos
 #### Scenario: 未初始化需求目录时编写需求
 - **WHEN** 项目不存在 `requirements/_template.md` 且用户要求创建正式需求
 - **THEN** 系统 SHALL 以插件内置模板生成 `requirements/REQ-*.md`，且不得先创建孤立的模板文件。
-

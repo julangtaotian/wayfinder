@@ -17,14 +17,33 @@ const SCRIPT_ALIASES = {
 const DEFAULT_BUILD_ALIASES = ['build'];
 const RELEASE_BUILD_ALIASES = ['build:prod', 'build:production', 'build:release'];
 const VERIFIED_LINT_PATTERN = /\b(?:eslint|stylelint|biome|oxlint)\b|\bvue-cli-service\s+lint\b/u;
+const PLACEHOLDER_TEST_PATTERNS = [
+  /^\s*echo\s+(["'])?error:\s*no test specified\1\s*&&\s*exit\s+1\s*$/iu,
+  /^\s*(?:exit\s+1|false)\s*$/iu,
+];
+const PLATFORM_COMMAND_TARGETS = [
+  { target: 'wechat-mini-program', aliases: ['weapp', 'mp-weixin', 'wechat'] },
+  { target: 'alipay-mini-program', aliases: ['alipay', 'mp-alipay'] },
+  { target: 'h5', aliases: ['h5'] },
+];
+const PLATFORM_COMMAND_ACTIONS = {
+  dev: ['dev', 'serve', 'start'],
+  build: ['build'],
+};
+const PLATFORM_COMMAND_SEPARATORS = [':', '-'];
 
 const PATH_CANDIDATES = {
   views: ['src/views', 'src/pages', 'app', 'pages'],
   components: ['src/components', 'components'],
-  request: ['src/request', 'src/api', 'src/services', 'src/service', 'services'],
+  request: ['src/request', 'src/api', 'src/services', 'src/service', 'api', 'services'],
   router: ['src/router', 'src/routes', 'app/routes'],
   store: ['src/store', 'src/stores', 'src/state'],
   tests: ['src/__tests__', 'tests', 'test', '__tests__'],
+};
+
+const NATIVE_MINI_PROGRAM_PATH_CANDIDATES = {
+  router: ['app.json'],
+  store: ['app.js'],
 };
 
 const TECH_PACKAGES = [
@@ -42,6 +61,7 @@ const TECH_PACKAGES = [
   ['antd', 'Ant Design'],
   ['@mui/material', 'MUI'],
   ['vant', 'Vant'],
+  ['@vant/weapp', 'Vant Weapp'],
   ['antd-mobile', 'Ant Design Mobile'],
   ['@nutui/nutui', 'NutUI'],
   ['@dcloudio/uni-app', 'uni-app'],
@@ -73,10 +93,20 @@ function majorVersion(value) {
   return match ? Number(match[0]) : null;
 }
 
-export function detectPreset(packageJson) {
+export function detectPreset(packageJson, platformProfile = null) {
   const deps = dependencyMap(packageJson);
   const hasVite = Boolean(deps.vite);
   const hasWebpack = Boolean(deps.webpack || deps['@vue/cli-service'] || deps['react-scripts']);
+
+  if (
+    platformProfile?.kind === 'native-mini-program'
+    && platformProfile.frameworks.length === 1
+    && platformProfile.frameworks[0] === 'wechat-native'
+    && !deps.vue
+    && !deps.react
+  ) {
+    return 'wechat-native';
+  }
 
   if (deps.vue) {
     const vueMajor = majorVersion(deps.vue);
@@ -99,7 +129,24 @@ export function detectPackageManager(root) {
 }
 
 function findScript(scripts, aliases) {
-  return aliases.find((name) => Object.prototype.hasOwnProperty.call(scripts, name)) || null;
+  return aliases.find((name) => (
+    Object.prototype.hasOwnProperty.call(scripts, name)
+    && typeof scripts[name] === 'string'
+    && scripts[name].trim().length > 0
+  )) || null;
+}
+
+function isPlaceholderTestScript(content) {
+  return PLACEHOLDER_TEST_PATTERNS.some((pattern) => pattern.test(String(content || '')));
+}
+
+function findTestScript(scripts, aliases, { placeholder = false } = {}) {
+  return aliases.find((name) => (
+    Object.prototype.hasOwnProperty.call(scripts, name)
+    && typeof scripts[name] === 'string'
+    && scripts[name].trim().length > 0
+    && isPlaceholderTestScript(scripts[name]) === placeholder
+  )) || null;
 }
 
 // 仅基于脚本文本给出可信度，不把未知包装脚本误判为静态检查能力。
@@ -111,7 +158,7 @@ function describeCommand(packageManager, scriptName, source) {
   };
 }
 
-function inspectCommandSemantics(packageManager, scripts, legacyBuildScript, lintScript) {
+function inspectCommandSemantics(packageManager, scripts, legacyBuildScript, lintScript, testScriptCandidate) {
   const defaultBuildScript = findScript(scripts, DEFAULT_BUILD_ALIASES) || legacyBuildScript;
   const explicitReleaseScript = findScript(scripts, RELEASE_BUILD_ALIASES);
   const releaseBuildScript = explicitReleaseScript || defaultBuildScript;
@@ -119,6 +166,9 @@ function inspectCommandSemantics(packageManager, scripts, legacyBuildScript, lin
   const lintStatus = !lintScript
     ? 'missing'
     : (VERIFIED_LINT_PATTERN.test(lintContent) ? 'verified' : 'unverified');
+  const testStatus = !testScriptCandidate
+    ? 'missing'
+    : (isPlaceholderTestScript(scripts[testScriptCandidate]) ? 'placeholder' : 'detected');
 
   return {
     defaultBuild: describeCommand(
@@ -135,6 +185,10 @@ function inspectCommandSemantics(packageManager, scripts, legacyBuildScript, lin
       ...describeCommand(packageManager, lintScript, lintStatus),
       status: lintStatus,
     },
+    test: {
+      ...describeCommand(packageManager, testScriptCandidate, testStatus),
+      status: testStatus,
+    },
   };
 }
 
@@ -146,16 +200,91 @@ export function packageCommand(packageManager, scriptName) {
   return `npm run ${scriptName}`;
 }
 
+function platformScriptNames(actions, aliases) {
+  return actions.flatMap((action) => aliases.flatMap((alias) =>
+    PLATFORM_COMMAND_SEPARATORS.map((separator) => `${action}${separator}${alias}`)));
+}
+
+function platformCandidates(packageManager, scripts, actions, aliases) {
+  return platformScriptNames(actions, aliases)
+    .filter((scriptName, index, names) => names.indexOf(scriptName) === index)
+    .filter((scriptName) => (
+      typeof scripts[scriptName] === 'string'
+      && scripts[scriptName].trim().length > 0
+    ))
+    .map((scriptName) => ({
+      scriptName,
+      command: packageCommand(packageManager, scriptName),
+      source: 'explicit-platform-script',
+      executed: false,
+    }));
+}
+
+// 平台脚本只作为静态候选证据，不解析内容、不选择默认值，也不执行命令。
+export function detectPlatformCommands(packageManager, scripts = {}) {
+  const targets = PLATFORM_COMMAND_TARGETS.map(({ target, aliases }) => ({
+    target,
+    devCandidates: platformCandidates(
+      packageManager,
+      scripts,
+      PLATFORM_COMMAND_ACTIONS.dev,
+      aliases,
+    ),
+    buildCandidates: platformCandidates(
+      packageManager,
+      scripts,
+      PLATFORM_COMMAND_ACTIONS.build,
+      aliases,
+    ),
+  })).filter(({ devCandidates, buildCandidates }) => (
+    devCandidates.length > 0 || buildCandidates.length > 0
+  ));
+  const evidence = [...new Set(targets.flatMap(({ devCandidates, buildCandidates }) => (
+    [...devCandidates, ...buildCandidates].map(({ scriptName }) => `script:${scriptName}`)
+  )))].sort();
+
+  return {
+    status: targets.length ? 'detected' : 'missing',
+    source: targets.length ? 'package-scripts' : 'unknown',
+    targets,
+    evidence,
+  };
+}
+
 function findExistingPath(root, candidates) {
   const found = candidates.find((candidate) => fs.existsSync(path.join(root, candidate)));
   return found || '未识别';
 }
 
-function techStack(packageJson) {
+function hasNativeMiniProgramGlobalState(root) {
+  const appPath = path.join(root, 'app.js');
+  if (!fs.existsSync(appPath)) return false;
+  const stats = fs.statSync(appPath);
+  // 普通初始化只读取合理大小的应用入口，并且只匹配结构，不输出任何源码值。
+  if (!stats.isFile() || stats.size > 1024 * 1024) return false;
+  const content = fs.readFileSync(appPath, 'utf8');
+  return /\bApp\s*\(/u.test(content) && /\bglobalData\s*:/u.test(content);
+}
+
+function detectProjectPaths(root, platformProfile) {
+  return Object.fromEntries(Object.entries(PATH_CANDIDATES).map(([kind, candidates]) => {
+    const platformCandidates = platformProfile.kind === 'native-mini-program'
+      ? (NATIVE_MINI_PROGRAM_PATH_CANDIDATES[kind] || [])
+      : [];
+    const filteredPlatformCandidates = kind === 'store' && !hasNativeMiniProgramGlobalState(root)
+      ? []
+      : platformCandidates;
+    return [kind, findExistingPath(root, [...candidates, ...filteredPlatformCandidates])];
+  }));
+}
+
+function techStack(packageJson, platformProfile) {
   const deps = dependencyMap(packageJson);
-  const stack = TECH_PACKAGES
+  const stack = [];
+  if (platformProfile.frameworks.includes('wechat-native')) stack.push('微信原生小程序');
+  stack.push(...TECH_PACKAGES
     .filter(([packageName]) => deps[packageName])
-    .map(([packageName, label]) => `${label} ${deps[packageName]}`);
+    .map(([packageName, label]) => `${label} ${deps[packageName]}`));
   return stack.length ? stack : ['未识别'];
 }
 
@@ -169,16 +298,29 @@ export function inspectProject(target = process.cwd()) {
   const packageJson = readJson(packagePath);
   const packageManager = detectPackageManager(root);
   const scripts = packageJson.scripts || {};
+  const targetProfile = detectTargetProfile(
+    dependencyMap(packageJson),
+    collectPlatformProjectEvidence(root),
+  );
+  const usableTestScript = findTestScript(scripts, SCRIPT_ALIASES.test);
+  const testScriptCandidate = usableTestScript
+    || findTestScript(scripts, SCRIPT_ALIASES.test, { placeholder: true });
   const scriptNames = Object.fromEntries(
     Object.entries(SCRIPT_ALIASES).map(([kind, aliases]) => [kind, findScript(scripts, aliases)]),
   );
+  scriptNames.test = usableTestScript;
   const commands = Object.fromEntries(
     Object.entries(scriptNames).map(([kind, scriptName]) => [kind, packageCommand(packageManager, scriptName)]),
   );
-  const commandSemantics = inspectCommandSemantics(packageManager, scripts, scriptNames.build, scriptNames.lint);
-  const paths = Object.fromEntries(
-    Object.entries(PATH_CANDIDATES).map(([kind, candidates]) => [kind, findExistingPath(root, candidates)]),
+  const commandSemantics = inspectCommandSemantics(
+    packageManager,
+    scripts,
+    scriptNames.build,
+    scriptNames.lint,
+    testScriptCandidate,
   );
+  const platformCommands = detectPlatformCommands(packageManager, scripts);
+  const paths = detectProjectPaths(root, targetProfile.platform);
   // Wayfinder 是插件项目导航的唯一长期文档，需求模板改为按需使用的插件资产。
   const managedFiles = [
     'AGENTS.md',
@@ -189,16 +331,14 @@ export function inspectProject(target = process.cwd()) {
   return {
     root,
     name: packageJson.name || path.basename(root),
-    preset: detectPreset(packageJson),
+    preset: detectPreset(packageJson, targetProfile.platform),
     packageManager,
-    techStack: techStack(packageJson),
-    targetProfile: detectTargetProfile(
-      dependencyMap(packageJson),
-      collectPlatformProjectEvidence(root),
-    ),
+    techStack: techStack(packageJson, targetProfile.platform),
+    targetProfile,
     scriptNames,
     commands,
     commandSemantics,
+    platformCommands,
     paths,
     existingWorkflowFiles: managedFiles.filter((file) => fs.existsSync(path.join(root, file))),
   };

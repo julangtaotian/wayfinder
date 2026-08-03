@@ -165,8 +165,12 @@ function inspectCommandEvidence(inspection) {
   return Object.fromEntries(Object.entries(inspection.commands).map(([kind, command]) => [
     kind,
     {
-      command,
-      status: command === '未配置' ? 'missing' : 'detected',
+      command: kind === 'test' && inspection.commandSemantics.test.status === 'placeholder'
+        ? inspection.commandSemantics.test.command
+        : command,
+      status: kind === 'test'
+        ? inspection.commandSemantics.test.status
+        : (command === '未配置' ? 'missing' : 'detected'),
       executed: false,
     },
   ]));
@@ -213,12 +217,25 @@ export function checkProject(target = process.cwd()) {
   if (layout === 'legacy') warnings.push('检测到旧工作流布局；请先运行 Wayfinder 迁移预览，普通升级不会自动移动文件。');
   if (layout === 'none') warnings.push('未检测到 Wayfinder 或旧工作流元数据。');
   if (!inspection.scriptNames.build) warnings.push('package.json 未配置构建脚本');
-  if (!inspection.scriptNames.test) warnings.push('package.json 未配置测试脚本');
+  if (inspection.commandSemantics.test.status === 'placeholder') {
+    warnings.push(`package.json 的 ${inspection.commandSemantics.test.scriptName} 是失败占位脚本，不作为可用测试入口`);
+  } else if (!inspection.scriptNames.test) {
+    warnings.push('package.json 未配置测试脚本');
+  }
   if (!inspection.scriptNames.lint) warnings.push('package.json 未配置 lint 脚本');
   if (inspection.commandSemantics.lint.status === 'unverified') {
     warnings.push(`lint 脚本语义未验证：${inspection.commandSemantics.lint.command}；请确认其是否执行静态检查。`);
   }
   if (!inspection.scriptNames.typecheck) warnings.push('package.json 未配置类型检查脚本');
+  if (
+    inspection.targetProfile.platform.kind !== 'unknown'
+    && inspection.platformCommands.status === 'missing'
+  ) {
+    const environment = inspection.targetProfile.platform.frameworks.includes('wechat-native')
+      ? '微信开发者工具或外部 CI'
+      : '人工开发工具或外部 CI';
+    warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}的验证环境。`);
+  }
 
   const planningEngine = checkPlanningEngine(inspection.root, errors);
   deepAnalysis.freshness = checkAnalysisFreshness(inspection.root, deepAnalysis, warnings);
@@ -234,6 +251,7 @@ export function checkProject(target = process.cwd()) {
     commands: inspection.commands,
     commandEvidence: inspectCommandEvidence(inspection),
     commandSemantics: inspection.commandSemantics,
+    platformCommands: inspection.platformCommands,
     planningEngine,
     activeChanges,
     deepAnalysis,

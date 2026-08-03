@@ -66,6 +66,12 @@ test('终端画像只根据依赖生成桌面、移动、混合和未知结果',
     evidence: ['@nutui/nutui', 'vant'],
     platform: UNKNOWN_PLATFORM_PROFILE,
   });
+  assert.deepEqual(detectTargetProfile({ '@vant/weapp': '^1.11.7' }), {
+    formFactor: 'mobile',
+    source: 'package-dependencies',
+    evidence: ['@vant/weapp'],
+    platform: UNKNOWN_PLATFORM_PROFILE,
+  });
   assert.deepEqual(detectTargetProfile({ vant: '^4.0.0', 'element-ui': '^2.0.0' }), {
     formFactor: 'mixed',
     source: 'package-dependencies',

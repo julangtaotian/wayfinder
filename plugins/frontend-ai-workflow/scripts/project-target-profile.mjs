@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const TARGET_PACKAGE_GROUPS = Object.freeze({
   desktop: Object.freeze(['@mui/material', 'antd', 'element-plus', 'element-ui']),
-  mobile: Object.freeze(['@nutui/nutui', 'antd-mobile', 'vant']),
+  mobile: Object.freeze(['@nutui/nutui', '@vant/weapp', 'antd-mobile', 'vant']),
 });
 
 const PLATFORM_FRAMEWORKS = Object.freeze([

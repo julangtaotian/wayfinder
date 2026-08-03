@@ -1,7 +1,7 @@
 # project-target-profile Specification
 
 ## Purpose
-为需求分析、受管变更、实现和验证提供轻量、保守且可追溯的 Web 终端事实，同时避免把项目识别扩张成独立框架工具链。
+为需求分析、受管变更、实现和验证提供轻量、保守且可追溯的 Web 与小程序终端事实，同时避免把项目识别扩张成独立框架工具链。
 ## Requirements
 ### Requirement: 系统生成可追溯的终端画像
 系统 MUST 从项目真实依赖生成包含稳定英文 `formFactor`、`source` 和有序 `evidence` 的 `targetProfile`，并 MUST 保留现有项目识别字段。（D-03、D-04；A-01、A-02）
@@ -11,7 +11,7 @@
 - **THEN** 系统返回 `formFactor=desktop`、依赖证据来源和有序包名，并保持既有 preset、命令及路径结果不变
 
 #### Scenario: 只有移动终端依赖证据
-- **WHEN** 项目依赖只匹配受支持的移动终端包
+- **WHEN** 项目依赖只匹配受支持的移动终端包，包括 Vant Weapp 的 `@vant/weapp`
 - **THEN** 系统返回 `formFactor=mobile`、依赖证据来源和有序包名，并保持既有 preset、命令及路径结果不变
 
 #### Scenario: 同时存在两类终端证据
@@ -41,8 +41,8 @@
 系统 MUST 在不增加公共命令、项目配置文件、第三方依赖、框架适配器或框架专用工作流分支的情况下提供终端与平台画像，并 MUST NOT 把框架识别描述为构建、真机或发布支持；目标仓库仍 MUST 具有 `package.json`。（D-01、D-05、D-07；A-02、A-04）
 
 #### Scenario: 既有调用继续运行
-- **WHEN** 现有调用方不读取新增平台画像字段
-- **THEN** 原有 CLI、默认预览、受管文件保护、formFactor、preset、命令和路径语义保持兼容
+- **WHEN** 现有 Web 调用方不读取新增平台画像字段
+- **THEN** 原有 CLI、默认预览、受管文件保护、formFactor、preset、命令和路径语义保持兼容；原生微信小程序只增加来源明确的平台专属事实
 
 #### Scenario: 遇到没有 package.json 的纯小程序目录
 - **WHEN** 用户把缺少 `package.json` 的目录作为目标
@@ -50,7 +50,7 @@
 
 #### Scenario: 遇到小程序框架项目
 - **WHEN** 项目匹配微信原生、uni-app、Taro 或 Remax 证据
-- **THEN** 系统只报告平台框架画像，不安装工具、不选择构建命令、不生成框架代码，也不宣称具体平台已可运行
+- **THEN** 系统报告平台框架画像和保守的已知项目事实，不安装工具、不选择构建命令、不生成框架代码，也不宣称具体平台已可运行
 
 ### Requirement: 系统生成保守的平台框架画像
 系统 MUST 在现有 `targetProfile` 中增加包含稳定英文 `kind`、有序 `frameworks`、`source` 和 `evidence` 的 `platform` 对象，并 MUST 只使用已确认的固定文件组合或明确包依赖作为证据。（D-02、D-03、D-04、D-05；A-01、A-02）
@@ -58,6 +58,7 @@
 #### Scenario: 微信原生固定配置组合
 - **WHEN** 有 `package.json` 的项目同时包含受支持位置的微信原生应用配置和项目配置
 - **THEN** 系统返回 `platform.kind=native-mini-program`、`frameworks=[wechat-native]` 和不含配置内容的相对文件证据
+- **AND** 当项目依赖中没有 Vue 或 React 时返回 `preset=wechat-native`，技术栈包含“微信原生小程序”
 
 #### Scenario: 单一跨端框架证据
 - **WHEN** 项目只匹配 uni-app、Taro 或 Remax 中一个框架的明确依赖，或匹配 uni-app 固定配置组合
@@ -85,3 +86,18 @@
 #### Scenario: 需求分析读取平台画像
 - **WHEN** 需求整理读取到 `native-mini-program`、`cross-platform` 或 `conflict`
 - **THEN** 系统要求核对适用的平台边界；对于 `unknown` 不得擅自补造小程序专项要求
+
+### Requirement: 原生微信小程序报告可追溯的常用路径
+
+系统 SHALL 在确认 `wechat-native` 平台画像后报告实际存在的原生小程序常用路径：根目录 `api` 可作为请求与接口路径，`app.json` 可作为路由与页面注册路径；只有 `app.js` 同时包含 `App(...)` 与 `globalData` 结构时，才可作为状态管理或全局数据路径。系统 MUST NOT 输出配置值或仅凭项目名推断这些职责。
+
+#### Scenario: 原生小程序包含常用请求与全局数据结构
+
+- **WHEN** 已确认的原生微信小程序存在根 `api`、`app.json`，且 `app.js` 同时包含 `App(...)` 和 `globalData`
+- **THEN** 项目识别、AGENTS、Wayfinder 和 OpenSpec 分别使用 `api`、`app.json` 与 `app.js` 作为对应路径
+- **AND** 路径文案不得把文件错误描述为目录
+
+#### Scenario: app.js 没有全局数据结构
+
+- **WHEN** 已确认的原生微信小程序存在 `app.js`，但没有同时确认 `App(...)` 和 `globalData`
+- **THEN** 系统保持状态管理或全局数据路径为未识别，不得仅凭文件存在推断职责

@@ -16,7 +16,7 @@ Perform a read-only audit of the target repository.
    node <plugin-root>/scripts/check-project.mjs --target <repository-root>
    ```
 
-3. Parse the report into errors, warnings, detected commands, command evidence, workflow layout/version, migration state, analysis freshness, completed-but-active changes, and planning-engine status.
+3. Parse the report into errors, warnings, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, completed-but-active changes, and planning-engine status.
 4. When the user selects a requirement and active change, also run:
 
    ```bash
@@ -31,7 +31,8 @@ Perform a read-only audit of the target repository.
 
 - Missing required workflow files are errors.
 - Missing optional lint or typecheck scripts are warnings, not invented commands.
-- `commandSemantics` separates the default build from the delivery-build candidate. `commandEvidence.status: detected` only proves the script was found; report a command as passed only when `executed: true` comes from an actual successful run.
+- `commandSemantics` separates the default build from the delivery-build candidate and marks known failing test placeholders as `placeholder`. `commandEvidence.status: detected` only proves the script was found; `placeholder` is unavailable, and a command is passed only when `executed: true` comes from an actual successful run.
+- `platformCommands.status: detected` only proves matching non-empty script names exist. Report their target, all development/build candidates, and evidence with `executed=false`; never describe a candidate as passed unless that exact command was run successfully. When an identified platform framework has no candidate, report the non-blocking warning and the need for a manual developer tool or external CI environment; for native WeChat mini programs, name WeChat DevTools explicitly.
 - A lint status of `unverified` means the script name exists but its static-check behavior is not proven. Keep it as a warning and ask for project evidence before treating it as lint coverage.
 - A missing or mismatched bundled planning runtime is a plugin integrity error.
 - An unhealthy planning root is an error when its configuration exists.

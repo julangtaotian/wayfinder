@@ -1,56 +1,6 @@
-# project-command-semantics Specification
+## ADDED Requirements
 
-## Purpose
-定义默认与交付构建、lint、测试入口和平台命令的保守语义，避免把名称存在、失败占位或静态候选误报为可用验证能力。
-## Requirements
-### Requirement: 项目检查报告构建语义
-
-项目检查器 SHALL 保留现有 `commands.build` 和 `scriptNames.build` 字段，并 SHALL 额外返回稳定的构建语义字段，分别表示默认构建和交付构建。默认构建 SHALL 优先选择 `build`；交付构建 SHALL 优先选择 `build:prod`、`build:production` 或 `build:release`，不存在时 SHALL 回退默认构建并标示回退来源。
-
-#### Scenario: 项目同时定义默认和生产构建脚本
-
-- **WHEN** `package.json` 同时包含 `build` 与 `build:prod`
-- **THEN** 检查报告保留原有 `commands.build`
-- **AND** 构建语义字段分别报告 `build` 为默认构建、`build:prod` 为交付构建
-
-#### Scenario: 项目只定义默认构建脚本
-
-- **WHEN** `package.json` 只包含 `build`
-- **THEN** 默认构建和交付构建均报告该命令
-- **AND** 交付构建字段标示其从默认构建回退
-
-### Requirement: 项目检查报告 lint 语义
-
-项目检查器 SHALL 在保留现有 lint 命令字段的同时报告 lint 语义状态。仅静态识别为 lint 工具的脚本 SHALL 标记为 `verified`；存在但无法静态识别的脚本 SHALL 标记为 `unverified` 并产生中文警告；缺少脚本 SHALL 标记为 `missing`。
-
-#### Scenario: lint 脚本不执行已识别检查工具
-
-- **WHEN** 项目的 `lint` 脚本为 `vite optimize`
-- **THEN** 报告保留该 lint 命令
-- **AND** lint 语义状态为 `unverified`
-- **AND** 警告不得将该脚本描述为有效 lint
-
-#### Scenario: lint 脚本执行已识别检查工具
-
-- **WHEN** 项目的 `lint` 脚本包含 `eslint`、`stylelint`、`biome`、`oxlint` 或 Vue CLI 的 lint 子命令
-- **THEN** lint 语义状态为 `verified`
-- **AND** 不产生语义未验证警告
-
-### Requirement: 项目检查拒绝失败测试占位脚本
-
-项目检查器 SHALL 只把非空且不是已知失败占位内容的测试脚本作为可用测试入口。npm 初始化生成的 `Error: no test specified` 失败脚本以及仅执行 `exit 1` 或 `false` 的脚本 SHALL 标记为 `placeholder`，并 SHALL 保留脚本名与可追溯命令，但 MUST NOT 写入 `commands.test` 或受管文件作为可用测试能力。
-
-#### Scenario: package.json 保留 npm 默认失败测试
-
-- **WHEN** 项目的 `test` 脚本仍是 npm 初始化生成的失败占位内容
-- **THEN** `scriptNames.test` 和 `commands.test` 不报告可用测试入口
-- **AND** `commandSemantics.test` 与 `commandEvidence.test` 返回 `status=placeholder`、原脚本名、当前包管理器命令和 `executed=false`
-- **AND** AGENTS、Wayfinder、OpenSpec 与项目检查明确该脚本不可用，不得执行它充当测试证据
-
-#### Scenario: 项目提供真实测试脚本
-
-- **WHEN** 项目的受支持测试脚本非空且不匹配已知失败占位内容，即使更高优先级脚本仍是失败占位
-- **THEN** 系统保持现有测试命令，并返回 `commandSemantics.test.status=detected`
+关联决策：D-01～D-08；关联验收：A-01～A-04。
 
 ### Requirement: 系统报告显式平台命令候选
 系统 SHALL 只从非空 `package.json.scripts` 中识别显式平台命令，并 SHALL 为微信小程序、支付宝小程序和 H5 返回稳定目标、全部开发与构建候选、当前包管理器命令、证据来源及 `executed=false`。系统 MUST NOT 解析脚本内容、补造脚本、自动选择候选或执行候选。

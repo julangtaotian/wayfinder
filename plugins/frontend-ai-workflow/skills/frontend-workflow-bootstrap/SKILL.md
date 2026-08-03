@@ -7,10 +7,15 @@ description: Inspect and initialize a frontend repository with shared Codex guid
 
 Initialize only the repository the user placed in scope. Resolve the plugin root as the directory two levels above this skill folder.
 
+## Mode Selection
+
+- Use ordinary initialization only when the user asks to initialize or onboard the workflow without requesting project understanding. State before writing that it creates a traceable identification baseline and leaves the deep project map pending.
+- Use deep initialization when the user asks to inspect or understand an established project, wants useful project-specific context or a complete/high-confidence project map, or says an ordinary generated result is too generic. Do not substitute a shallow file inventory for this mode.
+
 ## Workflow
 
 1. Read the repository's existing `AGENTS.md` files and run `git status --short`.
-2. Read `../../references/project-detection.md` and `../../references/managed-files.md` relative to this skill. When the user requests a deep scan, complete project map or high-confidence project context, also read `../../references/deep-project-analysis.md`.
+2. Read `../../references/project-detection.md` and `../../references/managed-files.md` relative to this skill. When mode selection requires deep initialization, also read `../../references/deep-project-analysis.md`.
 3. Run the inspector without changing the repository:
 
    ```bash
@@ -23,7 +28,7 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
    node <plugin-root>/scripts/bootstrap-project.mjs --target <repository-root>
    ```
 
-5. Show the detected preset, real project commands, default and delivery build candidates, lint semantic status, files to create, files to skip, and warnings. Do not describe an `unverified` lint script as an available static check.
+5. Show the detected preset, real project commands, default and delivery build candidates, test and lint semantic status, files to create, files to skip, and warnings. Do not describe a `placeholder` test script as an available test entry or an `unverified` lint script as an available static check. For a native WeChat mini program without platform scripts, state that WeChat DevTools or an external CI environment must be recorded for preview, upload and device verification.
 6. When initialization is within the user's request, apply the previewed plan:
 
    ```bash
@@ -68,7 +73,7 @@ After the user confirms its create, preserve and delete plan, repeat with `--wri
 - Never overwrite an existing file without a valid managed block.
 - Never modify business code during initialization.
 - Never install or upgrade project dependencies.
-- Treat absent scripts as unavailable; do not invent commands.
+- Treat absent, empty and known failing placeholder scripts as unavailable; do not invent commands.
 - Preserve all pre-existing user changes.
 - Stop when the target resolves to a filesystem root or user home directory.
 - A file inventory is not an architecture conclusion. Do not infer project behavior from names, directories or dependencies without reading evidence.

@@ -17,6 +17,16 @@
 - **WHEN** 目标目录名称包含某框架名称但 `package.json` 没有对应依赖
 - **THEN** 系统忽略目录名称并只按真实文件和依赖返回识别结果
 
+### Requirement: 项目识别支持原生微信小程序轻量工作流
+
+系统 MUST 在目标包含 `package.json`、根 `app.json` 与根 `project.config.json` 且没有 Vue/React 依赖时返回 `wechat-native` 预设，并 MUST 在不安装依赖、不调用微信开发者工具的前提下完成初始化、升级与检查。
+
+#### Scenario: 原生微信小程序完成工作流关键路径
+
+- **WHEN** 最小 fixture 包含原生微信配置、Vant Weapp、常用页面组件路径、根 `api` 和带 `globalData` 的 `app.js`
+- **THEN** 系统返回 `wechat-native`、`mobile` 和来源明确的项目路径
+- **AND** 默认初始化保持只读，显式写入生成三份受管文件，升级只刷新受管区块，检查明确人工微信开发者工具或外部 CI 验证边界
+
 ### Requirement: 项目识别必须覆盖受支持包管理器
 
 系统 MUST 通过锁文件以确定性优先级识别 pnpm、yarn 和 npm，并 MUST 为识别结果生成对应的项目脚本命令。（D-04；A-04）

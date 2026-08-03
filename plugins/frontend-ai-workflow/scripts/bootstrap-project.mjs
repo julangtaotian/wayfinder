@@ -30,6 +30,49 @@ function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallba
   return fallback;
 }
 
+function platformCommandSummary(platformCommands) {
+  if (!platformCommands.targets.length) return '未识别';
+  return platformCommands.targets.map(({ target, devCandidates, buildCandidates }) => {
+    const dev = devCandidates.length
+      ? devCandidates.map(({ command }) => command).join('、')
+      : '未识别';
+    const build = buildCandidates.length
+      ? buildCandidates.map(({ command }) => command).join('、')
+      : '未识别';
+    return `${target}（开发候选：${dev}；构建候选：${build}）`;
+  }).join('；');
+}
+
+function testCommandSummary(inspection) {
+  if (inspection.commandSemantics.test.status === 'placeholder') {
+    return `不可用（${inspection.commandSemantics.test.command} 为失败占位脚本）`;
+  }
+  return inspection.commands.test;
+}
+
+function testEntryGuidance(inspection) {
+  if (inspection.commandSemantics.test.status === 'detected') {
+    return `检测到的测试入口为 \`${inspection.commands.test}\`，仍需按本次影响面选择最窄验证。`;
+  }
+  if (inspection.commandSemantics.test.status === 'placeholder') {
+    return `\`${inspection.commandSemantics.test.command}\` 是失败占位脚本，不得运行它充当测试证据；改动需记录适用的聚焦验证、人工验证和剩余风险。`;
+  }
+  return '项目当前没有可用测试入口；改动需记录适用的聚焦验证、人工验证和剩余风险。';
+}
+
+function platformVerificationGuidance(inspection) {
+  if (inspection.platformCommands.status === 'detected') {
+    return '检测到的平台脚本只是候选；执行前确认发布目标，执行后记录实际命令、环境与结果。';
+  }
+  if (inspection.targetProfile.platform.frameworks.includes('wechat-native')) {
+    return '原生微信小程序未提供显式平台脚本；开发、预览、上传与真机验证需记录微信开发者工具或外部 CI 的环境和结果。';
+  }
+  if (inspection.targetProfile.platform.kind !== 'unknown') {
+    return '已识别平台框架但未提供显式平台脚本；需求与变更需记录人工开发工具或外部 CI 的环境和结果。';
+  }
+  return '未识别额外平台命令；只按仓库实际存在的开发、构建和测试入口验证。';
+}
+
 function templateVariables(inspection, scope = null, preservedSettings = null) {
   const deepAnalysis = Boolean(scope) || preservedSettings?.deepAnalysis === 'true';
   const targetEvidence = inspection.targetProfile.evidence.length
@@ -40,6 +83,12 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     : '未识别';
   const platformEvidence = inspection.targetProfile.platform.evidence.length
     ? inspection.targetProfile.platform.evidence.join('、')
+    : '未识别';
+  const platformCommandTargets = inspection.platformCommands.targets.length
+    ? inspection.platformCommands.targets.map(({ target }) => target).join('、')
+    : '未识别';
+  const platformCommandEvidence = inspection.platformCommands.evidence.length
+    ? inspection.platformCommands.evidence.join('、')
     : '未识别';
   return {
     WORKFLOW_VERSION,
@@ -54,11 +103,18 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     TARGET_PLATFORM_FRAMEWORKS: platformFrameworks,
     TARGET_PLATFORM_SOURCE: inspection.targetProfile.platform.source,
     TARGET_PLATFORM_EVIDENCE: platformEvidence,
+    PLATFORM_COMMAND_STATUS: inspection.platformCommands.status,
+    PLATFORM_COMMAND_TARGETS: platformCommandTargets,
+    PLATFORM_COMMAND_EVIDENCE: platformCommandEvidence,
+    PLATFORM_COMMAND_SUMMARY: platformCommandSummary(inspection.platformCommands),
+    PLATFORM_VERIFICATION_GUIDANCE: platformVerificationGuidance(inspection),
     PACKAGE_MANAGER: inspection.packageManager,
     DEV_COMMAND: inspection.commands.dev,
     BUILD_COMMAND: inspection.commands.build,
     RELEASE_BUILD_COMMAND: inspection.commandSemantics.releaseBuild.command,
-    TEST_COMMAND: inspection.commands.test,
+    TEST_COMMAND: testCommandSummary(inspection),
+    TEST_STATUS: inspection.commandSemantics.test.status,
+    TEST_ENTRY_GUIDANCE: testEntryGuidance(inspection),
     LINT_COMMAND: inspection.commands.lint,
     LINT_STATUS: inspection.commandSemantics.lint.status,
     TYPECHECK_COMMAND: inspection.commands.typecheck,
@@ -69,6 +125,7 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     STORE_PATH: inspection.paths.store,
     TESTS_PATH: inspection.paths.tests,
     DEEP_ANALYSIS: deepAnalysis ? 'true' : 'false',
+    DEEP_ANALYSIS_LABEL: deepAnalysis ? '已启用' : '未启用（普通初始化仅生成可追溯的识别基线）',
     SCOPE_VERSION: snapshotValue(scope, preservedSettings, scope?.version, 'scopeVersion', '未执行'),
     SCOPE_INCLUDED_FILES: snapshotValue(scope, preservedSettings, scope?.summary.includedFiles, 'scopeIncludedFiles', 0),
     SCOPE_EXCLUDED_FILES: snapshotValue(scope, preservedSettings, scope?.summary.excludedFiles, 'scopeExcludedFiles', 0),

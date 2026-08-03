@@ -16,12 +16,14 @@
 - 技术栈：{{TECH_STACK}}。
 - 终端画像：`{{TARGET_FORM_FACTOR}}`（来源：`{{TARGET_PROFILE_SOURCE}}`；证据：{{TARGET_PROFILE_EVIDENCE}}）。
 - 平台框架画像：`{{TARGET_PLATFORM_KIND}}`（框架：{{TARGET_PLATFORM_FRAMEWORKS}}；来源：`{{TARGET_PLATFORM_SOURCE}}`；证据：{{TARGET_PLATFORM_EVIDENCE}}）。
+- 平台命令证据：{{PLATFORM_COMMAND_SUMMARY}}（状态：`{{PLATFORM_COMMAND_STATUS}}`；证据：{{PLATFORM_COMMAND_EVIDENCE}}；发现不代表已执行）。
+- 平台验证边界：{{PLATFORM_VERIFICATION_GUIDANCE}}
 - 包管理器：`{{PACKAGE_MANAGER}}`。
 - 页面目录：`{{VIEWS_PATH}}`。
 - 公共组件目录：`{{COMPONENTS_PATH}}`。
-- 请求目录：`{{REQUEST_PATH}}`。
-- 路由目录：`{{ROUTER_PATH}}`。
-- 状态管理目录：`{{STORE_PATH}}`。
+- 请求与接口：`{{REQUEST_PATH}}`。
+- 路由与页面注册：`{{ROUTER_PATH}}`。
+- 状态管理或全局数据：`{{STORE_PATH}}`。
 
 项目导航见 `wayfinder/frontend.md`。当该文档的 `deepAnalysis: true` 时，涉及架构、接口、权限、路由、风险或测试判断前，必须先阅读其中的“深度扫描范围”和“深度项目地图”区块。
 
@@ -51,7 +53,7 @@
 - 需求和实施前必须记录测试文件策略：新建或复用、目标路径、Git 基线证据和理由；测试目录无法确定或无法确认基线时先如实记录，不得猜测文件位置。
 - 需要升级旧工作流时，先运行旧需求升级预览；它只报告 `requirements/REQ-*.md` 的决策台账、验收映射和统一状态缺口，不得据此自动修改任何需求。
 - 自动或人工验证完成后才更新 `V-*` 结果；人工视觉记录必须包含视口或设备、检查项和截图或录屏路径。完成前先将需求更新为“待验证”，状态、任务、验收、持久证据和关联验证记录全部通过后才可同步归档，归档成功后再更新为“已验收”。
-- 局部页面、组件、表单或独立交互默认运行专用测试和必要构建；`{{TEST_COMMAND}}` 仅表示可用测试入口，不因它是 coverage 或处于最终交付就自动执行全量测试。
+- 局部页面、组件、表单或独立交互默认运行专用测试和必要构建；可用测试入口不因它是 coverage 或处于最终交付就自动执行全量测试。{{TEST_ENTRY_GUIDANCE}}
 - 只有请求层、鉴权、路由、构建、共享组件或共享状态受影响，缺少聚焦测试，用户明确要求，或需求记录发布级理由时，才能执行全量测试或 coverage；必须记录触发原因和无关失败或网络噪声。
 - 不为局部需求引入平行架构、升级依赖、格式化整仓或重构无关模块。
 - 修改请求层、鉴权、路由守卫、公共组件、全局样式或构建配置前，先检索全部调用方并确认范围。
@@ -62,7 +64,7 @@
 - 开发：`{{DEV_COMMAND}}`。
 - 默认构建：`{{BUILD_COMMAND}}`。
 - 交付构建：`{{RELEASE_BUILD_COMMAND}}`。
-- 测试：`{{TEST_COMMAND}}`。
+- 测试：`{{TEST_COMMAND}}`（状态：`{{TEST_STATUS}}`）。
 - Lint：`{{LINT_COMMAND}}`（语义：`{{LINT_STATUS}}`）。
 - 类型检查：`{{TYPECHECK_COMMAND}}`。
 - 只报告真实执行过的命令；脚本不存在或无法运行时，说明原因和剩余风险。
