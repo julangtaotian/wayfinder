@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.11.0+codex.20260804012628",
+  "version": "0.11.0+codex.20260804025906",
   "description": "Reusable frontend project onboarding, governed requirement delivery, multi-framework verification, and integrity-checked OpenSpec 1.7 planning.",
   "author": {
     "name": "lvshuai"

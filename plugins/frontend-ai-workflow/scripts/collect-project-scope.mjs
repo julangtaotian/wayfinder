@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-export const PROJECT_SCOPE_VERSION = '2.1.0';
+export const PROJECT_SCOPE_VERSION = '2.2.0';
 
 const EXCLUDED_DIRECTORIES = new Set([
   '.git',
@@ -82,6 +82,7 @@ const CATEGORY_PRIORITIES = new Map([
   ['other', 4],
 ]);
 const GIT_MAX_BUFFER = 64 * 1024 * 1024;
+const WXML_ADJACENT_ATTRIBUTE_PATTERN = /\b[A-Za-z_][\w:.-]*\s*=\s*(?:"[^"]*"|'[^']*')(?=[A-Za-z_:][\w:.-]*\s*=)/gu;
 
 // 这些规则只界定 AI 需要处理的材料范围，不承担项目语义判断。
 function relativePath(root, filePath) {
@@ -95,6 +96,57 @@ function countLines(content) {
 
 function sha256(content) {
   return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+function buildValidationEvidence() {
+  return {
+    fileEnumeration: { executed: true, status: 'performed', description: '已完成安全路径枚举与范围过滤。' },
+    contentRead: { executed: true, status: 'performed', description: '已读取纳入范围的文本内容。' },
+    contentHash: { executed: true, status: 'performed', description: '已计算纳入文件的 SHA-256。' },
+    syntaxParse: { executed: false, status: 'not-run', description: '范围工具未执行源码语法解析。' },
+    platformCompile: { executed: false, status: 'not-run', description: '范围工具未执行平台编译。' },
+    lint: { executed: false, status: 'not-run', description: '范围工具未执行 Lint。' },
+    test: { executed: false, status: 'not-run', description: '范围工具未执行测试。' },
+  };
+}
+
+// 这里只记录低成本静态观察，不把启发式匹配冒充 WXML 解析或平台编译结论。
+function collectWxmlObservations(filePath, content) {
+  if (path.extname(filePath).toLowerCase() !== '.wxml') return [];
+  const observations = [];
+  const lines = content.split(/\r\n|\r|\n/u);
+  let insideComment = false;
+  for (let index = 0; index < lines.length; index += 1) {
+    const characters = lines[index].split('');
+    let cursor = 0;
+    while (cursor < characters.length) {
+      if (insideComment) {
+        const commentEnd = lines[index].indexOf('-->', cursor);
+        const maskEnd = commentEnd < 0 ? characters.length : commentEnd + 3;
+        characters.fill(' ', cursor, maskEnd);
+        cursor = maskEnd;
+        if (commentEnd < 0) break;
+        insideComment = false;
+      } else {
+        const commentStart = lines[index].indexOf('<!--', cursor);
+        if (commentStart < 0) break;
+        characters.fill(' ', commentStart, commentStart + 4);
+        cursor = commentStart + 4;
+        insideComment = true;
+      }
+    }
+    const matches = characters.join('').match(WXML_ADJACENT_ATTRIBUTE_PATTERN) || [];
+    for (let count = 0; count < matches.length; count += 1) {
+      observations.push({
+        code: 'wxml-attribute-spacing',
+        severity: 'warning',
+        path: filePath,
+        line: index + 1,
+        message: '属性结束引号后可能缺少空白；仅为静态观察，未执行 WXML 语法解析或平台编译。',
+      });
+    }
+  }
+  return observations;
 }
 
 function hasTextExtension(filePath) {
@@ -247,6 +299,7 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
   walkProject(root, root, discoveredFiles, excludedFiles);
   const git = inspectGitScope(root);
   const eligibleFiles = [];
+  const observations = [];
 
   // 先完成纯路径与元数据过滤，只有安全候选才会进入内容读取阶段。
   for (const file of sortByPath(discoveredFiles)) {
@@ -284,14 +337,16 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
         excludedFiles.push({ path: file.path, kind: 'file', bytes: file.bytes, reason: '内容包含空字节，未按文本读取' });
         continue;
       }
+      const text = content.toString('utf8');
       includedBytes += file.bytes;
       includedFiles.push({
         path: file.path,
         category: file.category,
         bytes: file.bytes,
-        lines: countLines(content.toString('utf8')),
+        lines: countLines(text),
         sha256: sha256(content),
       });
+      observations.push(...collectWxmlObservations(file.path, text));
     } catch (error) {
       excludedFiles.push({ path: file.path, kind: 'file', bytes: file.bytes, reason: `无法读取文件：${error.code || error.message}` });
     }
@@ -299,6 +354,9 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
 
   const exclusions = sortByPath(excludedFiles);
   const stableFiles = sortByPath(includedFiles);
+  const stableObservations = [...observations].sort((left, right) => (
+    left.path.localeCompare(right.path) || left.line - right.line || left.code.localeCompare(right.code)
+  ));
   return {
     version: PROJECT_SCOPE_VERSION,
     root,
@@ -314,6 +372,8 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
       commit: git.commit,
       dirty: git.dirty,
     },
+    validationEvidence: buildValidationEvidence(),
+    observations: stableObservations,
     includedFiles: stableFiles,
     excludedFiles: exclusions,
     summary: {
@@ -321,6 +381,7 @@ export function collectProjectScope(target = process.cwd(), limits = DEFAULT_LIM
       includedFiles: includedFiles.length,
       includedBytes,
       excludedFiles: exclusions.length,
+      observations: stableObservations.length,
     },
   };
 }

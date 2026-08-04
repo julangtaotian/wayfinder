@@ -773,21 +773,67 @@ test('微信小程序文本源码进入安全范围并参与稳定指纹', (t) =
   assert.equal(spawnSync('git', ['init', '-q', root], { encoding: 'utf8' }).status, 0);
   writeFixtureFile(root, '.gitignore', 'ignored/\n');
   writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{message}}</view>\n');
+  writeFixtureFile(root, 'pages/home/spacing.wxml', [
+    '<view class="valid" bindtap="ok"></view>',
+    '<view class="broken"bindtap="broken"></view>',
+    '<!-- <view class="single-comment"bindtap="ignored"></view> -->',
+    '<view class="before"bindtap="before"></view><!-- <view class="inline-comment"bindtap="ignored"></view> --><view class="after"bindtap="after"></view>',
+    '<!--',
+    '<view class="multi-comment"bindtap="ignored"></view>',
+    '-->',
+    '<!-- <view class="unclosed-comment"bindtap="ignored"></view>',
+  ].join('\n'));
   writeFixtureFile(root, 'pages/home/index.wxss', '.page { color: #333; }\n');
   writeFixtureFile(root, 'pages/home/format.wxs', 'module.exports = {};\n');
-  writeFixtureFile(root, 'ignored/hidden.wxml', '<view>ignored</view>\n');
+  writeFixtureFile(root, 'ignored/hidden.wxml', '<view class="ignored"bindtap="ignored"></view>\n');
   writeFixtureFile(root, 'pages/home/binary.wxs', `\u0000binary\n`);
 
   const first = collectProjectScope(root);
-  assert.equal(first.version, '2.1.0');
+  assert.equal(first.version, '2.2.0');
   for (const file of ['pages/home/index.wxml', 'pages/home/index.wxss', 'pages/home/format.wxs']) {
     assert.ok(first.includedFiles.some((item) => item.path === file), file);
   }
   assert.ok(first.excludedFiles.some((item) => item.path === 'ignored/hidden.wxml' && /Git 忽略/u.test(item.reason)));
   assert.ok(first.excludedFiles.some((item) => item.path === 'pages/home/binary.wxs' && /空字节/u.test(item.reason)));
+  assert.equal(first.validationEvidence.contentRead.executed, true);
+  assert.equal(first.validationEvidence.contentHash.status, 'performed');
+  assert.equal(first.validationEvidence.syntaxParse.executed, false);
+  assert.equal(first.validationEvidence.platformCompile.status, 'not-run');
+  assert.equal(first.validationEvidence.lint.executed, false);
+  assert.equal(first.validationEvidence.test.executed, false);
+  assert.deepEqual(first.observations.map(({ code, path: file, line }) => ({ code, file, line })), [
+    { code: 'wxml-attribute-spacing', file: 'pages/home/spacing.wxml', line: 2 },
+    { code: 'wxml-attribute-spacing', file: 'pages/home/spacing.wxml', line: 4 },
+    { code: 'wxml-attribute-spacing', file: 'pages/home/spacing.wxml', line: 4 },
+  ]);
+  assert.equal(first.summary.observations, 3);
 
   writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{changed}}</view>\n');
   assert.notEqual(collectProjectScope(root).fingerprint, first.fingerprint);
+});
+
+test('健康检查公开验证边界并非阻断报告 WXML 静态观察', (t) => {
+  const root = createVueFixture(t);
+  writeFixtureFile(root, 'pages/home/index.wxml', '<view class="page"bindtap="open"></view>\n');
+  runBootstrap({ target: root, deep: true, write: true });
+
+  const observed = checkProject(root);
+  assert.equal(observed.ok, true);
+  assert.equal(observed.deepAnalysis.freshness.stale, false);
+  assert.equal(observed.deepAnalysis.validationEvidence.syntaxParse.status, 'not-run');
+  assert.equal(observed.deepAnalysis.validationEvidence.platformCompile.executed, false);
+  assert.deepEqual(observed.deepAnalysis.observations.map(({ code, path: file, line }) => ({ code, file, line })), [{
+    code: 'wxml-attribute-spacing',
+    file: 'pages/home/index.wxml',
+    line: 1,
+  }]);
+  assert.match(observed.warnings.join('\n'), /静态发现 1 处 WXML 属性之间可能缺少空白/u);
+  assert.match(observed.warnings.join('\n'), /未执行 WXML 语法解析或平台编译/u);
+
+  writeFixtureFile(root, 'pages/home/index.wxml', '<view class="page" bindtap="open"></view>\n');
+  const corrected = checkProject(root);
+  assert.deepEqual(corrected.deepAnalysis.observations, []);
+  assert.doesNotMatch(corrected.warnings.join('\n'), /静态发现.*WXML 属性/u);
 });
 
 test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
@@ -907,13 +953,22 @@ test('深度项目约束会被升级保留且健康检查要求有效标记', (t
 test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   const reference = fs.readFileSync(path.join(pluginRoot, 'references', 'deep-project-analysis.md'), 'utf8');
   const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-workflow-bootstrap', 'SKILL.md'), 'utf8');
+  const checkSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-workflow-check', 'SKILL.md'), 'utf8');
 
   assert.match(reference, /每个纳入文件分批读取/);
   assert.match(reference, /扫描报告/);
   assert.match(reference, /frontend\.md/);
   assert.match(reference, /已确认事实/);
   assert.match(reference, /待确认项/);
+  assert.match(reference, /validationEvidence/);
+  assert.match(reference, /不得写“没有解析错误”/);
+  assert.match(reference, /观察数组为空.*不表示源码已经通过/u);
   assert.match(skill, /includedFiles/);
+  assert.match(skill, /validationEvidence/);
+  assert.match(skill, /do not prove syntax parsing, platform compilation, Lint or tests/);
+  assert.match(skill, /never upgrade a heuristic observation/);
+  assert.match(checkSkill, /deepAnalysis\.validationEvidence/);
+  assert.match(checkSkill, /not as a confirmed WXML syntax or platform compilation failure/);
   assert.match(skill, /Never create `project-scan\.md`/);
   assert.match(skill, /do not describe the result as complete/);
 });

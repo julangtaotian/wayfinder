@@ -45,6 +45,8 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
    - Show the scope summary, explicit exclusions, limits, planned files and the fact that no file has been written.
    - Confirm that sensitive files and Git-ignored paths were excluded before reading. Never print or persist suspected credential values.
    - Before claiming a complete analysis, read every file listed under `includedFiles` in batches. Record every file as read and classified, or retain its concrete unprocessed reason from the scope result.
+   - Treat `validationEvidence` as the capability boundary: file enumeration, text reading and hashing do not prove syntax parsing, platform compilation, Lint or tests. Never claim one of those checks passed unless that exact tool or command was actually executed successfully.
+   - Treat `observations` as non-blocking static hints. Report their paths and lines as risks or unresolved validation work; never upgrade a heuristic observation to a syntax or platform compilation error without the corresponding tool evidence.
    - Build a project map, then deep-read and cross-check routes with pages, services with the request/config layers, permissions with route guards, build settings with routing settings, and test scripts with test assets.
    - Separate source-backed facts, multi-file inferences and unresolved questions. Every fact names a source file; every cross-file chain names its endpoints. Dynamic behavior and repository-external contracts remain unresolved questions.
    - After the user confirms writing, refresh the existing workflow files and create `frontend.md` only when it is absent:
@@ -54,7 +56,7 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
      ```
 
    - Replace only the `frontend-ai-workflow:analysis:start/end` block in `wayfinder/frontend.md` and the `frontend-ai-workflow:deep-guardrails:start/end` block in `AGENTS.md`. In AGENTS write 4–8 concise, source-backed, project-specific hard constraints for high-impact request, auth/security, route/build and test boundaries. Preserve the `meta` and `scope` blocks, the other generic AGENTS rules and all content outside managed blocks. If any Wayfinder block is missing or duplicated, stop and report the conflict. Never create `project-scan.md` or another project-analysis document.
-   - The written analysis must include the coverage totals and boundary, scope fingerprint, scan time, Git state, project map, confirmed facts, inferences, unresolved questions, high-risk areas and verification recommendations. Keep the per-file ledger in the scan report rather than adding a long-lived document. If any included file is not accounted for, report partial coverage and do not describe the result as complete.
+   - The written analysis must include the coverage totals and boundary, validation capability boundary, static observations, scope fingerprint, scan time, Git state, project map, confirmed facts, inferences, unresolved questions, high-risk areas and verification recommendations. Keep the per-file ledger in the scan report rather than adding a long-lived document. If any included file is not accounted for, report partial coverage and do not describe the result as complete.
 8. Run the workflow checker and report any bundled OpenSpec runtime failure separately from project failures.
 9. Re-run `git status --short` and summarize only files created by the workflow.
 

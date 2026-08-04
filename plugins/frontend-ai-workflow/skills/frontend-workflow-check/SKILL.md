@@ -16,7 +16,7 @@ Perform a read-only audit of the target repository.
    node <plugin-root>/scripts/check-project.mjs --target <repository-root>
    ```
 
-3. Parse the report into errors, warnings, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, completed-but-active changes, and planning-engine status.
+3. Parse the report into errors, warnings, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, static observations, completed-but-active changes, and planning-engine status.
 4. When the user selects a requirement and active change, also run:
 
    ```bash
@@ -37,6 +37,8 @@ Perform a read-only audit of the target repository.
 - A missing or mismatched bundled planning runtime is a plugin integrity error.
 - An unhealthy planning root is an error when its configuration exists.
 - A stale Wayfinder fingerprint is a refresh warning, not permission to overwrite the project map.
+- `deepAnalysis.validationEvidence` distinguishes performed file reading and hashing from syntax parsing, platform compilation, Lint and tests that were not run. Never turn `not-run` into a passing result.
+- `deepAnalysis.observations` contains non-blocking static hints. Report `wxml-attribute-spacing` with its path and line as a location to verify, not as a confirmed WXML syntax or platform compilation failure.
 - Completed changes that remain active are workflow hygiene warnings; do not archive them without their selected requirement and delivery gate.
 - `legacy` 布局是迁移提醒，不等同于工作流损坏；说明需要 Wayfinder 迁移，且不要把检查命令当作迁移命令。
 - Existing business-code changes are context, not workflow failures.

@@ -193,16 +193,36 @@ function checkActiveChanges(root, warnings) {
   return { available: true, total: changes.length, completedNotArchived };
 }
 
-function checkAnalysisFreshness(root, deepAnalysis, warnings) {
-  if (!deepAnalysis.enabled) return { checked: false, stale: null, currentFingerprint: null };
-  if (!deepAnalysis.scopeFingerprint || deepAnalysis.scopeFingerprint === '未执行') {
-    warnings.push('深度项目地图缺少范围指纹；请显式刷新深度分析后再判断新鲜度。');
-    return { checked: false, stale: null, currentFingerprint: null };
+function checkAnalysisState(root, deepAnalysis, warnings) {
+  if (!deepAnalysis.enabled) {
+    return {
+      freshness: { checked: false, stale: null, currentFingerprint: null },
+      validationEvidence: null,
+      observations: [],
+    };
   }
   const current = collectProjectScope(root);
-  const stale = current.fingerprint !== deepAnalysis.scopeFingerprint;
-  if (stale) warnings.push('项目文件快照已变化，Wayfinder 深度项目地图可能过期；请预览并显式刷新深度分析。');
-  return { checked: true, stale, currentFingerprint: current.fingerprint };
+  let freshness;
+  if (!deepAnalysis.scopeFingerprint || deepAnalysis.scopeFingerprint === '未执行') {
+    warnings.push('深度项目地图缺少范围指纹；请显式刷新深度分析后再判断新鲜度。');
+    freshness = { checked: false, stale: null, currentFingerprint: current.fingerprint };
+  } else {
+    const stale = current.fingerprint !== deepAnalysis.scopeFingerprint;
+    if (stale) warnings.push('项目文件快照已变化，Wayfinder 深度项目地图可能过期；请预览并显式刷新深度分析。');
+    freshness = { checked: true, stale, currentFingerprint: current.fingerprint };
+  }
+
+  const wxmlObservations = current.observations.filter((item) => item.code === 'wxml-attribute-spacing');
+  if (wxmlObservations.length) {
+    const locations = wxmlObservations.slice(0, 5).map((item) => `${item.path}:${item.line}`);
+    const omitted = wxmlObservations.length > locations.length ? `，另有 ${wxmlObservations.length - locations.length} 处` : '';
+    warnings.push(`静态发现 ${wxmlObservations.length} 处 WXML 属性之间可能缺少空白：${locations.join('、')}${omitted}；未执行 WXML 语法解析或平台编译，请使用微信开发者工具或外部 CI 确认。`);
+  }
+  return {
+    freshness,
+    validationEvidence: current.validationEvidence,
+    observations: current.observations,
+  };
 }
 
 function checkManagedContentFreshness(root, layout, warnings) {
@@ -252,7 +272,10 @@ export function checkProject(target = process.cwd()) {
   }
 
   const planningEngine = checkPlanningEngine(inspection.root, errors);
-  deepAnalysis.freshness = checkAnalysisFreshness(inspection.root, deepAnalysis, warnings);
+  const analysisState = checkAnalysisState(inspection.root, deepAnalysis, warnings);
+  deepAnalysis.freshness = analysisState.freshness;
+  deepAnalysis.validationEvidence = analysisState.validationEvidence;
+  deepAnalysis.observations = analysisState.observations;
   const managedContentFreshness = checkManagedContentFreshness(inspection.root, layout, warnings);
   const activeChanges = checkActiveChanges(inspection.root, warnings);
   return {
