@@ -280,6 +280,8 @@ test('原生微信小程序生成准确的预设、路径、测试与人工验�
   assert.match(agents, /测试：`不可用（yarn test 为失败占位脚本）`（状态：`placeholder`）/u);
   assert.match(agents, /微信开发者工具或外部 CI/u);
   assert.match(wayfinder, /testCommandStatus: "placeholder"/u);
+  assert.match(wayfinder, /frontend-ai-workflow:facts:start/u);
+  assert.match(wayfinder, /技术栈：微信原生小程序、Vant Weapp \^1\.11\.7/u);
   assert.match(wayfinder, /路由与页面注册：`app\.json`/u);
   assert.match(wayfinder, /深度分析状态：未启用（普通初始化仅生成可追溯的识别基线）/u);
   assert.match(openspec, /测试命令：不可用（yarn test 为失败占位脚本）（状态：placeholder）/u);
@@ -287,8 +289,9 @@ test('原生微信小程序生成准确的预设、路径、测试与人工验�
   const checked = checkProject(root);
   assert.equal(checked.commandEvidence.test.status, 'placeholder');
   assert.equal(checked.commandEvidence.test.executed, false);
+  assert.deepEqual(checked.managedContentFreshness, { checked: true, stale: false, files: [] });
   assert.match(checked.warnings.join('\n'), /失败占位脚本/u);
-  assert.match(checked.warnings.join('\n'), /微信开发者工具或外部 CI/u);
+  assert.match(checked.warnings.join('\n'), /记录微信开发者工具或外部 CI 的验证环境/u);
 });
 
 test('失败测试占位脚本不会遮蔽后续真实测试入口', (t) => {

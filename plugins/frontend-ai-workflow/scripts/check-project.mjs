@@ -5,6 +5,7 @@ import { parseCliArgs } from './cli-arguments.mjs';
 import { inspectProject } from './inspect-project.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
 import { collectProjectScope } from './collect-project-scope.mjs';
+import { runUpdate } from './update-project.mjs';
 import {
   detectWorkflowLayout,
   LEGACY_FRONTEND_PATH,
@@ -204,6 +205,19 @@ function checkAnalysisFreshness(root, deepAnalysis, warnings) {
   return { checked: true, stale, currentFingerprint: current.fingerprint };
 }
 
+function checkManagedContentFreshness(root, layout, warnings) {
+  if (layout !== 'wayfinder') return { checked: false, stale: null, files: [] };
+  const preview = runUpdate({ target: root });
+  if (!preview.ok) return { checked: false, stale: null, files: [] };
+  const files = preview.actions
+    .filter((item) => item.action === 'update')
+    .map((item) => item.file);
+  if (files.length) {
+    warnings.push(`受管工作流内容与当前项目识别结果不一致：${files.join('、')}；请先预览并显式升级。`);
+  }
+  return { checked: true, stale: files.length > 0, files };
+}
+
 export function checkProject(target = process.cwd()) {
   const inspection = inspectProject(target);
   const errors = [];
@@ -232,13 +246,14 @@ export function checkProject(target = process.cwd()) {
     && inspection.platformCommands.status === 'missing'
   ) {
     const environment = inspection.targetProfile.platform.frameworks.includes('wechat-native')
-      ? '微信开发者工具或外部 CI'
-      : '人工开发工具或外部 CI';
-    warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}的验证环境。`);
+      ? '微信开发者工具或外部 CI 的验证环境'
+      : '人工开发工具或外部 CI 的验证环境';
+    warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}。`);
   }
 
   const planningEngine = checkPlanningEngine(inspection.root, errors);
   deepAnalysis.freshness = checkAnalysisFreshness(inspection.root, deepAnalysis, warnings);
+  const managedContentFreshness = checkManagedContentFreshness(inspection.root, layout, warnings);
   const activeChanges = checkActiveChanges(inspection.root, warnings);
   return {
     ok: errors.length === 0,
@@ -254,6 +269,7 @@ export function checkProject(target = process.cwd()) {
     platformCommands: inspection.platformCommands,
     planningEngine,
     activeChanges,
+    managedContentFreshness,
     deepAnalysis,
     errors,
     warnings,

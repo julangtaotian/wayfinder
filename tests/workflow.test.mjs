@@ -546,6 +546,7 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /归档前必须通过插件完成预览/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.7\.0"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /layout: "wayfinder"/);
+  assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /frontend-ai-workflow:facts:start/);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), false);
 });
@@ -569,6 +570,66 @@ test('重复初始化不覆盖文件，升级只替换受管区块', (t) => {
   assert.match(nextAgents, /## 工作流/);
   assert.doesNotMatch(nextAgents, /## 旧工作流/);
   assert.match(nextAgents, /项目保留内容：不得覆盖。/);
+});
+
+test('旧 Wayfinder 项目事实安全迁移且检查报告受管内容漂移', (t) => {
+  const root = createVueFixture(t);
+  runBootstrap({ target: root, write: true });
+  const wayfinderPath = path.join(root, 'wayfinder/frontend.md');
+  const openspecPath = path.join(root, 'openspec/config.yaml');
+  const legacyWayfinder = fs.readFileSync(wayfinderPath, 'utf8')
+    .replace(/<!-- frontend-ai-workflow:facts:start[^\n]*-->\n/u, '')
+    .replace(/<!-- frontend-ai-workflow:facts:end -->\n/u, '')
+    .replace(/- 技术栈：[^\n]+/u, '- 技术栈：未识别。')
+    .replace('## 深度项目地图（待生成）', '## 深度项目地图（项目保留）')
+    .concat('\n项目自定义 Wayfinder 内容。\n');
+  fs.writeFileSync(wayfinderPath, legacyWayfinder, 'utf8');
+  fs.writeFileSync(openspecPath, fs.readFileSync(openspecPath, 'utf8').replace('预设：vue3-vite', '预设：generic-frontend'), 'utf8');
+
+  const before = checkProject(root);
+  assert.equal(before.managedContentFreshness.checked, true);
+  assert.equal(before.managedContentFreshness.stale, true);
+  assert.deepEqual(before.managedContentFreshness.files, ['wayfinder/frontend.md', 'openspec/config.yaml']);
+  assert.match(before.warnings.join('\n'), /受管工作流内容与当前项目识别结果不一致/u);
+
+  const preview = runUpdate({ target: root });
+  assert.equal(preview.write, false);
+  assert.equal(preview.actions.find((item) => item.file === 'wayfinder/frontend.md').action, 'update');
+  assert.equal(preview.actions.find((item) => item.file === 'openspec/config.yaml').action, 'update');
+  assert.equal(fs.readFileSync(wayfinderPath, 'utf8'), legacyWayfinder);
+
+  const applied = runUpdate({ target: root, write: true });
+  assert.equal(applied.ok, true);
+  const nextWayfinder = fs.readFileSync(wayfinderPath, 'utf8');
+  assert.equal([...nextWayfinder.matchAll(/frontend-ai-workflow:facts:start/gu)].length, 1);
+  assert.equal([...nextWayfinder.matchAll(/frontend-ai-workflow:facts:end/gu)].length, 1);
+  assert.doesNotMatch(nextWayfinder, /技术栈：未识别/u);
+  assert.match(nextWayfinder, /深度项目地图（项目保留）/u);
+  assert.match(nextWayfinder, /项目自定义 Wayfinder 内容/u);
+  assert.match(fs.readFileSync(openspecPath, 'utf8'), /预设：vue3-vite/u);
+  assert.deepEqual(checkProject(root).managedContentFreshness, { checked: true, stale: false, files: [] });
+});
+
+test('深度刷新同步已有 OpenSpec 项目事实并保持重复执行稳定', (t) => {
+  const root = createVueFixture(t);
+  runBootstrap({ target: root, write: true });
+  const openspecPath = path.join(root, 'openspec/config.yaml');
+  fs.writeFileSync(openspecPath, fs.readFileSync(openspecPath, 'utf8').replace('预设：vue3-vite', '预设：generic-frontend'), 'utf8');
+
+  const preview = runBootstrap({ target: root, deep: true });
+  assert.equal(preview.actions.find((item) => item.file === 'openspec/config.yaml').action, 'update');
+  assert.match(fs.readFileSync(openspecPath, 'utf8'), /预设：generic-frontend/u);
+
+  const applied = runBootstrap({ target: root, deep: true, write: true });
+  assert.equal(applied.ok, true);
+  assert.match(fs.readFileSync(openspecPath, 'utf8'), /预设：vue3-vite/u);
+  const repeated = runBootstrap({ target: root, deep: true, write: true });
+  assert.equal(repeated.actions.find((item) => item.file === 'AGENTS.md').action, 'unchanged');
+  assert.equal(repeated.actions.find((item) => item.file === 'openspec/config.yaml').action, 'unchanged');
+  const repeatedWayfinder = fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8');
+  assert.equal([...repeatedWayfinder.matchAll(/frontend-ai-workflow:facts:start/gu)].length, 1);
+  assert.equal([...repeatedWayfinder.matchAll(/frontend-ai-workflow:facts:end/gu)].length, 1);
+  assert.equal(runUpdate({ target: root, write: true }).actions.find((item) => item.file === 'wayfinder/frontend.md').action, 'unchanged');
 });
 
 test('已有无受管标记的 AGENTS.md 会被保留', (t) => {
@@ -705,6 +766,28 @@ test('范围清单完整记账且结果稳定', (t) => {
   assert.ok(first.excludedFiles.some((file) => file.path === 'node_modules' && file.kind === 'directory'));
   assert.ok(first.excludedFiles.some((file) => file.path === 'docs/oversized.md' && file.reason.startsWith('超过单文件限制')));
   assert.throws(() => collectProjectScope(path.parse(root).root), /拒绝在高风险目录扫描/);
+});
+
+test('微信小程序文本源码进入安全范围并参与稳定指纹', (t) => {
+  const root = createVueFixture(t);
+  assert.equal(spawnSync('git', ['init', '-q', root], { encoding: 'utf8' }).status, 0);
+  writeFixtureFile(root, '.gitignore', 'ignored/\n');
+  writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{message}}</view>\n');
+  writeFixtureFile(root, 'pages/home/index.wxss', '.page { color: #333; }\n');
+  writeFixtureFile(root, 'pages/home/format.wxs', 'module.exports = {};\n');
+  writeFixtureFile(root, 'ignored/hidden.wxml', '<view>ignored</view>\n');
+  writeFixtureFile(root, 'pages/home/binary.wxs', `\u0000binary\n`);
+
+  const first = collectProjectScope(root);
+  assert.equal(first.version, '2.1.0');
+  for (const file of ['pages/home/index.wxml', 'pages/home/index.wxss', 'pages/home/format.wxs']) {
+    assert.ok(first.includedFiles.some((item) => item.path === file), file);
+  }
+  assert.ok(first.excludedFiles.some((item) => item.path === 'ignored/hidden.wxml' && /Git 忽略/u.test(item.reason)));
+  assert.ok(first.excludedFiles.some((item) => item.path === 'pages/home/binary.wxs' && /空字节/u.test(item.reason)));
+
+  writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{changed}}</view>\n');
+  assert.notEqual(collectProjectScope(root).fingerprint, first.fingerprint);
 });
 
 test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {

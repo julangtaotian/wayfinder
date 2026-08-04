@@ -20,8 +20,8 @@ const templateRoot = path.join(pluginRoot, 'assets', 'templates');
 const FILES = [
   // Wayfinder 集中工作流元数据和项目导航，AGENTS 与 OpenSpec 保持外部约定位置。
   { source: 'AGENTS.md', target: 'AGENTS.md', managedKind: 'html', preserveManagedBlocks: ['deep-guardrails'], updateWhenDeep: true },
-  { source: 'wayfinder/frontend.md', target: WAYFINDER_PATH, managedKind: 'html', managedBlocks: ['meta', 'scope'], requiredManagedBlocks: ['meta', 'scope', 'analysis'], updateWhenDeep: true },
-  { source: 'openspec/config.yaml', target: 'openspec/config.yaml', managedKind: 'yaml' },
+  { source: 'wayfinder/frontend.md', target: WAYFINDER_PATH, managedKind: 'html', managedBlocks: ['meta', 'facts', 'scope'], requiredManagedBlocks: ['meta', 'facts', 'scope', 'analysis'], migrateManagedBlocks: ['facts'], updateWhenDeep: true },
+  { source: 'openspec/config.yaml', target: 'openspec/config.yaml', managedKind: 'yaml', updateWhenDeep: true },
 ];
 
 function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallback) {
@@ -165,16 +165,45 @@ function mergePreservedBlocks(existing, rendered, descriptor) {
   return merged;
 }
 
+function findLegacyWayfinderFactsRange(content) {
+  const heading = '## 项目概览';
+  const start = content.indexOf(heading);
+  if (start < 0 || start !== content.lastIndexOf(heading)) {
+    throw new Error('旧 Wayfinder 项目事实区域缺少唯一的“项目概览”标题');
+  }
+  const scopeRange = findManagedRange(content, 'html', 'scope');
+  if (start >= scopeRange.start) throw new Error('旧 Wayfinder 项目事实区域顺序异常');
+  return { start, end: scopeRange.start };
+}
+
+// 旧版 Wayfinder 的人类可读项目事实没有标记，只允许按稳定标题边界迁移一次。
+function migrateManagedBlocks(existing, rendered, descriptor) {
+  let migrated = existing;
+  for (const block of descriptor.migrateManagedBlocks || []) {
+    const marker = `frontend-ai-workflow:${block}:`;
+    if (migrated.includes(marker)) continue;
+    if (descriptor.target !== WAYFINDER_PATH || block !== 'facts') {
+      throw new Error(`没有可用的受管区块迁移规则：${block}`);
+    }
+    const currentRange = findLegacyWayfinderFactsRange(migrated);
+    const nextRange = findManagedRange(rendered, descriptor.managedKind, block);
+    const nextBlock = rendered.slice(nextRange.start, nextRange.end);
+    migrated = `${migrated.slice(0, currentRange.start)}${nextBlock}\n\n${migrated.slice(currentRange.end)}`;
+  }
+  return migrated;
+}
+
 function replaceManagedBlocks(existing, rendered, descriptor) {
   const merged = mergePreservedBlocks(existing, rendered, descriptor);
+  const migrated = migrateManagedBlocks(existing, merged, descriptor);
   const requiredBlocks = descriptor.requiredManagedBlocks || descriptor.managedBlocks || [null];
   for (const block of requiredBlocks) {
-    findManagedRange(existing, descriptor.managedKind, block);
+    findManagedRange(migrated, descriptor.managedKind, block);
     findManagedRange(merged, descriptor.managedKind, block);
   }
 
   // 范围区块可由脚本刷新，AI 分析区块始终保留给深度扫描流程维护。
-  let nextContent = existing;
+  let nextContent = migrated;
   for (const block of descriptor.managedBlocks || [null]) {
     const currentRange = findManagedRange(nextContent, descriptor.managedKind, block);
     const nextRange = findManagedRange(merged, descriptor.managedKind, block);

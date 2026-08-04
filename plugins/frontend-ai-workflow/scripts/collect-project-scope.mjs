@@ -5,7 +5,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-export const PROJECT_SCOPE_VERSION = '2.0.0';
+export const PROJECT_SCOPE_VERSION = '2.1.0';
 
 const EXCLUDED_DIRECTORIES = new Set([
   '.git',
@@ -47,6 +47,9 @@ const TEXT_EXTENSIONS = new Set([
   '.tsx',
   '.txt',
   '.vue',
+  '.wxml',
+  '.wxs',
+  '.wxss',
   '.yaml',
   '.yml',
 ]);

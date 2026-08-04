@@ -31,6 +31,7 @@ scopeGitCommit: "{{SCOPE_GIT_COMMIT}}"
 scopeGitDirty: "{{SCOPE_GIT_DIRTY}}"
 <!-- frontend-ai-workflow:meta:end -->
 
+<!-- frontend-ai-workflow:facts:start version={{WORKFLOW_VERSION}} -->
 ## 项目概览
 
 - 技术栈：{{TECH_STACK}}。
@@ -52,6 +53,7 @@ scopeGitDirty: "{{SCOPE_GIT_DIRTY}}"
 - 路由与页面注册：`{{ROUTER_PATH}}`。
 - 状态管理或全局数据：`{{STORE_PATH}}`。
 - 测试：`{{TESTS_PATH}}`。
+<!-- frontend-ai-workflow:facts:end -->
 
 <!-- frontend-ai-workflow:scope:start version={{WORKFLOW_VERSION}} -->
 ## 深度扫描范围
