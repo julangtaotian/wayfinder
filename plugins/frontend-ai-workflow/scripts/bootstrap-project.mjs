@@ -12,7 +12,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.11.0';
+export const WORKFLOW_VERSION = '0.12.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
@@ -28,6 +28,36 @@ function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallba
   if (scope) return scopeValue;
   if (preservedSettings?.[settingsKey] !== undefined) return preservedSettings[settingsKey];
   return fallback;
+}
+
+function nonNegativeInteger(value, fallback = '0') {
+  return /^\d+$/u.test(String(value)) ? String(value) : fallback;
+}
+
+// 范围扫描与项目地图是两阶段工作：重新扫描时必须让旧地图显式失效，不能沿用“已完成”结论。
+function analysisStateVariables(scope, preservedSettings) {
+  if (scope) {
+    return {
+      status: 'pending',
+      coveredFiles: '0',
+      updatedAt: '未完成',
+    };
+  }
+  if (preservedSettings?.deepAnalysis === 'true') {
+    const status = ['pending', 'partial', 'complete'].includes(preservedSettings.analysisStatus)
+      ? preservedSettings.analysisStatus
+      : 'pending';
+    return {
+      status,
+      coveredFiles: nonNegativeInteger(preservedSettings.analysisCoveredFiles),
+      updatedAt: preservedSettings.analysisUpdatedAt || '未完成',
+    };
+  }
+  return {
+    status: 'not-requested',
+    coveredFiles: '0',
+    updatedAt: '未执行',
+  };
 }
 
 function platformCommandSummary(platformCommands) {
@@ -75,6 +105,7 @@ function platformVerificationGuidance(inspection) {
 
 function templateVariables(inspection, scope = null, preservedSettings = null) {
   const deepAnalysis = Boolean(scope) || preservedSettings?.deepAnalysis === 'true';
+  const analysis = analysisStateVariables(scope, preservedSettings);
   const targetEvidence = inspection.targetProfile.evidence.length
     ? inspection.targetProfile.evidence.join('、')
     : '未识别';
@@ -126,6 +157,9 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     TESTS_PATH: inspection.paths.tests,
     DEEP_ANALYSIS: deepAnalysis ? 'true' : 'false',
     DEEP_ANALYSIS_LABEL: deepAnalysis ? '已启用' : '未启用（普通初始化仅生成可追溯的识别基线）',
+    ANALYSIS_STATUS: analysis.status,
+    ANALYSIS_COVERED_FILES: analysis.coveredFiles,
+    ANALYSIS_UPDATED_AT: analysis.updatedAt,
     SCOPE_VERSION: snapshotValue(scope, preservedSettings, scope?.version, 'scopeVersion', '未执行'),
     SCOPE_INCLUDED_FILES: snapshotValue(scope, preservedSettings, scope?.summary.includedFiles, 'scopeIncludedFiles', 0),
     SCOPE_EXCLUDED_FILES: snapshotValue(scope, preservedSettings, scope?.summary.excludedFiles, 'scopeExcludedFiles', 0),

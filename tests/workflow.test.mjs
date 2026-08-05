@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { inspectProject } from '../plugins/frontend-ai-workflow/scripts/inspect-project.mjs';
-import { runBootstrap } from '../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
+import { runBootstrap, WORKFLOW_VERSION } from '../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
 import { archiveTarget, checkChange, validatePlanningArtifacts, validatePlanningRoot } from '../plugins/frontend-ai-workflow/scripts/check-change.mjs';
 import { finalizeChange } from '../plugins/frontend-ai-workflow/scripts/finalize-change.mjs';
@@ -74,6 +74,47 @@ function createVueFixture(t) {
   };
   for (const [file, content] of Object.entries(fixtureFiles)) writeFixtureFile(root, file, content);
   return root;
+}
+
+// 深度地图完成态必须同时满足全量覆盖与固定章节，避免只改元数据就被误判为完成。
+function completeWayfinderAnalysis(content) {
+  const included = content.match(/scopeIncludedFiles: (\d+)/u)?.[1];
+  assert.ok(included, 'Wayfinder 应包含深度扫描纳入文件数');
+  return content
+    .replace('analysisStatus: "pending"', 'analysisStatus: "complete"')
+    .replace('analysisCoveredFiles: 0', `analysisCoveredFiles: ${included}`)
+    .replace('analysisUpdatedAt: "未完成"', 'analysisUpdatedAt: "2026-08-05T00:00:00.000Z"')
+    .replace(
+      /<!-- frontend-ai-workflow:analysis:start[^\n]*-->[\s\S]*?<!-- frontend-ai-workflow:analysis:end -->/u,
+      `<!-- frontend-ai-workflow:analysis:start version=${WORKFLOW_VERSION} -->
+## 深度项目地图
+
+<!-- frontend-ai-workflow:analysis-dimension:run-delivery -->
+### 项目运行与交付边界
+
+- 入口、构建与部署边界已按源码交叉核对（证据：\`vite.config.js\`）。
+
+<!-- frontend-ai-workflow:analysis-dimension:functional-dependencies -->
+### 功能与依赖链路
+
+- 路由由 \`src/router/index.js\` 映射到 \`src/views/Home.vue\`。
+
+<!-- frontend-ai-workflow:analysis-dimension:data-state-security -->
+### 数据、状态与安全边界
+
+- 资料请求经 \`src/serve/profile.js\` 调用 \`src/request/http.js\`。
+
+<!-- frontend-ai-workflow:analysis-dimension:verification-risks -->
+### 验证基线与高风险区域
+
+- \`npm run test\` 是已识别的测试入口，实际执行结果仍以验证记录为准。
+
+<!-- frontend-ai-workflow:analysis-dimension:facts-inferences-questions -->
+## 事实、推断与待确认项
+
+- 已确认事实均附源码路径；动态接口契约和运行时权限仍待实际环境确认。
+<!-- frontend-ai-workflow:analysis:end -->`,
+    );
 }
 
 // 支持矩阵只创建识别和工作流所需的真实文件，不安装或执行任何第三方依赖。
@@ -547,6 +588,8 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.7\.0"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /layout: "wayfinder"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /frontend-ai-workflow:facts:start/);
+  assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /analysisStatus: "not-requested"/);
+  assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /analysisCoveredFiles: 0/);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), false);
 });
@@ -745,7 +788,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.11.0');
+  assert.equal(result.version, '0.12.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);
@@ -852,6 +895,8 @@ test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
   assert.match(fs.readFileSync(frontendPath, 'utf8'), /frontend-ai-workflow:meta:start/);
   assert.match(fs.readFileSync(frontendPath, 'utf8'), /frontend-ai-workflow:scope:start/);
   assert.match(fs.readFileSync(frontendPath, 'utf8'), /frontend-ai-workflow:analysis:start/);
+  assert.match(fs.readFileSync(frontendPath, 'utf8'), /analysisStatus: "pending"/);
+  assert.match(fs.readFileSync(frontendPath, 'utf8'), /analysisCoveredFiles: 0/);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'docs', 'ai-context', 'frontend.md')), false);
   // 常规升级不能意外将已完成深度扫描的项目降级为浅层工作流。
@@ -862,12 +907,85 @@ test('深度初始化写入 Wayfinder 且保留 AI 项目地图', (t) => {
   fs.writeFileSync(frontendPath, customized, 'utf8');
   const refreshed = runUpdate({ target: root, deep: true, write: true });
   assert.equal(refreshed.ok, true);
-  assert.match(fs.readFileSync(frontendPath, 'utf8'), /人工补充/);
+  const refreshedContent = fs.readFileSync(frontendPath, 'utf8');
+  assert.match(refreshedContent, /人工补充/);
+  assert.match(refreshedContent, /analysisStatus: "pending"/);
+  assert.match(refreshedContent, /analysisCoveredFiles: 0/);
 
   const checked = checkProject(root);
   assert.equal(checked.ok, true);
   assert.equal(checked.deepAnalysis.enabled, true);
   assert.equal(checked.deepAnalysis.scopeVersion, PROJECT_SCOPE_VERSION);
+  assert.equal(checked.deepAnalysis.analysis.status, 'pending');
+  assert.match(checked.warnings.join('\n'), /项目地图仍待生成/u);
+});
+
+test('深度项目地图完成态要求全量覆盖、结构证据，并会在刷新后安全失效', (t) => {
+  const root = createVueFixture(t);
+  runBootstrap({ target: root, deep: true, write: true });
+  const frontendPath = path.join(root, 'wayfinder', 'frontend.md');
+  const completed = completeWayfinderAnalysis(fs.readFileSync(frontendPath, 'utf8'));
+  fs.writeFileSync(frontendPath, completed, 'utf8');
+
+  const checked = checkProject(root);
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.deepAnalysis.analysis, {
+    status: 'complete',
+    coveredFiles: Number(completed.match(/scopeIncludedFiles: (\d+)/u)?.[1]),
+    totalFiles: Number(completed.match(/scopeIncludedFiles: (\d+)/u)?.[1]),
+    updatedAt: '2026-08-05T00:00:00.000Z',
+    complete: true,
+  });
+
+  fs.writeFileSync(frontendPath, completed.replace(/- 技术栈：[^\n]+/u, '- 技术栈：未识别。'), 'utf8');
+  const upgraded = runUpdate({ target: root, write: true });
+  assert.equal(upgraded.ok, true);
+  const preserved = fs.readFileSync(frontendPath, 'utf8');
+  assert.match(preserved, /analysisStatus: "complete"/);
+  assert.match(preserved, /analysisUpdatedAt: "2026-08-05T00:00:00.000Z"/);
+  assert.match(preserved, /资料请求经/);
+  assert.doesNotMatch(preserved, /技术栈：未识别/u);
+
+  fs.writeFileSync(
+    frontendPath,
+    completed
+      .replace('### 项目运行与交付边界', '### 项目自定义启动边界')
+      .replace('### 功能与依赖链路', '### 页面调用关系'),
+    'utf8',
+  );
+  assert.equal(checkProject(root).ok, true);
+
+  fs.writeFileSync(
+    frontendPath,
+    completed
+      .replace('analysisStatus: "complete"', 'analysisStatus: "partial"')
+      .replace(/analysisCoveredFiles: \d+/u, 'analysisCoveredFiles: 1'),
+    'utf8',
+  );
+  const partial = checkProject(root);
+  assert.equal(partial.ok, true);
+  assert.equal(partial.deepAnalysis.analysis.complete, false);
+  assert.match(partial.warnings.join('\n'), /仅覆盖 1\//u);
+
+  fs.writeFileSync(frontendPath, completed.replace(/analysisCoveredFiles: \d+/u, 'analysisCoveredFiles: 0'), 'utf8');
+  const invalid = checkProject(root);
+  assert.equal(invalid.ok, false);
+  assert.match(invalid.errors.join('\n'), /覆盖数必须等于纳入文件数/u);
+
+  const verificationMarker = '<!-- frontend-ai-workflow:analysis-dimension:verification-risks -->';
+  fs.writeFileSync(frontendPath, `${completed.replace(verificationMarker, '')}\n${verificationMarker}\n`, 'utf8');
+  const incompleteStructure = checkProject(root);
+  assert.equal(incompleteStructure.ok, false);
+  assert.match(incompleteStructure.errors.join('\n'), /验证基线与高风险区域（标记数：0）/u);
+
+  fs.writeFileSync(frontendPath, completed, 'utf8');
+  const refreshed = runBootstrap({ target: root, deep: true, write: true });
+  assert.equal(refreshed.ok, true);
+  const pending = fs.readFileSync(frontendPath, 'utf8');
+  assert.match(pending, /analysisStatus: "pending"/);
+  assert.match(pending, /analysisCoveredFiles: 0/);
+  assert.match(pending, /资料请求经/);
+  assert.match(checkProject(root).warnings.join('\n'), /项目地图仍待生成/u);
 });
 
 test('深度初始化不覆盖没有受管标记的 Wayfinder', (t) => {
@@ -907,6 +1025,8 @@ test('旧布局必须显式迁移并保留项目事实与硬约束', (t) => {
   assert.equal(migrated.ok, true);
   const wayfinder = fs.readFileSync(path.join(root, 'wayfinder', 'frontend.md'), 'utf8');
   assert.match(wayfinder, /项目维护者说明：迁移后必须保留。/);
+  assert.match(wayfinder, /analysisStatus: "pending"/);
+  assert.match(wayfinder, /analysisCoveredFiles: 0/);
   assert.match(fs.readFileSync(agentsPath, 'utf8'), /页面不得绕过/);
   assert.equal(fs.existsSync(path.join(root, 'docs', 'ai-context', 'frontend.md')), false);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
@@ -963,6 +1083,10 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(reference, /validationEvidence/);
   assert.match(reference, /不得写“没有解析错误”/);
   assert.match(reference, /观察数组为空.*不表示源码已经通过/u);
+  assert.match(reference, /analysisStatus: complete/);
+  assert.match(reference, /数据、状态与安全边界/);
+  assert.match(reference, /Service Worker/);
+  assert.match(reference, /Feature Flag/);
   assert.match(skill, /includedFiles/);
   assert.match(skill, /validationEvidence/);
   assert.match(skill, /do not prove syntax parsing, platform compilation, Lint or tests/);
@@ -971,6 +1095,8 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(checkSkill, /not as a confirmed WXML syntax or platform compilation failure/);
   assert.match(skill, /Never create `project-scan\.md`/);
   assert.match(skill, /do not describe the result as complete/);
+  assert.match(skill, /analysisCoveredFiles/);
+  assert.match(checkSkill, /deepAnalysis\.analysis\.status/);
 });
 
 test('需求模板仅作为插件资产按需使用', () => {

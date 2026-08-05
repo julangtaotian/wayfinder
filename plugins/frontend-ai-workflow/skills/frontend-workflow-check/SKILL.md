@@ -37,6 +37,7 @@ Perform a read-only audit of the target repository.
 - A missing or mismatched bundled planning runtime is a plugin integrity error.
 - An unhealthy planning root is an error when its configuration exists.
 - A stale Wayfinder fingerprint is a refresh warning, not permission to overwrite the project map.
+- `deepAnalysis.analysis.status` separates a scope snapshot from a usable project map: `pending` means the map has not been produced, `partial` is not a complete context, and only `complete` with full coverage and all required map dimensions can be used as a complete project context. A deep refresh intentionally resets the status to `pending` until the analysis is rewritten.
 - `deepAnalysis.validationEvidence` distinguishes performed file reading and hashing from syntax parsing, platform compilation, Lint and tests that were not run. Never turn `not-run` into a passing result.
 - `deepAnalysis.observations` contains non-blocking static hints. Report `wxml-attribute-spacing` with its path and line as a location to verify, not as a confirmed WXML syntax or platform compilation failure.
 - Completed changes that remain active are workflow hygiene warnings; do not archive them without their selected requirement and delivery gate.

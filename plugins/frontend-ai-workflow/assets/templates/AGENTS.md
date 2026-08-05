@@ -25,7 +25,7 @@
 - 路由与页面注册：`{{ROUTER_PATH}}`。
 - 状态管理或全局数据：`{{STORE_PATH}}`。
 
-项目导航见 `wayfinder/frontend.md`。当该文档的 `deepAnalysis: true` 时，涉及架构、接口、权限、路由、风险或测试判断前，必须先阅读其中的“深度扫描范围”和“深度项目地图”区块。
+项目导航见 `wayfinder/frontend.md`。当该文档的 `deepAnalysis: true` 时，涉及架构、接口、权限、路由、风险或测试判断前，必须先阅读其中的“深度扫描范围”和“深度项目地图”区块；只有 `analysisStatus: "complete"` 时才能将地图作为完整项目上下文。`pending` 或 `partial` 仅表示范围或部分文件已阅读，相关判断仍须回到源码核对。
 
 <!-- frontend-ai-workflow:deep-guardrails:start version={{WORKFLOW_VERSION}} -->
 ## 深度扫描关键约束（待生成）

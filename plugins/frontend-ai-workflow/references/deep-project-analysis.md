@@ -40,6 +40,14 @@
 - 测试脚本、测试资产及关键行为覆盖；
 - 公共组件、全局样式和状态管理的影响范围。
 
+发现以下任一类源码、配置或公开依赖证据时，再补充对应扩展维度；没有证据时保持不写，不能按框架惯例猜测：
+
+- 国际化资源、语言路由、格式化和回退策略；
+- Service Worker、PWA 清单、缓存和离线降级；
+- 设计 Token、Storybook、可访问性规则和组件演示；
+- 错误追踪、埋点、性能观测、实验或 Feature Flag；
+- 跨端入口、条件编译、平台生命周期和目标发布配置。
+
 动态导入、运行时拼接、环境变量实际值、后端协议和仓库外业务约定不能仅凭源码确认，必须记为待确认项。
 
 ## 结论合同
@@ -53,6 +61,28 @@
 5. 推断，说明依据与边界；
 6. 待确认项，说明不能确认的原因；
 7. 高风险区域与验证建议。
+
+## 项目地图完成状态
+
+`deepAnalysis: true` 仅表示范围清单、范围指纹和安全读取边界已经建立。项目地图通过 `meta` 区块中的以下字段单独表示完成度：
+
+- `analysisStatus: pending`：已取得范围快照，尚未开始项目地图；`analysisCoveredFiles` 必须是 0。
+- `analysisStatus: partial`：只读完部分纳入文件；覆盖数必须大于 0 且小于 `scopeIncludedFiles`，删除待生成占位内容，并在项目地图中写清未覆盖文件和原因。
+- `analysisStatus: complete`：每个纳入文件均已阅读和归类，`analysisCoveredFiles` 必须等于 `scopeIncludedFiles`，`analysisUpdatedAt` 必须为 ISO 时间。
+
+写入 `complete` 时，删除分析区块中的待生成占位标记，并至少保留“项目运行与交付边界”“功能与依赖链路”“数据、状态与安全边界”“验证基线与高风险区域”“事实、推断与待确认项”五个维度。标题可以根据项目语义调整，但每个维度前必须分别保留且只保留一个稳定标记：
+
+```text
+<!-- frontend-ai-workflow:analysis-dimension:run-delivery -->
+<!-- frontend-ai-workflow:analysis-dimension:functional-dependencies -->
+<!-- frontend-ai-workflow:analysis-dimension:data-state-security -->
+<!-- frontend-ai-workflow:analysis-dimension:verification-risks -->
+<!-- frontend-ai-workflow:analysis-dimension:facts-inferences-questions -->
+```
+
+标记必须位于 `frontend-ai-workflow:analysis:start/end` 区块内，区块外的同名标记不构成完成证据。按证据启用的国际化、PWA、设计系统、观测和跨端维度不属于小项目的必填项。每个稳定结论仍须附来源；维度标记只保证信息结构齐全，不替代证据。
+
+深度刷新会先将状态重置为 `pending`，以免旧项目地图在新范围快照下被误认为有效。刷新后只有重新完成阅读、交叉核对和状态更新，才可再次标记为 `complete`。
 
 任何没有来源证据的内容不得写入“已确认事实”。跨文件链路至少引用首尾关键文件。存在未覆盖、超限或不可读取项目时，必须说明结果的覆盖边界。
 

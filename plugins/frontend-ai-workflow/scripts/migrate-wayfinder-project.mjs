@@ -20,6 +20,7 @@ const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
 
 function formatMetadata(settings, inspection) {
+  const deepAnalysis = settings.deepAnalysis || 'false';
   const fields = {
     version: WORKFLOW_VERSION,
     openspecVersion: settings.openspecVersion || '未知',
@@ -27,7 +28,11 @@ function formatMetadata(settings, inspection) {
     project: inspection.name,
     preset: inspection.preset,
     packageManager: inspection.packageManager,
-    deepAnalysis: settings.deepAnalysis || 'false',
+    deepAnalysis,
+    // 旧布局没有可验证的覆盖统计，迁移后保留原地图正文但要求显式深度刷新后才能标记完成。
+    analysisStatus: deepAnalysis === 'true' ? 'pending' : 'not-requested',
+    analysisCoveredFiles: '0',
+    analysisUpdatedAt: deepAnalysis === 'true' ? '未完成' : '未执行',
     scopeVersion: settings.scopeVersion || '未执行',
     scopeIncludedFiles: settings.scopeIncludedFiles || '0',
     scopeExcludedFiles: settings.scopeExcludedFiles || '0',
@@ -38,7 +43,7 @@ function formatMetadata(settings, inspection) {
     scopeGitDirty: settings.scopeGitDirty || '不可用',
   };
   const lines = Object.entries(fields).map(([key, value]) => {
-    if (/^(deepAnalysis|scopeIncludedFiles|scopeExcludedFiles|scopeIncludedBytes|scopeGitDirty)$/.test(key)) return `${key}: ${value}`;
+    if (/^(deepAnalysis|analysisCoveredFiles|scopeIncludedFiles|scopeExcludedFiles|scopeIncludedBytes|scopeGitDirty)$/.test(key)) return `${key}: ${value}`;
     return `${key}: "${String(value).replaceAll('"', '\\"')}"`;
   });
   return `<!-- frontend-ai-workflow:meta:start version=${WORKFLOW_VERSION} -->\n${lines.join('\n')}\n<!-- frontend-ai-workflow:meta:end -->`;

@@ -18,12 +18,14 @@ context: |
   交付构建命令：{{RELEASE_BUILD_COMMAND}}
   静态检查命令：{{LINT_COMMAND}}（语义：{{LINT_STATUS}}）
   测试命令：{{TEST_COMMAND}}（状态：{{TEST_STATUS}}）
+  项目地图状态：{{ANALYSIS_STATUS}}（已覆盖深度范围文件：{{ANALYSIS_COVERED_FILES}}/{{SCOPE_INCLUDED_FILES}}；最后更新：{{ANALYSIS_UPDATED_AT}}）
   实现必须遵守根目录 AGENTS.md。
 
 operations:
   apply:
     guidance:
       - 将 context 和本区块视为补充约束；需求决策、用户选择、仓库规则和 OpenSpec 阻断状态优先
+      - 项目地图为 pending 或 partial 时，不把它当作完整架构事实；先回到关联源码补齐本次影响链路和验证边界
       - 只按 tasks 与关联验收实施并记录证据，不把动态指导当作任务完成证明或额外写入授权
   archive:
     guidance:

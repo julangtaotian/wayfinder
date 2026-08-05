@@ -34,7 +34,7 @@ YAML 使用：
 Wayfinder 的项目导航使用三组独立 Markdown 标记：
 
 ```text
-<!-- frontend-ai-workflow:meta:start version=0.11.0 -->
+<!-- frontend-ai-workflow:meta:start version=0.12.0 -->
 <!-- frontend-ai-workflow:meta:end -->
 <!-- frontend-ai-workflow:scope:start version=0.4.0 -->
 <!-- frontend-ai-workflow:scope:end -->
@@ -44,7 +44,9 @@ Wayfinder 的项目导航使用三组独立 Markdown 标记：
 
 脚本刷新元数据与范围时只替换 `meta`、`scope` 区块；AI 在用户确认后写入 `analysis` 区块。三组标记必须各自恰好成对存在。没有这些标记的 Wayfinder 一律保留，不自动插入标记或覆盖。
 
-`meta` 区块中的 `scopeFingerprint`、`scopeScannedAt`、`scopeGitCommit` 和 `scopeGitDirty` 属于分析基线。旧项目缺少这些字段时只报告刷新提醒，不因升级自动伪造。
+`meta` 区块中的 `scopeFingerprint`、`scopeScannedAt`、`scopeGitCommit` 和 `scopeGitDirty` 属于分析基线。`analysisStatus`、`analysisCoveredFiles` 和 `analysisUpdatedAt` 属于项目地图完成合同：`deepAnalysis: true` 只表示已经取得范围快照，不等于项目地图已完成。旧项目缺少这些字段时只报告刷新提醒，不因升级自动伪造。
+
+深度扫描写入范围快照时将项目地图重置为 `pending`、覆盖数重置为 0；历史地图正文可以保留供参考，但在后续分析完成前不得作为完整事实源。普通升级必须保留已有的项目地图状态和覆盖统计。
 
 新版 `AGENTS.md` 在外层受管区块内还包含一组 `deep-guardrails` Markdown 标记。AI 在深度扫描确认后只替换这一内层区块，写入项目专属的高影响约束；升级通用 AGENTS 规则时必须保留其内容。旧版 AGENTS 缺少该内层标记时，可在外层受管区块有效的前提下由新版模板补入占位区块；已有但不成对或重复的内层标记一律报告冲突。
 
