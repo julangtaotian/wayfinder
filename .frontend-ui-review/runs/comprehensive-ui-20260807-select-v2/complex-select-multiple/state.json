@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-select-v2",
+  "stage": "review",
+  "status": "passed",
+  "scenarioId": "complex-select-multiple",
+  "scenarioFingerprint": "fb7c442a46938733a08f4c7cf2989304a603e6174070640327f716e8d620dd55",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:34:13.501Z",
+  "updatedAt": "2026-08-07T02:45:18.367Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-select-v2/complex-select-multiple/review-input.json"
+  }
+}

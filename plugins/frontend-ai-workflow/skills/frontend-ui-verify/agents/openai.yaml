@@ -1,0 +1,4 @@
+interface:
+  display_name: "前端 UI 复验"
+  short_description: "复用内置 Playwright 或基线视觉采集器检查修复结果"
+  default_prompt: "Use $frontend-ui-verify to recheck a UI fix with the exact baseline context and actual capture method."

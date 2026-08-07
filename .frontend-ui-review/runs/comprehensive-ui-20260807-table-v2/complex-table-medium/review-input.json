@@ -1,0 +1,111 @@
+{
+  "findings": [],
+  "visualComparison": {
+    "completed": true,
+    "conclusion": "声明范围内通过：1440×900 页面、筛选卡片、表格卡片、九行数据、状态、进度、操作列与分页和设计依据一致。",
+    "boundary": "仅覆盖 Medium 经典表格页及输入/下拉恢复后的默认状态，不代表 Small、Large 或排序筛选结果态通过。"
+  },
+  "reviewedAt": "2026-08-07T10:44:41+08:00",
+  "project": {
+    "name": "frontend-ai-workflow",
+    "runtime": "Chromium 151.0.7922.34（新版插件内置 Playwright）",
+    "page": "http://127.0.0.1:4176/?evidence=1#table/SCN-TABLE-23",
+    "designBasis": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-TABLE-23.png",
+    "scope": [
+      "1440×900 经典后台表格页",
+      "筛选表单与操作区",
+      "表格、状态、进度、操作与分页区"
+    ]
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "dpr": 1,
+    "scale": 100
+  },
+  "interactionEvidence": {
+    "declared": [
+      "在姓名字段输入临时文本并清空，打开状态下拉后按 Escape 收起",
+      "确认页面恢复基准状态，表格九行数据、状态标签、进度、操作列和分页均可见"
+    ],
+    "executedBy": "complex-table-medium",
+    "completed": true
+  },
+  "checkedNodes": [
+    {
+      "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-table-page",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue",
+      "nodeText": "首页 数据可视化 表单页 列表页 基础表格 卡片列表 详情页 结果页 异常页 个人中心 表格页/ 基础表格 基础表格页 表格页用于展示多条结构类似的数据，可对数据进行排序、筛选、对比或其他自定义操作。 消息中心 1073000000@qq.com 日期: − 姓名: 状态: 地址: 完成进度: − 搜索 重置 收起 新建 批量导入 日期 姓名 状态 地址 完成进度 操作 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已完成 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已完成 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-",
+      "nodeMeaning": "1440×900 经典后台表格页",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 900
+      },
+      "computedStyle": {
+        "display": "block",
+        "position": "relative",
+        "width": "1440px",
+        "height": "900px",
+        "margin": "0px",
+        "padding": "0px",
+        "color": "rgb(48, 49, 51)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(48, 49, 51)",
+        "boxShadow": "none",
+        "font": "14px / 20px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    },
+    {
+      "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-filter-card",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue",
+      "nodeText": "日期: − 姓名: 状态: 地址: 完成进度: − 搜索 重置 收起",
+      "nodeMeaning": "筛选表单与操作区",
+      "rect": {
+        "x": 216,
+        "y": 192,
+        "width": 1208,
+        "height": 139
+      },
+      "computedStyle": {
+        "display": "block",
+        "position": "absolute",
+        "width": "1208px",
+        "height": "139px",
+        "margin": "0px",
+        "padding": "0px",
+        "color": "rgb(48, 49, 51)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(48, 49, 51)",
+        "boxShadow": "rgba(0, 0, 0, 0.08) 0px 4px 16px 0px",
+        "font": "14px / 20px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    },
+    {
+      "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-table-card",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue",
+      "nodeText": "新建 批量导入 日期 姓名 状态 地址 完成进度 操作 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 进行中 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已完成 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已完成 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已关闭 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已关闭 No. 189, Grove St, Los Angeles 40% 详情编辑删除 2016-05-03 Tom 已废止 No. 189, Grove St, Los Ang",
+      "nodeMeaning": "表格、状态、进度、操作与分页区",
+      "rect": {
+        "x": 216,
+        "y": 347,
+        "width": 1208,
+        "height": 537
+      },
+      "computedStyle": {
+        "display": "flex",
+        "position": "absolute",
+        "width": "1208px",
+        "height": "537px",
+        "margin": "0px",
+        "padding": "0px",
+        "color": "rgb(48, 49, 51)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(48, 49, 51)",
+        "boxShadow": "rgba(0, 0, 0, 0.08) 0px 4px 16px 0px",
+        "font": "14px / 20px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    }
+  ]
+}

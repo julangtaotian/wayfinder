@@ -1,0 +1,59 @@
+{
+  "findings": [],
+  "visualComparison": {
+    "completed": true,
+    "conclusion": "声明范围内通过：960×360 弹窗、双列八项表单、标题、关闭按钮和底部操作与设计依据一致。",
+    "boundary": "仅覆盖大型双列表单弹窗及本次关闭后重开状态，不代表其他弹窗尺寸通过。"
+  },
+  "reviewedAt": "2026-08-07T10:44:41+08:00",
+  "project": {
+    "name": "frontend-ai-workflow",
+    "runtime": "Chromium 151.0.7922.34（新版插件内置 Playwright）",
+    "page": "http://127.0.0.1:4176/?evidence=1#dialog-usage/SCN-DIALOG-USAGE-05",
+    "designBasis": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-DIALOG-USAGE-05.png",
+    "scope": [
+      "960px 大型双列表单弹窗"
+    ]
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 520,
+    "dpr": 1,
+    "scale": 100
+  },
+  "interactionEvidence": {
+    "declared": [
+      "等待证据路由自动打开大型弹窗，点击右上角关闭，再点击打开复杂对话框重新打开",
+      "确认双列八个表单项、关闭按钮和底部取消/确定操作均可见"
+    ],
+    "executedBy": "complex-dialog-large",
+    "completed": true
+  },
+  "checkedNodes": [
+    {
+      "selector": ".dialog-panel--dialog-usage-5",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue",
+      "nodeText": "标题名称 四字标签 四字标签 四字标签 备选项 备选项 四字标签 点击上传 四字标签 四字标签 四字标签 备选项 备选项 四字标签 点击上传 取消确定",
+      "nodeMeaning": "960px 大型双列表单弹窗",
+      "rect": {
+        "x": 480,
+        "y": 80,
+        "width": 960,
+        "height": 360
+      },
+      "computedStyle": {
+        "display": "flex",
+        "position": "relative",
+        "width": "960px",
+        "height": "360px",
+        "margin": "80px 480px 0px",
+        "padding": "0px",
+        "color": "rgb(34, 34, 34)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "0px none rgb(34, 34, 34)",
+        "boxShadow": "rgba(0, 0, 0, 0.18) 0px 10px 24px 0px",
+        "font": "14px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    }
+  ]
+}

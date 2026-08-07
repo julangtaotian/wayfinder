@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-table-v2",
+  "stage": "review",
+  "status": "passed",
+  "scenarioId": "complex-table-medium",
+  "scenarioFingerprint": "c9510e2af5f14e9dbf886a03c4444f6c5946513ba692ce6d36b585e1d026d36a",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:34:13.517Z",
+  "updatedAt": "2026-08-07T02:45:18.384Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-table-v2/complex-table-medium/review-input.json"
+  }
+}

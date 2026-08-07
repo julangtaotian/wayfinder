@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "artifactsRoot": ".frontend-ui-review/runs",
+  "autoFix": "off",
+  "scenarios": [
+    {
+      "id": "complex-dialog-large",
+      "url": "http://127.0.0.1:4176/?evidence=1#dialog-usage/SCN-DIALOG-USAGE-05",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": {
+        "width": 1920,
+        "height": 520,
+        "deviceScaleFactor": 1
+      },
+      "design": {
+        "type": "image",
+        "path": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-DIALOG-USAGE-05.png"
+      },
+      "targets": [
+        {
+          "selector": ".dialog-panel--dialog-usage-5",
+          "nodeMeaning": "960px 大型双列表单弹窗",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue"
+        }
+      ],
+      "interactions": [
+        "等待证据路由自动打开大型弹窗，点击右上角关闭，再点击打开复杂对话框重新打开",
+        "确认双列八个表单项、关闭按钮和底部取消/确定操作均可见"
+      ]
+    },
+    {
+      "id": "complex-select-multiple",
+      "url": "http://127.0.0.1:4176/?evidence=1#select/SCN-SELECT-05",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": {
+        "width": 950,
+        "height": 300,
+        "deviceScaleFactor": 1
+      },
+      "design": {
+        "type": "image",
+        "path": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-SELECT-05.png"
+      },
+      "targets": [
+        {
+          "selector": "[data-scenario-id=\"SCN-SELECT-05\"] .select-variant-pair",
+          "nodeMeaning": "双多选触发器、标签与折叠计数",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue"
+        }
+      ],
+      "interactions": [
+        "等待两个多选下拉层自动展开，从第一个触发器移除选项 2，再从第一个弹层重新选择选项 2",
+        "确认两组标签、+6 折叠计数、选中勾选与两个弹层均恢复可见"
+      ]
+    },
+    {
+      "id": "complex-cascader-indeterminate",
+      "url": "http://127.0.0.1:4176/?evidence=1&state=Indeterminate#cascader/SCN-CASCADER-03",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": {
+        "width": 950,
+        "height": 500,
+        "deviceScaleFactor": 1
+      },
+      "design": {
+        "type": "image",
+        "path": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-CASCADER-03.png"
+      },
+      "targets": [
+        {
+          "selector": ".el-cascader__dropdown.cascader-evidence-indeterminate[x-placement]",
+          "nodeMeaning": "多级级联选择弹层及半选/禁用状态",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue"
+        }
+      ],
+      "interactions": [
+        "等待半选数据和级联弹层自动恢复，勾选一个可用子节点并验证数量变化，再取消勾选恢复基准",
+        "确认第四行路径、子级勾选、父级半选以及禁用节点状态仍然共存"
+      ]
+    },
+    {
+      "id": "complex-table-medium",
+      "url": "http://127.0.0.1:4176/?evidence=1#table/SCN-TABLE-23",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "deviceScaleFactor": 1
+      },
+      "design": {
+        "type": "image",
+        "path": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-TABLE-23.png"
+      },
+      "targets": [
+        {
+          "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-table-page",
+          "nodeMeaning": "1440×900 经典后台表格页",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue"
+        },
+        {
+          "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-filter-card",
+          "nodeMeaning": "筛选表单与操作区",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue"
+        },
+        {
+          "selector": "[data-scenario-id=\"SCN-TABLE-23\"] .classic-table-card",
+          "nodeMeaning": "表格、状态、进度、操作与分页区",
+          "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/TableScenario.vue"
+        }
+      ],
+      "interactions": [
+        "在姓名字段输入临时文本并清空，打开状态下拉后按 Escape 收起",
+        "确认页面恢复基准状态，表格九行数据、状态标签、进度、操作列和分页均可见"
+      ]
+    }
+  ]
+}

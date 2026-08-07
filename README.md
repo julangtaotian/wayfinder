@@ -21,6 +21,7 @@
 - 用同一个 `npm run verify` 在本地和 CI 串行执行测试、插件结构、OpenSpec 严格校验、运行时版本与完整性检查。
 - 对已确认“不改变可观察行为”的工具、文档或纯内部变更支持受控 `skip_specs`；其他变更仍必须提供 delta specs，完成入口不暴露跳过参数。
 - 通过插件提供通用技能，减少每个仓库重复维护 `.codex/skills`。
+- 在项目自动化流程内完成真实页面 UI 验收、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 
 当前完整回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn。Monorepo 和多个前端应用的专属编排不在本版本范围内。
 
@@ -37,7 +38,7 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 
 ## 使用
 
-对外只提供以下 5 个团队命令。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
+对外提供以下 8 个团队命令。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
 
 使用前请通过 Codex 打开目标前端仓库。安装或更新插件后，建议新建 Codex 任务，以加载最新版命令。调用时输入 `$命令名`，后面直接跟自然语言要求即可。
 
@@ -164,7 +165,55 @@ $frontend-change 验证、同步并归档当前变更
 
 **达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 归档”，不用学习 OpenSpec 的内部命令。
 
-### 4. `$frontend-workflow-check`
+### 4. `$frontend-ui-review`
+
+**作用**：按项目内配置打开真实页面，对照本地设计图或设计规范生成实际截图、标注截图、Markdown 报告和可继续处理的运行状态。
+
+**使用示例**：
+
+```text
+$frontend-ui-review 验收 home-desktop 场景
+```
+
+首次使用时，在业务项目创建 `.frontend-ui-review/config.json` 和 `.frontend-ui-review/playwright-adapter.mjs`，声明页面、视口、设计依据、目标节点和交互。两个草案分别来自插件的 `assets/templates/ui-review/config.json` 与 `assets/templates/ui-review/playwright-adapter.mjs`；场景事实和项目交互必须按当前项目修改。
+
+新配置默认通过 `projectPlaywright.adapter` 接收插件内置的 Playwright 1.62.1 与 Chromium headless shell，业务项目不添加 Playwright 依赖，也不修改自己的锁文件。采集计划可以被其他 AI 工具与 CI 直接消费；既有 `projectPlaywright.command` 继续兼容。Codex Browser 或同类视觉能力只在配置明确声明、主路径不可用时作为兜底。运行阶段不会执行 npm 安装、浏览器下载、同一运行内采集器切换或虚假通过。
+
+其他 AI 工具不需要理解 Codex Skill，也可以直接消费确定性入口：
+
+```text
+node <插件根>/scripts/ui-review-workflow.mjs capture-plan --target <项目> --scenario home-desktop --run-id build-101
+```
+
+返回值包含插件命令参数、固定运行时版本、目标与当前平台、完整性结论、不可用原因、结果路径、实际截图与报告路径以及允许的兜底顺序。没有新增字段的老配置继续保持原来的单采集器行为。
+
+当前仓库内置的浏览器资产面向 `darwin-arm64`，约占 219 MB。发布到 Windows、Linux 或其他 CPU 时必须由对应平台重新构建并验证浏览器资产；平台不匹配时插件明确阻塞 Playwright 主路径，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
+
+### 5. `$frontend-ui-fix`
+
+**作用**：只在用户明确要求后，根据验收报告声明的源码文件、稳定锚点和修改边界应用最小修复。
+
+**使用示例**：
+
+```text
+$frontend-ui-fix 应用 build-101 的 UI 验收修复
+```
+
+默认 `autoFix: "suggest"` 只输出建议；当前任务显式授权后才会修改。它拒绝直接修改 `main` / `master`、拒绝覆盖重叠的未提交改动，并且修复后只进入“待复验”，不会直接标记通过，也不会自动提交、推送或创建 PR。
+
+### 6. `$frontend-ui-verify`
+
+**作用**：使用与基线完全相同的页面、视口、设计依据、目标节点、交互和首次实际采集器重新验收，区分已关闭、未解决和新增问题；不能在项目 Playwright 与视觉兜底之间切换。
+
+**使用示例**：
+
+```text
+$frontend-ui-verify 复验 build-101 的修复结果
+```
+
+只有未解决与新增问题都为空时才通过；场景上下文已经变化时会要求重新开始独立验收。
+
+### 7. `$frontend-workflow-check`
 
 **作用**：只读检查当前项目是否正确接入工作流，以及工作流能否正常运行。
 
@@ -190,7 +239,7 @@ $frontend-workflow-check 检查当前项目的工作流是否健康
 
 **达到的目的**：快速判断当前项目能否正常使用这套流程，并定位缺失配置或版本问题。
 
-### 5. `$frontend-workflow-upgrade`
+### 8. `$frontend-workflow-upgrade`
 
 **作用**：公共工作流发布新版本后，安全升级业务项目中的受管规则。
 
@@ -232,6 +281,11 @@ $frontend-change 开始实施当前变更
 # 开发完成后验证和归档
 $frontend-change 验证、同步并归档当前变更
 
+# 需要进行 UI 验收闭环时执行
+$frontend-ui-review 验收 home-desktop 场景
+$frontend-ui-fix 应用本次验收中已授权的安全修复
+$frontend-ui-verify 使用原场景复验修复结果
+
 # 初始化后、升级后或者出现问题时执行
 $frontend-workflow-check 检查当前项目的工作流是否健康
 
@@ -239,7 +293,7 @@ $frontend-workflow-check 检查当前项目的工作流是否健康
 $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 ```
 
-可以简单记为：`bootstrap` 管接入，`requirement-write` 管需求，`change` 管整个开发过程，`check` 管检查，`upgrade` 管升级。
+可以简单记为：`bootstrap` 管接入，`requirement-write` 管需求，`change` 管开发过程，`ui-review / ui-fix / ui-verify` 管 UI 验收闭环，`check` 管检查，`upgrade` 管升级。
 
 ## 项目落地文件
 
@@ -262,6 +316,16 @@ npm run verify
 ```
 
 `verify` 是本地与 CI 的统一只读门禁。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
+
+仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。当前 CI 已通过 `actions/checkout` 的 `lfs: true` 获取真实文件。非 `darwin-arm64` 环境仍会校验运行时摘要，但跳过不兼容浏览器的真实启动；UI 采集计划会把该平台标记为不可移植。
+
+### 升级内置 Playwright
+
+1. 在 `plugins/frontend-ai-workflow/runtime/playwright/package.json` 固定同一个 Playwright 版本，使用官方 npm 注册表更新包和锁文件。
+2. 只在发布构建阶段设置 `PLAYWRIGHT_BROWSERS_PATH=0`，执行该运行时自己的 Playwright CLI 安装 `chromium --only-shell`。
+3. 更新 `runtime/playwright/platform.json` 中的平台、CPU、浏览器 revision、可执行文件和许可路径。
+4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建完整性清单，再运行 `--inspect` 与目标平台上的 `--smoke`。
+5. 确认 `.local-browsers` 文件由 Git LFS 跟踪，执行全量验证后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
 
 ### 升级内置 OpenSpec
 

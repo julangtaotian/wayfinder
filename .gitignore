@@ -3,5 +3,8 @@
 node_modules/
 !plugins/frontend-ai-workflow/runtime/openspec/node_modules/
 !plugins/frontend-ai-workflow/runtime/openspec/node_modules/**
+!plugins/frontend-ai-workflow/runtime/playwright/node_modules/
+!plugins/frontend-ai-workflow/runtime/playwright/node_modules/**
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/.bin/
 coverage/
 *.log

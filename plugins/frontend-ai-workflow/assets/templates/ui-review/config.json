@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "artifactsRoot": ".frontend-ui-review/runs",
+  "autoFix": "suggest",
+  "scenarios": [
+    {
+      "id": "home-desktop",
+      "url": "http://127.0.0.1:5173/",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "deviceScaleFactor": 1
+      },
+      "design": {
+        "type": "image",
+        "path": "design/home.png"
+      },
+      "targets": [
+        {
+          "selector": "main",
+          "nodeMeaning": "页面主要内容"
+        }
+      ],
+      "interactions": []
+    }
+  ]
+}

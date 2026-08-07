@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.12.0+codex.20260805095141",
-  "description": "Reusable frontend project onboarding, governed requirement delivery, multi-framework verification, and integrity-checked OpenSpec 1.7 planning.",
+  "version": "0.12.0+codex.20260807021508",
+  "description": "Reusable frontend onboarding, governed delivery, and portable project-local UI review with optional visual fallback, safe repair, and verification.",
   "author": {
     "name": "lvshuai"
   },
@@ -11,13 +11,14 @@
     "workflow",
     "openspec",
     "requirements",
+    "ui-review",
     "codex"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.7 change lifecycle, verify runtime integrity, and safely upgrade managed sections without overwriting project-owned content.",
+    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.7 change lifecycle, and run portable project-Playwright UI review with optional visual fallback, explicitly gated source repair, and same-context verification without requiring a separate management platform.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [
@@ -27,7 +28,7 @@
     "defaultPrompt": [
       "Initialize this frontend repository with the shared AI workflow.",
       "Turn my feature description into a reviewable requirement document.",
-      "Move this frontend change through its next planning or delivery stage."
+      "Review a configured frontend page through the portable capture plan, use visual fallback only when declared, safely fix approved UI findings, and verify the result."
     ]
   }
 }

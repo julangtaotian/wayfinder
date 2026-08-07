@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-cascader-v2",
+  "stage": "review",
+  "status": "collecting",
+  "scenarioId": "complex-cascader-indeterminate",
+  "scenarioFingerprint": "2026e9922c875b0aa884aab296ed66fd20c9e70fb3b333013fb290a51f655baf",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:34:13.497Z",
+  "updatedAt": "2026-08-07T02:34:13.497Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader-v2/complex-cascader-indeterminate/review-input.json"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@frontend-ai-workflow/playwright-runtime",
+  "version": "1.62.1",
+  "private": true,
+  "description": "Pinned Playwright runtime bundled with Frontend AI Workflow.",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}

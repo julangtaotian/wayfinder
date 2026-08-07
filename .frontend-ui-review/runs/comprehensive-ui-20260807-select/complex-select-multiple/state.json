@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-select",
+  "stage": "review",
+  "status": "collecting",
+  "scenarioId": "complex-select-multiple",
+  "scenarioFingerprint": "c841f3015dbd4f937d7dbd0b19ca30f8e764a2869d92c9bf02d0408603ad1578",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:31:18.066Z",
+  "updatedAt": "2026-08-07T02:31:18.066Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-select/complex-select-multiple/review-input.json"
+  }
+}

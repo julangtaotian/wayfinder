@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-dialog",
+  "stage": "review",
+  "status": "passed",
+  "scenarioId": "complex-dialog-large",
+  "scenarioFingerprint": "42de215d42e9c0d4e21b22e99e6f258f520197f56120ec0cb473e22c07e9cfb1",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:31:18.065Z",
+  "updatedAt": "2026-08-07T02:45:18.362Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-dialog/complex-dialog-large/review-input.json"
+  }
+}

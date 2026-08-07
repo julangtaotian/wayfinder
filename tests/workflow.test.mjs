@@ -31,6 +31,9 @@ const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 const expectedPublicSkills = [
   'frontend-change',
   'frontend-requirement-write',
+  'frontend-ui-fix',
+  'frontend-ui-review',
+  'frontend-ui-verify',
   'frontend-workflow-bootstrap',
   'frontend-workflow-check',
   'frontend-workflow-upgrade',
@@ -536,6 +539,8 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
     'openspec',
     'runtime-version',
     'runtime-integrity',
+    'playwright-integrity',
+    'playwright-smoke',
   ]);
 
   const executed = [];

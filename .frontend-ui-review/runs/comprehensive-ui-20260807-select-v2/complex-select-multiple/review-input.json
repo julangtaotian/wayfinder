@@ -1,0 +1,59 @@
+{
+  "findings": [],
+  "visualComparison": {
+    "completed": true,
+    "conclusion": "声明范围内通过：双多选触发器、标签、+6 折叠计数、五组选项与勾选反馈与设计依据一致。",
+    "boundary": "仅覆盖基础多选的双展开状态和移除后恢复路径，不代表筛选或远程搜索 Select 通过。"
+  },
+  "reviewedAt": "2026-08-07T10:44:41+08:00",
+  "project": {
+    "name": "frontend-ai-workflow",
+    "runtime": "Chromium 151.0.7922.34（新版插件内置 Playwright）",
+    "page": "http://127.0.0.1:4176/?evidence=1#select/SCN-SELECT-05",
+    "designBasis": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-SELECT-05.png",
+    "scope": [
+      "双多选触发器、标签与折叠计数"
+    ]
+  },
+  "viewport": {
+    "width": 950,
+    "height": 300,
+    "dpr": 1,
+    "scale": 100
+  },
+  "interactionEvidence": {
+    "declared": [
+      "等待两个多选下拉层自动展开，从第一个触发器移除选项 2，再从第一个弹层重新选择选项 2",
+      "确认两组标签、+6 折叠计数、选中勾选与两个弹层均恢复可见"
+    ],
+    "executedBy": "complex-select-multiple",
+    "completed": true
+  },
+  "checkedNodes": [
+    {
+      "selector": "[data-scenario-id=\"SCN-SELECT-05\"] .select-variant-pair",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue",
+      "nodeText": "选项 2 选项 3 选项 2 + 6",
+      "nodeMeaning": "双多选触发器、标签与折叠计数",
+      "rect": {
+        "x": 20,
+        "y": 20,
+        "width": 528,
+        "height": 32
+      },
+      "computedStyle": {
+        "display": "flex",
+        "position": "static",
+        "width": "528px",
+        "height": "32px",
+        "margin": "0px",
+        "padding": "0px",
+        "color": "rgb(34, 34, 34)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(34, 34, 34)",
+        "boxShadow": "none",
+        "font": "14px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    }
+  ]
+}

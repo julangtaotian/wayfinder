@@ -48,6 +48,16 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
       label: 'OpenSpec 运行时完整性',
       args: [path.join(pluginScripts, 'runtime-integrity.mjs'), '--check'],
     },
+    {
+      id: 'playwright-integrity',
+      label: 'Playwright 运行时完整性',
+      args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--check'],
+    },
+    {
+      id: 'playwright-smoke',
+      label: 'Playwright 浏览器启动',
+      args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--smoke'],
+    },
   ];
 }
 

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "runId": "comprehensive-ui-20260807-cascader",
+  "stage": "review",
+  "status": "collecting",
+  "scenarioId": "complex-cascader-indeterminate",
+  "scenarioFingerprint": "48d1e8d0a49ae10fe568d40417ba5cefff304a6217068617a1d12f64d3c1b099",
+  "capture": "project-playwright",
+  "autoFix": "off",
+  "parentRunId": null,
+  "createdAt": "2026-08-07T02:31:18.072Z",
+  "updatedAt": "2026-08-07T02:31:18.072Z",
+  "findings": [],
+  "appliedFindingIds": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate",
+    "state": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate/actual.png",
+    "annotatedScreenshot": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate/report/ui-review.png",
+    "report": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/comprehensive-ui-20260807-cascader/complex-cascader-indeterminate/review-input.json"
+  }
+}

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
+import { BUNDLED_PLAYWRIGHT_VERSION, inspectBundledPlaywright } from './playwright-runtime.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -10,6 +11,9 @@ const repositoryRoot = path.resolve(pluginRoot, '..', '..');
 const PUBLIC_SKILLS = [
   'frontend-change',
   'frontend-requirement-write',
+  'frontend-ui-fix',
+  'frontend-ui-review',
+  'frontend-ui-verify',
   'frontend-workflow-bootstrap',
   'frontend-workflow-check',
   'frontend-workflow-upgrade',
@@ -50,6 +54,24 @@ const PROJECT_PROFILE_ASSETS = [
 const RUNTIME_INTEGRITY_ASSETS = [
   'scripts/runtime-integrity.mjs',
   'runtime/openspec-integrity.json',
+];
+// UI 验收的状态合同、报告器、模板和共享说明必须作为一个整体发布。
+const UI_REVIEW_ASSETS = [
+  'scripts/ui-review-workflow.mjs',
+  'scripts/ui-review-report.mjs',
+  'scripts/playwright-adapter-runner.mjs',
+  'scripts/playwright-runtime.mjs',
+  'assets/templates/ui-review/config.json',
+  'assets/templates/ui-review/playwright-adapter.mjs',
+  'references/ui-review-workflow.md',
+];
+const PLAYWRIGHT_RUNTIME_ASSETS = [
+  'runtime/playwright/package.json',
+  'runtime/playwright/package-lock.json',
+  'runtime/playwright/platform.json',
+  'runtime/playwright/node_modules/playwright/LICENSE',
+  'runtime/playwright/node_modules/playwright-core/LICENSE',
+  'runtime/playwright-integrity.json',
 ];
 
 function readJson(file) {
@@ -121,6 +143,13 @@ function validateSkills(errors) {
       errors.push(`技能 frontmatter 异常：${entry.name}`);
     }
     if (content.includes('[TODO:')) errors.push(`技能仍包含 TODO：${entry.name}`);
+    const metadataPath = path.join(skillsRoot, entry.name, 'agents', 'openai.yaml');
+    if (!fs.existsSync(metadataPath)) errors.push(`技能缺少 agents/openai.yaml：${entry.name}`);
+  }
+
+  const fixMetadata = path.join(skillsRoot, 'frontend-ui-fix', 'agents', 'openai.yaml');
+  if (fs.existsSync(fixMetadata) && !fs.readFileSync(fixMetadata, 'utf8').includes('allow_implicit_invocation: false')) {
+    errors.push('frontend-ui-fix 必须禁止隐式调用');
   }
 
   const referenceRoot = path.join(pluginRoot, 'references', 'openspec');
@@ -165,6 +194,24 @@ function validateRuntimeIntegrityAssets(errors) {
   }
 }
 
+function validateUiReviewAssets(errors) {
+  for (const file of UI_REVIEW_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 UI 验收资产：${file}`);
+  }
+}
+
+function validatePlaywrightRuntime(errors) {
+  for (const file of PLAYWRIGHT_RUNTIME_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 Playwright 运行时资产：${file}`);
+  }
+  const runtime = inspectBundledPlaywright();
+  if (!runtime.valid) {
+    errors.push(`插件内置 Playwright 运行时不可用：${runtime.reason || '未知错误'}`);
+  } else if (runtime.version !== BUNDLED_PLAYWRIGHT_VERSION) {
+    errors.push(`插件内置 Playwright 版本不一致：${runtime.version}`);
+  }
+}
+
 const errors = [];
 try {
   validatePlugin(errors);
@@ -177,6 +224,8 @@ try {
   validateDeliveryGuardAssets(errors);
   validateProjectProfileAssets(errors);
   validateRuntimeIntegrityAssets(errors);
+  validateUiReviewAssets(errors);
+  validatePlaywrightRuntime(errors);
 } catch (error) {
   errors.push(error.message);
 }

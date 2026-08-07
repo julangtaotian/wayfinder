@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "platform": "darwin",
+  "arch": "arm64",
+  "playwrightVersion": "1.62.1",
+  "browser": {
+    "name": "chromium-headless-shell",
+    "revision": "1234",
+    "executable": "node_modules/playwright-core/.local-browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell",
+    "license": "node_modules/playwright-core/.local-browsers/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/LICENSE.headless_shell"
+  },
+  "ffmpeg": {
+    "revision": "1011",
+    "executable": "node_modules/playwright-core/.local-browsers/ffmpeg-1011/ffmpeg-mac",
+    "license": "node_modules/playwright-core/.local-browsers/ffmpeg-1011/COPYING.LGPLv2.1"
+  }
+}

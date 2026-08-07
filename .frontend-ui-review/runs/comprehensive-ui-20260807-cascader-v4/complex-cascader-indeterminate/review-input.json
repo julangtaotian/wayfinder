@@ -1,0 +1,59 @@
+{
+  "findings": [],
+  "visualComparison": {
+    "completed": true,
+    "conclusion": "声明范围内通过：级联弹层双列宽度、行高、第四行路径、子级勾选、父级半选和禁用态与设计依据一致。",
+    "boundary": "仅覆盖基础多选的 Indeterminate 状态和一次子节点勾选恢复，不代表任意层级单选场景通过。"
+  },
+  "reviewedAt": "2026-08-07T10:44:41+08:00",
+  "project": {
+    "name": "frontend-ai-workflow",
+    "runtime": "Chromium 151.0.7922.34（新版插件内置 Playwright）",
+    "page": "http://127.0.0.1:4176/?evidence=1&state=Indeterminate#cascader/SCN-CASCADER-03",
+    "designBasis": "outputs/lanhu-design-spec/validation-evidence/a05-visual-matrix/reference/SCN-CASCADER-03.png",
+    "scope": [
+      "多级级联选择弹层及半选/禁用状态"
+    ]
+  },
+  "viewport": {
+    "width": 950,
+    "height": 500,
+    "dpr": 1,
+    "scale": 100
+  },
+  "interactionEvidence": {
+    "declared": [
+      "等待半选数据和级联弹层自动恢复，勾选一个可用子节点并验证数量变化，再取消勾选恢复基准",
+      "确认第四行路径、子级勾选、父级半选以及禁用节点状态仍然共存"
+    ],
+    "executedBy": "complex-cascader-indeterminate",
+    "completed": true
+  },
+  "checkedNodes": [
+    {
+      "selector": ".el-cascader__dropdown.cascader-evidence-indeterminate[x-placement]",
+      "componentPath": "outputs/lanhu-design-spec/validation-element-ui/src/ScenarioDemo.vue",
+      "nodeText": "第一行 第二行 第三行 第四行 第五行 第六行 第七行 第八行 第九行 第十行 第一行 第二行 第三行 第四行 第五行 第六行 第七行 第八行 第九行 第十行 第十一行 第十二行",
+      "nodeMeaning": "多级级联选择弹层及半选/禁用状态",
+      "rect": {
+        "x": 20,
+        "y": 72,
+        "width": 362,
+        "height": 402
+      },
+      "computedStyle": {
+        "display": "block",
+        "position": "absolute",
+        "width": "362px",
+        "height": "402px",
+        "margin": "12px 0px 5px",
+        "padding": "0px",
+        "color": "rgb(34, 34, 34)",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(228, 231, 237)",
+        "boxShadow": "rgba(0, 0, 0, 0.1) 0px 2px 12px 0px",
+        "font": "14px \"PingFang SC\", \"Microsoft YaHei\", Arial, sans-serif"
+      }
+    }
+  ]
+}

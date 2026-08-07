@@ -1,0 +1,6 @@
+interface:
+  display_name: "前端 UI 修复"
+  short_description: "仅在显式授权后按验收报告边界修改源码并生成待复验状态"
+  default_prompt: "Use $frontend-ui-fix to apply explicitly authorized UI fixes within the recorded safety boundaries."
+policy:
+  allow_implicit_invocation: false
