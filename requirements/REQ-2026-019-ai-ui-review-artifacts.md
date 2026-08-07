@@ -7,7 +7,7 @@
 - 负责人：Codex
 - 目标版本：当前开发迭代
 - 关联页面或模块：`outputs/lanhu-design-spec/validation-tools/`、`outputs/lanhu-design-spec/validation-element-plus/`、`outputs/lanhu-design-spec/validation-element-ui/`、`outputs/lanhu-design-spec/ai-ui-review/`
-- 关联变更：`add-ai-ui-review-artifacts`
+- 关联变更：`add-ai-ui-review-artifacts`、`enhance-ai-ui-review-source-guidance`、`fix-ai-ui-review-ci-portability`
 
 ## 背景与目标
 
@@ -28,6 +28,7 @@
 | D-07 | 首轮验证对象 | 已确认 | 使用 `validation-element-plus` 与 `validation-element-ui` 两个真实项目各生成一组两文件验收结果，结果位于 `outputs/lanhu-design-spec/ai-ui-review/` | 用户本轮明确要求 |
 | D-08 | 实现边界 | 项目默认 | 使用 Node.js 标准库编排，并复用本机 FFmpeg 完成截图标注；页面采集和 AI 判断与确定性的文件生成分离，不增加项目依赖 | 仓库 `AGENTS.md` 仅使用 Node.js 标准库约束与既有截图工具实现 |
 | D-09 | AI 源码修复指导 | 已确认 | 每个问题在原有 DOM 定位之外，还要记录仓库相对源码文件、稳定代码锚点、当前样式来源、精确修改内容、修改作用域、禁止修改范围，以及包含工作目录、命令、页面和断言的复验方式；不以易漂移的行号作为唯一定位依据 | 用户确认按 AI 自动修复建议调整 Markdown |
+| D-10 | 验证环境兼容性 | 已确认 | AI UI 验收专用测试必须同时兼容 macOS 开发环境和 GitHub Actions 的 Linux 环境，不得依赖 Homebrew 或 macOS 系统字体的固定绝对路径，也不得为修复 CI 增加业务项目依赖 | 用户明确要求修复 GitHub Actions 失败；失败日志显示测试写死 macOS FFmpeg 路径 |
 
 ## 范围
 
@@ -123,6 +124,7 @@
 | --- | --- | --- |
 | add-ai-ui-review-artifacts | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08 | A-01、A-02、A-03、A-04 |
 | enhance-ai-ui-review-source-guidance | D-02、D-04、D-05、D-09 | A-01、A-02、A-03、A-05 |
+| fix-ai-ui-review-ci-portability | D-02、D-03、D-08、D-10 | A-01、A-02、A-03、A-06 |
 
 ## 修订记录
 
@@ -131,17 +133,18 @@
 | R-01 | 2026-08-05 | D-01～D-08 | A-01～A-04 | 首次建立需求，V-01～V-03 保持计划，任务待规划。 |
 | R-02 | 2026-08-05 | D-01～D-08 | A-01～A-04 | 生成器、聚焦测试、双项目浏览器验收和完整门禁均完成；V-01～V-03 回填，四条验收进入完成门禁。 |
 | R-03 | 2026-08-05 | D-02、D-04、D-05、D-09 | A-01、A-02、A-03、A-05 | 根据用户确认新增 AI 源码修复指导；保留既有两文件约束，新增 V-04 计划并等待后续变更验证。 |
+| R-04 | 2026-08-07 | D-08、D-10 | A-01、A-02、A-03、A-06 | GitHub Actions 的 Linux Runner 暴露 macOS 固定路径回归；复用专用测试进行跨平台修复，V-05 恢复为计划并重新执行 CI 同入口验证。 |
 
 ## 兼容性与风险
 
 - 受影响页面、公共组件、路由、权限或接口：不修改两套项目页面行为，只新增验证工具、聚焦测试和独立结果目录。
 - 历史数据与兼容策略：保留现有 `validation-evidence/` 历史证据；新两文件结果不替换 183 场景矩阵。
-- 上线与回滚注意事项：截图标注依赖本机 FFmpeg；若环境缺失应明确失败。AI 判断仍可能受字体渲染和抗锯齿影响，因此只交付高置信度差异并声明覆盖范围。
+- 上线与回滚注意事项：正式截图标注仍依赖运行环境提供可用 FFmpeg 和中文字体，缺失时应明确失败；自动测试的输入图片不得依赖固定操作系统路径。AI 判断仍可能受字体渲染和抗锯齿影响，因此只交付高置信度差异并声明覆盖范围。
 
 ## 测试与验证
 
-- 测试文件策略：新建；目标路径：`tests/ai-ui-review.test.mjs`；基线证据：Git 中仍不存在该测试文件，当前工作区版本来自尚未纳入 Git 的前序已验收变更；选择理由：继续完善同一个待纳入版本库的专用测试，不新增第二套测试文件。
-- 验证范围：聚焦；执行命令：`node --test tests/ai-ui-review.test.mjs`、两个组件库项目分别执行 `npm run build`；选择理由：只新增独立验收生成器和结果，不修改共享插件、页面组件、路由或状态。
+- 测试文件策略：复用；目标路径：`tests/ai-ui-review.test.mjs`；基线证据：该文件已由 Git 跟踪并专门覆盖 AI UI 验收产物生成；选择理由：本次修复同一功能的测试输入生成方式，不新增第二套测试文件。
+- 验证范围：聚焦测试执行 `node --test tests/ai-ui-review.test.mjs`；全量验证执行 `npm run verify`。选择理由：先证明跨平台图片输入不改变生成器断言，再复现 GitHub Actions 的唯一验证入口，确认修复没有破坏共享仓库门禁。
 - 自动测试：有问题、零问题、低置信度过滤、最多十条、重复编号、坐标越界、缺少节点定位、重复生成保持两文件。
 - 人工检查：浏览器 `1440 × 900`、DPR 1、100% 缩放；分别检查两套项目实际页面和最终标注截图，确认标注与 DOM 节点及 Markdown 编号一致。
 - 构建与静态检查：两个组件库项目生产构建、`git diff --check` 和 AI 代码标记策略检查。
@@ -154,6 +157,7 @@
 | V-02 | 自动 | Element Plus 与 Element UI 分别执行 `npm run build`，转换 `1603 / 317` 个模块并成功生成生产构建；仅有既有大包体及上游注释提示 | 2026-08-05 | 通过 | [Element Plus 构建](../outputs/lanhu-design-spec/validation-element-plus/dist/index.html)、[Element UI 构建](../outputs/lanhu-design-spec/validation-element-ui/dist/index.html)、[验证记录](../openspec/changes/add-ai-ui-review-artifacts/verification.md) |
 | V-03 | 自动+人工 | Codex 内置 Chromium，视口 `1440px × 900px`、DPR 1、100% 缩放；两套项目各检查 SCN-BUTTON-01 的 6 个真实按钮，截图、DOM 坐标、计算样式、标注和 Markdown 一致；两套均发现 `line-height: 14px` 相对目标 `22px` 的 1 项高置信度问题 | 2026-08-05 | 通过 | [Element Plus 标注截图](../outputs/lanhu-design-spec/ai-ui-review/element-plus/ui-review.png)、[Element Plus 报告](../outputs/lanhu-design-spec/ai-ui-review/element-plus/ui-review.md)、[Element UI 报告](../outputs/lanhu-design-spec/ai-ui-review/element-ui/ui-review.md)、[Element UI 标注截图](../outputs/lanhu-design-spec/ai-ui-review/element-ui/ui-review.png) |
 | V-04 | 自动 | 专用测试 `6/6`、仓库测试 `121/121`、结构校验与 OpenSpec 严格校验通过；检查两份报告中的源码文件、稳定锚点、修改边界和复验字段，两个项目目录仍各只有两个文件 | 2026-08-05 | 通过 | [专用测试](../tests/ai-ui-review.test.mjs)、[验证记录](../openspec/changes/enhance-ai-ui-review-source-guidance/verification.md)、[Element Plus 报告](../outputs/lanhu-design-spec/ai-ui-review/element-plus/ui-review.md)、[Element UI 报告](../outputs/lanhu-design-spec/ai-ui-review/element-ui/ui-review.md) |
+| V-05 | 自动 | 专用测试 `6/6`；GitHub Actions 同入口 `npm run verify` 的自动测试 `136/136`、OpenSpec `24/24` 与统一门禁 `7/7`；8 个官方 Skill validator、Plugin validator 和 `git diff --check` 通过 | 2026-08-07 | 通过 | [专用测试](../tests/ai-ui-review.test.mjs)、[验证记录](../openspec/changes/archive/2026-08-07-fix-ai-ui-review-ci-portability/verification.md) |
 
 ## 验收标准
 
@@ -162,6 +166,7 @@
 - [x] [A-03] 生成器执行高置信度过滤、十条上限、编号与坐标校验，错误输入不留下半成品交付物。
 - [x] [A-04] Element Plus 与 Element UI 真实项目在 `1440 × 900` 视口完成 AI 验收，最终四个文件通过视觉复核、聚焦测试和两套生产构建。
 - [x] [A-05] 每个交付问题包含安全的仓库相对源码文件、稳定代码锚点、当前样式来源、精确修改、作用域、禁止修改范围，以及可执行且可断言的复验步骤；两套现有报告映射到各自真实源码而不增加交付文件。
+- [x] [A-06] AI UI 验收专用测试和 GitHub Actions 同入口验证不依赖 macOS 专用绝对路径，在 Linux CI 中能够执行且保留原有产物与安全断言。
 
 ## 验收—证据映射
 
@@ -172,6 +177,7 @@
 | A-03 | 过滤和错误边界 | D-05、D-06、D-08 | 自动 | `tests/ai-ui-review.test.mjs` | 已验证低置信度和小于 2px 几何差异过滤、同节点合并、十条上限、重复编号、缺少节点、越界与未知文件保护，错误输入无半成品 | V-01 |
 | A-04 | 双项目真实验收 | D-01、D-06、D-07 | 自动+人工 | Chromium 视口 `1440 × 900`、DPR 1；检查项：双项目按钮场景 DOM、计算样式和标注产物；截图：两套 `ui-review.png`；两套构建产物与 `verification.md` | 两个真实项目均在 `1440 × 900` 完成按钮场景 AI 验收，各发现 1 项行高问题；四个产物、两套构建、视觉复核及完整门禁通过 | V-02、V-03 |
 | A-05 | AI 源码修复指导 | D-02、D-04、D-05、D-09 | 自动 | `tests/ai-ui-review.test.mjs`、两套 `ui-review.md` 和对应 `src/theme.css` | 每个问题可从报告直接定位到真实源码文件与稳定规则锚点，明确允许和禁止的改动边界，并给出构建与页面样式断言；项目目录仍各自只有两个文件 | V-04 |
+| A-06 | macOS 与 Linux CI 验证兼容 | D-08、D-10 | 自动 | `tests/ai-ui-review.test.mjs`、`.github/workflows/validate.yml`、`openspec/changes/archive/2026-08-07-fix-ai-ui-review-ci-portability/verification.md` | 专用测试使用确定性输入和临时工具替身，不调用 macOS 专用 FFmpeg 或字体路径；GitHub Actions 同入口自动测试 `136/136`、统一门禁 `7/7` 通过 | V-05 |
 
 ## 待确认问题
 

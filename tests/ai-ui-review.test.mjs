@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { deflateSync } from 'node:zlib';
 
 import {
   generateUiReview,
@@ -12,16 +12,69 @@ import {
   renderReviewMarkdown,
 } from '../outputs/lanhu-design-spec/validation-tools/generate-ai-ui-review.mjs';
 
-const ffmpegPath = '/opt/homebrew/bin/ffmpeg';
-const fontPath = '/System/Library/Fonts/PingFang.ttc';
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function pngChunk(type, data = Buffer.alloc(0)) {
+  const typeBuffer = Buffer.from(type, 'ascii');
+  const lengthBuffer = Buffer.alloc(4);
+  const checksumBuffer = Buffer.alloc(4);
+  lengthBuffer.writeUInt32BE(data.length);
+  checksumBuffer.writeUInt32BE(crc32(Buffer.concat([typeBuffer, data])));
+  return Buffer.concat([lengthBuffer, typeBuffer, data, checksumBuffer]);
+}
 
 function createPng(filePath, width = 320, height = 180) {
-  const result = spawnSync(
-    ffmpegPath,
-    ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `color=c=white:s=${width}x${height}`, '-frames:v', '1', filePath],
-    { encoding: 'utf8' },
-  );
-  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+
+  // 每行首字节是 PNG 过滤器类型，后续像素使用不透明白色 RGBA。
+  const rowLength = width * 4 + 1;
+  const pixels = Buffer.alloc(rowLength * height, 255);
+  for (let row = 0; row < height; row += 1) pixels[row * rowLength] = 0;
+
+  fs.writeFileSync(filePath, Buffer.concat([
+    pngSignature,
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', deflateSync(pixels)),
+    pngChunk('IEND'),
+  ]));
+}
+
+function createRenderingTools(tempRoot) {
+  const ffmpegPath = path.join(tempRoot, 'fake-ffmpeg.mjs');
+  const fontPath = path.join(tempRoot, 'fake-font.ttf');
+  fs.writeFileSync(ffmpegPath, `#!/usr/bin/env node
+import fs from 'node:fs';
+
+const args = process.argv.slice(2);
+if (args.includes('-version')) process.exit(0);
+const inputIndex = args.indexOf('-i');
+const inputPath = inputIndex >= 0 ? args[inputIndex + 1] : '';
+const outputPath = args.at(-1);
+if (!inputPath || !outputPath) {
+  process.stderr.write('测试 FFmpeg 缺少输入或输出路径。\\n');
+  process.exit(1);
+}
+// 测试替身只验证生成编排与两文件合同，真实绘制效果由视觉验收证据覆盖。
+fs.copyFileSync(inputPath, outputPath);
+`);
+  fs.chmodSync(ffmpegPath, 0o755);
+  fs.writeFileSync(fontPath, 'test-font', 'utf8');
+  return { ffmpegPath, fontPath };
 }
 
 function checkedNode(overrides = {}) {
@@ -188,6 +241,7 @@ test('有问题和零问题都只生成两个文件且重复生成不增加文�
   const screenshot = path.join(tempRoot, 'raw.png');
   const allowedRoot = path.join(tempRoot, 'results');
   const outputDir = path.join(allowedRoot, 'element-plus');
+  const renderingTools = createRenderingTools(tempRoot);
   createPng(screenshot);
 
   const first = generateUiReview({
@@ -195,8 +249,7 @@ test('有问题和零问题都只生成两个文件且重复生成不增加文�
     input: reviewInput({ findings: [finding()] }),
     outputDir,
     allowedOutputRoot: allowedRoot,
-    ffmpegPath,
-    fontPath,
+    ...renderingTools,
   });
   assert.equal(first.findingCount, 1);
   assert.deepEqual(fs.readdirSync(outputDir).sort(), ['ui-review.md', 'ui-review.png']);
@@ -207,8 +260,7 @@ test('有问题和零问题都只生成两个文件且重复生成不增加文�
     input: reviewInput(),
     outputDir,
     allowedOutputRoot: allowedRoot,
-    ffmpegPath,
-    fontPath,
+    ...renderingTools,
   });
   assert.equal(second.findingCount, 0);
   assert.deepEqual(fs.readdirSync(outputDir).sort(), ['ui-review.md', 'ui-review.png']);
@@ -251,8 +303,6 @@ test('未知输出文件会阻止生成且既有内容保持不变', (context) =
       input: reviewInput(),
       outputDir,
       allowedOutputRoot: allowedRoot,
-      ffmpegPath,
-      fontPath,
     }),
     /包含未知文件/u,
   );
