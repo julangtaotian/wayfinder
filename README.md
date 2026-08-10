@@ -21,7 +21,8 @@
 - 用同一个 `npm run verify` 在本地和 CI 串行执行测试、插件结构、OpenSpec 严格校验、运行时版本与完整性检查。
 - 对已确认“不改变可观察行为”的工具、文档或纯内部变更支持受控 `skip_specs`；其他变更仍必须提供 delta specs，完成入口不暴露跳过参数。
 - 通过插件提供通用技能，减少每个仓库重复维护 `.codex/skills`。
-- 在项目自动化流程内完成真实页面 UI 验收、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
+- 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
+- 随插件提供共享 Playwright、`darwin-arm64` 与 `linux-x64` 独立浏览器运行包；业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
 当前完整回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn。Monorepo 和多个前端应用的专属编排不在本版本范围内。
 
@@ -177,17 +178,19 @@ $frontend-ui-review 验收 home-desktop 场景
 
 首次使用时，在业务项目创建 `.frontend-ui-review/config.json` 和 `.frontend-ui-review/playwright-adapter.mjs`，声明页面、视口、设计依据、目标节点和交互。两个草案分别来自插件的 `assets/templates/ui-review/config.json` 与 `assets/templates/ui-review/playwright-adapter.mjs`；场景事实和项目交互必须按当前项目修改。
 
-新配置默认通过 `projectPlaywright.adapter` 接收插件内置的 Playwright 1.62.1 与 Chromium headless shell，业务项目不添加 Playwright 依赖，也不修改自己的锁文件。采集计划可以被其他 AI 工具与 CI 直接消费；既有 `projectPlaywright.command` 继续兼容。Codex Browser 或同类视觉能力只在配置明确声明、主路径不可用时作为兜底。运行阶段不会执行 npm 安装、浏览器下载、同一运行内采集器切换或虚假通过。
+版本 2 配置通过 `projectPlaywright.adapter` 接收插件内置的 Playwright 1.62.1 与当前平台 Chromium headless shell，业务项目不添加 Playwright 依赖，也不修改自己的锁文件。交互使用受限结构化动作表达点击、悬停、输入、按键、选择、勾选、等待、断言和分段截图；比较使用 DOM、图片区域或混合模式，输出 `passed / needs-fix / inconclusive`。Codex Browser 或同类视觉能力只在结果不确定且配置明确声明时作为兜底。
 
 其他 AI 工具不需要理解 Codex Skill，也可以直接消费确定性入口：
 
 ```text
-node <插件根>/scripts/ui-review-workflow.mjs capture-plan --target <项目> --scenario home-desktop --run-id build-101
+node <插件根>/scripts/ui-review-runner.mjs review --target <项目> --scenario home-desktop --run-id build-101
+# 确认预览后显式执行
+node <插件根>/scripts/ui-review-runner.mjs review --target <项目> --scenario home-desktop --run-id build-101 --write
 ```
 
-返回值包含插件命令参数、固定运行时版本、目标与当前平台、完整性结论、不可用原因、结果路径、实际截图与报告路径以及允许的兜底顺序。没有新增字段的老配置继续保持原来的单采集器行为。
+返回值包含固定运行时与平台、结构化交互、比较规则、预计产物和安全边界。稳定退出码为 `0=通过`、`1=需修改/复验失败`、`2=不确定`、`3=阻塞`；默认预览不创建目录。版本 1 老配置继续保持原指纹和采集语义，其字符串交互不会被猜测执行。
 
-当前仓库内置的浏览器资产面向 `darwin-arm64`，约占 219 MB。发布到 Windows、Linux 或其他 CPU 时必须由对应平台重新构建并验证浏览器资产；平台不匹配时插件明确阻塞 Playwright 主路径，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
+当前仓库内置 `darwin-arm64` 与 `linux-x64` 两套独立浏览器资产，共享 Playwright、PNG 解码和像素比较代码。每套资产独立校验 Chromium、FFmpeg、许可和摘要；Windows、Intel Mac、Linux ARM 等未支持平台明确阻塞，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
 
 ### 5. `$frontend-ui-fix`
 
@@ -317,15 +320,15 @@ npm run verify
 
 `verify` 是本地与 CI 的统一只读门禁。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
 
-仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。当前 CI 已通过 `actions/checkout` 的 `lfs: true` 获取真实文件。非 `darwin-arm64` 环境仍会校验运行时摘要，但跳过不兼容浏览器的真实启动；UI 采集计划会把该平台标记为不可移植。
+仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。当前 CI 已通过 `actions/checkout` 的 `lfs: true` 获取真实文件，并在 Linux x64 实际启动内置 Chromium；受支持平台不允许以跳过冒烟代替成功。
 
 ### 升级内置 Playwright
 
 1. 在 `plugins/frontend-ai-workflow/runtime/playwright/package.json` 固定同一个 Playwright 版本，使用官方 npm 注册表更新包和锁文件。
-2. 只在发布构建阶段设置 `PLAYWRIGHT_BROWSERS_PATH=0`，执行该运行时自己的 Playwright CLI 安装 `chromium --only-shell`。
-3. 更新 `runtime/playwright/platform.json` 中的平台、CPU、浏览器 revision、可执行文件和许可路径。
-4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建完整性清单，再运行 `--inspect` 与目标平台上的 `--smoke`。
-5. 确认 `.local-browsers` 文件由 Git LFS 跟踪，执行全量验证后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
+2. 用 `build-playwright-platform.mjs --platform <platform-arch>` 预览发布计划，只有维护阶段才追加 `--write` 下载固定 Chromium headless shell 与 FFmpeg。
+3. 更新 `runtime/playwright/platforms/<platform-arch>.json` 的浏览器 revision、可执行文件和许可路径；平台资产只能位于自己的独立目录。
+4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建共享及各平台完整性清单，再运行 `--inspect`、`--check` 与目标平台上的 `--smoke`。
+5. 确认 `platform-assets` 文件由 Git LFS 跟踪，在 Apple Silicon Mac 与 Linux x64 都取得 `skipped: false` 的真实启动证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
 
 ### 升级内置 OpenSpec
 

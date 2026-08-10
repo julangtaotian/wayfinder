@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
-import { BUNDLED_PLAYWRIGHT_VERSION, inspectBundledPlaywright } from './playwright-runtime.mjs';
+import {
+  BUNDLED_PLAYWRIGHT_VERSION,
+  inspectBundledPlaywright,
+  verifyPlaywrightIntegrity,
+} from './playwright-runtime.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -58,9 +62,13 @@ const RUNTIME_INTEGRITY_ASSETS = [
 // UI 验收的状态合同、报告器、模板和共享说明必须作为一个整体发布。
 const UI_REVIEW_ASSETS = [
   'scripts/ui-review-workflow.mjs',
+  'scripts/ui-review-runner.mjs',
   'scripts/ui-review-report.mjs',
   'scripts/playwright-adapter-runner.mjs',
   'scripts/playwright-runtime.mjs',
+  'scripts/build-playwright-platform.mjs',
+  'scripts/ui-review-interactions.mjs',
+  'scripts/ui-review-comparator.mjs',
   'assets/templates/ui-review/config.json',
   'assets/templates/ui-review/playwright-adapter.mjs',
   'references/ui-review-workflow.md',
@@ -68,10 +76,15 @@ const UI_REVIEW_ASSETS = [
 const PLAYWRIGHT_RUNTIME_ASSETS = [
   'runtime/playwright/package.json',
   'runtime/playwright/package-lock.json',
-  'runtime/playwright/platform.json',
+  'runtime/playwright/platforms/darwin-arm64.json',
+  'runtime/playwright/platforms/linux-x64.json',
+  'runtime/playwright/integrity/shared.json',
+  'runtime/playwright/integrity/darwin-arm64.json',
+  'runtime/playwright/integrity/linux-x64.json',
   'runtime/playwright/node_modules/playwright/LICENSE',
   'runtime/playwright/node_modules/playwright-core/LICENSE',
-  'runtime/playwright-integrity.json',
+  'runtime/playwright/node_modules/pngjs/LICENSE',
+  'runtime/playwright/node_modules/pixelmatch/LICENSE',
 ];
 
 function readJson(file) {
@@ -210,6 +223,8 @@ function validatePlaywrightRuntime(errors) {
   } else if (runtime.version !== BUNDLED_PLAYWRIGHT_VERSION) {
     errors.push(`插件内置 Playwright 版本不一致：${runtime.version}`);
   }
+  const integrity = verifyPlaywrightIntegrity({ verifyAllPlatforms: true });
+  if (!integrity.ok) errors.push(`Playwright 跨平台完整性校验失败：${integrity.errors.join('；')}`);
 }
 
 const errors = [];

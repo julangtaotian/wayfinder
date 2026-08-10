@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "artifactsRoot": ".frontend-ui-review/runs",
   "autoFix": "suggest",
   "scenarios": [
@@ -27,7 +27,32 @@
           "nodeMeaning": "页面主要内容"
         }
       ],
-      "interactions": []
+      "interactions": [],
+      "comparison": {
+        "mode": "hybrid",
+        "dom": [
+          {
+            "selector": "main",
+            "property": "visible",
+            "expected": true
+          }
+        ],
+        "image": {
+          "regions": [
+            {
+              "name": "main-page",
+              "actual": { "x": 0, "y": 0, "width": 1440, "height": 900 },
+              "expected": { "x": 0, "y": 0, "width": 1440, "height": 900 }
+            }
+          ],
+          "masks": [],
+          "thresholds": {
+            "colorThreshold": 0.1,
+            "maxDiffPixels": 100,
+            "maxDiffRatio": 0.001
+          }
+        }
+      }
     }
   ]
 }

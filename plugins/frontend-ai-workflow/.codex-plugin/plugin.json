@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.12.0+codex.20260807021508",
-  "description": "Reusable frontend onboarding, governed delivery, and portable project-local UI review with optional visual fallback, safe repair, and verification.",
+  "version": "0.12.0+codex.20260810023014",
+  "description": "Reusable frontend delivery and project-local UI review with structured interactions, deterministic comparison, cross-platform bundled Chromium, optional visual fallback, safe repair, and verification.",
   "author": {
     "name": "lvshuai"
   },
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.7 change lifecycle, and run portable project-Playwright UI review with optional visual fallback, explicitly gated source repair, and same-context verification without requiring a separate management platform.",
+    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.7 change lifecycle, and run portable UI review with structured interactions, deterministic DOM or image comparison, bundled macOS ARM and Linux x64 Chromium, optional visual fallback, explicitly gated source repair, and same-context verification without a separate management platform.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [
@@ -28,7 +28,7 @@
     "defaultPrompt": [
       "Initialize this frontend repository with the shared AI workflow.",
       "Turn my feature description into a reviewable requirement document.",
-      "Review a configured frontend page through the portable capture plan, use visual fallback only when declared, safely fix approved UI findings, and verify the result."
+      "Review a configured frontend page through the unified deterministic runner, use visual fallback only for declared inconclusive results, safely fix approved UI findings, and verify the result."
     ]
   }
 }

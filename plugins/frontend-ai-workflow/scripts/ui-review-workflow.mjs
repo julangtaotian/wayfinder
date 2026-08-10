@@ -6,17 +6,34 @@ import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { inspectBundledPlaywright } from './playwright-runtime.mjs';
 
-export const UI_REVIEW_CONFIG_VERSION = 1;
-export const UI_REVIEW_STATE_VERSION = 1;
+export const UI_REVIEW_CONFIG_VERSION = 2;
+export const UI_REVIEW_STATE_VERSION = 2;
 export const DEFAULT_UI_REVIEW_CONFIG = '.frontend-ui-review/config.json';
 
 const AUTO_FIX_MODES = new Set(['off', 'suggest', 'apply']);
 const CAPTURE_METHODS = new Set(['browser', 'project-playwright']);
 const DESIGN_TYPES = new Set(['image', 'spec']);
 const RUN_STAGES = new Set(['review', 'repair', 'verify']);
-const RUN_STATUSES = new Set(['collecting', 'needs-fix', 'passed', 'ready-to-verify', 'failed']);
+const RUN_STATUSES = new Set(['collecting', 'needs-fix', 'passed', 'ready-to-verify', 'failed', 'inconclusive', 'blocked']);
 const RUN_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$/u;
 const SCENARIO_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/u;
+const CAPTURE_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/u;
+const INTERACTION_ACTIONS = new Set([
+  'click',
+  'hover',
+  'fill',
+  'press',
+  'select-option',
+  'check',
+  'uncheck',
+  'wait-for',
+  'assert',
+  'capture',
+]);
+const LOCATOR_ACTIONS = new Set(['click', 'hover', 'fill', 'press', 'select-option', 'check', 'uncheck', 'wait-for']);
+const WAIT_STATES = new Set(['visible', 'hidden', 'attached', 'detached']);
+const ASSERTION_TYPES = new Set(['visible', 'hidden', 'text', 'value', 'url']);
+const COMPARISON_MODES = new Set(['dom', 'image', 'hybrid']);
 const CAPTURE_TEMPLATE_PATTERN = /\{([A-Za-z][A-Za-z0-9]*)\}/gu;
 const CAPTURE_TEMPLATE_KEYS = new Set([
   'scenarioId',
@@ -51,7 +68,189 @@ function optionalString(value, label) {
 function normalizeStringArray(value, label) {
   if (value === undefined) return [];
   if (!Array.isArray(value)) fail(`${label}必须是字符串数组`);
-  return value.map((item, index) => requireString(item, `${label}[${index}]`));
+  return value.map((item, index) => {
+    if (typeof item !== 'string') fail(`${label}必须是字符串数组，${label}[${index}] 不是字符串`);
+    return requireString(item, `${label}[${index}]`);
+  });
+}
+
+function assertAllowedKeys(value, allowed, label) {
+  const unknown = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unknown.length > 0) fail(`${label}包含不支持字段：${unknown.join('、')}`);
+}
+
+function normalizeTimeout(value, label) {
+  if (value === undefined) return 5000;
+  const timeout = Number(value);
+  if (!Number.isInteger(timeout) || timeout < 100 || timeout > 30000) {
+    fail(`${label}必须是 100 到 30000 的整数`);
+  }
+  return timeout;
+}
+
+function normalizeSelector(value, label) {
+  const selector = requireString(value, label);
+  if (selector.length > 512 || /[\u0000-\u001f\u007f]/u.test(selector)) fail(`${label}包含无效字符或过长`);
+  return selector;
+}
+
+function normalizeInteractionValue(value, label) {
+  const text = requireString(value, label);
+  if (text.length > 4096 || /[\u0000\u000b\u000c\u000e-\u001f\u007f]/u.test(text)) {
+    fail(`${label}包含无效控制字符或过长`);
+  }
+  return text;
+}
+
+function normalizeInteraction(value, index) {
+  const label = `interactions[${index}]`;
+  const interaction = requireObject(value, label);
+  const action = requireString(interaction.action, `${label}.action`);
+  if (!INTERACTION_ACTIONS.has(action)) fail(`${label}包含不支持的交互动作：${action}`);
+
+  const common = new Set(['action', 'timeout']);
+  const actionFields = {
+    click: ['selector'],
+    hover: ['selector'],
+    fill: ['selector', 'value'],
+    press: ['selector', 'key'],
+    'select-option': ['selector', 'value'],
+    check: ['selector'],
+    uncheck: ['selector'],
+    'wait-for': ['selector', 'state'],
+    assert: ['assertion', 'selector', 'value', 'exact'],
+    capture: ['name'],
+  };
+  assertAllowedKeys(interaction, new Set([...common, ...actionFields[action]]), label);
+  const normalized = { action, timeout: normalizeTimeout(interaction.timeout, `${label}.timeout`) };
+
+  if (LOCATOR_ACTIONS.has(action)) {
+    normalized.selector = normalizeSelector(interaction.selector, `${label}.selector`);
+  }
+  if (action === 'fill') {
+    if (/(?:password|passwd|secret|token)/iu.test(normalized.selector)) {
+      fail(`${label}.selector 指向敏感凭据字段，结构化交互禁止记录凭据`);
+    }
+    normalized.value = normalizeInteractionValue(interaction.value, `${label}.value`);
+  }
+  if (action === 'press') {
+    normalized.key = requireString(interaction.key, `${label}.key`);
+    if (normalized.key.length > 64 || !/^[A-Za-z0-9+_-]+$/u.test(normalized.key)) fail(`${label}.key 不是受支持的按键组合`);
+  }
+  if (action === 'select-option') normalized.value = normalizeInteractionValue(interaction.value, `${label}.value`);
+  if (action === 'wait-for') {
+    normalized.state = interaction.state === undefined ? 'visible' : requireString(interaction.state, `${label}.state`);
+    if (!WAIT_STATES.has(normalized.state)) fail(`${label}.state 只能是 visible、hidden、attached 或 detached`);
+  }
+  if (action === 'assert') {
+    normalized.assertion = requireString(interaction.assertion, `${label}.assertion`);
+    if (!ASSERTION_TYPES.has(normalized.assertion)) fail(`${label}.assertion 不受支持：${normalized.assertion}`);
+    if (normalized.assertion === 'url') {
+      if (interaction.selector !== undefined) fail(`${label}.url 断言不能声明 selector`);
+    } else {
+      normalized.selector = normalizeSelector(interaction.selector, `${label}.selector`);
+    }
+    if (['text', 'value', 'url'].includes(normalized.assertion)) {
+      normalized.value = normalizeInteractionValue(interaction.value, `${label}.value`);
+    } else if (interaction.value !== undefined) {
+      fail(`${label}.${normalized.assertion} 断言不能声明 value`);
+    }
+    normalized.exact = interaction.exact === true;
+  }
+  if (action === 'capture') {
+    normalized.name = requireString(interaction.name, `${label}.name`);
+    if (!CAPTURE_NAME_PATTERN.test(normalized.name)) fail(`${label}.截图名称只能使用小写字母、数字和短横线，长度不超过 64`);
+  }
+  return normalized;
+}
+
+function normalizeComparisonRect(value, label) {
+  const rect = requireObject(value, label);
+  assertAllowedKeys(rect, new Set(['x', 'y', 'width', 'height']), label);
+  const normalized = Object.fromEntries(['x', 'y', 'width', 'height'].map((key) => [key, Number(rect[key])]));
+  if (!Number.isInteger(normalized.x) || normalized.x < 0 || !Number.isInteger(normalized.y) || normalized.y < 0) {
+    fail(`${label}.x 和 ${label}.y 必须是非负整数`);
+  }
+  if (!Number.isInteger(normalized.width) || normalized.width < 1 || !Number.isInteger(normalized.height) || normalized.height < 1) {
+    fail(`${label}.width 和 ${label}.height 必须是正整数`);
+  }
+  return normalized;
+}
+
+function normalizeComparison(value, label, designType) {
+  const comparison = requireObject(value, label);
+  assertAllowedKeys(comparison, new Set(['mode', 'dom', 'image']), label);
+  const mode = requireString(comparison.mode, `${label}.mode`);
+  if (!COMPARISON_MODES.has(mode)) fail(`${label}.mode 只能是 dom、image 或 hybrid`);
+
+  const dom = comparison.dom === undefined ? [] : comparison.dom;
+  if (!Array.isArray(dom)) fail(`${label}.dom 必须是数组`);
+  const normalizedDom = dom.map((item, index) => {
+    const itemLabel = `${label}.dom[${index}]`;
+    const assertion = requireObject(item, itemLabel);
+    assertAllowedKeys(assertion, new Set(['selector', 'property', 'expected', 'exact']), itemLabel);
+    const property = requireString(assertion.property, `${itemLabel}.property`);
+    if (!['visible', 'hidden', 'text', 'value', 'url'].includes(property) && !/^style\.[a-z-]{1,64}$/u.test(property)) {
+      fail(`${itemLabel}.property 不受支持：${property}`);
+    }
+    const expected = assertion.expected;
+    if (['visible', 'hidden'].includes(property)) {
+      if (expected !== true && expected !== false) fail(`${itemLabel}.expected 必须是布尔值`);
+    } else if (typeof expected !== 'string') {
+      fail(`${itemLabel}.expected 必须是字符串`);
+    }
+    return {
+      selector: normalizeSelector(assertion.selector, `${itemLabel}.selector`),
+      property,
+      expected,
+      exact: assertion.exact === true,
+    };
+  });
+
+  let normalizedImage = null;
+  if (comparison.image !== undefined) {
+    if (designType !== 'image') fail(`${label}.image 只能用于图片设计依据`);
+    const image = requireObject(comparison.image, `${label}.image`);
+    assertAllowedKeys(image, new Set(['regions', 'masks', 'thresholds']), `${label}.image`);
+    if (!Array.isArray(image.regions) || image.regions.length === 0) fail(`${label}.image.regions 至少要包含一个区域`);
+    const regions = image.regions.map((item, index) => {
+      const itemLabel = `${label}.image.regions[${index}]`;
+      const region = requireObject(item, itemLabel);
+      assertAllowedKeys(region, new Set(['name', 'actual', 'expected']), itemLabel);
+      const name = requireString(region.name, `${itemLabel}.name`);
+      if (!CAPTURE_NAME_PATTERN.test(name)) fail(`${itemLabel}.name 只能使用小写字母、数字和短横线`);
+      return {
+        name,
+        actual: normalizeComparisonRect(region.actual, `${itemLabel}.actual`),
+        expected: normalizeComparisonRect(region.expected, `${itemLabel}.expected`),
+      };
+    });
+    if (new Set(regions.map((region) => region.name)).size !== regions.length) fail(`${label}.image.regions 名称不能重复`);
+    const masks = image.masks === undefined ? [] : image.masks;
+    if (!Array.isArray(masks)) fail(`${label}.image.masks 必须是数组`);
+    const normalizedMasks = masks.map((item, index) => {
+      const itemLabel = `${label}.image.masks[${index}]`;
+      const mask = requireObject(item, itemLabel);
+      assertAllowedKeys(mask, new Set(['actual', 'expected']), itemLabel);
+      return {
+        actual: normalizeComparisonRect(mask.actual, `${itemLabel}.actual`),
+        expected: normalizeComparisonRect(mask.expected, `${itemLabel}.expected`),
+      };
+    });
+    const thresholds = image.thresholds === undefined ? {} : requireObject(image.thresholds, `${label}.image.thresholds`);
+    assertAllowedKeys(thresholds, new Set(['colorThreshold', 'maxDiffPixels', 'maxDiffRatio']), `${label}.image.thresholds`);
+    const colorThreshold = thresholds.colorThreshold === undefined ? 0.1 : Number(thresholds.colorThreshold);
+    const maxDiffPixels = thresholds.maxDiffPixels === undefined ? 0 : Number(thresholds.maxDiffPixels);
+    const maxDiffRatio = thresholds.maxDiffRatio === undefined ? 0 : Number(thresholds.maxDiffRatio);
+    if (!Number.isFinite(colorThreshold) || colorThreshold < 0 || colorThreshold > 1) fail(`${label}.image.thresholds.colorThreshold 必须是 0 到 1`);
+    if (!Number.isInteger(maxDiffPixels) || maxDiffPixels < 0) fail(`${label}.image.thresholds.maxDiffPixels 必须是非负整数`);
+    if (!Number.isFinite(maxDiffRatio) || maxDiffRatio < 0 || maxDiffRatio > 1) fail(`${label}.image.thresholds.maxDiffRatio 必须是 0 到 1`);
+    normalizedImage = { regions, masks: normalizedMasks, thresholds: { colorThreshold, maxDiffPixels, maxDiffRatio } };
+  }
+  if (['dom', 'hybrid'].includes(mode) && normalizedDom.length === 0) fail(`${label}.${mode} 模式必须声明 DOM 断言`);
+  if (['image', 'hybrid'].includes(mode) && !normalizedImage) fail(`${label}.${mode} 模式必须声明图片比较`);
+  if (mode === 'dom' && normalizedImage) fail(`${label}.dom 模式不能声明图片比较`);
+  return { mode, dom: normalizedDom, image: normalizedImage };
 }
 
 function requireRepoRelativePath(value, label) {
@@ -192,7 +391,7 @@ function normalizeProjectPlaywright(value, label, projectRoot, captureOrder) {
   };
 }
 
-function normalizeScenario(value, index, projectRoot) {
+function normalizeScenario(value, index, projectRoot, schemaVersion) {
   const label = `scenarios[${index}]`;
   const scenario = requireObject(value, label);
   const id = requireString(scenario.id, `${label}.id`);
@@ -242,6 +441,12 @@ function normalizeScenario(value, index, projectRoot) {
     selectors.add(target.selector);
   }
 
+  const interactions = schemaVersion === 1
+    ? normalizeStringArray(scenario.interactions, `${label}.interactions`)
+    : (() => {
+        if (!Array.isArray(scenario.interactions)) fail(`${label}.interactions 必须是结构化交互数组`);
+        return scenario.interactions.map((interaction, interactionIndex) => normalizeInteraction(interaction, interactionIndex));
+      })();
   const normalized = {
     id,
     url: pageUrl.toString(),
@@ -253,14 +458,23 @@ function normalizeScenario(value, index, projectRoot) {
       sha256: sha256(fs.readFileSync(designPath.absolutePath)),
     },
     targets,
-    interactions: normalizeStringArray(scenario.interactions, `${label}.interactions`),
+    interactions,
   };
-  // 老配置继续使用原指纹来源；只有声明新策略时才把扩展字段纳入指纹。
-  const fingerprintSource = captureFallback || projectPlaywright
+  const interactionMode = schemaVersion === 1 ? 'instructions' : 'structured';
+  const comparison = schemaVersion === 1
+    ? null
+    : normalizeComparison(scenario.comparison, `${label}.comparison`, designType);
+  // 版本 1 继续使用原指纹来源；版本 2 才纳入结构化交互模式和确定性比较合同。
+  const legacyFingerprintSource = captureFallback || projectPlaywright
     ? { ...normalized, captureFallback, projectPlaywright }
     : normalized;
+  const fingerprintSource = schemaVersion === 1
+    ? legacyFingerprintSource
+    : { ...legacyFingerprintSource, interactionMode, comparison };
   return {
     ...normalized,
+    interactionMode,
+    comparison,
     captureFallback,
     projectPlaywright,
     capturePlan: {
@@ -275,7 +489,7 @@ function normalizeScenario(value, index, projectRoot) {
 
 export function normalizeUiReviewConfig(input, projectRoot, configPath = DEFAULT_UI_REVIEW_CONFIG) {
   const config = requireObject(input, 'UI 验收配置');
-  if (config.schemaVersion !== UI_REVIEW_CONFIG_VERSION) {
+  if (![1, UI_REVIEW_CONFIG_VERSION].includes(config.schemaVersion)) {
     fail(`UI 验收配置版本不受支持：${String(config.schemaVersion)}`);
   }
   const autoFix = config.autoFix === undefined ? 'suggest' : requireString(config.autoFix, 'autoFix');
@@ -286,14 +500,19 @@ export function normalizeUiReviewConfig(input, projectRoot, configPath = DEFAULT
     'artifactsRoot',
   ).projectPath;
   if (!Array.isArray(config.scenarios) || config.scenarios.length === 0) fail('scenarios 至少要包含一个验收场景');
-  const scenarios = config.scenarios.map((scenario, index) => normalizeScenario(scenario, index, projectRoot));
+  const scenarios = config.scenarios.map((scenario, index) => normalizeScenario(
+    scenario,
+    index,
+    projectRoot,
+    config.schemaVersion,
+  ));
   const scenarioIds = new Set();
   for (const scenario of scenarios) {
     if (scenarioIds.has(scenario.id)) fail(`场景 ID 重复：${scenario.id}`);
     scenarioIds.add(scenario.id);
   }
   return {
-    schemaVersion: UI_REVIEW_CONFIG_VERSION,
+    schemaVersion: config.schemaVersion,
     configPath,
     artifactsRoot,
     autoFix,
@@ -338,7 +557,9 @@ function buildArtifactPaths(config, runId, scenarioId) {
     runDirectory,
     state: `${runDirectory}/state.json`,
     actualScreenshot: `${runDirectory}/actual.png`,
+    interactionScreenshots: `${runDirectory}/interactions`,
     annotatedScreenshot: `${runDirectory}/report/ui-review.png`,
+    diffScreenshot: `${runDirectory}/report/diff.png`,
     report: `${runDirectory}/report/ui-review.md`,
     reviewInput: `${runDirectory}/review-input.json`,
   };
@@ -441,7 +662,7 @@ export function createCapturePlan(config, scenarioId, { runId } = {}) {
     );
   }
   return {
-    schemaVersion: UI_REVIEW_CONFIG_VERSION,
+    schemaVersion: config.schemaVersion,
     scenarioId: scenario.id,
     scenarioFingerprint: scenario.fingerprint,
     primary: scenario.capturePlan.primary,
@@ -458,6 +679,8 @@ export function createCapturePlan(config, scenarioId, { runId } = {}) {
       design: scenario.design,
       targets: scenario.targets,
       interactions: scenario.interactions,
+      interactionMode: scenario.interactionMode,
+      comparison: scenario.comparison,
     },
     artifacts,
   };
@@ -482,8 +705,13 @@ export function createReviewRun(config, scenarioId, { runId, capture, now = new 
     parentRunId: null,
     createdAt: requireIsoDate(now, 'now'),
     updatedAt: now,
+    observations: [],
     findings: [],
+    repairCandidates: [],
     appliedFindingIds: [],
+    fallbackDeclared: scenario.capturePlan.order.includes('browser') && selectedCapture !== 'browser',
+    fallbackRequired: false,
+    inconclusiveReasons: [],
     artifacts: buildArtifactPaths(config, normalizedRunId, scenario.id),
   };
 }
@@ -530,40 +758,124 @@ export function normalizeUiFinding(value, index = 0) {
     sourceFile: normalized.sourceTarget.file,
     anchor: normalized.sourceTarget.anchor,
   };
-  return { ...normalized, fingerprint: sha256(stableJson(fingerprintSource)) };
+  return { ...normalized, repairable: true, fingerprint: sha256(stableJson(fingerprintSource)) };
 }
 
-function normalizeFindings(result) {
+function normalizeObservation(value, index, fallbackStatus = 'observed') {
+  const observation = requireObject(value, `observations[${index}]`);
+  const confidence = optionalString(observation.confidence, `observations[${index}].confidence`) || 'high';
+  if (!['high', 'medium', 'low'].includes(confidence)) fail(`observations[${index}].confidence 不受支持`);
+  return {
+    id: optionalString(observation.id, `observations[${index}].id`) || `OBS-${String(index + 1).padStart(3, '0')}`,
+    kind: optionalString(observation.kind, `observations[${index}].kind`) || optionalString(observation.type, `observations[${index}].type`) || 'visual',
+    status: optionalString(observation.status, `observations[${index}].status`) || fallbackStatus,
+    confidence,
+    selector: optionalString(observation.selector, `observations[${index}].selector`),
+    detail: optionalString(observation.detail, `observations[${index}].detail`) || optionalString(observation.problem, `observations[${index}].problem`),
+    evidence: observation.evidence && typeof observation.evidence === 'object' && !Array.isArray(observation.evidence)
+      ? stableValue(observation.evidence)
+      : null,
+  };
+}
+
+function normalizeNonRepairableFinding(value, index) {
+  const label = `findings[${index}]`;
+  const finding = requireObject(value, label);
+  const normalized = {
+    id: requireString(finding.id, `${label}.id`),
+    confidence: requireString(finding.confidence, `${label}.confidence`),
+    selector: requireString(finding.selector, `${label}.selector`),
+    type: requireString(finding.type, `${label}.type`),
+    targetValue: requireString(finding.targetValue, `${label}.targetValue`),
+    repairable: false,
+    evidence: finding.evidence && typeof finding.evidence === 'object' && !Array.isArray(finding.evidence)
+      ? stableValue(finding.evidence)
+      : null,
+  };
+  if (normalized.confidence !== 'high') fail(`${label}.confidence 必须是 high 才能进入问题状态`);
+  return {
+    ...normalized,
+    fingerprint: sha256(stableJson({
+      selector: normalized.selector,
+      type: normalized.type,
+      targetValue: normalized.targetValue,
+      evidence: normalized.evidence,
+    })),
+  };
+}
+
+function normalizeAssessment(result) {
   const source = requireObject(result, '验收结果');
-  if (source.analysisPending === true) fail('验收结果仍处于待视觉分析状态，不能写入通过或问题结论');
   if (!Array.isArray(source.findings)) fail('验收结果 findings 必须是数组');
   const geometryTypes = new Set(['尺寸', '间距', '边距', '位置']);
-  const highConfidence = source.findings.filter((finding) => {
-    if (finding?.confidence !== 'high') return false;
-    return !(
-      geometryTypes.has(finding.type)
-      && Number.isFinite(finding.differencePx)
+  const observations = Array.isArray(source.observations)
+    ? source.observations.map((observation, index) => normalizeObservation(observation, index))
+    : [];
+  const deliverable = [];
+  let hasUncertainDifference = source.analysisPending === true;
+  for (const finding of source.findings) {
+    const belowGeometryThreshold = (
+      geometryTypes.has(finding?.type)
+      && Number.isFinite(finding?.differencePx)
       && finding.differencePx < 2
       && finding.exact !== true
     );
-  });
-  const normalized = highConfidence.map((finding, index) => normalizeUiFinding(finding, index));
+    if (finding?.confidence !== 'high' || belowGeometryThreshold) {
+      observations.push(normalizeObservation(
+        finding,
+        observations.length,
+        belowGeometryThreshold ? 'below-threshold' : 'uncertain',
+      ));
+      if (finding?.confidence === 'medium') hasUncertainDifference = true;
+      continue;
+    }
+    deliverable.push(finding);
+  }
+  const findings = deliverable.map((finding, index) => (
+    finding.repairable === false
+      ? normalizeNonRepairableFinding(finding, index)
+      : normalizeUiFinding(finding, index)
+  ));
   const fingerprints = new Set();
-  for (const finding of normalized) {
+  for (const finding of findings) {
     if (fingerprints.has(finding.fingerprint)) fail(`验收结果包含重复问题：${finding.id}`);
     fingerprints.add(finding.fingerprint);
   }
-  return normalized;
+  const explicitOutcome = source.outcome ?? source.status;
+  if (explicitOutcome !== undefined && !['passed', 'needs-fix', 'inconclusive'].includes(explicitOutcome)) {
+    fail(`验收结果 outcome 不受支持：${String(explicitOutcome)}`);
+  }
+  let status = explicitOutcome || (findings.length > 0 ? 'needs-fix' : hasUncertainDifference ? 'inconclusive' : 'passed');
+  if (source.analysisPending === true || hasUncertainDifference) status = 'inconclusive';
+  if (status === 'passed' && findings.length > 0) fail('验收结果包含问题，不能声明 passed');
+  if (status === 'needs-fix' && findings.length === 0) status = 'inconclusive';
+  const inconclusiveReasons = [];
+  if (source.analysisPending === true) inconclusiveReasons.push('视觉分析尚未完成');
+  if (hasUncertainDifference && source.analysisPending !== true) inconclusiveReasons.push('存在中置信度或证据不足的差异');
+  if (status === 'inconclusive' && inconclusiveReasons.length === 0) inconclusiveReasons.push('确定性证据不足');
+  return {
+    status,
+    findings,
+    repairCandidates: findings.filter((finding) => finding.repairable === true),
+    observations,
+    inconclusiveReasons,
+  };
 }
 
 function assertState(value, expectedStage, expectedStatus) {
   const state = requireObject(value, '运行状态');
-  if (state.schemaVersion !== UI_REVIEW_STATE_VERSION) fail(`运行状态版本不受支持：${String(state.schemaVersion)}`);
+  if (![1, UI_REVIEW_STATE_VERSION].includes(state.schemaVersion)) fail(`运行状态版本不受支持：${String(state.schemaVersion)}`);
   requireRunId(state.runId, '运行状态 runId');
   if (!RUN_STAGES.has(state.stage) || !RUN_STATUSES.has(state.status)) fail('运行状态包含未知阶段或状态');
   if (!CAPTURE_METHODS.has(state.capture)) fail('运行状态包含未知采集器');
   if (expectedStage && state.stage !== expectedStage) fail(`当前阶段必须是 ${expectedStage}，实际为 ${state.stage}`);
   if (expectedStatus && state.status !== expectedStatus) fail(`当前状态必须是 ${expectedStatus}，实际为 ${state.status}`);
+  return state;
+}
+
+function assertMutableState(value, expectedStage, expectedStatus) {
+  const state = assertState(value, expectedStage, expectedStatus);
+  if (state.schemaVersion === 1) fail('运行状态版本 1 仅供历史只读，不能原地改写');
   return state;
 }
 
@@ -578,13 +890,17 @@ function normalizeArtifactEvidence(artifacts) {
 }
 
 export function completeReviewRun(state, result, { artifacts = state.artifacts, now = new Date().toISOString() } = {}) {
-  const current = assertState(state, 'review', 'collecting');
-  const findings = normalizeFindings(result);
+  const current = assertMutableState(state, 'review', 'collecting');
+  const assessment = normalizeAssessment(result);
   return {
     ...current,
-    status: findings.length === 0 ? 'passed' : 'needs-fix',
+    status: assessment.status,
     updatedAt: requireIsoDate(now, 'now'),
-    findings,
+    observations: assessment.observations,
+    findings: assessment.findings,
+    repairCandidates: assessment.repairCandidates,
+    fallbackRequired: assessment.status === 'inconclusive' && current.fallbackDeclared === true,
+    inconclusiveReasons: assessment.inconclusiveReasons,
     artifacts: normalizeArtifactEvidence(artifacts),
   };
 }
@@ -595,10 +911,10 @@ function validateRepairContext(findings) {
 }
 
 export function evaluateRepairGate(state, config, { explicitApproval = false } = {}) {
-  const current = assertState(state, 'review', 'needs-fix');
+  const current = assertMutableState(state, 'review', 'needs-fix');
   const scenario = scenarioById(config, current.scenarioId);
   if (scenario.fingerprint !== current.scenarioFingerprint) fail('当前配置与验收基线的场景指纹不一致');
-  validateRepairContext(current.findings);
+  validateRepairContext(current.repairCandidates || []);
   if (config.autoFix === 'off') {
     return { decision: 'blocked', reason: '项目配置已关闭自动修复，不能修改源码。' };
   }
@@ -612,9 +928,9 @@ export function evaluateRepairGate(state, config, { explicitApproval = false } =
 }
 
 export function completeRepairRun(state, appliedFindingIds, { now = new Date().toISOString() } = {}) {
-  const current = assertState(state, 'review', 'needs-fix');
+  const current = assertMutableState(state, 'review', 'needs-fix');
   if (!Array.isArray(appliedFindingIds) || appliedFindingIds.length === 0) fail('appliedFindingIds 至少要包含一个已应用问题');
-  const knownIds = new Set(current.findings.map((finding) => finding.id));
+  const knownIds = new Set((current.repairCandidates || []).map((finding) => finding.id));
   const normalizedIds = [...new Set(appliedFindingIds.map((id, index) => requireString(id, `appliedFindingIds[${index}]`)))];
   for (const id of normalizedIds) {
     if (!knownIds.has(id)) fail(`不能记录未知问题为已修复：${id}`);
@@ -651,14 +967,19 @@ export function createVerifyRun(config, baselineState, { runId, now = new Date()
     parentRunId: baseline.runId,
     createdAt: requireIsoDate(now, 'now'),
     updatedAt: now,
+    observations: [],
     findings: [],
+    repairCandidates: [],
     appliedFindingIds: [...(baseline.appliedFindingIds || [])],
+    fallbackDeclared: baseline.fallbackDeclared === true,
+    fallbackRequired: false,
+    inconclusiveReasons: [],
     artifacts: buildArtifactPaths(config, normalizedRunId, scenario.id),
   };
 }
 
 export function completeVerifyRun(state, baselineState, result, { artifacts = state.artifacts, now = new Date().toISOString() } = {}) {
-  const current = assertState(state, 'verify', 'collecting');
+  const current = assertMutableState(state, 'verify', 'collecting');
   const baseline = assertState(baselineState);
   if (
     current.parentRunId !== baseline.runId
@@ -667,17 +988,30 @@ export function completeVerifyRun(state, baselineState, result, { artifacts = st
   ) {
     fail('复验运行与基线运行不匹配');
   }
-  const findings = normalizeFindings(result);
+  const assessment = normalizeAssessment(result);
+  const findings = assessment.findings;
   const baselineMap = new Map((baseline.findings || []).map((finding) => [finding.fingerprint, finding]));
   const currentMap = new Map(findings.map((finding) => [finding.fingerprint, finding]));
-  const resolved = [...baselineMap.keys()].filter((fingerprint) => !currentMap.has(fingerprint));
-  const remaining = [...baselineMap.keys()].filter((fingerprint) => currentMap.has(fingerprint));
-  const added = [...currentMap.keys()].filter((fingerprint) => !baselineMap.has(fingerprint));
+  const resolved = assessment.status === 'inconclusive'
+    ? []
+    : [...baselineMap.keys()].filter((fingerprint) => !currentMap.has(fingerprint));
+  const remaining = assessment.status === 'inconclusive'
+    ? [...baselineMap.keys()]
+    : [...baselineMap.keys()].filter((fingerprint) => currentMap.has(fingerprint));
+  const added = assessment.status === 'inconclusive'
+    ? []
+    : [...currentMap.keys()].filter((fingerprint) => !baselineMap.has(fingerprint));
   return {
     ...current,
-    status: remaining.length === 0 && added.length === 0 ? 'passed' : 'failed',
+    status: assessment.status === 'inconclusive'
+      ? 'inconclusive'
+      : remaining.length === 0 && added.length === 0 ? 'passed' : 'failed',
     updatedAt: requireIsoDate(now, 'now'),
+    observations: assessment.observations,
     findings,
+    repairCandidates: assessment.repairCandidates,
+    fallbackRequired: assessment.status === 'inconclusive' && current.fallbackDeclared === true,
+    inconclusiveReasons: assessment.inconclusiveReasons,
     artifacts: normalizeArtifactEvidence(artifacts),
     verification: { resolved, remaining, new: added },
   };
@@ -697,7 +1031,7 @@ export function readRunState(projectRoot, statePath) {
 }
 
 export function writeRunState(projectRoot, state, { allowExistingState = false } = {}) {
-  const current = assertState(state);
+  const current = assertMutableState(state);
   const artifacts = requireObject(current.artifacts, '运行状态 artifacts');
   const statePath = resolveSafeProjectPath(projectRoot, artifacts.state, '状态产物路径');
   const runDirectory = resolveSafeProjectPath(projectRoot, artifacts.runDirectory, '运行目录');
@@ -705,7 +1039,7 @@ export function writeRunState(projectRoot, state, { allowExistingState = false }
 
   if (fs.existsSync(runDirectory.absolutePath)) {
     const entries = fs.readdirSync(runDirectory.absolutePath);
-    const allowed = new Set(['state.json', 'actual.png', 'review-input.json', 'report']);
+    const allowed = new Set(['state.json', 'actual.png', 'interactions', 'review-input.json', 'report']);
     const unknown = entries.filter((entry) => !allowed.has(entry));
     if (unknown.length > 0) fail(`运行目录包含未知内容，拒绝写入：${unknown.join('、')}`);
     if (fs.existsSync(statePath.absolutePath) && !allowExistingState) fail(`运行状态已存在，拒绝覆盖：${artifacts.state}`);

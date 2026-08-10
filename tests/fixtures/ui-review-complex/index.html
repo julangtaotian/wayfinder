@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI 验收综合场景</title>
+    <link rel="stylesheet" href="./src/main.css">
+    <style>
+      .tooltip { display: none; margin-left: 8px; color: #475467; }
+      .help:hover + .tooltip { display: inline; }
+      dialog { width: 480px; border: 0; border-radius: 12px; box-shadow: 0 24px 64px rgb(16 24 40 / 24%); }
+      dialog::backdrop { background: rgb(16 24 40 / 48%); }
+      dialog label { display: block; margin: 12px 0; }
+      input, select { box-sizing: border-box; width: 100%; min-height: 36px; }
+      input[type="checkbox"] { width: auto; }
+      button { min-height: 36px; margin-right: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>账号资料</h1>
+      <button class="help">帮助</button><span class="tooltip">填写后保存</span>
+      <button data-open-dialog>编辑资料</button>
+      <p data-status>尚未保存</p>
+      <dialog>
+        <h2>编辑资料</h2>
+        <label>显示名称<input name="displayName"></label>
+        <label>角色<select name="role"><option value="viewer">访客</option><option value="editor">编辑者</option></select></label>
+        <label><input name="notice" type="checkbox"> 通知我</label>
+        <p id="summary"></p>
+        <button data-save>保存</button>
+      </dialog>
+    </main>
+    <script>
+      // fixture 只实现本次综合验收需要的稳定交互，不访问网络或浏览器存储。
+      const dialog = document.querySelector('dialog');
+      const displayName = document.querySelector('[name="displayName"]');
+      const role = document.querySelector('[name="role"]');
+      const render = () => { document.querySelector('#summary').textContent = `${displayName.value} / ${role.value}`; };
+      document.querySelector('[data-open-dialog]').addEventListener('click', () => dialog.showModal());
+      displayName.addEventListener('input', render);
+      role.addEventListener('change', render);
+      dialog.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          dialog.close();
+        }
+      });
+      document.querySelector('[data-save]').addEventListener('click', () => {
+        document.querySelector('[data-status]').textContent = `已保存 ${displayName.value}`;
+        dialog.close();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,226 @@
+{
+  "analysisPending": false,
+  "project": {
+    "name": "ui-review-complex-fixture",
+    "runtime": "Chromium 151.0.7922.34（插件内置 Playwright）",
+    "page": "http://127.0.0.1:4179/",
+    "designBasis": "design.md",
+    "scope": [
+      "账号资料主要内容"
+    ]
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 800,
+    "dpr": 1,
+    "scale": 1
+  },
+  "interactions": {
+    "completed": true,
+    "steps": [
+      {
+        "index": 1,
+        "action": "hover",
+        "selector": ".help",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 2,
+        "action": "assert",
+        "selector": ".tooltip",
+        "timeout": 5000,
+        "valueLength": null,
+        "assertion": "visible",
+        "matched": true,
+        "actual": true
+      },
+      {
+        "index": 3,
+        "action": "click",
+        "selector": "[data-open-dialog]",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 4,
+        "action": "wait-for",
+        "selector": "dialog",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 5,
+        "action": "fill",
+        "selector": "[name=\"displayName\"]",
+        "timeout": 5000,
+        "valueLength": 4
+      },
+      {
+        "index": 6,
+        "action": "select-option",
+        "selector": "[name=\"role\"]",
+        "timeout": 5000,
+        "valueLength": 6
+      },
+      {
+        "index": 7,
+        "action": "check",
+        "selector": "[name=\"notice\"]",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 8,
+        "action": "assert",
+        "selector": "#summary",
+        "timeout": 5000,
+        "valueLength": 13,
+        "assertion": "text",
+        "matched": true,
+        "actual": "测试用户 / editor"
+      },
+      {
+        "index": 9,
+        "action": "capture",
+        "selector": null,
+        "timeout": 5000,
+        "valueLength": null,
+        "capture": "09-dialog-filled.png"
+      },
+      {
+        "index": 10,
+        "action": "press",
+        "selector": "dialog",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 11,
+        "action": "assert",
+        "selector": "dialog",
+        "timeout": 5000,
+        "valueLength": null,
+        "assertion": "hidden",
+        "matched": true,
+        "actual": false
+      },
+      {
+        "index": 12,
+        "action": "click",
+        "selector": "[data-open-dialog]",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 13,
+        "action": "click",
+        "selector": "[data-save]",
+        "timeout": 5000,
+        "valueLength": null
+      },
+      {
+        "index": 14,
+        "action": "assert",
+        "selector": "[data-status]",
+        "timeout": 5000,
+        "valueLength": 7,
+        "assertion": "text",
+        "matched": true,
+        "actual": "已保存 测试用户"
+      }
+    ],
+    "captures": [
+      "09-dialog-filled.png"
+    ]
+  },
+  "domObservations": [
+    {
+      "selector": "[data-status]",
+      "property": "text",
+      "actual": "已保存 测试用户"
+    },
+    {
+      "selector": "dialog",
+      "property": "hidden",
+      "actual": true
+    }
+  ],
+  "checkedNodes": [
+    {
+      "selector": "main",
+      "componentPath": "src/main.css",
+      "nodeText": "账号资料\n帮助 编辑资料\n\n已保存 测试用户",
+      "nodeMeaning": "账号资料主要内容",
+      "rect": {
+        "x": 280,
+        "y": 32,
+        "width": 720,
+        "height": 145.4375
+      },
+      "computedStyle": {
+        "display": "block",
+        "position": "static",
+        "width": "720px",
+        "height": "145.438px",
+        "margin": "32px 272px",
+        "padding": "0px",
+        "color": "rgb(0, 0, 0)",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "font": "16px / 24px system-ui, sans-serif"
+      }
+    }
+  ],
+  "outcome": "passed",
+  "observations": [
+    {
+      "id": "DOM-001",
+      "kind": "dom",
+      "status": "matched",
+      "confidence": "high",
+      "selector": "[data-status]",
+      "detail": "text：实际 已保存 测试用户，期望 已保存 测试用户",
+      "evidence": {
+        "property": "text",
+        "actual": "已保存 测试用户",
+        "expected": "已保存 测试用户",
+        "exact": true
+      }
+    },
+    {
+      "id": "DOM-002",
+      "kind": "dom",
+      "status": "matched",
+      "confidence": "high",
+      "selector": "dialog",
+      "detail": "hidden：实际 true，期望 true",
+      "evidence": {
+        "property": "hidden",
+        "actual": true,
+        "expected": true,
+        "exact": false
+      }
+    }
+  ],
+  "findings": [],
+  "metrics": null,
+  "diffPath": null,
+  "comparison": {
+    "mode": "dom",
+    "dom": [
+      {
+        "selector": "[data-status]",
+        "property": "text",
+        "expected": "已保存 测试用户",
+        "exact": true
+      },
+      {
+        "selector": "dialog",
+        "property": "hidden",
+        "expected": true,
+        "exact": false
+      }
+    ],
+    "image": null
+  }
+}

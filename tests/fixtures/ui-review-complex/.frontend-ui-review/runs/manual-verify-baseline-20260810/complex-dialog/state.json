@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 2,
+  "runId": "manual-verify-baseline-20260810",
+  "stage": "review",
+  "status": "needs-fix",
+  "scenarioId": "complex-dialog",
+  "scenarioFingerprint": "a414557fbef6dcaa91c463acae60bbf7ee9afa00556f4377899b2495d2f88f91",
+  "capture": "project-playwright",
+  "autoFix": "suggest",
+  "parentRunId": null,
+  "createdAt": "2026-08-10T02:34:52.682Z",
+  "updatedAt": "2026-08-10T02:34:53.167Z",
+  "observations": [
+    {
+      "id": "DOM-001",
+      "kind": "dom",
+      "status": "different",
+      "confidence": "high",
+      "selector": "[data-status]",
+      "detail": "text：实际 未保存 测试用户，期望 已保存 测试用户",
+      "evidence": {
+        "actual": "未保存 测试用户",
+        "exact": true,
+        "expected": "已保存 测试用户",
+        "property": "text"
+      }
+    },
+    {
+      "id": "DOM-002",
+      "kind": "dom",
+      "status": "matched",
+      "confidence": "high",
+      "selector": "dialog",
+      "detail": "hidden：实际 true，期望 true",
+      "evidence": {
+        "actual": true,
+        "exact": false,
+        "expected": true,
+        "property": "hidden"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "UI-001",
+      "confidence": "high",
+      "selector": "[data-status]",
+      "type": "DOM 断言差异",
+      "targetValue": "text=已保存 测试用户",
+      "repairable": false,
+      "evidence": {
+        "actual": "未保存 测试用户",
+        "expected": "已保存 测试用户",
+        "property": "text"
+      },
+      "fingerprint": "837722e0f520142fc1a3f4483b8df2d82d22368d57a86bdd68ed84a1e5524bcb"
+    }
+  ],
+  "repairCandidates": [],
+  "appliedFindingIds": [],
+  "fallbackDeclared": true,
+  "fallbackRequired": false,
+  "inconclusiveReasons": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog",
+    "state": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/actual.png",
+    "interactionScreenshots": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/interactions",
+    "annotatedScreenshot": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/report/ui-review.png",
+    "diffScreenshot": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/report/diff.png",
+    "report": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/review-input.json"
+  }
+}

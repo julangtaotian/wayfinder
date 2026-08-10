@@ -1,1 +1,1 @@
-plugins/frontend-ai-workflow/runtime/playwright/node_modules/playwright-core/.local-browsers/** filter=lfs diff=lfs merge=lfs -text
+plugins/frontend-ai-workflow/runtime/playwright/platform-assets/** filter=lfs diff=lfs merge=lfs -text

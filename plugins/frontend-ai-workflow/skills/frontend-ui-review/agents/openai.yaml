@@ -1,4 +1,4 @@
 interface:
   display_name: "前端 UI 验收"
   short_description: "使用插件内置 Playwright 验收并保留视觉能力作为显式兜底"
-  default_prompt: "Use $frontend-ui-review to inspect a configured frontend scenario with bundled Playwright and use visual fallback only when declared."
+  default_prompt: "Use $frontend-ui-review to run structured interactions and deterministic UI comparison with bundled Playwright, using visual fallback only for a declared inconclusive result."

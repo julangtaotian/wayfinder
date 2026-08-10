@@ -10,6 +10,8 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      UI_REVIEW_EXPECT_PLATFORM: linux-x64
     steps:
       - uses: actions/checkout@v6
         with:

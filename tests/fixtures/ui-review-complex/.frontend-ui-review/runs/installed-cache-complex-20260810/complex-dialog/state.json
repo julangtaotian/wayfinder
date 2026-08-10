@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "runId": "installed-cache-complex-20260810",
+  "stage": "review",
+  "status": "passed",
+  "scenarioId": "complex-dialog",
+  "scenarioFingerprint": "a237ef258d30a15bc9ef062b326261cb958f13091b77facac1e6e3918c961667",
+  "capture": "project-playwright",
+  "autoFix": "suggest",
+  "parentRunId": null,
+  "createdAt": "2026-08-10T02:31:46.830Z",
+  "updatedAt": "2026-08-10T02:31:47.302Z",
+  "observations": [
+    {
+      "id": "DOM-001",
+      "kind": "dom",
+      "status": "matched",
+      "confidence": "high",
+      "selector": "[data-status]",
+      "detail": "text：实际 已保存 测试用户，期望 已保存 测试用户",
+      "evidence": {
+        "actual": "已保存 测试用户",
+        "exact": true,
+        "expected": "已保存 测试用户",
+        "property": "text"
+      }
+    },
+    {
+      "id": "DOM-002",
+      "kind": "dom",
+      "status": "matched",
+      "confidence": "high",
+      "selector": "dialog",
+      "detail": "hidden：实际 true，期望 true",
+      "evidence": {
+        "actual": true,
+        "exact": false,
+        "expected": true,
+        "property": "hidden"
+      }
+    }
+  ],
+  "findings": [],
+  "repairCandidates": [],
+  "appliedFindingIds": [],
+  "fallbackDeclared": true,
+  "fallbackRequired": false,
+  "inconclusiveReasons": [],
+  "artifacts": {
+    "runDirectory": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog",
+    "state": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/state.json",
+    "actualScreenshot": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/actual.png",
+    "interactionScreenshots": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/interactions",
+    "annotatedScreenshot": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/report/ui-review.png",
+    "diffScreenshot": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/report/diff.png",
+    "report": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/report/ui-review.md",
+    "reviewInput": ".frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/review-input.json"
+  }
+}

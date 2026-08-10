@@ -349,6 +349,58 @@ export function renderReviewMarkdown(review) {
   return `${lines.join('\n')}\n`;
 }
 
+export function renderDeterministicAssessmentMarkdown({ scenario, assessment, runtime = '插件内置 Playwright' }) {
+  if (!scenario || typeof scenario !== 'object') fail('确定性验收报告缺少场景信息。');
+  if (!assessment || typeof assessment !== 'object') fail('确定性验收报告缺少比较结果。');
+  const conclusion = {
+    passed: '通过：已声明的 DOM 与图片比较均满足阈值。',
+    'needs-fix': '需修改：已发现超过阈值的确定性差异。',
+    inconclusive: '不确定：证据缺失、损坏或无法对齐，不能判定为通过。',
+  }[assessment.outcome] || '阻塞：比较结果状态不受支持。';
+  const lines = [
+    '# UI 确定性验收结果',
+    '',
+    `- 场景：${escapeInlineCode(scenario.id || 'unknown')}`,
+    `- 页面：${escapeInlineCode(scenario.url)}`,
+    `- 运行时：${escapeInlineCode(runtime)}`,
+    `- 比较模式：${escapeInlineCode(scenario.comparison?.mode || '未声明')}`,
+    `- 结果：${conclusion}`,
+    `- 观察数：${escapeInlineCode((assessment.observations || []).length)}`,
+    `- 问题数：${escapeInlineCode((assessment.findings || []).length)}`,
+    '',
+    '## 确定性观察',
+    '',
+  ];
+  if ((assessment.observations || []).length === 0) lines.push('- 无可用观察。', '');
+  else {
+    for (const observation of assessment.observations) {
+      lines.push(`- ${escapeInlineCode(observation.id)}｜${escapeMarkdown(observation.kind)}｜${escapeMarkdown(observation.status)}｜${escapeMarkdown(observation.detail || '')}`);
+    }
+    lines.push('');
+  }
+  lines.push('## 问题与修复边界', '');
+  if ((assessment.findings || []).length === 0) lines.push('- 未发现超过阈值的问题。', '');
+  else {
+    for (const finding of assessment.findings) {
+      lines.push(
+        `- ${escapeInlineCode(finding.id)}｜${escapeInlineCode(finding.selector)}｜${escapeMarkdown(finding.type)}｜${escapeMarkdown(finding.repairable === false ? '仅报告，缺少完整源码上下文，不能自动修复' : '可进入受控修复门禁')}`,
+      );
+    }
+    lines.push('');
+  }
+  if (assessment.outcome === 'inconclusive') {
+    lines.push(
+      '## 视觉兜底',
+      '',
+      assessment.fallbackRequired
+        ? '- 配置已声明视觉兜底，可交给当前 AI 工具的视觉能力继续分析；不得把兜底待处理写成通过。'
+        : '- 配置未声明视觉兜底，本次保持不确定并阻止通过。',
+      '',
+    );
+  }
+  return `${lines.join('\n')}\n`;
+}
+
 function resolveExecutable(preferred, candidates) {
   for (const candidate of [preferred, ...candidates].filter(Boolean)) {
     const result = spawnSync(candidate, ['-version'], { encoding: 'utf8' });

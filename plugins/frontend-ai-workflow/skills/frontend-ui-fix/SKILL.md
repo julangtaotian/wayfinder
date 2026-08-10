@@ -10,7 +10,7 @@ description: Apply explicitly authorized frontend source fixes from a completed 
 ## 强制门禁
 
 1. 定位本 Skill 所在目录，并读取 `../../references/ui-review-workflow.md`。
-2. 读取用户指定的 review `state.json`，并用 `repair-gate` 检查当前配置与场景指纹。
+2. 读取用户指定的版本 2 review `state.json`，确认状态为 `needs-fix` 且 `repairCandidates` 非空，再用 `repair-gate` 检查当前配置与场景指纹。仅报告的图片差异或缺少源码上下文的问题不能进入修复。
 3. `blocked` 时停止；`suggest` 时只交付建议。只有 `apply` 才能继续。默认 `suggest` 模式必须由用户在当前任务明确要求应用修复，并向命令传入 `--explicit-approval`。
 4. 检查 Git 当前分支与工作区：
    - 当前分支为 `main` 或 `master` 时停止，要求切换到工作分支。

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "artifactsRoot": ".frontend-ui-review/runs",
+  "autoFix": "suggest",
+  "scenarios": [
+    {
+      "id": "complex-dialog",
+      "url": "http://127.0.0.1:4179/",
+      "capture": "project-playwright",
+      "captureFallback": "browser",
+      "projectPlaywright": {
+        "adapter": ".frontend-ui-review/playwright-adapter.mjs",
+        "resultPath": "{reviewInput}"
+      },
+      "viewport": { "width": 1280, "height": 800, "deviceScaleFactor": 1 },
+      "design": { "type": "spec", "path": "design.md" },
+      "targets": [
+        { "selector": "main", "nodeMeaning": "账号资料主要内容", "sourcePath": "src/main.css" }
+      ],
+      "interactions": [
+        { "action": "hover", "selector": ".help" },
+        { "action": "assert", "assertion": "visible", "selector": ".tooltip" },
+        { "action": "click", "selector": "[data-open-dialog]" },
+        { "action": "wait-for", "selector": "dialog", "state": "visible" },
+        { "action": "fill", "selector": "[name=\"displayName\"]", "value": "测试用户" },
+        { "action": "select-option", "selector": "[name=\"role\"]", "value": "editor" },
+        { "action": "check", "selector": "[name=\"notice\"]" },
+        { "action": "assert", "assertion": "text", "selector": "#summary", "value": "测试用户 / editor", "exact": true },
+        { "action": "capture", "name": "dialog-filled" },
+        { "action": "press", "selector": "dialog", "key": "Escape" },
+        { "action": "assert", "assertion": "hidden", "selector": "dialog" },
+        { "action": "click", "selector": "[data-open-dialog]" },
+        { "action": "click", "selector": "[data-save]" },
+        { "action": "assert", "assertion": "text", "selector": "[data-status]", "value": "保存 测试用户" }
+      ],
+      "comparison": {
+        "mode": "dom",
+        "dom": [
+          { "selector": "[data-status]", "property": "text", "expected": "已保存 测试用户", "exact": true },
+          { "selector": "dialog", "property": "hidden", "expected": true }
+        ]
+      }
+    }
+  ]
+}

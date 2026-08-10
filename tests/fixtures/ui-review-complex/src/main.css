@@ -1,0 +1,5 @@
+main {
+  width: min(720px, calc(100vw - 48px));
+  margin: 32px auto;
+  font: 16px/1.5 system-ui, sans-serif;
+}

@@ -3,7 +3,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
-import { loadBundledPlaywright } from './playwright-runtime.mjs';
+import { inspectBundledPlaywright, loadBundledPlaywright } from './playwright-runtime.mjs';
+import { executeStructuredInteractions } from './ui-review-interactions.mjs';
+import { compareUiEvidence } from './ui-review-comparator.mjs';
 import { parsePngDimensions } from './ui-review-report.mjs';
 import {
   DEFAULT_UI_REVIEW_CONFIG,
@@ -126,7 +128,9 @@ export async function runPlaywrightAdapter({
     { mustExist: true, allowDirectory: false },
   );
   const actualScreenshot = resolveSafeProjectPath(projectRoot, plan.artifacts.actualScreenshot, '实际截图');
+  const interactionScreenshots = resolveSafeProjectPath(projectRoot, plan.artifacts.interactionScreenshots, '交互截图目录');
   const resultPath = resolveSafeProjectPath(projectRoot, plan.projectPlaywright.resultPath, '结构化采集结果');
+  const diffScreenshot = resolveSafeProjectPath(projectRoot, plan.artifacts.diffScreenshot, '像素差异图');
   const designPath = resolveSafeProjectPath(
     projectRoot,
     plan.scenario.design.path,
@@ -139,13 +143,25 @@ export async function runPlaywrightAdapter({
   const adapterModule = await import(pathToFileURL(adapter.absolutePath).href);
   if (typeof adapterModule.default !== 'function') fail('Playwright 适配器必须默认导出异步函数');
   const playwright = await loadBundledPlaywright();
+  const runtime = inspectBundledPlaywright();
   const adapterResult = await adapterModule.default({
     playwright,
+    runtime: deepFreeze({
+      platformKey: runtime.platformKey,
+      browserExecutable: runtime.browserExecutable,
+      ffmpegExecutable: runtime.ffmpegExecutable,
+    }),
+    executeInteractions: async ({ page, interactions = plan.scenario.interactions } = {}) => executeStructuredInteractions({
+      page,
+      interactions,
+      captureRoot: interactionScreenshots.absolutePath,
+    }),
     project: deepFreeze({ root: projectRoot, name: projectName(projectRoot) }),
     runId: normalizedRunId,
     scenario: deepFreeze(structuredClone(plan.scenario)),
     artifacts: deepFreeze({
       actualScreenshot: actualScreenshot.absolutePath,
+      interactionScreenshots: interactionScreenshots.absolutePath,
       result: resultPath.absolutePath,
       design: designPath.absolutePath,
     }),
@@ -165,7 +181,22 @@ export async function runPlaywrightAdapter({
   }
   const result = readJson(resultPath.absolutePath, 'Playwright 适配器结果');
   validateCheckedNodes(result, new Set(plan.scenario.targets.map((target) => target.selector)));
-  if (!Array.isArray(result.findings) && result.analysisPending !== true) {
+  if (plan.scenario.interactionMode === 'structured') {
+    if (result.interactions?.completed !== true || result.interactions.steps?.length !== plan.scenario.interactions.length) {
+      fail('Playwright 适配器没有返回完整的结构化交互执行记录');
+    }
+  }
+  if (plan.scenario.comparison) {
+    const assessment = compareUiEvidence({
+      scenario: plan.scenario,
+      actualScreenshot: actualScreenshot.absolutePath,
+      expectedScreenshot: designPath.absolutePath,
+      domObservations: result.domObservations,
+      diffPath: diffScreenshot.absolutePath,
+    });
+    Object.assign(result, assessment, { comparison: plan.scenario.comparison });
+    writeJsonAtomic(resultPath.absolutePath, result);
+  } else if (!Array.isArray(result.findings) && result.analysisPending !== true) {
     // 没有视觉结论时显式保持待分析，防止空数组缺失被误当成通过。
     result.analysisPending = true;
     writeJsonAtomic(resultPath.absolutePath, result);
@@ -179,8 +210,10 @@ export async function runPlaywrightAdapter({
     artifacts: {
       actualScreenshot: plan.artifacts.actualScreenshot,
       result: plan.projectPlaywright.resultPath,
+      interactionScreenshots: plan.artifacts.interactionScreenshots,
     },
     analysisPending: result.analysisPending === true,
+    outcome: result.outcome || null,
   };
 }
 

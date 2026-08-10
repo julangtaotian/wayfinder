@@ -11,16 +11,16 @@ description: Re-run a recorded frontend UI review after fixes using the exact ba
 
 1. 定位本 Skill 所在目录，并读取 `../../references/ui-review-workflow.md`。
 2. 读取用户指定的基线 `state.json` 和当前 `.frontend-ui-review/config.json`。
-3. 用 `start-verify` 预览复验运行。场景指纹、采集计划或基线实际采集器不一致时停止，并要求重新开始一次独立验收；不能通过调整配置绕过。
-4. 确认运行 ID 和独立产物目录后再加 `--write`。
+3. 版本 2 Playwright 基线优先执行 `node scripts/ui-review-runner.mjs verify --target <项目> --scenario <场景> --run-id <运行ID> --baseline <基线状态路径>` 预览；版本 1 或 Browser 基线继续使用 `start-verify` 细粒度入口。
+4. 场景指纹、采集计划或基线实际采集器不一致时停止，并要求重新开始一次独立验收；不能通过调整配置绕过。确认运行 ID 和独立产物目录后再加 `--write`。
 
 ## 重新采集
 
-1. 读取复验状态的 `capture` 并严格复用：基线实际使用 `project-playwright` 时执行采集计划中的插件内置适配器或兼容项目命令，基线实际使用 `browser` 时才调用视觉能力；即使另一采集器当前更方便也不得切换。
-2. 内置适配器产生 `analysisPending` 证据时，必须重新比较同一设计依据与实际截图并补齐视觉结论；不得把仅完成截图采集当成复验通过。
+1. 读取复验状态的 `capture` 并严格复用：基线实际使用插件内置 `project-playwright` 时由统一入口重新执行相同结构化交互和确定性比较；基线实际使用 `browser` 时才调用视觉能力。即使另一采集器当前更方便也不得切换。
+2. `inconclusive` 必须保持不确定，原问题不能记为已解决；只有配置已声明兜底时才返回 `fallbackRequired`。不得把仅完成截图采集当成复验通过。
 3. 复用相同页面、视口、DPR、设计内容、目标节点和交互步骤，重新生成实际截图和结构化检查结果。
-4. 调用 `ui-review-report.mjs` 生成本次标注 PNG 与 Markdown。采集或报告失败时保持未完成，不写通过。
-5. 执行 `complete-verify` 预览，核对稳定问题指纹形成的 `resolved`、`remaining` 和 `new`，再加 `--write`。
+4. 统一入口生成本次实际 PNG、差异图、证据副本、Markdown 与状态。采集或报告失败时返回阻塞，不写通过。
+5. 核对稳定问题指纹形成的 `resolved`、`remaining` 和 `new`；统一入口退出码分别为通过 0、失败 1、不确定 2、阻塞 3。
 
 ## 复验结论
 
