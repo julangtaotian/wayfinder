@@ -18,7 +18,8 @@ node scripts/ui-review-runner.mjs verify --target <项目> --scenario <场景> -
 - 不含认证信息的 HTTP(S) 页面、视口、DPR、本地设计依据和至少一个唯一目标节点。
 - `capture: project-playwright`、项目内适配器与结果路径；`captureFallback: browser` 可选，只在不确定结果时开放。
 - `interactions` 结构化步骤，仅支持 `click`、`hover`、`fill`、`press`、`select-option`、`check`、`uncheck`、`wait-for`、`assert` 和 `capture`。
-- `comparison.mode` 为 `dom`、`image` 或 `hybrid`。DOM 规则支持显隐、文本、值、URL 和 `style.<CSS属性>`；图片规则必须声明成对区域、成对掩码以及颜色、差异像素数和差异比例阈值。
+- `comparison.scope` 为 `structure` 或 `visual`，省略时按向后兼容的 `structure` 处理。结构范围只能证明节点和交互；视觉范围至少要包含 `style.*`、`rect.*` 或图片区域证据，否则结果固定为 `inconclusive`。
+- `comparison.mode` 为 `dom`、`image` 或 `hybrid`。DOM 规则支持显隐、文本、值、URL、`style.<CSS属性>` 和 `rect.x/y/width/height/top/right/bottom/center-x/center-y`。几何规则使用数值 `expected` 与 `tolerance`，或通过 `relativeTo` 比较另一个唯一节点的几何属性；图片规则必须声明成对区域、成对掩码以及颜色、差异像素数和差异比例阈值。
 
 每个交互动作都校验允许字段、唯一选择器和 100～30000 毫秒超时。分段截图名称只允许小写字母、数字和短横线。禁止任意 JavaScript、Shell、动态模块、项目外路径和密码、令牌等敏感填写目标；执行记录只保存值长度，不保存填写值、Cookie 或页面存储。
 
@@ -30,17 +31,19 @@ node scripts/ui-review-runner.mjs verify --target <项目> --scenario <场景> -
 
 ## 结构化交互与采集
 
-默认适配器使用当前平台内置 Chromium，打开页面并等待字体与两帧渲染稳定。结构化动作封闭分派、顺序执行；目标必须唯一。交互截图先写临时目录，只有所有步骤成功才一次性提交，失败时不留下半成品。完成交互后再采集目标节点坐标、文本、语义和计算样式，适配器不读取认证数据和页面存储。
+默认适配器使用当前平台内置 Chromium，打开页面后等待字体、有限 Web Animation/Transition 和连续两帧渲染稳定。结构化动作封闭分派、顺序执行；目标必须唯一。每个状态变更动作之后及每次截图之前重新等待稳定，超出步骤超时即失败关闭。交互截图先写临时目录，只有所有步骤成功才一次性提交，失败时不留下半成品。完成交互后再采集目标节点坐标、文本、语义和计算样式，适配器不读取认证数据和页面存储。
 
 插件只从自己的固定运行时加载 Playwright，业务项目不安装 Playwright，`package.json` 和锁文件不得改变。默认适配器显式使用平台元数据登记的浏览器可执行文件，不回退到用户缓存，也不在运行阶段下载。
 
 ## 确定性判断
 
-DOM 与图片比较都产生可追溯 `observations`。图片比较只处理显式区域，按成对掩码忽略动态内容，记录比较像素、差异像素和比例并生成 `report/diff.png`。结论规则：
+DOM、几何与图片比较都产生可追溯 `observations`。几何比较读取 Playwright `boundingBox()`，支持固定目标与同页面参考节点的相对中心线等关系；图片比较只处理显式区域，按成对掩码忽略动态内容，记录比较像素、差异像素和比例并生成 `report/diff.png`。结论规则：
 
 - `passed`：全部已声明判断均有确定证据且满足阈值。
 - `needs-fix`：存在高置信度、超过阈值的确定差异。
 - `inconclusive`：待分析、中置信度、证据缺失、PNG 损坏、区域越界或尺寸无法对齐；永远不能自动升级为通过。
+
+报告必须展示 `scope`。`structure` 通过只能写成结构与交互通过，不得声称视觉还原通过；`visual` 通过必须实际存在样式、几何或图片证据。文本存在、按钮可点击和弹窗 `visible` 都不是单独成立的视觉证据。
 
 确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。
 

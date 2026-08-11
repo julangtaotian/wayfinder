@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { inspectBundledPlaywright, loadBundledPlaywright } from './playwright-runtime.mjs';
-import { executeStructuredInteractions } from './ui-review-interactions.mjs';
+import { executeStructuredInteractions, waitForVisualStability } from './ui-review-interactions.mjs';
 import { compareUiEvidence } from './ui-review-comparator.mjs';
 import { parsePngDimensions } from './ui-review-report.mjs';
 import {
@@ -156,6 +156,7 @@ export async function runPlaywrightAdapter({
       interactions,
       captureRoot: interactionScreenshots.absolutePath,
     }),
+    stabilizePage: async ({ page, timeout = 5000 } = {}) => waitForVisualStability(page, { timeout }),
     project: deepFreeze({ root: projectRoot, name: projectName(projectRoot) }),
     runId: normalizedRunId,
     scenario: deepFreeze(structuredClone(plan.scenario)),

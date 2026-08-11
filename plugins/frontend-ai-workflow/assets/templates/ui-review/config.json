@@ -29,6 +29,7 @@
       ],
       "interactions": [],
       "comparison": {
+        "scope": "visual",
         "mode": "hybrid",
         "dom": [
           {

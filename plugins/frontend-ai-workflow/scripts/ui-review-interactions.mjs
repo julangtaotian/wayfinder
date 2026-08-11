@@ -62,6 +62,16 @@ async function executeStep(page, interaction, stepLabel, capturePath) {
     return { capture: path.basename(capturePath) };
   }
   if (interaction.action === 'assert') return executeAssertion(page, interaction, stepLabel);
+  if (interaction.action === 'wait-for') {
+    const locator = page.locator(interaction.selector);
+    const count = await locator.count();
+    if (count === 0 && ['hidden', 'detached'].includes(interaction.state)) {
+      return { waitState: interaction.state, actual: 'absent' };
+    }
+    if (count !== 1) fail(`${stepLabel}的选择器必须唯一命中一个节点：${interaction.selector}，实际 ${count}`);
+    await locator.first().waitFor({ state: interaction.state, timeout: interaction.timeout });
+    return { waitState: interaction.state, actual: interaction.state };
+  }
   const locator = await uniqueLocator(page, interaction.selector, stepLabel);
   const options = { timeout: interaction.timeout };
   if (interaction.action === 'click') await locator.click(options);
@@ -71,8 +81,43 @@ async function executeStep(page, interaction, stepLabel, capturePath) {
   else if (interaction.action === 'select-option') await locator.selectOption(interaction.value, options);
   else if (interaction.action === 'check') await locator.check(options);
   else if (interaction.action === 'uncheck') await locator.uncheck(options);
-  else if (interaction.action === 'wait-for') await locator.waitFor({ state: interaction.state, timeout: interaction.timeout });
   return {};
+}
+
+// 等待字体、有限动画和连续两帧渲染稳定，避免把过渡首帧保存为验收证据。
+export async function waitForVisualStability(page, { timeout = 5000 } = {}) {
+  if (!page || typeof page.evaluate !== 'function') fail('视觉稳定等待需要有效的 Playwright 页面');
+  if (!Number.isInteger(timeout) || timeout < 100 || timeout > 30000) fail('视觉稳定等待超时必须是 100 到 30000 的整数');
+  await page.evaluate(async (maxWait) => {
+    const deadline = Date.now() + maxWait;
+    const remaining = () => Math.max(0, deadline - Date.now());
+    const waitUntil = async (promise, label) => {
+      const available = remaining();
+      if (available === 0) throw new Error(`${label}等待超时`);
+      let timer;
+      try {
+        await Promise.race([
+          promise,
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(`${label}等待超时`)), available);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+    if (document.fonts?.ready) await waitUntil(document.fonts.ready, '字体');
+    while (true) {
+      const running = document.getAnimations().filter((animation) => {
+        if (animation.playState !== 'running') return false;
+        const endTime = animation.effect?.getComputedTiming?.().endTime;
+        return Number.isFinite(endTime);
+      });
+      if (running.length === 0) break;
+      await waitUntil(new Promise((resolve) => requestAnimationFrame(resolve)), '有限动画');
+    }
+    await waitUntil(new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))), '渲染帧');
+  }, timeout);
 }
 
 // 交互产物先写入临时目录，只有全部步骤成功才一次性提交，避免失败运行留下半成品证据。
@@ -96,13 +141,17 @@ export async function executeStructuredInteractions({ page, interactions, captur
         capturePath = path.join(temporaryRoot, `${String(index + 1).padStart(2, '0')}-${interaction.name}.png`);
         assertInside(temporaryRoot, capturePath);
       }
+      if (interaction.action === 'capture') await waitForVisualStability(page, { timeout: interaction.timeout });
       const evidence = await executeStep(page, interaction, stepLabel, capturePath);
+      const stateChanging = !['assert', 'capture'].includes(interaction.action);
+      if (stateChanging) await waitForVisualStability(page, { timeout: interaction.timeout });
       steps.push({
         index: index + 1,
         action: interaction.action,
         selector: interaction.selector || null,
         timeout: interaction.timeout,
         valueLength: typeof interaction.value === 'string' ? interaction.value.length : null,
+        stabilized: stateChanging || interaction.action === 'capture',
         ...evidence,
       });
     }

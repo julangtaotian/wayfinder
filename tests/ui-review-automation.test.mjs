@@ -16,6 +16,7 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 import { executeStructuredInteractions } from '../plugins/frontend-ai-workflow/scripts/ui-review-interactions.mjs';
 import { compareUiEvidence, inspectComparisonRuntime } from '../plugins/frontend-ai-workflow/scripts/ui-review-comparator.mjs';
+import { renderDeterministicAssessmentMarkdown } from '../plugins/frontend-ai-workflow/scripts/ui-review-report.mjs';
 import { runUiReview } from '../plugins/frontend-ai-workflow/scripts/ui-review-runner.mjs';
 import pngjs from '../plugins/frontend-ai-workflow/runtime/playwright/node_modules/pngjs/lib/png.js';
 import {
@@ -79,6 +80,7 @@ function configV2Input(overrides = {}) {
           { action: 'capture', name: 'dialog-filled' },
         ],
         comparison: {
+          scope: 'visual',
           mode: 'hybrid',
           dom: [
             { selector: '[role="dialog"]', property: 'visible', expected: true },
@@ -168,6 +170,8 @@ test('版本 2 配置规范化结构化交互、比较规则并生成稳定指�
   assert.equal(first.scenarios[0].interactionMode, 'structured');
   assert.equal(first.scenarios[0].fingerprint, second.scenarios[0].fingerprint);
   assert.equal(first.scenarios[0].comparison.mode, 'hybrid');
+  assert.equal(first.scenarios[0].comparison.scope, 'visual');
+  assert.equal(first.scenarios[0].comparison.visualEvidenceDeclared, true);
 
   const changed = configV2Input();
   changed.scenarios[0].interactions[1].value = '另一个用户';
@@ -175,6 +179,46 @@ test('版本 2 配置规范化结构化交互、比较规则并生成稳定指�
     first.scenarios[0].fingerprint,
     normalizeUiReviewConfig(changed, projectRoot).scenarios[0].fingerprint,
   );
+});
+
+test('视觉范围规范化几何断言并保持旧配置为结构范围', (context) => {
+  const projectRoot = createProject(context);
+  const input = configV2Input();
+  input.scenarios[0].comparison = {
+    scope: 'visual',
+    mode: 'dom',
+    dom: [
+      { selector: '.row', property: 'rect.height', expected: 57, tolerance: 0.5 },
+      {
+        selector: '.remove',
+        property: 'rect.center-y',
+        relativeTo: { selector: '.field-input', property: 'rect.center-y' },
+        tolerance: 1,
+      },
+    ],
+  };
+  const normalized = normalizeUiReviewConfig(input, projectRoot).scenarios[0].comparison;
+  assert.equal(normalized.scope, 'visual');
+  assert.equal(normalized.visualEvidenceDeclared, true);
+  assert.equal(normalized.dom[0].expected, 57);
+  assert.equal(normalized.dom[1].relativeTo.selector, '.field-input');
+
+  const legacy = configV2Input();
+  delete legacy.scenarios[0].comparison.scope;
+  assert.equal(normalizeUiReviewConfig(legacy, projectRoot).scenarios[0].comparison.scope, 'structure');
+
+  const invalid = structuredClone(input);
+  invalid.scenarios[0].comparison.dom[0] = {
+    selector: '.row',
+    property: 'rect.height',
+    expected: 57,
+    relativeTo: { selector: '.other', property: 'rect.height' },
+  };
+  assert.throws(() => normalizeUiReviewConfig(invalid, projectRoot), /必须且只能声明 expected 或 relativeTo/u);
+
+  const repeatedProperty = structuredClone(input);
+  repeatedProperty.scenarios[0].comparison.dom.push({ selector: '.row', property: 'rect.height', expected: 58 });
+  assert.equal(normalizeUiReviewConfig(repeatedProperty, projectRoot).scenarios[0].comparison.dom.length, 3);
 });
 
 test('版本 2 配置拒绝未知交互字段、危险凭据目标、非法超时和不安全截图名称', (context) => {
@@ -398,6 +442,99 @@ test('确定性比较覆盖 DOM、图片区域、掩码、损坏图片和无法�
     () => compareUiEvidence({ scenario: imageScenario, actualScreenshot: actualPath, expectedScreenshot: expectedPath, diffPath }),
     /不是可解码的 PNG/u,
   );
+});
+
+test('视觉范围在证据不足时不通过，并确定判断固定与相对几何差异', (context) => {
+  const projectRoot = createProject(context);
+  const actualPath = path.join(projectRoot, 'actual.png');
+  const expectedPath = path.join(projectRoot, 'expected.png');
+  const diffPath = path.join(projectRoot, '.frontend-ui-review', 'geometry-diff.png');
+  writeSolidPng(actualPath, 20, 20, [255, 255, 255]);
+  writeSolidPng(expectedPath, 20, 20, [255, 255, 255]);
+
+  const insufficient = compareUiEvidence({
+    scenario: {
+      comparison: {
+        scope: 'visual',
+        mode: 'dom',
+        dom: [{ selector: '.dialog', property: 'visible', expected: true }],
+        image: null,
+      },
+    },
+    actualScreenshot: actualPath,
+    expectedScreenshot: expectedPath,
+    domObservations: [{ selector: '.dialog', property: 'visible', actual: true }],
+    diffPath,
+  });
+  assert.equal(insufficient.outcome, 'inconclusive');
+  assert.equal(insufficient.observations[0].id, 'VIS-001');
+
+  const geometryScenario = {
+    comparison: {
+      scope: 'visual',
+      mode: 'dom',
+      dom: [
+        { selector: '.row', property: 'rect.height', expected: 57, tolerance: 0.5, relativeTo: null },
+        {
+          selector: '.remove',
+          property: 'rect.center-y',
+          expected: undefined,
+          tolerance: 1,
+          relativeTo: { selector: '.field-input', property: 'rect.center-y' },
+        },
+      ],
+      image: null,
+      visualEvidenceDeclared: true,
+    },
+  };
+  const passed = compareUiEvidence({
+    scenario: geometryScenario,
+    actualScreenshot: actualPath,
+    expectedScreenshot: expectedPath,
+    domObservations: [
+      { selector: '.row', property: 'rect.height', actual: 57.2 },
+      { selector: '.remove', property: 'rect.center-y', actual: 42, referenceActual: 42.8 },
+    ],
+    diffPath,
+  });
+  assert.equal(passed.outcome, 'passed');
+  const failed = compareUiEvidence({
+    scenario: geometryScenario,
+    actualScreenshot: actualPath,
+    expectedScreenshot: expectedPath,
+    domObservations: [
+      { selector: '.row', property: 'rect.height', actual: 79 },
+      { selector: '.remove', property: 'rect.center-y', actual: 35, referenceActual: 42 },
+    ],
+    diffPath,
+  });
+  assert.equal(failed.outcome, 'needs-fix');
+  assert.equal(failed.findings.length, 2);
+  assert.equal(failed.findings[0].type, '几何断言差异');
+  assert.match(failed.findings[1].targetValue, /\.field-input\.rect\.center-y/u);
+  assert.equal(compareUiEvidence({
+    scenario: geometryScenario,
+    actualScreenshot: actualPath,
+    expectedScreenshot: expectedPath,
+    domObservations: [{ selector: '.row', property: 'rect.height', actual: 57 }],
+    diffPath,
+  }).outcome, 'inconclusive');
+});
+
+test('确定性报告区分结构通过与视觉通过措辞', () => {
+  const structureReport = renderDeterministicAssessmentMarkdown({
+    scenario: { id: 'structure', url: 'http://127.0.0.1/', comparison: { scope: 'structure', mode: 'dom' } },
+    assessment: { outcome: 'passed', observations: [], findings: [] },
+  });
+  assert.match(structureReport, /验收范围：`structure`/u);
+  assert.match(structureReport, /不代表视觉还原通过/u);
+
+  const visualReport = renderDeterministicAssessmentMarkdown({
+    scenario: { id: 'visual', url: 'http://127.0.0.1/', comparison: { scope: 'visual', mode: 'dom' } },
+    assessment: { outcome: 'passed', observations: [], findings: [] },
+  });
+  assert.match(visualReport, /验收范围：`visual`/u);
+  assert.match(visualReport, /样式、几何或图片证据均满足阈值/u);
 });
 
 test('能力链路状态矩阵覆盖初始、操作、重复、空态与错误态', (context) => {
@@ -722,6 +859,53 @@ document.querySelector('[data-save]').onclick=()=>{document.querySelector('[data
       /断言失败/u,
     );
     assert.equal(fs.existsSync(failedRoot), false);
+  } finally {
+    await browser.close();
+  }
+});
+
+test('结构化交互等待弹窗过渡结束后再保存截图', async (context) => {
+  const runtime = inspectBundledPlaywright();
+  assert.equal(runtime.available, true, runtime.reason);
+  const projectRoot = createProject(context);
+  const playwright = await loadBundledPlaywright();
+  const browser = await playwright.chromium.launch({
+    headless: true,
+    executablePath: runtime.browserExecutable,
+  });
+  try {
+    const page = await browser.newPage({ viewport: { width: 200, height: 160 } });
+    await page.setContent(`<!doctype html><style>
+      body{margin:0;background:#fff}.panel{position:fixed;inset:0;width:100px;height:100px;background:#f00;opacity:0;transition:opacity 220ms linear}.panel.open{opacity:1}
+    </style><button data-open style="position:fixed;left:120px">打开</button><div class="panel"></div><script>
+      document.querySelector('[data-open]').onclick=()=>document.querySelector('.panel').classList.add('open');
+    </script>`);
+    const captureRoot = path.join(projectRoot, '.frontend-ui-review', 'stable-transition');
+    const result = await executeStructuredInteractions({
+      page,
+      captureRoot,
+      interactions: [
+        { action: 'click', selector: '[data-open]', timeout: 5000 },
+        { action: 'capture', name: 'stable-dialog', timeout: 5000 },
+      ],
+    });
+    assert.equal(result.steps.every((step) => step.stabilized === true), true);
+    const screenshot = PNG.sync.read(fs.readFileSync(path.join(captureRoot, '02-stable-dialog.png')));
+    const offset = (20 * screenshot.width + 20) * 4;
+    assert.equal(screenshot.data[offset] > 245, true);
+    assert.equal(screenshot.data[offset + 1] < 10, true);
+    assert.equal(screenshot.data[offset + 2] < 10, true);
+
+    await page.setContent('<button class="remove" onclick="this.remove()">移除</button>');
+    const removed = await executeStructuredInteractions({
+      page,
+      captureRoot: path.join(projectRoot, '.frontend-ui-review', 'removed-node'),
+      interactions: [
+        { action: 'click', selector: '.remove', timeout: 5000 },
+        { action: 'wait-for', selector: '.remove', state: 'hidden', timeout: 5000 },
+      ],
+    });
+    assert.equal(removed.steps[1].actual, 'absent');
   } finally {
     await browser.close();
   }

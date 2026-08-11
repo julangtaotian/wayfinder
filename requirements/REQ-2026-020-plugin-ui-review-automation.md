@@ -201,6 +201,7 @@
 | R-06 | 2026-08-07 | D-08、D-09、D-10 | A-02、A-05、A-06、A-07 | 完成固定运行时、平台与完整性门禁、注入式适配器、Git LFS 发布链路和兼容命令；V-07、V-08 全部通过，进入交付归档门禁。 |
 | R-07 | 2026-08-10 | D-01、D-03、D-06～D-14 | A-04、A-06～A-12 | 用户确认补齐结构化交互、确定性视觉判断、首批跨平台运行包和统一编排四层；需求恢复为已确认，新验收 V-09～V-12 保持计划，既有 V-01～V-08 只证明历史基线。 |
 | R-08 | 2026-08-10 | D-01、D-03、D-06～D-14 | A-08～A-12 | 完成四层代码、复杂场景、Mac 真实浏览器、安装缓存和本地全量门禁；A-08、A-09、A-11 已通过，A-10、A-12 等待分支推送后的 GitHub Actions Linux x64 真实冒烟证据。 |
+| R-09 | 2026-08-11 | D-06、D-09、D-11、D-12、D-14 | A-08、A-09、A-11、A-12 | 真实项目复查发现 DOM-only 场景可在未声明几何或图片证据时被误写为视觉通过，且弹窗过渡动画期间即可截图；V-10、V-12 继续作为历史能力证据，新增 V-13，重新打开视觉范围、稳定截图、几何断言、真实失败基线和复验任务。 |
 
 ## 兼容性与风险
 
@@ -212,8 +213,8 @@
 
 - 测试文件策略：复用；目标路径：`tests/ui-review-automation.test.mjs`；基线证据：该文件已由 Git 跟踪并专门覆盖 UI 验收配置、状态、Playwright 适配器和复验合同；选择理由：结构化交互、确定性判断和统一入口继续属于同一手写专用功能。平台运行包选择与发布矩阵新建 `tests/ui-review-platform-runtime.test.mjs`，当前路径不存在且未被 Git 跟踪，避免将大体积平台发布职责继续堆入功能测试。
 - 验证范围：全量；执行命令：聚焦 `node --test tests/ui-review-automation.test.mjs`，随后 `npm test`、`npm run validate`、`npm run verify`；选择理由：新增公共 Skills 并修改插件结构校验、README 和发布资产，影响插件所有使用者及统一验证链路。
-- 自动测试：继续覆盖既有合同；新增弹窗、下拉、悬停和表单结构化步骤，未知动作与任意代码拒绝，DOM/样式和图片区域通过、失败、不确定三态，统一入口预览、写入、退出码和复验，平台包选择、独立完整性以及 macOS ARM 与 Linux x64 真实浏览器启动。
-- 人工检查：检查三个 Skill 的触发描述、职责边界和串联方式；在现有 Element Plus 或隔离 fixture 上执行包含弹窗、下拉和表单的综合场景，确认确定性结果明确时不调用视觉兜底，不确定时只使用已声明兜底，不执行远程写入。
+- 自动测试：继续覆盖既有合同；新增弹窗、下拉、悬停和表单结构化步骤，未知动作与任意代码拒绝，截图前动画与字体稳定，结构范围和视觉范围结论分离，DOM 几何/样式和图片区域通过、失败、不确定三态，统一入口预览、写入、退出码和复验，平台包选择、独立完整性以及 macOS ARM 与 Linux x64 真实浏览器启动。
+- 人工检查：检查三个 Skill 的触发描述、职责边界和串联方式；在现有 Element Plus 或隔离 fixture 上执行包含弹窗、下拉和表单的综合场景，确认视觉范围缺少几何、样式或图片证据时保持不确定，明确结果不调用视觉兜底，不确定时只使用已声明兜底，不执行远程写入。
 - 构建与静态检查：官方 Skill validator 检查三个新 Skill，官方 Plugin validator 检查 manifest，`git diff --check` 检查补丁格式，仓库 AI 标记策略测试保持通过。
 
 ## 验证记录
@@ -232,6 +233,7 @@
 | V-10 | 自动+人工 | DOM 与图片区域通过/失败/损坏/对齐失败/掩码三态均通过；人工查看 1280×800 弹窗与最终截图；同一复杂场景先形成 `needs-fix` 基线，恢复页面后复验得到 `resolved=1`、`remaining=0`、`new=0`，且两次确定性执行均为 `fallbackRequired=false` | 2026-08-10 | 通过 | `tests/fixtures/ui-review-complex/.frontend-ui-review/runs/manual-complex-20260810/complex-dialog/`、`tests/fixtures/ui-review-complex/.frontend-ui-review/runs/manual-verify-baseline-20260810/complex-dialog/`、`tests/fixtures/ui-review-complex/.frontend-ui-review/runs/manual-verify-passed-20260810/complex-dialog/` |
 | V-11 | 自动 | 两套平台元数据、许可与独立完整性共 536 个文件通过；Apple Silicon Mac 与安装缓存均真实启动 Chromium、`skipped=false`；GitHub Actions 已强制期望 `linux-x64`，待分支推送后取得远端实际启动证据 | 2026-08-10 | 未执行 | `tests/ui-review-platform-runtime.test.mjs`、`.github/workflows/validate.yml` |
 | V-12 | 自动 | 统一入口预览、写入、四类退出码和复验通过；`npm run verify` 148/148、7/7，严格 OpenSpec 24/24，8 个官方 Skill validator、Plugin validator、安装缓存综合场景与 `git diff --check` 通过 | 2026-08-10 | 通过 | `tests/ui-review-automation.test.mjs`、`scripts/verify.mjs`、`tests/fixtures/ui-review-complex/.frontend-ui-review/runs/installed-cache-complex-20260810/complex-dialog/` |
+| V-13 | 自动+人工 | 聚焦测试 28/28 验证视觉范围失败关闭、弹窗动画稳定截图、节点移除等待和固定/相对几何三态；翻译平台修复前实测行高 79px、中心线差 6px并形成 `needs-fix`，同一 1440×900 指纹复验后为 57px、0px，`resolved=2`、`remaining=0`、`new=0`，1280×800 及其余七个场景均通过且 `fallbackRequired=false`；全量 110/110、综合门禁 152/152、8 个官方 Skill validator 和 Plugin validator 通过；缓存版本 `0.12.0+codex.20260811034952` 重装后再次真实验收通过 | 2026-08-11 | 通过 | `tests/ui-review-automation.test.mjs`；翻译平台 `.frontend-ui-review/runs/20260811-manual-geometry-baseline-r2/`、`20260811-manual-geometry-verify/`、`20260811-manual-geometry-1280/`、`20260811-regression-*/`、`20260811-installed-cache-manual-1280/`；`scripts/verify.mjs`；本机插件缓存 |
 
 ## 验收标准
 
@@ -259,11 +261,11 @@
 | A-05 | 插件完整验证 | D-01～D-10 | 自动 | 仓库验证、官方 validators、`git diff --check` 和验证记录 | 新增公共能力未破坏既有工作流、运行时与插件结构 | V-08 |
 | A-06 | 可移植主路径与视觉兜底 | D-08、D-09、D-10 | 自动 | 配置模板、采集计划 CLI、三个 Skill 和专用测试 | 插件内置 Playwright 命令可被其他 AI 工具和 CI 直接消费；视觉插件只在显式兜底时启用；旧项目命令继续兼容 | V-07、V-08 |
 | A-07 | 内置 Playwright 运行时 | D-08、D-10 | 自动 | 运行时检查、完整性清单、真实 Chromium 启动测试和结构校验 | 固定包与浏览器随插件发布，目标项目零依赖安装，平台或摘要不匹配时安全失败 | V-07、V-08 |
-| A-08 | 结构化复杂交互 | D-04、D-08、D-11 | 自动+人工 | `tests/ui-review-automation.test.mjs`、模板配置与适配器、综合 UI fixture | 常见弹窗、下拉、悬停和表单步骤无需项目手写适配器即可执行；非法动作和任意代码失败关闭 | V-09、V-12 |
-| A-09 | 确定性视觉三态 | D-05、D-06、D-09、D-12 | 自动+人工 | 判断器聚焦测试、结构化结果、已声明视觉兜底人工记录 | 明确结果自动通过或发现问题，不确定结果不误报且只进入显式视觉兜底 | V-10、V-12 |
+| A-08 | 结构化复杂交互 | D-04、D-08、D-11 | 自动+人工 | `tests/ui-review-automation.test.mjs`、模板配置与适配器、综合 UI fixture | 常见弹窗、下拉、悬停和表单步骤无需项目手写适配器即可执行；截图前等待有限动画、字体和双帧稳定；非法动作和任意代码失败关闭 | V-09、V-12、V-13 |
+| A-09 | 确定性视觉三态 | D-05、D-06、D-09、D-12 | 自动+人工 | 判断器聚焦测试、结构化结果、已声明视觉兜底人工记录 | 视觉范围必须含样式、几何或图片证据；明确结果自动通过或发现问题，证据不足不误报且只进入显式视觉兜底 | V-10、V-12、V-13 |
 | A-10 | macOS ARM 与 Linux x64 运行包 | D-08、D-10、D-13 | 自动 | 平台运行包测试、独立完整性清单、macOS 本地与 GitHub Actions Linux 冒烟截图 | 两个平台选择匹配运行包并真实启动；缺包、混装和摘要变化稳定阻塞 | V-11、V-12 |
-| A-11 | 跨工具统一入口 | D-01、D-03、D-07、D-14 | 自动 | 统一入口聚焦测试、JSON 结果与退出码断言 | 单入口完成验收或复验编排，同时保留预览、显式写入和自动修复权限边界 | V-12 |
-| A-12 | 四层增强完整验证 | D-01、D-03、D-06～D-14 | 自动+人工 | 聚焦测试、全量验证、官方 validators、复杂场景验收证据 | 四层能力可用且未引入独立平台、业务依赖、通用 RPA 或无人值守源码修改 | V-09、V-10、V-11、V-12 |
+| A-11 | 跨工具统一入口 | D-01、D-03、D-07、D-14 | 自动 | 统一入口聚焦测试、JSON 结果与退出码断言 | 单入口完成验收或复验编排，报告明确区分结构与视觉范围，同时保留预览、显式写入和自动修复权限边界 | V-12、V-13 |
+| A-12 | 四层增强完整验证 | D-01、D-03、D-06～D-14 | 自动+人工 | 聚焦测试、全量验证、官方 validators、复杂场景验收证据 | 四层能力可用且未引入独立平台、业务依赖、通用 RPA 或无人值守源码修改 | V-09、V-10、V-11、V-12、V-13 |
 
 ## 待确认问题
 

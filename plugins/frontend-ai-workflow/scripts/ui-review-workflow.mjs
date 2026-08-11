@@ -34,6 +34,18 @@ const LOCATOR_ACTIONS = new Set(['click', 'hover', 'fill', 'press', 'select-opti
 const WAIT_STATES = new Set(['visible', 'hidden', 'attached', 'detached']);
 const ASSERTION_TYPES = new Set(['visible', 'hidden', 'text', 'value', 'url']);
 const COMPARISON_MODES = new Set(['dom', 'image', 'hybrid']);
+const COMPARISON_SCOPES = new Set(['structure', 'visual']);
+const RECT_PROPERTIES = new Set([
+  'rect.x',
+  'rect.y',
+  'rect.width',
+  'rect.height',
+  'rect.top',
+  'rect.right',
+  'rect.bottom',
+  'rect.center-x',
+  'rect.center-y',
+]);
 const CAPTURE_TEMPLATE_PATTERN = /\{([A-Za-z][A-Za-z0-9]*)\}/gu;
 const CAPTURE_TEMPLATE_KEYS = new Set([
   'scenarioId',
@@ -179,7 +191,9 @@ function normalizeComparisonRect(value, label) {
 
 function normalizeComparison(value, label, designType) {
   const comparison = requireObject(value, label);
-  assertAllowedKeys(comparison, new Set(['mode', 'dom', 'image']), label);
+  assertAllowedKeys(comparison, new Set(['scope', 'mode', 'dom', 'image']), label);
+  const scope = comparison.scope === undefined ? 'structure' : requireString(comparison.scope, `${label}.scope`);
+  if (!COMPARISON_SCOPES.has(scope)) fail(`${label}.scope 只能是 structure 或 visual`);
   const mode = requireString(comparison.mode, `${label}.mode`);
   if (!COMPARISON_MODES.has(mode)) fail(`${label}.mode 只能是 dom、image 或 hybrid`);
 
@@ -188,25 +202,53 @@ function normalizeComparison(value, label, designType) {
   const normalizedDom = dom.map((item, index) => {
     const itemLabel = `${label}.dom[${index}]`;
     const assertion = requireObject(item, itemLabel);
-    assertAllowedKeys(assertion, new Set(['selector', 'property', 'expected', 'exact']), itemLabel);
+    assertAllowedKeys(assertion, new Set(['selector', 'property', 'expected', 'exact', 'tolerance', 'relativeTo']), itemLabel);
     const property = requireString(assertion.property, `${itemLabel}.property`);
-    if (!['visible', 'hidden', 'text', 'value', 'url'].includes(property) && !/^style\.[a-z-]{1,64}$/u.test(property)) {
+    const isRect = RECT_PROPERTIES.has(property);
+    if (!isRect && !['visible', 'hidden', 'text', 'value', 'url'].includes(property) && !/^style\.[a-z-]{1,64}$/u.test(property)) {
       fail(`${itemLabel}.property 不受支持：${property}`);
     }
     const expected = assertion.expected;
-    if (['visible', 'hidden'].includes(property)) {
+    if (isRect) {
+      if ((expected === undefined) === (assertion.relativeTo === undefined)) {
+        fail(`${itemLabel}几何断言必须且只能声明 expected 或 relativeTo`);
+      }
+      if (expected !== undefined && (!Number.isFinite(Number(expected)))) {
+        fail(`${itemLabel}.expected 必须是有限数值`);
+      }
+      if (assertion.exact !== undefined) fail(`${itemLabel}几何断言请使用 tolerance，不能声明 exact`);
+    } else if (['visible', 'hidden'].includes(property)) {
       if (expected !== true && expected !== false) fail(`${itemLabel}.expected 必须是布尔值`);
     } else if (typeof expected !== 'string') {
       fail(`${itemLabel}.expected 必须是字符串`);
     }
-    return {
+    if (!isRect && (assertion.tolerance !== undefined || assertion.relativeTo !== undefined)) {
+      fail(`${itemLabel}只有 rect.* 几何断言可以声明 tolerance 或 relativeTo`);
+    }
+    const tolerance = isRect && assertion.tolerance !== undefined ? Number(assertion.tolerance) : 0;
+    if (!Number.isFinite(tolerance) || tolerance < 0 || tolerance > 10000) {
+      fail(`${itemLabel}.tolerance 必须是 0 到 10000 的有限数值`);
+    }
+    let relativeTo = null;
+    if (isRect && assertion.relativeTo !== undefined) {
+      const reference = requireObject(assertion.relativeTo, `${itemLabel}.relativeTo`);
+      assertAllowedKeys(reference, new Set(['selector', 'property']), `${itemLabel}.relativeTo`);
+      const referenceProperty = requireString(reference.property, `${itemLabel}.relativeTo.property`);
+      if (!RECT_PROPERTIES.has(referenceProperty)) fail(`${itemLabel}.relativeTo.property 必须是 rect.* 几何属性`);
+      relativeTo = {
+        selector: normalizeSelector(reference.selector, `${itemLabel}.relativeTo.selector`),
+        property: referenceProperty,
+      };
+    }
+    const normalized = {
       selector: normalizeSelector(assertion.selector, `${itemLabel}.selector`),
       property,
-      expected,
-      exact: assertion.exact === true,
+      expected: isRect && expected !== undefined ? Number(expected) : expected,
+      exact: isRect ? false : assertion.exact === true,
     };
+    if (isRect) Object.assign(normalized, { tolerance, relativeTo });
+    return normalized;
   });
-
   let normalizedImage = null;
   if (comparison.image !== undefined) {
     if (designType !== 'image') fail(`${label}.image 只能用于图片设计依据`);
@@ -250,7 +292,9 @@ function normalizeComparison(value, label, designType) {
   if (['dom', 'hybrid'].includes(mode) && normalizedDom.length === 0) fail(`${label}.${mode} 模式必须声明 DOM 断言`);
   if (['image', 'hybrid'].includes(mode) && !normalizedImage) fail(`${label}.${mode} 模式必须声明图片比较`);
   if (mode === 'dom' && normalizedImage) fail(`${label}.dom 模式不能声明图片比较`);
-  return { mode, dom: normalizedDom, image: normalizedImage };
+  const visualEvidenceDeclared = Boolean(normalizedImage)
+    || normalizedDom.some((assertion) => assertion.property.startsWith('style.') || RECT_PROPERTIES.has(assertion.property));
+  return { scope, mode, dom: normalizedDom, image: normalizedImage, visualEvidenceDeclared };
 }
 
 function requireRepoRelativePath(value, label) {

@@ -55,6 +55,10 @@ function domKey(value) {
   return `${value.selector}\u0000${value.property}`;
 }
 
+function isRectProperty(property) {
+  return typeof property === 'string' && property.startsWith('rect.');
+}
+
 function compareDom(assertions, actualObservations) {
   const actualByKey = new Map((actualObservations || []).map((observation) => [domKey(observation), observation]));
   const observations = [];
@@ -75,27 +79,56 @@ function compareDom(assertions, actualObservations) {
       });
       continue;
     }
-    const matched = typeof assertion.expected === 'string' && assertion.exact !== true
-      ? String(actual.actual).includes(assertion.expected)
-      : actual.actual === assertion.expected;
+    const geometry = isRectProperty(assertion.property);
+    const expected = geometry && assertion.relativeTo ? actual.referenceActual : assertion.expected;
+    if (geometry && (!Number.isFinite(actual.actual) || !Number.isFinite(expected))) {
+      inconclusive = true;
+      observations.push({
+        id: `DOM-${String(index + 1).padStart(3, '0')}`,
+        kind: 'geometry',
+        status: 'inconclusive',
+        confidence: 'medium',
+        selector: assertion.selector,
+        detail: assertion.relativeTo ? '缺少当前节点或参考节点的有效几何结果' : '缺少有效几何结果',
+        evidence: { property: assertion.property, expected: assertion.expected, relativeTo: assertion.relativeTo },
+      });
+      continue;
+    }
+    const tolerance = geometry ? assertion.tolerance || 0 : null;
+    const difference = geometry ? Math.abs(actual.actual - expected) : null;
+    const matched = geometry
+      ? difference <= tolerance
+      : typeof assertion.expected === 'string' && assertion.exact !== true
+        ? String(actual.actual).includes(assertion.expected)
+        : actual.actual === assertion.expected;
     observations.push({
       id: `DOM-${String(index + 1).padStart(3, '0')}`,
-      kind: 'dom',
+      kind: geometry ? 'geometry' : 'dom',
       status: matched ? 'matched' : 'different',
       confidence: 'high',
       selector: assertion.selector,
-      detail: `${assertion.property}：实际 ${String(actual.actual)}，期望 ${String(assertion.expected)}`,
-      evidence: { property: assertion.property, actual: actual.actual, expected: assertion.expected, exact: assertion.exact },
+      detail: geometry
+        ? `${assertion.property}：实际 ${String(actual.actual)}，目标 ${String(expected)}，差值 ${difference.toFixed(3)}，容差 ${tolerance}`
+        : `${assertion.property}：实际 ${String(actual.actual)}，期望 ${String(assertion.expected)}`,
+      evidence: geometry
+        ? { property: assertion.property, actual: actual.actual, expected, tolerance, difference, relativeTo: assertion.relativeTo }
+        : { property: assertion.property, actual: actual.actual, expected: assertion.expected, exact: assertion.exact },
     });
     if (!matched) {
       findings.push({
         id: `UI-${String(findings.length + 1).padStart(3, '0')}`,
         confidence: 'high',
         selector: assertion.selector,
-        type: 'DOM 断言差异',
-        targetValue: `${assertion.property}=${String(assertion.expected)}`,
+        type: geometry ? '几何断言差异' : 'DOM 断言差异',
+        targetValue: geometry
+          ? assertion.relativeTo
+            ? `${assertion.property}≈${assertion.relativeTo.selector}.${assertion.relativeTo.property}±${String(tolerance)}`
+            : `${assertion.property}=${String(expected)}±${String(tolerance)}`
+          : `${assertion.property}=${String(assertion.expected)}`,
         repairable: false,
-        evidence: { property: assertion.property, actual: actual.actual, expected: assertion.expected },
+        evidence: geometry
+          ? { property: assertion.property, actual: actual.actual, expected, tolerance, difference, relativeTo: assertion.relativeTo }
+          : { property: assertion.property, actual: actual.actual, expected: assertion.expected },
       });
     }
   }
@@ -221,6 +254,11 @@ export function compareUiEvidence({ scenario, actualScreenshot, expectedScreensh
   if (!runtime.ok) fail(runtime.reason);
   const comparison = scenario?.comparison;
   if (!comparison) return { outcome: 'inconclusive', analysisPending: true, observations: [], findings: [], reason: '场景未声明确定性比较规则' };
+  const scope = comparison.scope || 'structure';
+  const visualEvidenceDeclared = comparison.visualEvidenceDeclared === true
+    || Boolean(comparison.image)
+    || (comparison.dom || []).some((assertion) => assertion.property?.startsWith('style.') || isRectProperty(assertion.property));
+  const visualEvidenceMissing = scope === 'visual' && !visualEvidenceDeclared;
   const dom = ['dom', 'hybrid'].includes(comparison.mode)
     ? compareDom(comparison.dom, domObservations)
     : { observations: [], findings: [], inconclusive: false };
@@ -228,14 +266,26 @@ export function compareUiEvidence({ scenario, actualScreenshot, expectedScreensh
     ? compareImage(comparison.image, actualScreenshot, expectedScreenshot, diffPath)
     : { observations: [], findings: [], inconclusive: false, metrics: null };
   const observations = [...dom.observations, ...image.observations];
+  if (visualEvidenceMissing) {
+    observations.unshift({
+      id: 'VIS-001',
+      kind: 'scope',
+      status: 'inconclusive',
+      confidence: 'high',
+      selector: null,
+      detail: '视觉范围只声明了文本、显隐、值或 URL，缺少样式、几何或图片区域证据',
+      evidence: { scope, visualEvidenceDeclared: false },
+    });
+  }
   const findings = [...dom.findings, ...image.findings].map((finding, index) => ({
     ...finding,
     id: `UI-${String(index + 1).padStart(3, '0')}`,
   }));
-  const inconclusive = dom.inconclusive || image.inconclusive;
+  const inconclusive = visualEvidenceMissing || dom.inconclusive || image.inconclusive;
   return {
     outcome: inconclusive ? 'inconclusive' : findings.length > 0 ? 'needs-fix' : 'passed',
     analysisPending: false,
+    scope,
     observations,
     findings,
     metrics: image.metrics,

@@ -352,8 +352,11 @@ export function renderReviewMarkdown(review) {
 export function renderDeterministicAssessmentMarkdown({ scenario, assessment, runtime = '插件内置 Playwright' }) {
   if (!scenario || typeof scenario !== 'object') fail('确定性验收报告缺少场景信息。');
   if (!assessment || typeof assessment !== 'object') fail('确定性验收报告缺少比较结果。');
+  const scope = scenario.comparison?.scope || assessment.scope || 'structure';
   const conclusion = {
-    passed: '通过：已声明的 DOM 与图片比较均满足阈值。',
+    passed: scope === 'visual'
+      ? '通过：已声明的样式、几何或图片证据均满足阈值。'
+      : '通过：已声明的结构与交互断言满足；该结论不代表视觉还原通过。',
     'needs-fix': '需修改：已发现超过阈值的确定性差异。',
     inconclusive: '不确定：证据缺失、损坏或无法对齐，不能判定为通过。',
   }[assessment.outcome] || '阻塞：比较结果状态不受支持。';
@@ -363,6 +366,7 @@ export function renderDeterministicAssessmentMarkdown({ scenario, assessment, ru
     `- 场景：${escapeInlineCode(scenario.id || 'unknown')}`,
     `- 页面：${escapeInlineCode(scenario.url)}`,
     `- 运行时：${escapeInlineCode(runtime)}`,
+    `- 验收范围：${escapeInlineCode(scope)}`,
     `- 比较模式：${escapeInlineCode(scenario.comparison?.mode || '未声明')}`,
     `- 结果：${conclusion}`,
     `- 观察数：${escapeInlineCode((assessment.observations || []).length)}`,
