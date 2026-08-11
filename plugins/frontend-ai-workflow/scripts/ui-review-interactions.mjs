@@ -64,12 +64,17 @@ async function executeStep(page, interaction, stepLabel, capturePath) {
   if (interaction.action === 'assert') return executeAssertion(page, interaction, stepLabel);
   if (interaction.action === 'wait-for') {
     const locator = page.locator(interaction.selector);
-    const count = await locator.count();
-    if (count === 0 && ['hidden', 'detached'].includes(interaction.state)) {
-      return { waitState: interaction.state, actual: 'absent' };
+    if (['hidden', 'detached'].includes(interaction.state)) {
+      const count = await locator.count();
+      if (count === 0) return { waitState: interaction.state, actual: 'absent' };
+      if (count !== 1) fail(`${stepLabel}的选择器必须唯一命中一个节点：${interaction.selector}，实际 ${count}`);
+      await locator.first().waitFor({ state: interaction.state, timeout: interaction.timeout });
+    } else {
+      // 可出现的节点应先进入 Playwright 自动等待，再校验最终唯一性。
+      await locator.first().waitFor({ state: interaction.state, timeout: interaction.timeout });
+      const count = await locator.count();
+      if (count !== 1) fail(`${stepLabel}的选择器必须唯一命中一个节点：${interaction.selector}，实际 ${count}`);
     }
-    if (count !== 1) fail(`${stepLabel}的选择器必须唯一命中一个节点：${interaction.selector}，实际 ${count}`);
-    await locator.first().waitFor({ state: interaction.state, timeout: interaction.timeout });
     return { waitState: interaction.state, actual: interaction.state };
   }
   const locator = await uniqueLocator(page, interaction.selector, stepLabel);

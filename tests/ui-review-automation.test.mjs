@@ -219,6 +219,17 @@ test('视觉范围规范化几何断言并保持旧配置为结构范围', (cont
   const repeatedProperty = structuredClone(input);
   repeatedProperty.scenarios[0].comparison.dom.push({ selector: '.row', property: 'rect.height', expected: 58 });
   assert.equal(normalizeUiReviewConfig(repeatedProperty, projectRoot).scenarios[0].comparison.dom.length, 3);
+
+  const styleInput = configV2Input();
+  styleInput.scenarios[0].comparison = {
+    scope: 'visual',
+    mode: 'dom',
+    dom: [{ selector: '.row', property: 'style.height', expected: '57px' }],
+  };
+  assert.equal(normalizeUiReviewConfig(styleInput, projectRoot).scenarios[0].comparison.dom[0].exact, true);
+  const emptyStyle = structuredClone(styleInput);
+  emptyStyle.scenarios[0].comparison.dom[0].expected = '';
+  assert.throws(() => normalizeUiReviewConfig(emptyStyle, projectRoot), /计算样式期望值不能为空/u);
 });
 
 test('版本 2 配置拒绝未知交互字段、危险凭据目标、非法超时和不安全截图名称', (context) => {
@@ -432,7 +443,10 @@ test('确定性比较覆盖 DOM、图片区域、掩码、损坏图片和无法�
     actual: { x: 0, y: 0, width: 20, height: 20 },
     expected: { x: 0, y: 0, width: 20, height: 20 },
   }];
-  assert.equal(compareUiEvidence({ scenario: maskedScenario, actualScreenshot: actualPath, expectedScreenshot: expectedPath, diffPath }).outcome, 'passed');
+  const fullyMasked = compareUiEvidence({ scenario: maskedScenario, actualScreenshot: actualPath, expectedScreenshot: expectedPath, diffPath });
+  assert.equal(fullyMasked.outcome, 'inconclusive');
+  assert.equal(fullyMasked.observations[0].status, 'inconclusive');
+  assert.equal(fullyMasked.metrics.comparedPixels, 0);
 
   const misalignedScenario = structuredClone(imageScenario);
   misalignedScenario.comparison.image.regions[0].expected.width = 19;
@@ -468,6 +482,23 @@ test('视觉范围在证据不足时不通过，并确定判断固定与相对�
   });
   assert.equal(insufficient.outcome, 'inconclusive');
   assert.equal(insufficient.observations[0].id, 'VIS-001');
+
+  const styleSubstring = compareUiEvidence({
+    scenario: {
+      comparison: {
+        scope: 'visual',
+        mode: 'dom',
+        dom: [{ selector: '.row', property: 'style.height', expected: '57px', exact: false }],
+        image: null,
+        visualEvidenceDeclared: true,
+      },
+    },
+    actualScreenshot: actualPath,
+    expectedScreenshot: expectedPath,
+    domObservations: [{ selector: '.row', property: 'style.height', actual: '157px' }],
+    diffPath,
+  });
+  assert.equal(styleSubstring.outcome, 'needs-fix');
 
   const geometryScenario = {
     comparison: {
@@ -622,6 +653,39 @@ test('复验按稳定问题指纹区分关闭、未解决与新增问题', (cont
   assert.equal(failed.verification.new.length, 1);
 });
 
+test('复验对同一不可修复问题的实际差异变化保持 remaining', (context) => {
+  const projectRoot = createProject(context);
+  const config = loadUiReviewConfig(projectRoot);
+  const geometryFinding = (actual) => ({
+    id: 'UI-001',
+    confidence: 'high',
+    selector: '.row',
+    type: '几何断言差异',
+    targetValue: 'rect.height=57±0.5',
+    repairable: false,
+    evidence: {
+      property: 'rect.height',
+      actual,
+      expected: 57,
+      tolerance: 0.5,
+      difference: actual - 57,
+    },
+  });
+  const baseline = completeReviewRun(
+    createReviewRun(config, 'home-desktop', { runId: 'stable-non-repairable-baseline' }),
+    { outcome: 'needs-fix', observations: [], findings: [geometryFinding(79)] },
+  );
+  const verify = completeVerifyRun(
+    createVerifyRun(config, baseline, { runId: 'stable-non-repairable-verify' }),
+    baseline,
+    { outcome: 'needs-fix', observations: [], findings: [geometryFinding(78)] },
+  );
+  assert.equal(verify.status, 'failed');
+  assert.equal(verify.verification.resolved.length, 0);
+  assert.equal(verify.verification.remaining.length, 1);
+  assert.equal(verify.verification.new.length, 0);
+});
+
 test('复验拒绝配置上下文变化，CLI 默认预览且显式写入', (context) => {
   const projectRoot = createProject(context);
   const config = loadUiReviewConfig(projectRoot);
@@ -767,6 +831,66 @@ test('内置 Playwright 适配器生成零安装采集计划并注入真实浏�
   assert.equal(targetManifest.devDependencies, undefined);
 });
 
+test('版本 2 统一入口只执行摘要匹配的受信适配器', async (context) => {
+  const projectRoot = createProject(context, {
+    schemaVersion: 2,
+    scenarios: [{
+      ...configInput().scenarios[0],
+      capture: 'project-playwright',
+      captureFallback: 'browser',
+      projectPlaywright: {
+        adapter: '.frontend-ui-review/playwright-adapter.mjs',
+        resultPath: '{reviewInput}',
+      },
+      interactions: [],
+      comparison: {
+        scope: 'structure',
+        mode: 'dom',
+        dom: [{ selector: 'main', property: 'text', expected: '完成', exact: true }],
+      },
+    }],
+  });
+  const adapterPath = path.join(projectRoot, '.frontend-ui-review', 'playwright-adapter.mjs');
+  fs.copyFileSync(
+    path.resolve('plugins/frontend-ai-workflow/assets/templates/ui-review/playwright-adapter.mjs'),
+    adapterPath,
+  );
+  const trusted = loadUiReviewConfig(projectRoot);
+  const trustedPlan = createCapturePlan(trusted, 'home-desktop', { runId: 'trusted-adapter' });
+  assert.equal(trustedPlan.projectPlaywright.source, 'bundled-adapter');
+  assert.equal(trustedPlan.projectPlaywright.portable, inspectBundledPlaywright().available);
+
+  fs.writeFileSync(adapterPath, `throw new Error('自定义适配器不应执行');\nexport default async function () {}\n`);
+  const changed = loadUiReviewConfig(projectRoot);
+  const changedPlan = createCapturePlan(changed, 'home-desktop', { runId: 'changed-adapter' });
+  assert.notEqual(changed.scenarios[0].fingerprint, trusted.scenarios[0].fingerprint);
+  assert.equal(changedPlan.projectPlaywright.source, 'project-adapter');
+  assert.equal(changedPlan.projectPlaywright.portable, false);
+  const blockedPreview = await runUiReview({
+    target: projectRoot,
+    mode: 'review',
+    scenarioId: 'home-desktop',
+    runId: 'changed-adapter-preview',
+  });
+  assert.equal(blockedPreview.readyToWrite, false);
+  assert.equal(blockedPreview.status, 'blocked');
+  assert.equal(blockedPreview.exitCode, 3);
+  assert.match(blockedPreview.error.message, /项目自有本地页面环境/u);
+  assert.doesNotMatch(blockedPreview.error.message, /自定义适配器不应执行/u);
+  assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'changed-adapter-preview')), false);
+  const blocked = await runUiReview({
+    target: projectRoot,
+    mode: 'review',
+    scenarioId: 'home-desktop',
+    runId: 'changed-adapter',
+    write: true,
+  });
+  assert.equal(blocked.status, 'blocked');
+  assert.match(blocked.error.message, /受信内置适配器/u);
+  assert.doesNotMatch(blocked.error.message, /自定义适配器不应执行/u);
+  assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'changed-adapter')), false);
+});
+
 test('默认适配器在真实 Chromium 中完成弹窗、下拉、悬停和表单综合交互', async (context) => {
   const runtime = inspectBundledPlaywright();
   assert.equal(runtime.available, true, runtime.reason);
@@ -906,6 +1030,23 @@ test('结构化交互等待弹窗过渡结束后再保存截图', async (context
       ],
     });
     assert.equal(removed.steps[1].actual, 'absent');
+
+    await page.setContent(`<main></main><script>
+      setTimeout(() => {
+        const node = document.createElement('button');
+        node.className = 'late-node';
+        node.textContent = '稍后出现';
+        document.querySelector('main').append(node);
+      }, 80);
+    </script>`);
+    const appeared = await executeStructuredInteractions({
+      page,
+      captureRoot: path.join(projectRoot, '.frontend-ui-review', 'async-node'),
+      interactions: [
+        { action: 'wait-for', selector: '.late-node', state: 'visible', timeout: 5000 },
+      ],
+    });
+    assert.equal(appeared.steps[0].actual, 'visible');
   } finally {
     await browser.close();
   }
@@ -943,6 +1084,7 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
 
   const preview = await runUiReview({ target: projectRoot, mode: 'review', scenarioId: 'home-desktop', runId: 'runner-review' });
   assert.equal(preview.write, false);
+  assert.equal(preview.readyToWrite, true);
   assert.equal(preview.exitCode, 0);
   assert.equal(preview.safety.startsProjectCommand, false);
   assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'runner-review')), false);
@@ -953,6 +1095,20 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   assert.equal(review.repairCandidates.length, 0);
   assert.equal(fs.existsSync(path.join(projectRoot, review.artifacts.report)), true);
   assert.equal(fs.existsSync(path.join(projectRoot, review.artifacts.annotatedScreenshot)), true);
+
+  fs.writeFileSync(path.join(projectRoot, 'design', 'home.png'), 'design-v2');
+  const mismatchedPreview = await runUiReview({
+    target: projectRoot,
+    mode: 'verify',
+    scenarioId: 'home-desktop',
+    runId: 'runner-mismatched-preview',
+    baselinePath: review.artifacts.state,
+  });
+  assert.equal(mismatchedPreview.status, 'blocked');
+  assert.equal(mismatchedPreview.exitCode, 3);
+  assert.match(mismatchedPreview.error.message, /重新开始独立验收/u);
+  assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'runner-mismatched-preview')), false);
+  fs.writeFileSync(path.join(projectRoot, 'design', 'home.png'), 'design-v1');
 
   fixed = true;
   const verifyPreview = await runUiReview({
@@ -1001,13 +1157,27 @@ test('统一入口对不确定、非内置适配器和产物冲突失败关闭',
   assert.equal(fs.existsSync(path.join(projectRoot, 'never-run.mjs')), false);
   assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'blocked-command')), false);
 
+  const blockedPreview = await runUiReview({ target: projectRoot, mode: 'review', scenarioId: 'home-desktop', runId: 'blocked-command-preview' });
+  assert.equal(blockedPreview.readyToWrite, false);
+  assert.equal(blockedPreview.status, 'blocked');
+  assert.equal(blockedPreview.exitCode, 3);
+  assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'blocked-command-preview')), false);
+
   const invalid = await runUiReview({ target: projectRoot, mode: 'unknown', scenarioId: 'home-desktop', runId: 'bad-mode', write: true });
   assert.equal(invalid.exitCode, 3);
 
+  const uncertainServer = http.createServer((_request, response) => {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><main>证据不完整</main>');
+  });
+  await new Promise((resolve) => uncertainServer.listen(0, '127.0.0.1', resolve));
+  context.after(() => new Promise((resolve) => uncertainServer.close(resolve)));
+  const { port: uncertainPort } = uncertainServer.address();
   const uncertainProject = createProject(context, {
     schemaVersion: 2,
     scenarios: [{
       ...configInput().scenarios[0],
+      url: `http://127.0.0.1:${uncertainPort}/`,
       capture: 'project-playwright',
       captureFallback: 'browser',
       projectPlaywright: {
@@ -1021,26 +1191,9 @@ test('统一入口对不确定、非内置适配器和产物冲突失败关闭',
       },
     }],
   });
-  fs.writeFileSync(
+  fs.copyFileSync(
+    path.resolve('plugins/frontend-ai-workflow/assets/templates/ui-review/playwright-adapter.mjs'),
     path.join(uncertainProject, '.frontend-ui-review', 'playwright-adapter.mjs'),
-    `export default async function ({ playwright, runtime, project, scenario, artifacts }) {
-  const browser = await playwright.chromium.launch({ headless: true, executablePath: runtime.browserExecutable });
-  try {
-    const page = await browser.newPage({ viewport: { width: scenario.viewport.width, height: scenario.viewport.height } });
-    await page.setContent('<main>证据不完整</main>');
-    const rect = await page.locator('main').boundingBox();
-    await page.screenshot({ path: artifacts.actualScreenshot });
-    return {
-      project: { name: project.name, runtime: 'bundled', page: scenario.url, designBasis: scenario.design.path, scope: ['main'] },
-      viewport: { width: scenario.viewport.width, height: scenario.viewport.height, dpr: 1, scale: 1 },
-      interactions: { completed: true, steps: [], captures: [] },
-      domObservations: [],
-      checkedNodes: [{ selector: 'main', componentPath: 'src/main.css', nodeText: '证据不完整', nodeMeaning: '页面主要内容', rect }],
-      findings: []
-    };
-  } finally { await browser.close(); }
-}
-`,
   );
   const uncertain = await runUiReview({ target: uncertainProject, mode: 'review', scenarioId: 'home-desktop', runId: 'runner-inconclusive', write: true });
   assert.equal(uncertain.status, 'inconclusive');
@@ -1243,8 +1396,19 @@ test('三个 Skill 的职责、显式修复门禁和共享合同随插件发布'
   assert.match(sharedReference, /darwin-arm64/u);
   assert.match(sharedReference, /linux-x64/u);
   assert.match(reviewSkill, /bundled-adapter/u);
+  assert.match(reviewSkill, /readyToWrite: true/u);
+  assert.match(reviewSkill, /project-adapter/u);
+  assert.match(reviewSkill, /项目自有本地页面环境/u);
+  assert.match(reviewSkill, /受控故障/u);
   assert.match(reviewSkill, /inconclusive/u);
+  assert.match(verifySkill, /适配器摘要/u);
+  assert.match(verifySkill, /受控故障/u);
+  assert.match(fixSkill, /验收环境事实/u);
+  assert.match(fixSkill, /不得.*业务源码.*验收环境/u);
   assert.match(sharedReference, /0=passed.*3=blocked/u);
+  assert.match(sharedReference, /readyToWrite: false/u);
+  assert.match(sharedReference, /版本 2 自定义适配器不能自动降级/u);
+  assert.match(sharedReference, /受控故障/u);
   assert.match(sharedReference, /不隐含提交、推送、PR/u);
   assert.match(sharedReference, /captureFallback/u);
   assert.match(sharedReference, /跨 AI 工具/u);

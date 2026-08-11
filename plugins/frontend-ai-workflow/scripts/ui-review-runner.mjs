@@ -4,7 +4,6 @@ import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { runPlaywrightAdapter } from './playwright-adapter-runner.mjs';
-import { inspectBundledPlaywright } from './playwright-runtime.mjs';
 import { renderDeterministicAssessmentMarkdown } from './ui-review-report.mjs';
 import {
   DEFAULT_UI_REVIEW_CONFIG,
@@ -45,6 +44,7 @@ function createPreview({ mode, projectRoot, config, plan, baseline }) {
   return {
     ok: true,
     write: false,
+    readyToWrite: true,
     mode,
     exitCode: 0,
     projectRoot,
@@ -88,8 +88,14 @@ function createPreview({ mode, projectRoot, config, plan, baseline }) {
 
 function assertPortableWritePlan(config, plan, mode, baseline) {
   if (config.schemaVersion !== 2) fail('统一入口只执行版本 2 的确定性配置；版本 1 请继续使用细粒度兼容命令');
-  if (plan.primary !== 'project-playwright' || plan.projectPlaywright.source !== 'bundled-adapter') {
-    fail('统一入口只执行插件内置 Playwright 适配器，不会启动项目自定义命令或视觉插件');
+  if (plan.primary !== 'project-playwright') {
+    fail('统一入口只执行以项目 Playwright 为主采集器的版本 2 场景；Browser 只能按已声明的不确定兜底单独运行');
+  }
+  if (plan.projectPlaywright.source === 'project-adapter') {
+    fail('版本 2 项目适配器内容与受信内置适配器模板不一致；请保留原文件，把假登录、接口模拟和固定数据移到项目自有本地页面环境，再使用当前受信模板建立独立基线');
+  }
+  if (plan.projectPlaywright.source !== 'bundled-adapter') {
+    fail('统一入口只执行与插件模板摘要一致的受信内置适配器，不会启动项目自定义命令');
   }
   if (!plan.projectPlaywright.portable) fail(plan.projectPlaywright.unavailableReason || '当前平台运行包不可用');
   if (!plan.scenario.comparison) fail('版本 2 场景必须声明确定性比较规则');
@@ -116,6 +122,7 @@ function blockedResult({ mode, write, error, phase = 'orchestration', state = nu
   return {
     ok: false,
     write,
+    readyToWrite: false,
     mode,
     status: 'blocked',
     exitCode: EXIT_CODES.blocked,
@@ -147,13 +154,18 @@ export async function runUiReview({
       ? readRunState(projectRoot, requireString(baselinePath, '--baseline'))
       : null;
     const plan = createCapturePlan(config, normalizedScenarioId, { runId: normalizedRunId });
+    // 预览也必须完成纯校验，避免正式写入时才发现基线已经失效。
+    const preparedState = mode === 'verify'
+      ? createVerifyRun(config, baseline, { runId: normalizedRunId })
+      : null;
+    // 预览与正式写入共用同一纯就绪门禁，避免返回无法执行的成功计划。
+    assertPortableWritePlan(config, plan, mode, baseline);
     const preview = createPreview({ mode, projectRoot, config, plan, baseline });
     if (!write) return preview;
-    assertPortableWritePlan(config, plan, mode, baseline);
 
     state = mode === 'review'
       ? createReviewRun(config, normalizedScenarioId, { runId: normalizedRunId, capture: 'project-playwright' })
-      : createVerifyRun(config, baseline, { runId: normalizedRunId });
+      : preparedState;
     writeRunState(projectRoot, state);
     await runPlaywrightAdapter({ target: projectRoot, configPath, scenarioId: normalizedScenarioId, runId: normalizedRunId });
     const resultPath = resolveSafeProjectPath(projectRoot, plan.artifacts.reviewInput, '确定性比较结果', { mustExist: true, allowDirectory: false });

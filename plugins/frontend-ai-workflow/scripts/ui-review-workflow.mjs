@@ -57,6 +57,9 @@ const CAPTURE_TEMPLATE_KEYS = new Set([
   'url',
 ]);
 const PLAYWRIGHT_ADAPTER_RUNNER = fileURLToPath(new URL('./playwright-adapter-runner.mjs', import.meta.url));
+export const BUNDLED_UI_REVIEW_ADAPTER = fileURLToPath(
+  new URL('../assets/templates/ui-review/playwright-adapter.mjs', import.meta.url),
+);
 
 function fail(message) {
   throw new Error(message);
@@ -140,7 +143,7 @@ function normalizeInteraction(value, index) {
     normalized.selector = normalizeSelector(interaction.selector, `${label}.selector`);
   }
   if (action === 'fill') {
-    if (/(?:password|passwd|secret|token)/iu.test(normalized.selector)) {
+    if (/password|passwd|secret|token/iu.test(normalized.selector)) {
       fail(`${label}.selector 指向敏感凭据字段，结构化交互禁止记录凭据`);
     }
     normalized.value = normalizeInteractionValue(interaction.value, `${label}.value`);
@@ -205,6 +208,7 @@ function normalizeComparison(value, label, designType) {
     assertAllowedKeys(assertion, new Set(['selector', 'property', 'expected', 'exact', 'tolerance', 'relativeTo']), itemLabel);
     const property = requireString(assertion.property, `${itemLabel}.property`);
     const isRect = RECT_PROPERTIES.has(property);
+    const isStyle = property.startsWith('style.');
     if (!isRect && !['visible', 'hidden', 'text', 'value', 'url'].includes(property) && !/^style\.[a-z-]{1,64}$/u.test(property)) {
       fail(`${itemLabel}.property 不受支持：${property}`);
     }
@@ -222,6 +226,7 @@ function normalizeComparison(value, label, designType) {
     } else if (typeof expected !== 'string') {
       fail(`${itemLabel}.expected 必须是字符串`);
     }
+    if (isStyle && !expected.trim()) fail(`${itemLabel}.expected 计算样式期望值不能为空`);
     if (!isRect && (assertion.tolerance !== undefined || assertion.relativeTo !== undefined)) {
       fail(`${itemLabel}只有 rect.* 几何断言可以声明 tolerance 或 relativeTo`);
     }
@@ -244,7 +249,7 @@ function normalizeComparison(value, label, designType) {
       selector: normalizeSelector(assertion.selector, `${itemLabel}.selector`),
       property,
       expected: isRect && expected !== undefined ? Number(expected) : expected,
-      exact: isRect ? false : assertion.exact === true,
+      exact: isRect ? false : isStyle ? true : assertion.exact === true,
     };
     if (isRect) Object.assign(normalized, { tolerance, relativeTo });
     return normalized;
@@ -324,10 +329,6 @@ function stableJson(value) {
   return JSON.stringify(stableValue(value));
 }
 
-function toProjectPath(value) {
-  return value.split(path.sep).join('/');
-}
-
 function isInside(root, candidate) {
   const relative = path.relative(root, candidate);
   return relative !== '' && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
@@ -403,7 +404,7 @@ function validateCaptureTemplate(value, label) {
   return value;
 }
 
-function normalizeProjectPlaywright(value, label, projectRoot, captureOrder) {
+function normalizeProjectPlaywright(value, label, projectRoot, captureOrder, schemaVersion) {
   if (value === undefined || value === null) return null;
   if (!captureOrder.includes('project-playwright')) fail(`${label}只能用于包含 project-playwright 的采集计划`);
   const contract = requireObject(value, label);
@@ -424,10 +425,20 @@ function normalizeProjectPlaywright(value, label, projectRoot, captureOrder) {
       { mustExist: true, allowDirectory: false },
     );
     if (!/\.(?:mjs|js)$/u.test(safeAdapter.projectPath)) fail(`${label}.adapter 必须是 .mjs 或 .js 模块`);
-    return {
+    const normalized = {
       adapter: safeAdapter.projectPath,
       resultPath: validateCaptureTemplate(resultPath, `${label}.resultPath`),
     };
+    if (schemaVersion === 2) {
+      const adapterSha256 = sha256(fs.readFileSync(safeAdapter.absolutePath));
+      const trustedSha256 = sha256(fs.readFileSync(BUNDLED_UI_REVIEW_ADAPTER));
+      normalized.integrity = {
+        sha256: adapterSha256,
+        trustedSha256,
+        trusted: adapterSha256 === trustedSha256,
+      };
+    }
+    return normalized;
   }
   return {
     command: command.map((argument, argumentIndex) => validateCaptureTemplate(argument, `${label}.command[${argumentIndex}]`)),
@@ -465,6 +476,7 @@ function normalizeScenario(value, index, projectRoot, schemaVersion) {
     `${label}.projectPlaywright`,
     projectRoot,
     captureOrder,
+    schemaVersion,
   );
 
   const design = requireObject(scenario.design, `${label}.design`);
@@ -525,7 +537,11 @@ function normalizeScenario(value, index, projectRoot, schemaVersion) {
       primary: capture,
       fallback: captureFallback,
       order: captureOrder,
-      portable: capture === 'project-playwright' && Boolean(projectPlaywright),
+      portable: capture === 'project-playwright' && Boolean(projectPlaywright) && (
+        Boolean(projectPlaywright.command)
+        || schemaVersion === 1
+        || projectPlaywright.integrity?.trusted === true
+      ),
     },
     fingerprint: sha256(stableJson(fingerprintSource)),
   };
@@ -630,14 +646,17 @@ export function createCapturePlan(config, scenarioId, { runId } = {}) {
   };
   let projectPlaywright;
   if (scenario.projectPlaywright?.adapter) {
-    const runtime = inspectBundledPlaywright();
+    const trustedAdapter = config.schemaVersion === 1 || scenario.projectPlaywright.integrity?.trusted === true;
+    const runtime = trustedAdapter ? inspectBundledPlaywright() : null;
     projectPlaywright = {
-      source: 'bundled-adapter',
-      portable: runtime.available,
-      unavailableReason: runtime.reason,
+      source: trustedAdapter ? 'bundled-adapter' : 'project-adapter',
+      portable: trustedAdapter && runtime.available,
+      unavailableReason: trustedAdapter
+        ? runtime.reason
+        : '版本 2 项目适配器内容与插件受信内置适配器不一致',
       workingDirectory: '.',
       adapter: scenario.projectPlaywright.adapter,
-      command: runtime.available
+      command: trustedAdapter && runtime.available
         ? [
             process.execPath,
             PLAYWRIGHT_ADAPTER_RUNNER,
@@ -656,7 +675,7 @@ export function createCapturePlan(config, scenarioId, { runId } = {}) {
         replacements,
         'projectPlaywright.resultPath',
       ),
-      runtime: {
+      runtime: runtime ? {
         source: runtime.source,
         version: runtime.version,
         platform: runtime.platform ?? null,
@@ -668,7 +687,8 @@ export function createCapturePlan(config, scenarioId, { runId } = {}) {
         browserRevision: runtime.browserRevision ?? null,
         integrityOk: runtime.integrity?.ok ?? false,
         reason: runtime.reason,
-      },
+      } : null,
+      integrity: scenario.projectPlaywright.integrity ?? null,
     };
   } else if (scenario.projectPlaywright?.command) {
     projectPlaywright = {
@@ -775,6 +795,31 @@ function normalizeVerification(value, label) {
   };
 }
 
+function repairableFindingFingerprint(finding) {
+  return sha256(stableJson({
+    selector: finding.selector,
+    type: finding.type,
+    targetValue: finding.targetValue,
+    sourceFile: finding.sourceTarget.file,
+    anchor: finding.sourceTarget.anchor,
+  }));
+}
+
+function nonRepairableFindingFingerprint(finding) {
+  return sha256(stableJson({
+    selector: finding.selector,
+    type: finding.type,
+    targetValue: finding.targetValue,
+  }));
+}
+
+// 历史基线可能保存过包含观测值的旧指纹，复验时按问题身份重新计算。
+function verificationFindingFingerprint(finding) {
+  if (finding.repairable === false) return nonRepairableFindingFingerprint(finding);
+  if (finding.sourceTarget) return repairableFindingFingerprint(finding);
+  return finding.fingerprint;
+}
+
 export function normalizeUiFinding(value, index = 0) {
   const label = `findings[${index}]`;
   const finding = requireObject(value, label);
@@ -795,14 +840,7 @@ export function normalizeUiFinding(value, index = 0) {
     verification: normalizeVerification(finding.verification, `${label}.verification`),
   };
   if (normalized.confidence !== 'high') fail(`${label}.confidence 必须是 high 才能进入交付状态`);
-  const fingerprintSource = {
-    selector: normalized.selector,
-    type: normalized.type,
-    targetValue: normalized.targetValue,
-    sourceFile: normalized.sourceTarget.file,
-    anchor: normalized.sourceTarget.anchor,
-  };
-  return { ...normalized, repairable: true, fingerprint: sha256(stableJson(fingerprintSource)) };
+  return { ...normalized, repairable: true, fingerprint: repairableFindingFingerprint(normalized) };
 }
 
 function normalizeObservation(value, index, fallbackStatus = 'observed') {
@@ -839,12 +877,7 @@ function normalizeNonRepairableFinding(value, index) {
   if (normalized.confidence !== 'high') fail(`${label}.confidence 必须是 high 才能进入问题状态`);
   return {
     ...normalized,
-    fingerprint: sha256(stableJson({
-      selector: normalized.selector,
-      type: normalized.type,
-      targetValue: normalized.targetValue,
-      evidence: normalized.evidence,
-    })),
+    fingerprint: nonRepairableFindingFingerprint(normalized),
   };
 }
 
@@ -1034,8 +1067,8 @@ export function completeVerifyRun(state, baselineState, result, { artifacts = st
   }
   const assessment = normalizeAssessment(result);
   const findings = assessment.findings;
-  const baselineMap = new Map((baseline.findings || []).map((finding) => [finding.fingerprint, finding]));
-  const currentMap = new Map(findings.map((finding) => [finding.fingerprint, finding]));
+  const baselineMap = new Map((baseline.findings || []).map((finding) => [verificationFindingFingerprint(finding), finding]));
+  const currentMap = new Map(findings.map((finding) => [verificationFindingFingerprint(finding), finding]));
   const resolved = assessment.status === 'inconclusive'
     ? []
     : [...baselineMap.keys()].filter((fingerprint) => !currentMap.has(fingerprint));

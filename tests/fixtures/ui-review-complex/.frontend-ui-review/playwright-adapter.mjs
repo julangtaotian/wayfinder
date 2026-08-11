@@ -1,4 +1,19 @@
-export default async function captureUiEvidence({ playwright, runtime, executeInteractions, project, scenario, artifacts }) {
+function rectValue(rect, property) {
+  const values = {
+    'rect.x': rect.x,
+    'rect.y': rect.y,
+    'rect.width': rect.width,
+    'rect.height': rect.height,
+    'rect.top': rect.y,
+    'rect.right': rect.x + rect.width,
+    'rect.bottom': rect.y + rect.height,
+    'rect.center-x': rect.x + rect.width / 2,
+    'rect.center-y': rect.y + rect.height / 2,
+  };
+  return values[property];
+}
+
+export default async function captureUiEvidence({ playwright, runtime, executeInteractions, stabilizePage, project, scenario, artifacts }) {
   if (scenario.interactionMode === 'instructions' && scenario.interactions.length > 0) {
     throw new Error('版本 1 的字符串交互仅供自定义适配器读取，插件不会猜测执行');
   }
@@ -17,13 +32,11 @@ export default async function captureUiEvidence({ playwright, runtime, executeIn
     });
     const page = await context.newPage();
     await page.goto(scenario.url, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(async () => {
-      await document.fonts?.ready;
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    });
+    await stabilizePage({ page });
     const interactions = scenario.interactionMode === 'structured'
       ? await executeInteractions({ page })
       : { completed: true, steps: [], captures: [] };
+    await stabilizePage({ page });
 
     const domObservations = [];
     for (const assertion of scenario.comparison?.dom || []) {
@@ -41,9 +54,27 @@ export default async function captureUiEvidence({ playwright, runtime, executeIn
         else if (assertion.property === 'hidden') actual = !(await element.isVisible());
         else if (assertion.property === 'text') actual = (await element.innerText()).trim();
         else if (assertion.property === 'value') actual = await element.inputValue();
-        else {
+        else if (assertion.property.startsWith('style.')) {
           const property = assertion.property.slice('style.'.length);
           actual = await element.evaluate((node, cssProperty) => getComputedStyle(node).getPropertyValue(cssProperty), property);
+        } else {
+          const rect = await element.boundingBox();
+          if (!rect) throw new Error('无法读取节点几何信息');
+          actual = rectValue(rect, assertion.property);
+          if (assertion.relativeTo) {
+            const reference = page.locator(assertion.relativeTo.selector);
+            const referenceCount = await reference.count();
+            if (referenceCount !== 1) throw new Error(`参考几何选择器必须唯一命中一个节点，实际 ${referenceCount}`);
+            const referenceRect = await reference.first().boundingBox();
+            if (!referenceRect) throw new Error('无法读取参考节点几何信息');
+            domObservations.push({
+              selector: assertion.selector,
+              property: assertion.property,
+              actual,
+              referenceActual: rectValue(referenceRect, assertion.relativeTo.property),
+            });
+            continue;
+          }
         }
         domObservations.push({ selector: assertion.selector, property: assertion.property, actual });
       } catch (error) {
@@ -86,6 +117,7 @@ export default async function captureUiEvidence({ playwright, runtime, executeIn
       });
     }
 
+    await stabilizePage({ page });
     await page.screenshot({ path: artifacts.actualScreenshot, type: 'png' });
     return {
       analysisPending: true,

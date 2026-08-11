@@ -59,6 +59,10 @@ function isRectProperty(property) {
   return typeof property === 'string' && property.startsWith('rect.');
 }
 
+function isStyleProperty(property) {
+  return typeof property === 'string' && property.startsWith('style.');
+}
+
 function compareDom(assertions, actualObservations) {
   const actualByKey = new Map((actualObservations || []).map((observation) => [domKey(observation), observation]));
   const observations = [];
@@ -98,6 +102,8 @@ function compareDom(assertions, actualObservations) {
     const difference = geometry ? Math.abs(actual.actual - expected) : null;
     const matched = geometry
       ? difference <= tolerance
+      : isStyleProperty(assertion.property)
+        ? actual.actual === assertion.expected
       : typeof assertion.expected === 'string' && assertion.exact !== true
         ? String(actual.actual).includes(assertion.expected)
         : actual.actual === assertion.expected;
@@ -197,6 +203,19 @@ function compareImage(imageConfig, actualPath, expectedPath, diffPath) {
         if (masked) expectedRegion.copy(actualRegion, localOffset, localOffset, localOffset + 4);
         else comparedPixels += 1;
       }
+    }
+    if (comparedPixels === 0) {
+      inconclusive = true;
+      observations.push({
+        id: `IMG-${String(index + 1).padStart(3, '0')}`,
+        kind: 'image',
+        status: 'inconclusive',
+        confidence: 'medium',
+        selector: null,
+        detail: `区域 ${region.name} 被遮罩完全覆盖，没有可比较像素`,
+        evidence: { region: region.name, diffPixels: 0, comparedPixels: 0, diffRatio: 0 },
+      });
+      continue;
     }
     const diffPixels = pixelmatch(actualRegion, expectedRegion, diffRegion, width, height, {
       threshold: imageConfig.thresholds.colorThreshold,

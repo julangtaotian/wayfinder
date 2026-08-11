@@ -8,6 +8,7 @@ import { executeStructuredInteractions, waitForVisualStability } from './ui-revi
 import { compareUiEvidence } from './ui-review-comparator.mjs';
 import { parsePngDimensions } from './ui-review-report.mjs';
 import {
+  BUNDLED_UI_REVIEW_ADAPTER,
   DEFAULT_UI_REVIEW_CONFIG,
   createCapturePlan,
   loadUiReviewConfig,
@@ -140,7 +141,9 @@ export async function runPlaywrightAdapter({
   fs.mkdirSync(path.dirname(actualScreenshot.absolutePath), { recursive: true });
   fs.mkdirSync(path.dirname(resultPath.absolutePath), { recursive: true });
 
-  const adapterModule = await import(pathToFileURL(adapter.absolutePath).href);
+  // 版本 2 只把项目文件当作模板摘要凭据，实际代码始终从插件受信目录加载。
+  const executableAdapter = config.schemaVersion === 2 ? BUNDLED_UI_REVIEW_ADAPTER : adapter.absolutePath;
+  const adapterModule = await import(pathToFileURL(executableAdapter).href);
   if (typeof adapterModule.default !== 'function') fail('Playwright 适配器必须默认导出异步函数');
   const playwright = await loadBundledPlaywright();
   const runtime = inspectBundledPlaywright();
