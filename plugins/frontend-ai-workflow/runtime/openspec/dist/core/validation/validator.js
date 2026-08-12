@@ -4,7 +4,7 @@ import { SpecSchema, ChangeSchema } from '../schemas/index.js';
 import { MarkdownParser } from '../parsers/markdown-parser.js';
 import { ChangeParser } from '../parsers/change-parser.js';
 import { MIN_PURPOSE_LENGTH, MAX_REQUIREMENT_TEXT_LENGTH, VALIDATION_MESSAGES } from './constants.js';
-import { parseDeltaSpec, foldRequirementName, normalizeRequirementName, extractRequirementsSection } from '../parsers/requirement-blocks.js';
+import { parseDeltaSpec, foldRequirementName, normalizeRequirementName, extractRequirementsSection, findMissingCurrentScenarios, } from '../parsers/requirement-blocks.js';
 import { extractRequirementBody as extractRequirementBodyShared, containsShallOrMust as containsShallOrMustShared, countScenarios as countScenariosShared, } from '../parsers/requirement-text.js';
 import { findMainSpecStructureIssues } from '../parsers/spec-structure.js';
 import { FileSystemUtils } from '../../utils/file-system.js';
@@ -101,12 +101,18 @@ export class Validator {
      * Validate delta-formatted spec files under a change directory.
      * Enforces:
      * - At least one delta across all files
-     * - ADDED/MODIFIED: each requirement has SHALL/MUST and at least one scenario
+     * - ADDED/MODIFIED: each requirement has at least one scenario; missing
+     *   English SHALL/MUST keywords are guidance unless strict mode is enabled
      * - REMOVED: names only; no scenario/description required
      * - RENAMED: pairs well-formed
      * - No duplicates within sections; no cross-section conflicts per spec
+     *
+     * When `options.mainSpecsDir` is given, MODIFIED blocks are also checked
+     * against the current main specs for the scenario loss archive refuses to
+     * apply (#1477). Omitting it keeps the change-only checks, so callers with
+     * no main specs root (and existing library callers) behave as before.
      */
-    async validateChangeDeltaSpecs(changeDir) {
+    async validateChangeDeltaSpecs(changeDir, options = {}) {
         const issues = [];
         const specsDir = path.join(changeDir, 'specs');
         let totalDeltas = 0;
@@ -119,7 +125,7 @@ export class Validator {
             // path silently skips (#1385). It finds spec.md at any depth, covering
             // both specs/<capability>/spec.md and the nested multi-area
             // specs/<area>/<capability>/spec.md layout (#1182b).
-            const specFiles = (await discoverSpecFiles(specsDir)).map(spec => spec.specFile);
+            const discoveredSpecs = await discoverSpecFiles(specsDir);
             // A spec.md directly at the specs/ root has no capability folder, so the
             // merge path drops it: without this error the change validates clean and
             // archives while its requirements never reach openspec/specs/ (#1385).
@@ -131,10 +137,10 @@ export class Validator {
                 issues.push({
                     level: 'ERROR',
                     path: 'spec.md',
-                    message: 'Delta spec found at specs/spec.md. Delta specs must live in a capability folder (e.g. specs/<capability>/spec.md) — a file at the specs/ root is ignored when the change is applied or archived.',
+                    message: 'Delta spec found at specs/spec.md. Delta specs must live under a capability path (e.g. specs/<capability-path>/spec.md) — a file at the specs/ root is ignored when the change is applied or archived.',
                 });
             }
-            for (const specFile of specFiles) {
+            for (const { id: specId, specFile } of discoveredSpecs) {
                 let content;
                 try {
                     content = await fs.readFile(specFile, 'utf-8');
@@ -204,7 +210,11 @@ export class Validator {
                         });
                     }
                     else if (!this.containsShallOrMust(requirementText)) {
-                        issues.push({ level: 'ERROR', path: entryPath, message: this.buildMissingShallOrMustMessage(`ADDED "${block.name}"`, block.name) });
+                        issues.push({
+                            level: 'WARNING',
+                            path: entryPath,
+                            message: this.buildMissingShallOrMustMessage(`ADDED "${block.name}"`, block.name, true),
+                        });
                     }
                     const scenarioCount = this.countScenarios(block.raw);
                     if (scenarioCount < 1) {
@@ -232,12 +242,23 @@ export class Validator {
                         });
                     }
                     else if (!this.containsShallOrMust(requirementText)) {
-                        issues.push({ level: 'ERROR', path: entryPath, message: this.buildMissingShallOrMustMessage(`MODIFIED "${block.name}"`, block.name) });
+                        issues.push({
+                            level: 'WARNING',
+                            path: entryPath,
+                            message: this.buildMissingShallOrMustMessage(`MODIFIED "${block.name}"`, block.name, true),
+                        });
                     }
                     const scenarioCount = this.countScenarios(block.raw);
                     if (scenarioCount < 1) {
                         issues.push({ level: 'ERROR', path: entryPath, message: `MODIFIED "${block.name}" must include at least one scenario` });
                     }
+                }
+                // Run archive's scenario-loss check here too, so the change fails at
+                // authoring time instead of days later at archive time (#1477).
+                if (options.mainSpecsDir && plan.modified.length > 0) {
+                    const mainSpecFile = path.join(options.mainSpecsDir, ...specId.split('/'), 'spec.md');
+                    FileSystemUtils.assertPathWithin(path.dirname(mainSpecFile), mainSpecFile);
+                    issues.push(...(await this.findScenarioLossIssues(plan.modified, plan.renamed, mainSpecFile, entryPath, path.dirname(mainSpecFile))));
                 }
                 // Validate REMOVED (names only)
                 for (const name of plan.removed) {
@@ -368,6 +389,94 @@ export class Validator {
         }
         return this.createReport(issues);
     }
+    /**
+     * Report MODIFIED requirements whose block omits a scenario the main spec
+     * still carries. Uses the same comparison archive applies, so validate can
+     * only report what archive would refuse.
+     *
+     * Silent when the main spec or the requirement header is absent: applying a
+     * MODIFIED against a base that is not there yet is a different failure (a
+     * sister change still in flight is the legitimate case), and archive is the
+     * gate for it. A spec that exists but cannot be read is not absent, though —
+     * archive aborts on it, so reporting it beats calling the change valid.
+     */
+    async findScenarioLossIssues(modified, renamed, mainSpecFile, entryPath, mainSpecRoot) {
+        let mainContent;
+        FileSystemUtils.assertPathWithin(mainSpecRoot, mainSpecFile);
+        try {
+            mainContent = await fs.readFile(mainSpecFile, 'utf-8');
+        }
+        catch (error) {
+            const code = error?.code;
+            // Reported only for the codes that mean the file itself is unusable, and
+            // will be just as unusable when archive reads it. Everything else -
+            // ENOENT/ENOTDIR ("no main spec"), and transient resource errors like
+            // EMFILE that say nothing about the file - stays silent rather than
+            // failing a change that is fine. `validate --all` reads six changes at
+            // once, so a resource error must never become a verdict.
+            const UNUSABLE = new Set(['EACCES', 'EPERM', 'EISDIR', 'ELOOP', 'ENAMETOOLONG']);
+            if (!code || !UNUSABLE.has(code))
+                return [];
+            return [
+                {
+                    level: 'ERROR',
+                    path: entryPath,
+                    message: `Could not read ${FileSystemUtils.toPosixPath(mainSpecFile)} to check the MODIFIED requirements against it ` +
+                        `(${code}). Archive reads the same file, so fix the file before archiving.`,
+                },
+            ];
+        }
+        const currentBlocks = new Map();
+        for (const block of extractRequirementsSection(mainContent).bodyBlocks) {
+            currentBlocks.set(normalizeRequirementName(block.name), block);
+        }
+        // Archive applies RENAMED before MODIFIED, so a MODIFIED naming the new
+        // header is compared against the renamed block's scenarios. Fall back to
+        // the old header, or a rename-plus-modify pair would skip the check.
+        const renamedFrom = new Map(renamed.map(({ from, to }) => [normalizeRequirementName(to), normalizeRequirementName(from)]));
+        // Walked, not looked up once: renames chain (A→B then B→C leaves C holding
+        // A's block), and the visited set stops a cycle from looping forever. Every
+        // name in a rename cycle is also a rename FROM, so the skip above already
+        // keeps the walk out of one; the guard stays because the cost of being
+        // wrong about that is a hung CLI, not a wrong message.
+        const currentBlockFor = (name) => {
+            const visited = new Set();
+            let key = name;
+            while (key !== undefined && !visited.has(key)) {
+                const block = currentBlocks.get(key);
+                if (block)
+                    return block;
+                visited.add(key);
+                key = renamedFrom.get(key);
+            }
+            return undefined;
+        };
+        // A MODIFIED naming a header the same delta renames away is already
+        // reported ("MODIFIED references old name from RENAMED"), and the block it
+        // would land on is not the one it names — so any scenario named here would
+        // send the author after the wrong requirement.
+        const renamedAway = new Set(renamed.map(({ from }) => normalizeRequirementName(from)));
+        const issues = [];
+        for (const block of modified) {
+            const key = normalizeRequirementName(block.name);
+            if (renamedAway.has(key))
+                continue;
+            const current = currentBlockFor(key);
+            if (!current)
+                continue;
+            const missing = findMissingCurrentScenarios(current, block);
+            if (missing.length === 0)
+                continue;
+            issues.push({
+                level: 'ERROR',
+                path: entryPath,
+                message: `MODIFIED "${block.name}" omits scenario(s) the current spec still has: ` +
+                    `${missing.map(name => `"${name}"`).join(', ')}. ` +
+                    'Copy them into the MODIFIED block (a MODIFIED requirement replaces the whole block, so archive refuses to drop them).',
+            });
+        }
+        return issues;
+    }
     formatInvalidMarkerMessage(invalidReason) {
         return `${VALIDATION_MESSAGES.CHANGE_SKIP_SPECS_INVALID_METADATA} (${invalidReason})`;
     }
@@ -417,20 +526,26 @@ export class Validator {
                 });
             }
         });
-        // SHALL/MUST body-keyword enforcement for main specs (#1156). The main-spec
+        // SHALL/MUST body-keyword guidance for main specs (#1156, #243). The main-spec
         // parser collapses the requirement header into `text`, so we recover the
         // header+body pairs here (the same source the delta path trusts) and reuse
-        // the delta detection: a body that omits the keyword errors, with the
-        // targeted "move it to the body line" hint when the keyword is in the header
-        // only and the generic message otherwise. Emitted exactly once per
+        // the delta detection. A non-empty body that omits the English keyword gets
+        // guidance, while a missing body remains an error. Emitted exactly once per
         // requirement (the Zod refine that used to emit a generic error is removed).
         extractRequirementsSection(content).bodyBlocks.forEach((block, index) => {
             const requirementText = this.extractRequirementText(block.raw);
-            if (!requirementText || !this.containsShallOrMust(requirementText)) {
+            if (!requirementText) {
                 issues.push({
                     level: 'ERROR',
                     path: `requirements[${index}]`,
                     message: this.buildMissingShallOrMustMessage(`Requirement "${block.name}"`, block.name),
+                });
+            }
+            else if (!this.containsShallOrMust(requirementText)) {
+                issues.push({
+                    level: 'WARNING',
+                    path: `requirements[${index}]`,
+                    message: this.buildMissingShallOrMustMessage(`Requirement "${block.name}"`, block.name, true),
                 });
             }
         });
@@ -520,7 +635,7 @@ export class Validator {
         return containsShallOrMustShared(text);
     }
     /**
-     * Build an error message for a requirement block whose body lacks SHALL/MUST.
+     * Build a message for a requirement block whose body lacks SHALL/MUST.
      *
      * When the SHALL/MUST keyword already appears in the requirement header (e.g.
      * `### Requirement: The system SHALL ...`) the original generic error
@@ -529,12 +644,13 @@ export class Validator {
      * on the requirement body line (the line right after the header), so we point
      * the author at that exact fix when the keyword is found in the header only.
      */
-    buildMissingShallOrMustMessage(prefix, blockName) {
-        const base = `${prefix} must contain SHALL or MUST`;
+    buildMissingShallOrMustMessage(prefix, blockName, guidanceOnly = false) {
+        const base = `${prefix} ${guidanceOnly ? 'should' : 'must'} contain SHALL or MUST`;
+        const suffix = guidanceOnly ? ' (RFC 2119 best practice for English specs)' : '';
         if (this.containsShallOrMust(blockName)) {
-            return `${base} in the requirement body, not only in the header. Move the SHALL/MUST statement to the line immediately after the "### Requirement: ..." header.`;
+            return `${base} in the requirement body, not only in the header. Move the SHALL/MUST statement to the line immediately after the "### Requirement: ..." header.${suffix}`;
         }
-        return base;
+        return `${base}${suffix}`;
     }
     countScenarios(blockRaw) {
         // Fence-aware count via the shared reader: a `#### Scenario:` inside a fenced

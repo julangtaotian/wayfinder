@@ -7,13 +7,14 @@
 import ora from 'ora';
 import path from 'path';
 import * as fs from 'fs';
-import { loadChangeContext, generateInstructions, resolveSchema, resolveArtifactOutputs, } from '../../core/artifact-graph/index.js';
+import { loadChangeContext, generateInstructions, resolveSchema, resolveArtifactOutputPath, resolveArtifactOutputs, } from '../../core/artifact-graph/index.js';
 import { getChangeDir, resolveCurrentPlanningHomeSync, } from '../../core/planning-home.js';
 import { resolveRootForCommand, withStoreFlag, toPlanningHome, toRootOutput, } from '../../core/root-selection.js';
 import { assembleReferenceIndex, renderReferencedStoresBlock, renderReferencedStoresSection, } from '../../core/references.js';
 import { readRegistrySnapshot } from '../../core/store/registry.js';
 import { loadOperationInputs, readProjectConfig, } from '../../core/project-config.js';
 import { validateChangeExists, validateSchemaExists, } from './shared.js';
+import { parseTaskLines } from '../../utils/task-progress.js';
 // -----------------------------------------------------------------------------
 // Artifact Instructions Command
 // -----------------------------------------------------------------------------
@@ -206,25 +207,26 @@ export function printInstructionsText(instructions, isBlocked) {
 // Apply Instructions Command
 // -----------------------------------------------------------------------------
 /**
- * Parses tasks.md content and extracts task items with their completion status.
+ * Turns parsed task lines into the listed task items.
+ *
+ * A checkbox with no text after it is left out of the list: this is work for an
+ * agent to act on and tick off, and a bare `- [ ]` gives it nothing to match.
+ * It still counts toward progress, which is taken from every parsed line, so
+ * this list can be shorter than the totals beside it but never disagrees with
+ * `openspec list` or archive about how much work is left. An empty list is also
+ * what puts apply in its "nothing to work on" state, so a file of nothing but
+ * text-less checkboxes asks to be rewritten instead of being called done.
  */
-function parseTasksFile(content) {
+function toTaskItems(parsed) {
     const tasks = [];
-    const lines = content.split('\n');
-    let taskIndex = 0;
-    for (const line of lines) {
-        // Match checkbox patterns: - [ ] or - [x] or - [X]
-        const checkboxMatch = line.match(/^[-*]\s*\[([ xX])\]\s*(.+)\s*$/);
-        if (checkboxMatch) {
-            taskIndex++;
-            const done = checkboxMatch[1].toLowerCase() === 'x';
-            const description = checkboxMatch[2].trim();
-            tasks.push({
-                id: `${taskIndex}`,
-                description,
-                done,
-            });
-        }
+    for (const task of parsed) {
+        if (task.description.length === 0)
+            continue;
+        tasks.push({
+            id: `${tasks.length + 1}`,
+            description: task.description,
+            done: task.done,
+        });
     }
     return tasks;
 }
@@ -274,19 +276,21 @@ export async function generateApplyInstructions(projectRoot, changeName, schemaN
         }
     }
     // Parse tasks if tracking file exists
-    let tasks = [];
+    let parsedTasks = [];
     let tracksFileExists = false;
     if (tracksFile) {
-        const tracksPath = path.join(changeDir, tracksFile);
+        const tracksPath = resolveArtifactOutputPath(changeDir, tracksFile);
         tracksFileExists = fs.existsSync(tracksPath);
         if (tracksFileExists) {
             const tasksContent = await fs.promises.readFile(tracksPath, 'utf-8');
-            tasks = parseTasksFile(tasksContent);
+            parsedTasks = parseTaskLines(tasksContent);
         }
     }
-    // Calculate progress
-    const total = tasks.length;
-    const complete = tasks.filter((t) => t.done).length;
+    const tasks = toTaskItems(parsedTasks);
+    // Calculate progress over every checkbox in the file, listed or not, so these
+    // numbers match `openspec list` and archive's incomplete-task check.
+    const total = parsedTasks.length;
+    const complete = parsedTasks.filter((task) => task.done).length;
     const remaining = total - complete;
     // Determine state and instruction
     let state;
@@ -301,11 +305,12 @@ export async function generateApplyInstructions(projectRoot, changeName, schemaN
         state = 'blocked';
         instruction = `The ${tracksFilename} file is missing and must be created.\nUse openspec-continue-change to generate the tracking file.`;
     }
-    else if (tracksFile && tracksFileExists && total === 0) {
-        // Tracking file exists but contains no tasks
+    else if (tracksFile && tracksFileExists && tasks.length === 0) {
+        // Tracking file exists but lists nothing an agent can work on: either no
+        // checkboxes at all, or only checkboxes with no text after them.
         const tracksFilename = path.basename(tracksFile);
         state = 'blocked';
-        instruction = `The ${tracksFilename} file exists but contains no tasks.\nAdd tasks to ${tracksFilename} or regenerate it with openspec-continue-change.`;
+        instruction = `The ${tracksFilename} file exists but contains no tasks to work on.\nAdd tasks to ${tracksFilename} or regenerate it with openspec-continue-change.`;
     }
     else if (tracksFile && remaining === 0 && total > 0) {
         state = 'all_done';

@@ -36,5 +36,5 @@ If the preview reports a legacy layout, ordinary upgrade must not move files. In
 - Never overwrite requirement documents, project context, planning changes, or business code.
 - Never use a version upgrade as permission for unrelated cleanup.
 - Keep project-owned content outside managed blocks byte-for-byte unchanged.
-- Upgrading to workflow 0.12.0 adds the explicit deep-analysis completion contract while retaining OpenSpec 1.7.0 semantics; it must not rename, relocate or rewrite existing requirements, changes or specifications.
+- Upgrading to workflow 0.13.0 adopts OpenSpec 1.8.0 planning-completion semantics while retaining the explicit deep-analysis completion contract; it must not rename, relocate or rewrite existing requirements, changes or specifications.
 - Do not use the requirement preview as authorization to migrate a requirement. The maintainer must confirm each document's business facts, state, decision ledger and evidence mapping separately.

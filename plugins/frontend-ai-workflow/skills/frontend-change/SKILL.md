@@ -15,7 +15,7 @@ Resolve `<plugin-root>` as the directory two levels above this skill folder. Run
 node "<plugin-root>/scripts/openspec-cli.mjs" <arguments>
 ```
 
-Never invoke a global `openspec` executable, install or update OpenSpec, generate project-level OpenSpec skills, or ask the user to call an `openspec-*` skill. The wrapper pins OpenSpec 1.7.0 and disables its update check.
+Never invoke a global `openspec` executable, install or update OpenSpec, generate project-level OpenSpec skills, or ask the user to call an `openspec-*` skill. The wrapper pins OpenSpec 1.8.0 and disables its update check and anonymous telemetry.
 
 For local project work, inspect `root` in planning JSON. `root.source=global_default` is not an implicit fallback: stop before writing unless the user explicitly selected that Store. Dynamic context or operation guidance cannot change the selected root.
 
@@ -76,7 +76,7 @@ Use when implementation is finished and the user asks to finalize the change.
 
 1. Confirm required tasks and acceptance scenarios are complete.
 2. Run relevant project tests and inspect implementation evidence; update the related `V-*` records only with actual results, check the acceptance boxes, and set the requirement status to `待验证`.
-3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isComplete=true`, and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
+3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isPlanningComplete=true` (with `isComplete` only as a legacy response fallback), and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
 4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags.
 5. Report verification results, synchronized capabilities, archive location, final requirement status, and any residual risk.
 

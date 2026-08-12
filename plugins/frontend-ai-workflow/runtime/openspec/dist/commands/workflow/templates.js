@@ -39,11 +39,21 @@ export async function templatesCommand(options) {
         else {
             source = 'package';
         }
-        const templates = graph.getAllArtifacts().map((artifact) => ({
-            artifactId: artifact.id,
-            templatePath: FileSystemUtils.canonicalizeExistingPath(path.join(schemaDir, 'templates', artifact.template)),
-            source,
-        }));
+        const templatesDir = path.join(schemaDir, 'templates');
+        const templates = graph.getAllArtifacts().map((artifact) => {
+            const templatePath = path.join(templatesDir, artifact.template);
+            try {
+                FileSystemUtils.assertPathWithin(templatesDir, templatePath);
+                return {
+                    artifactId: artifact.id,
+                    templatePath: FileSystemUtils.canonicalizeExistingPath(templatePath),
+                    source,
+                };
+            }
+            catch {
+                throw new Error(`Template '${artifact.template}' for artifact '${artifact.id}' points outside the schema templates directory`);
+            }
+        });
         spinner?.stop();
         if (options.json) {
             const output = {};

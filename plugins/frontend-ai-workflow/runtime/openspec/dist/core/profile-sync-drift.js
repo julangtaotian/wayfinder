@@ -5,6 +5,10 @@ import { ALL_WORKFLOWS } from './profiles.js';
 import { CommandAdapterRegistry } from './command-generation/index.js';
 import { getConfiguredTools } from './shared/index.js';
 import { shouldGenerateCommandsForTool, shouldGenerateSkillsForTool, shouldReconcileCommandFilesForTool, shouldRemoveSkillsForTool, } from './command-surface.js';
+import { readSharedSkillTarget } from './shared-skill-target.js';
+import { FileSystemUtils } from '../utils/file-system.js';
+import { isLegacyCodexSkillEquivalentToCurrent } from './shared/skill-content-equivalence.js';
+import { hasGlobalSkillTarget, resolveToolSkillsDir, toolSupportsSkills, } from './shared/skill-paths.js';
 /**
  * Maps workflow IDs to their skill directory names.
  */
@@ -41,14 +45,45 @@ export function getConfiguredToolsForProfileSync(projectPath) {
  */
 export function hasToolProfileOrDeliveryDrift(projectPath, toolId, desiredWorkflows, delivery) {
     const tool = AI_TOOLS.find((t) => t.value === toolId);
-    if (!tool?.skillsDir)
+    if (!tool || !toolSupportsSkills(tool))
         return false;
     const knownDesiredWorkflows = toKnownWorkflows(desiredWorkflows);
     const desiredWorkflowSet = new Set(knownDesiredWorkflows);
-    const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
+    const skillsDir = resolveToolSkillsDir(projectPath, tool);
     const adapter = CommandAdapterRegistry.get(toolId);
     const shouldGenerateSkills = shouldGenerateSkillsForTool(toolId, delivery);
     const shouldGenerateCommands = shouldGenerateCommandsForTool(toolId, delivery);
+    const sharedTarget = tool.skillsDir
+        ? readSharedSkillTarget(projectPath, tool.skillsDir)
+        : undefined;
+    for (const root of tool.legacySkillsDirs ?? []) {
+        for (const workflow of knownDesiredWorkflows) {
+            const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
+            const legacySkill = path.join(projectPath, root, 'skills', dirName, 'SKILL.md');
+            if (!fs.existsSync(legacySkill))
+                continue;
+            const currentSkill = path.join(skillsDir, dirName, 'SKILL.md');
+            if (!fs.existsSync(currentSkill) || sharedTarget !== toolId) {
+                return true;
+            }
+            try {
+                if (FileSystemUtils.canonicalizeExistingPath(legacySkill) ===
+                    FileSystemUtils.canonicalizeExistingPath(currentSkill)) {
+                    continue;
+                }
+                // Equivalent generated copies are actionable: migration can safely
+                // remove the redundant legacy file even when version, line endings,
+                // or supported invocation syntax changed. Materially divergent copies
+                // stay in place without forcing an update on every run.
+                if (isLegacyCodexSkillEquivalentToCurrent(fs.readFileSync(legacySkill, 'utf-8'), fs.readFileSync(currentSkill, 'utf-8'))) {
+                    return true;
+                }
+            }
+            catch {
+                return true;
+            }
+        }
+    }
     if (shouldGenerateSkills) {
         for (const workflow of knownDesiredWorkflows) {
             const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
@@ -68,7 +103,7 @@ export function hasToolProfileOrDeliveryDrift(projectPath, toolId, desiredWorkfl
             }
         }
     }
-    else if (shouldRemoveSkillsForTool(toolId, delivery)) {
+    else if (shouldRemoveSkillsForTool(toolId, delivery) && !hasGlobalSkillTarget(tool)) {
         for (const workflow of ALL_WORKFLOWS) {
             const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
             const skillDir = path.join(skillsDir, dirName);
@@ -116,10 +151,10 @@ export function getToolsNeedingProfileSync(projectPath, desiredWorkflows, delive
 }
 function getInstalledWorkflowsForTool(projectPath, toolId, options) {
     const tool = AI_TOOLS.find((t) => t.value === toolId);
-    if (!tool?.skillsDir)
+    if (!tool || !toolSupportsSkills(tool))
         return [];
     const installed = new Set();
-    const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
+    const skillsDir = resolveToolSkillsDir(projectPath, tool);
     if (options.includeSkills) {
         for (const workflow of ALL_WORKFLOWS) {
             const dirName = WORKFLOW_TO_SKILL_DIR[workflow];

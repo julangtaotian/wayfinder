@@ -2,7 +2,7 @@
 
 ## OpenSpec
 
-The plugin bundles the OpenSpec 1.7.0 CLI runtime. Its generated workflow guidance is retained as internal reference material and is not exposed as public plugin skills:
+The plugin bundles the OpenSpec 1.8.0 CLI runtime. Its generated workflow guidance is retained as internal reference material and is not exposed as public plugin skills:
 
 - `openspec-apply-change`
 - `openspec-explore`

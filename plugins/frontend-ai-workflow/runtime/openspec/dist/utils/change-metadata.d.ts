@@ -55,19 +55,21 @@ export interface ResolveSchemaForChangeOptions {
  * @returns The resolved schema name
  */
 export declare function resolveSchemaForChange(changeDir: string, explicitSchema?: string, projectRootOverride?: string, options?: ResolveSchemaForChangeOptions): string;
-export interface SkipSpecsMarker {
+export interface MetadataMarker {
     /**
      * True when the metadata parses under ChangeMetadataSchema, sets
-     * skip_specs: true, and names a schema that loads.
+     * the requested boolean marker to true, and names a schema that loads.
      */
     declared: boolean;
     /**
-     * Set when the marker cannot be honored: skip_specs appears in a file that
+     * Set when the marker cannot be honored: it appears in a file that
      * fails the metadata contract, or the metadata file exists but cannot be
      * read at all (so whether the marker is set cannot even be determined).
      */
     invalidReason?: string;
 }
+/** @deprecated Use MetadataMarker. */
+export type SkipSpecsMarker = MetadataMarker;
 /**
  * Non-throwing read of the skip_specs marker. The marker only counts when the
  * metadata would load for status/instructions: the file parses under
@@ -81,5 +83,16 @@ export interface SkipSpecsMarker {
  * Missing metadata means "not declared"; a marker that cannot be honored
  * yields invalidReason so callers can say why.
  */
-export declare function readSkipSpecsMarker(changeDir: string): SkipSpecsMarker;
+export declare function readSkipSpecsMarker(changeDir: string): MetadataMarker;
+/**
+ * Non-throwing read of the retire_capabilities marker, with exactly the
+ * semantics `readSkipSpecsMarker` documents above.
+ *
+ * Gates the one archive action that removes a file from `openspec/specs/`: when
+ * a change's REMOVED entries take a capability's last requirement, archive
+ * deletes the emptied main spec rather than aborting on a spec it cannot write
+ * (#1302). Declared rather than inferred because the delete is recoverable only
+ * from git, so it is the author's call.
+ */
+export declare function readRetireCapabilitiesMarker(changeDir: string): MetadataMarker;
 //# sourceMappingURL=change-metadata.d.ts.map

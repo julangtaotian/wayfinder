@@ -1,10 +1,15 @@
 /**
  * Check if telemetry is enabled.
  *
- * Disabled when:
- * - OPENSPEC_TELEMETRY=0
- * - DO_NOT_TRACK=1
- * - CI=true (any CI environment)
+ * Precedence (first match wins):
+ * 1. OPENSPEC_TELEMETRY=0 → disabled
+ * 2. DO_NOT_TRACK=1 → disabled
+ * 3. CI set to a truthy/on value → disabled (same rule as version-check)
+ * 4. global config telemetry.enabled === false → disabled
+ * 5. otherwise enabled (unset config means on; opt-out model)
+ *
+ * Kept synchronous so call sites need not become async. Reads config via
+ * sync getGlobalConfig() rather than async getTelemetryConfig().
  */
 export declare function isTelemetryEnabled(): boolean;
 /**

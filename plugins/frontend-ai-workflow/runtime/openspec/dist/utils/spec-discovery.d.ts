@@ -10,10 +10,10 @@ export interface DiscoveredSpec {
  * are found (#1353). A `spec.md` sitting directly in the root is ignored,
  * matching the historical requirement that specs live in a capability folder.
  * Dot-directories are skipped and symlinked directories are not followed.
- * A symlinked `spec.md` IS resolved: `hasAnyFileUnder` and the artifact
- * graph's globs both count it as content, so dropping it here would silently
- * lose the delta on archive; a dangling link is skipped. Results are sorted
- * by id for deterministic output.
+ * An in-capability symlinked `spec.md` IS resolved: `hasAnyFileUnder` and the
+ * artifact graph's globs both count it as content, so dropping it here would
+ * silently lose the delta on archive. A link outside its capability is
+ * rejected and a dangling link is skipped. Results are sorted by id.
  *
  * A missing root (ENOENT) yields an empty list, but any other read failure
  * (EACCES, EIO, ...) is thrown rather than swallowed: since this feeds the

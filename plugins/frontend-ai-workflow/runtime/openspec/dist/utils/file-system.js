@@ -87,6 +87,76 @@ export class FileSystemUtils {
             }
         }
     }
+    /**
+     * Refuses a target that leaves an allowed directory, including through an
+     * existing symlink in either the target or one of its parent directories.
+     * Missing suffixes are resolved from their nearest existing ancestor.
+     */
+    static assertPathWithin(allowedDirectory, targetPath) {
+        const resolvedDirectory = path.resolve(allowedDirectory);
+        const resolvedTarget = path.resolve(targetPath);
+        if (!this.isPathWithin(resolvedDirectory, resolvedTarget)) {
+            throw new Error(`Path is outside the allowed directory: ${targetPath}`);
+        }
+        const canonicalDirectory = this.canonicalizePotentialPath(resolvedDirectory);
+        const canonicalTarget = this.canonicalizePotentialPath(resolvedTarget);
+        if (!this.isPathWithin(canonicalDirectory, canonicalTarget)) {
+            throw new Error(`Path is outside the allowed directory: ${targetPath}`);
+        }
+    }
+    static resolveProjectArtifactPath(projectPath, artifactPath) {
+        if (path.isAbsolute(artifactPath)) {
+            throw new Error(`Refusing to manage an artifact outside the project: ${artifactPath}`);
+        }
+        const targetPath = path.join(projectPath, artifactPath);
+        this.assertPathWithin(projectPath, targetPath);
+        return targetPath;
+    }
+    static assertProjectArtifactPath(projectPath, targetPath) {
+        this.assertPathWithin(projectPath, targetPath);
+    }
+    static isPathWithin(allowedDirectory, targetPath) {
+        const relative = path.relative(allowedDirectory, targetPath);
+        return (relative === '' ||
+            (relative !== '..' &&
+                !relative.startsWith(`..${path.sep}`) &&
+                !path.isAbsolute(relative)));
+    }
+    static canonicalizePotentialPath(targetPath) {
+        let existingPath = targetPath;
+        const missingSegments = [];
+        while (true) {
+            try {
+                // lstat distinguishes a missing path from a dangling symlink. A
+                // dangling link cannot be proven confined, so realpath must fail it.
+                nodeFs.lstatSync(existingPath);
+                const canonicalExisting = nodeFs.realpathSync.native(existingPath);
+                return path.resolve(canonicalExisting, ...missingSegments);
+            }
+            catch (error) {
+                const code = error.code;
+                if (code !== 'ENOENT') {
+                    throw error;
+                }
+                try {
+                    if (nodeFs.lstatSync(existingPath).isSymbolicLink()) {
+                        throw new Error(`Cannot verify dangling symbolic link: ${existingPath}`);
+                    }
+                }
+                catch (lstatError) {
+                    if (lstatError.code !== 'ENOENT') {
+                        throw lstatError;
+                    }
+                }
+                const parent = path.dirname(existingPath);
+                if (parent === existingPath) {
+                    throw new Error(`Cannot resolve an existing parent for ${targetPath}`);
+                }
+                missingSegments.unshift(path.basename(existingPath));
+                existingPath = parent;
+            }
+        }
+    }
     static isWindowsBasePath(basePath) {
         return /^[A-Za-z]:[\\/]/.test(basePath) || basePath.startsWith('\\');
     }

@@ -7,6 +7,7 @@ import { ChangeParser } from '../core/parsers/change-parser.js';
 import { isInteractive } from '../utils/interactive.js';
 import { getActiveChangeIds } from '../utils/item-discovery.js';
 import { getTaskProgressForChange } from '../utils/task-progress.js';
+import { FileSystemUtils } from '../utils/file-system.js';
 /**
  * True only when `target` is definitively absent. An EACCES or I/O failure
  * means existence cannot be determined, so callers fall through to their
@@ -95,12 +96,15 @@ export class ChangeCommand {
             }
             throw new Error(`Change "${changeName}" not found at ${proposalPath}`);
         }
+        FileSystemUtils.assertPathWithin(path.dirname(proposalPath), proposalPath);
         if (options?.json) {
+            FileSystemUtils.assertPathWithin(changeDir, proposalPath);
             const jsonOutput = await this.converter.convertChangeToJson(proposalPath);
             if (options.requirementsOnly) {
                 console.error('Flag --requirements-only is deprecated; use --deltas-only instead.');
             }
             const parsed = JSON.parse(jsonOutput);
+            FileSystemUtils.assertPathWithin(changeDir, proposalPath);
             const contentForTitle = await fs.readFile(proposalPath, 'utf-8');
             const title = this.extractTitle(contentForTitle, changeName);
             const id = parsed.name;
@@ -115,6 +119,7 @@ export class ChangeCommand {
             console.log(JSON.stringify(output, null, 2));
         }
         else {
+            FileSystemUtils.assertPathWithin(changeDir, proposalPath);
             const content = await fs.readFile(proposalPath, 'utf-8');
             console.log(content);
         }
@@ -147,6 +152,7 @@ export class ChangeCommand {
                     return { id: changeName, title: changeName, deltaCount: 0, taskStatus };
                 }
                 try {
+                    FileSystemUtils.assertPathWithin(changeDir, proposalPath);
                     const content = await fs.readFile(proposalPath, 'utf-8');
                     const parser = new ChangeParser(content, changeDir);
                     const change = await parser.parseChangeWithDeltas(changeName);
@@ -186,6 +192,7 @@ export class ChangeCommand {
                     continue;
                 }
                 try {
+                    FileSystemUtils.assertPathWithin(changeDir, proposalPath);
                     const content = await fs.readFile(proposalPath, 'utf-8');
                     const title = this.extractTitle(content, changeName);
                     const parser = new ChangeParser(content, changeDir);
@@ -225,6 +232,9 @@ export class ChangeCommand {
             }
         }
         const changeDir = path.join(changesPath, changeName);
+        if (!isChangeDirectoryName(changesPath, changeDir)) {
+            throw new Error(`Change "${changeName}" not found at ${changeDir}`);
+        }
         try {
             await fs.access(changeDir);
         }
@@ -232,7 +242,11 @@ export class ChangeCommand {
             throw new Error(`Change "${changeName}" not found at ${changeDir}`);
         }
         const validator = new Validator(options?.strict || false);
-        const report = await validator.validateChangeDeltaSpecs(changeDir);
+        const report = await validator.validateChangeDeltaSpecs(changeDir, {
+            // Derived from changesPath so the main specs come from the same root the
+            // change itself was resolved against.
+            mainSpecsDir: path.join(path.dirname(changesPath), 'specs'),
+        });
         if (options?.json) {
             console.log(JSON.stringify(report, null, 2));
         }

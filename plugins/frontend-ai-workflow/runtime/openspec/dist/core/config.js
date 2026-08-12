@@ -1,4 +1,18 @@
 export const OPENSPEC_DIR_NAME = 'openspec';
+export const OPENSPEC_SKILL_NAMES = [
+    'openspec-explore',
+    'openspec-new-change',
+    'openspec-continue-change',
+    'openspec-apply-change',
+    'openspec-update-change',
+    'openspec-ff-change',
+    'openspec-sync-specs',
+    'openspec-archive-change',
+    'openspec-bulk-archive-change',
+    'openspec-verify-change',
+    'openspec-onboard',
+    'openspec-propose',
+];
 export const OPENSPEC_MARKERS = {
     start: '<!-- OPENSPEC:START -->',
     end: '<!-- OPENSPEC:END -->'
@@ -11,7 +25,7 @@ export const AI_TOOLS = [
     { name: 'Claude Code', value: 'claude', available: true, successLabel: 'Claude Code', skillsDir: '.claude' },
     { name: 'Cline', value: 'cline', available: true, successLabel: 'Cline', skillsDir: '.cline' },
     { name: 'CodeArts', value: 'codeartsagent', available: true, successLabel: 'CodeArts', skillsDir: '.codeartsdoer' },
-    { name: 'Codex', value: 'codex', available: true, successLabel: 'Codex', skillsDir: '.codex' },
+    { name: 'Codex', value: 'codex', available: true, successLabel: 'Codex', skillsDir: '.agents', legacySkillsDirs: ['.codex'], detectionPaths: ['.agents/skills', '.codex/skills'] },
     { name: 'Devin Desktop (formerly Windsurf)', value: 'devin', available: true, successLabel: 'Devin Desktop', skillsDir: '.devin', detectionPaths: ['.devin', '.windsurf'] },
     { name: 'ForgeCode', value: 'forgecode', available: true, successLabel: 'ForgeCode', skillsDir: '.forge' },
     { name: 'CodeBuddy Code (CLI)', value: 'codebuddy', available: true, successLabel: 'CodeBuddy Code', skillsDir: '.codebuddy' },
@@ -29,16 +43,24 @@ export const AI_TOOLS = [
     { name: 'Kimi Code', value: 'kimi', available: true, successLabel: 'Kimi Code', skillsDir: '.kimi-code', detectionPaths: ['.kimi-code', '.kimi'] },
     { name: 'Kiro', value: 'kiro', available: true, successLabel: 'Kiro', skillsDir: '.kiro' },
     { name: 'Lingma', value: 'lingma', available: true, successLabel: 'Lingma', skillsDir: '.lingma' },
+    { name: 'MiniMax Code', value: 'minimax-code', available: true, successLabel: 'MiniMax Code', globalSkillsDir: '.minimax' },
     { name: 'Mistral Vibe', value: 'vibe', available: true, successLabel: 'Mistral Vibe', skillsDir: '.vibe' },
     { name: 'Oh My Pi', value: 'oh-my-pi', available: true, successLabel: 'Oh My Pi', skillsDir: '.omp' },
     { name: 'OpenCode', value: 'opencode', available: true, successLabel: 'OpenCode', skillsDir: '.opencode' },
     { name: 'Pi', value: 'pi', available: true, successLabel: 'Pi', skillsDir: '.pi' },
     { name: 'Qoder', value: 'qoder', available: true, successLabel: 'Qoder', skillsDir: '.qoder' },
     { name: 'Qwen Code', value: 'qwen', available: true, successLabel: 'Qwen Code', skillsDir: '.qwen' },
+    { name: 'Rovo Dev CLI', value: 'rovodev', available: true, successLabel: 'Rovo Dev CLI', skillsDir: '.rovodev', detectionPaths: ['.rovodev/skills', '.rovodev'] },
     { name: 'Zoo Code', value: 'roocode', available: true, successLabel: 'Zoo Code', skillsDir: '.roo' },
     { name: 'Trae', value: 'trae', available: true, successLabel: 'Trae', skillsDir: '.trae' },
     { name: 'ZCode', value: 'zcode', available: true, successLabel: 'ZCode', skillsDir: '.zcode' },
-    { name: 'AGENTS.md (works with Amp, VS Code, …)', value: 'agents', available: false, successLabel: 'your AGENTS.md-compatible assistant' }
+    // Vendor-neutral target for assistants that read the shared `.agents` root.
+    // Detection keys off `.agents/skills` rather than the bare root: frameworks use
+    // `.agents/` for more than skills, so the root alone says nothing about skills.
+    // A project that does keep skills there is a project this target fits, the same
+    // way `.claude/` selects Claude Code — the signal is the user's setup, not
+    // OpenSpec's own files.
+    { name: 'Shared .agents skills', value: 'agents', available: true, successLabel: 'shared .agents skills', skillsDir: '.agents', detectionPaths: ['.agents/skills'] }
 ];
 /**
  * Retired tool ids that still resolve, so a rebrand does not break scripted

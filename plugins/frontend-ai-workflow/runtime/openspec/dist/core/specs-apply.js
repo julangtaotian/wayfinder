@@ -5,14 +5,54 @@
  * Applies delta specs from a change to main specs without archiving.
  */
 import { promises as fs } from 'fs';
+import { randomUUID } from 'crypto';
 import path from 'path';
 import chalk from 'chalk';
-import { extractRequirementsSection, foldRequirementName, parseDeltaSpec, normalizeRequirementName, } from './parsers/requirement-blocks.js';
+import { extractRequirementsSection, findMissingCurrentScenarios, foldRequirementName, parseDeltaSpec, normalizeRequirementName, } from './parsers/requirement-blocks.js';
 import { findMainSpecStructureIssues } from './parsers/spec-structure.js';
 import { buildCodeFenceMask } from './parsers/code-fence.js';
 import { MarkdownParser } from './parsers/markdown-parser.js';
 import { MIN_PURPOSE_LENGTH } from './validation/constants.js';
 import { discoverSpecFiles } from '../utils/spec-discovery.js';
+import { FileSystemUtils } from '../utils/file-system.js';
+function isLexicallyWithin(allowedDirectory, targetPath) {
+    const relative = path.relative(path.resolve(allowedDirectory), path.resolve(targetPath));
+    return (relative === '' ||
+        (relative !== '..' &&
+            !relative.startsWith(`..${path.sep}`) &&
+            !path.isAbsolute(relative)));
+}
+function resolveTrustedSpecPath(specsRoot, specPath) {
+    if (!isLexicallyWithin(specsRoot, specPath)) {
+        throw new Error(`Path is outside the allowed directory: ${specPath}`);
+    }
+    try {
+        // Preserve spec.md links that remain inside the overall specs tree.
+        FileSystemUtils.assertPathWithin(specsRoot, specPath);
+        const root = FileSystemUtils.canonicalizeExistingPath(specsRoot);
+        return {
+            root,
+            // Rebase onto the canonical root so missing targets also work when the
+            // project is reached through an OS path alias (for example /var on macOS).
+            file: path.join(root, path.relative(path.resolve(specsRoot), path.resolve(specPath))),
+        };
+    }
+    catch {
+        // Direct capability directories may intentionally be monorepo symlinks.
+        // Freeze their canonical location as the trust root so later swaps are
+        // rejected while a nested spec.md link still cannot escape.
+        const root = FileSystemUtils.canonicalizeExistingPath(path.dirname(specPath));
+        const file = path.join(root, path.basename(specPath));
+        FileSystemUtils.assertPathWithin(root, file);
+        return { root, file };
+    }
+}
+function assertTrustedSpecPath(root, specPath) {
+    if (FileSystemUtils.canonicalizeExistingPath(root) !== path.resolve(root)) {
+        throw new Error(`Path is outside the allowed directory: ${specPath}`);
+    }
+    FileSystemUtils.assertPathWithin(root, specPath);
+}
 // -----------------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------------
@@ -28,10 +68,12 @@ export async function findSpecUpdates(changeDir, mainSpecsDir) {
     const discovered = await discoverSpecFiles(changeSpecsDir);
     for (const { id, specFile } of discovered) {
         const targetFile = path.join(mainSpecsDir, ...id.split('/'), 'spec.md');
+        const source = resolveTrustedSpecPath(changeSpecsDir, specFile);
+        const target = resolveTrustedSpecPath(mainSpecsDir, targetFile);
         // Check if target exists
         let exists = false;
         try {
-            await fs.access(targetFile);
+            await fs.access(target.file);
             exists = true;
         }
         catch {
@@ -39,8 +81,10 @@ export async function findSpecUpdates(changeDir, mainSpecsDir) {
         }
         updates.push({
             id,
-            source: specFile,
-            target: targetFile,
+            sourceRoot: source.root,
+            source: source.file,
+            targetRoot: target.root,
+            target: target.file,
             exists,
         });
     }
@@ -61,6 +105,7 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
         }
     };
     // Read change spec content (delta-format expected)
+    assertTrustedSpecPath(update.sourceRoot, update.source);
     const changeContent = await fs.readFile(update.source, 'utf-8');
     // Parse deltas from the change spec file
     const plan = parseDeltaSpec(changeContent);
@@ -152,6 +197,7 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
     const deltaPurpose = extractPurposeSection(changeContent);
     let targetContent;
     let isNewSpec = false;
+    assertTrustedSpecPath(update.targetRoot, update.target);
     try {
         targetContent = await fs.readFile(update.target, 'utf-8');
         // A delta Purpose only seeds a spec that does not exist yet. Say so rather
@@ -211,6 +257,7 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
     // Apply operations in order: RENAMED → REMOVED → MODIFIED → ADDED
     // RENAMED
     let renamedApplied = 0;
+    const renamedTargets = new Map();
     for (const r of plan.renamed) {
         const from = normalizeRequirementName(r.from);
         const to = normalizeRequirementName(r.to);
@@ -244,6 +291,7 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
         };
         nameToBlock.delete(from);
         nameToBlock.set(to, renamedBlock);
+        renamedTargets.set(from, to);
         renamedApplied++;
     }
     // REMOVED
@@ -323,6 +371,27 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
             keptOrder.push(replacement);
             seen.add(key);
         }
+        // A block's raw runs to the next header the parser RECOGNISES, so a note
+        // under an unrecognized heading can be absorbed into the requirement.
+        // Warn only when the replacement from this same original block drops the
+        // full absorbed suffix. RENAMED carries the original raw content under a
+        // new map key, and MODIFIED may repeat the suffix deliberately; neither is
+        // data loss.
+        const renamedTarget = renamedTargets.get(key);
+        const replacementFromOriginal = replacement ?? (renamedTarget ? nameToBlock.get(renamedTarget) : undefined);
+        if (replacementFromOriginal !== block) {
+            const foreign = firstForeignTail(block.raw);
+            const replacementRaw = replacementFromOriginal?.raw;
+            const normalizedForeign = foreign ? normalizeBlockRaw(foreign.raw) : '';
+            const keepsForeignTail = foreign !== undefined &&
+                replacementRaw !== undefined &&
+                countOccurrences(normalizeBlockRaw(replacementRaw), normalizedForeign) >=
+                    countOccurrences(normalizeBlockRaw(block.raw), normalizedForeign);
+            if (foreign && !keepsForeignTail) {
+                warn(`${specName} - "${foreign.heading}" sits inside requirement "${block.name}" and goes with it. ` +
+                    'Move it under its own requirement, or above `## Requirements`, to keep it.');
+            }
+        }
     }
     // Append any newly added that were not in original order
     for (const [key, block] of nameToBlock.entries()) {
@@ -348,18 +417,393 @@ export async function buildUpdatedSpec(update, changeName, options = {}) {
             renamed: renamedApplied,
         },
         warnings,
+        noRequirementBlocks: keptOrder.length === 0,
+        // Read off the ORIGINAL requirements section, not the rebuilt one. Anything
+        // after the last `### Requirement:` header belongs to that block's raw and
+        // is discarded with it, so a rebuilt-body scan only ever sees headings above
+        // the first requirement - it would veto `### Notes` written before the
+        // requirements and miss the identical heading written after them.
+        unaccountedContent: contentTheMergeCannotName(parts),
     };
+}
+/**
+ * The suffix of a requirement block that begins with content the requirement
+ * parser did not recognize as a boundary: a `#`, `##`, or `###` heading after
+ * the block's own header.
+ *
+ * `####` is excluded: a requirement's `#### Scenario:` headings are its own.
+ * Fenced lines are skipped, so a heading inside an example does not count.
+ *
+ * Approximate on purpose, and only ever used to WARN. A `#` line inside a
+ * scenario looks the same as a note written below the requirement, and no
+ * line-based rule separates them; a wrong warning costs a line of output, while
+ * acting on a wrong answer would rewrite the spec.
+ */
+function firstForeignTail(raw) {
+    const lines = raw.replace(/\r\n?/g, '\n').split('\n');
+    const fenceMask = buildCodeFenceMask(lines);
+    for (let index = 1; index < lines.length; index++) {
+        if (fenceMask[index])
+            continue;
+        if (/^ {0,3}#{1,3}(?:[ \t]|$)/.test(lines[index])) {
+            return {
+                heading: lines[index].trim(),
+                raw: lines.slice(index).join('\n').trimEnd(),
+            };
+        }
+    }
+    return undefined;
+}
+/**
+ * The non-blank lines of a spec that are not part of what a retirement is able
+ * to name: the title, the `## Purpose` section, the `## Requirements` header,
+ * and each requirement block's own header, statement and scenario bullets.
+ *
+ * Deliberately whole-file. Auditing a subset of the slices is what let authored
+ * prose inside a removed block, and content above the requirements section, be
+ * deleted unmentioned.
+ */
+function contentTheMergeCannotName(parts) {
+    const leftovers = [];
+    // Above the requirements section: the title and the Purpose section are
+    // expected; anything else is authored content the deletion would take.
+    const beforeLines = parts.before.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n');
+    const beforeMask = buildCodeFenceMask(beforeLines);
+    let inPurpose = false;
+    let titleSeen = false;
+    let previousLine = '';
+    for (let index = 0; index < beforeLines.length; index++) {
+        const line = beforeLines[index];
+        if (!line.trim()) {
+            previousLine = '';
+            continue;
+        }
+        if (!beforeMask[index]) {
+            const section = line.match(/^ {0,3}##\s+(.+?)\s*$/);
+            if (section) {
+                inPurpose = /^purpose$/i.test(section[1].trim());
+                if (!inPurpose)
+                    leftovers.push(line.trim());
+                previousLine = line;
+                continue;
+            }
+            // `##` is not the only way to open a section. A setext underline turns
+            // the line above it into a heading, and raw HTML says so outright - a
+            // reader sees a sibling of `## Purpose`, not more of its body. Treating
+            // everything up to the next ATX `##` as Purpose swallowed those whole and
+            // deleted them, reported as nothing but "Purpose".
+            const setext = inPurpose && previousLine.trim() && /^ {0,3}(=+|-+)\s*$/.test(line);
+            const htmlHeading = /^ {0,3}<h[1-6]\b/i.test(line);
+            if (setext || htmlHeading) {
+                leftovers.push((setext ? previousLine : line).trim());
+                inPurpose = false;
+                previousLine = line;
+                continue;
+            }
+            if (/^ {0,3}#\s+.+$/.test(line)) {
+                if (!titleSeen && !inPurpose) {
+                    titleSeen = true;
+                }
+                else {
+                    leftovers.push(line.trim());
+                    inPurpose = false;
+                }
+                previousLine = line;
+                continue;
+            }
+        }
+        previousLine = line;
+        if (inPurpose)
+            continue;
+        leftovers.push(line.trim());
+    }
+    // Between the header and the first requirement, and past the section's end.
+    for (const slice of [parts.preamble, parts.after]) {
+        for (const line of slice.split('\n')) {
+            if (line.trim())
+                leftovers.push(line.trim());
+        }
+    }
+    // Inside each requirement block, everything the block parser did not treat as
+    // a new header rides along in `raw` - tables, fences, comments, prose written
+    // below the scenarios. Only a requirement's own parts are expected here.
+    for (const block of parts.bodyBlocks) {
+        const foreignTail = firstForeignTail(block.raw);
+        if (foreignTail)
+            leftovers.push(foreignTail.heading);
+        const lines = block.raw.replace(/\r\n?/g, '\n').split('\n');
+        const mask = buildCodeFenceMask(lines);
+        let seenScenario = false;
+        // A scenario's bullets run unbroken beneath its header. A blank line after
+        // them ends the scenario, so bullets written past that point are a note the
+        // author added, not part of the scenario - and deleting the file would take
+        // them. Treating every bullet as a scenario's own is what let an
+        // operational note below the last scenario be deleted unmentioned.
+        let inScenarioBullets = false;
+        let bulletsSeen = false;
+        for (let index = 0; index < lines.length; index++) {
+            const line = lines[index];
+            if (!line.trim()) {
+                // Only a blank that follows actual bullets closes the run, so a blank
+                // between a scenario header and its first bullet is not a boundary.
+                if (bulletsSeen)
+                    inScenarioBullets = false;
+                continue;
+            }
+            if (index === 0)
+                continue; // the `### Requirement:` header itself
+            // Fenced lines render as a code block inside the requirement, so they are
+            // its own content however they are spelled - a `### Requirement:` in an
+            // example is not a heading to any reader. Flagging them made a spec that
+            // merely documents a command unretirable.
+            if (mask[index])
+                continue;
+            if (index > 1 &&
+                /^ {0,3}(?:=+|-+)\s*$/.test(line) &&
+                lines[index - 1].trim()) {
+                leftovers.push(lines[index - 1].trim());
+                continue;
+            }
+            if (/^ {0,3}####\s+Scenario:/i.test(line)) {
+                seenScenario = true;
+                inScenarioBullets = true;
+                bulletsSeen = false;
+                continue;
+            }
+            if (/^\s*(?:[-*]|\d+[.)])\s/.test(line)) {
+                if (inScenarioBullets) {
+                    bulletsSeen = true;
+                    continue;
+                }
+                // A bullet outside a scenario. Before the first scenario it is part of
+                // the requirement statement; after one it is the author's own note.
+                if (!seenScenario)
+                    continue;
+                leftovers.push(line.trim());
+                continue;
+            }
+            // Free prose above the first scenario is the requirement statement.
+            if (!seenScenario && !/^\s*[|<]/.test(line))
+                continue;
+            leftovers.push(line.trim());
+        }
+    }
+    return [...new Set(leftovers)];
 }
 function normalizeBlockRaw(raw) {
     return raw.replace(/\r\n?/g, '\n').trim();
+}
+/** Count non-overlapping copies so one retained duplicate cannot mask another copy's loss. */
+function countOccurrences(haystack, needle) {
+    if (!needle)
+        return 0;
+    let count = 0;
+    let start = 0;
+    while ((start = haystack.indexOf(needle, start)) !== -1) {
+        count++;
+        start += needle.length;
+    }
+    return count;
+}
+/**
+ * Retire a capability whose last requirement a delta removed: delete its main
+ * spec and prune any directories the deletion leaves empty. Returns false when
+ * there was nothing to delete.
+ *
+ * Gated by the caller on the change's `retire_capabilities` marker, so the one
+ * archive action that removes a file from `openspec/specs/` is always something
+ * the author asked for rather than something inferred from a delta's shape. The
+ * file is recoverable from git, which the report names; applying REMOVED already
+ * deletes requirement content from a main spec, so deleting the spec once
+ * nothing is left is the same operation carried to its end rather than a new
+ * kind of act.
+ *
+ * Only the generated `spec.md` is removed - a directory holding anything else (a
+ * nested capability, a hand-kept note) is left in place.
+ *
+ * The target must resolve inside the selected specs root. A capability-directory
+ * symlink must not turn a retirement marker into authorization to delete an
+ * unrelated external file. A symlinked `spec.md` itself is safe: unlink removes
+ * the link and leaves its target alone.
+ *
+ * Directory pruning IS bounded, by REAL paths rather than string prefixes:
+ * `path.resolve` collapses `..` but does not resolve symlinks, and `readdir` and
+ * `rmdir` both follow them, so a symlinked capability directory would otherwise
+ * let the walk delete directories outside the specs root entirely.
+ */
+export async function retireSpec(update, mainSpecsDir, options = {}) {
+    if (options.deferDelete && options.verifyDisplaced === undefined) {
+        throw new Error('Deferred retirement requires displaced-file verification.');
+    }
+    // Resolved before the unlink, while the link still exists, so the report can
+    // name the file that actually goes when a symlink points out of the tree.
+    // A symlinked `spec.md` is excluded: `realpath` would follow it, but `unlink`
+    // removes the link and leaves the target alone, so naming the target would
+    // claim a file was deleted that is still there.
+    let realSource;
+    try {
+        const link = await fs.lstat(update.target);
+        realSource = link.isSymbolicLink() ? undefined : await fs.realpath(update.target);
+    }
+    catch (error) {
+        if (error.code === 'ENOENT')
+            return { retired: false };
+        throw new Error(`Could not retire capability '${update.id}': could not verify ${update.target} ` +
+            `before deletion (${error instanceof Error ? error.message : String(error)}).`);
+    }
+    if (realSource !== undefined) {
+        let inside;
+        try {
+            inside = await isInsideRealDir(realSource, mainSpecsDir);
+        }
+        catch (error) {
+            throw new Error(`Could not retire capability '${update.id}': could not verify that ${update.target} ` +
+                `is inside ${mainSpecsDir} (${error instanceof Error ? error.message : String(error)}).`);
+        }
+        if (!inside) {
+            throw new Error(`Could not retire capability '${update.id}': ${update.target} resolves outside ` +
+                `${mainSpecsDir}. Remove the external file by hand, or replace the symlink and rerun.`);
+        }
+    }
+    let displacedPath;
+    try {
+        await options.beforeMutate?.();
+        if (options.verifyDisplaced) {
+            const displaced = `${update.target}.openspec-retire-${randomUUID()}`;
+            displacedPath = displaced;
+            await fs.rename(update.target, displaced);
+            try {
+                await options.verifyDisplaced(displaced);
+                try {
+                    await fs.lstat(update.target);
+                    throw new Error(`A concurrent file appeared at ${update.target} while archive was retiring it.`);
+                }
+                catch (targetError) {
+                    if (targetError.code !== 'ENOENT')
+                        throw targetError;
+                }
+                if (!options.deferDelete)
+                    await fs.unlink(displaced);
+            }
+            catch (error) {
+                try {
+                    await fs.lstat(update.target);
+                    throw new Error(`${error instanceof Error ? error.message : String(error)} ` +
+                        `A concurrent file now occupies ${update.target}; the displaced spec was retained at ${displaced}.`);
+                }
+                catch (targetError) {
+                    if (targetError.code !== 'ENOENT')
+                        throw targetError;
+                }
+                await fs.rename(displaced, update.target);
+                throw error;
+            }
+        }
+        else {
+            await fs.unlink(update.target);
+        }
+    }
+    catch (error) {
+        if (error.code === 'ENOENT')
+            return { retired: false };
+        // A bare errno here reads as an internal failure; say what was being
+        // attempted so the message is actionable on its own.
+        throw new Error(`Could not retire capability '${update.id}': failed to delete ${update.target} ` +
+            `(${error.message}). Remove it by hand, then rerun the archive.`);
+    }
+    if (!options.deferDelete) {
+        await pruneEmptyDirs(path.dirname(update.target), mainSpecsDir);
+    }
+    const nominal = options.displayPath ?? `openspec/specs/${update.id}/spec.md`;
+    if (!options.silent) {
+        console.log(`Retiring ${nominal}: all requirements removed.`);
+    }
+    // `resolvedPath` is always the file that was actually unlinked - callers need
+    // it to report a path git will accept, since the nominal one is built from
+    // the capability id and can differ in case, or point through a symlink.
+    return {
+        retired: true,
+        ...(realSource ? { resolvedPath: realSource } : {}),
+        ...(options.deferDelete && displacedPath ? { displacedPath } : {}),
+    };
+}
+export async function finalizeRetiredSpec(target, displacedPath, mainSpecsDir) {
+    await fs.unlink(displacedPath);
+    await pruneEmptyDirs(path.dirname(target), mainSpecsDir);
+}
+/** Whether `realPath` (already canonical) sits under the real `dir`. */
+async function isInsideRealDir(realPath, dir) {
+    const realDir = await fs.realpath(dir);
+    return realPath.startsWith(realDir + path.sep);
+}
+/**
+ * Remove now-empty directories from `startDir` upward, never leaving the real
+ * `boundaryDir` and never removing that directory itself.
+ *
+ * The boundary is a parameter rather than the specs root directly so the walk's
+ * containment is stated at the call site, where the root it must not escape is
+ * the thing being reasoned about.
+ *
+ * The guard re-runs every iteration, so stepping to the LEXICAL parent is safe:
+ * a parent that is not the real one is simply re-resolved and rejected. Errors
+ * are swallowed and end the walk - ENOTEMPTY and ENOENT are correct outcomes (a
+ * file arriving mid-walk must win), and a permissions failure leaves an empty
+ * directory behind, which the next successful archive clears.
+ *
+ * Not race-free: an attacker who can swap an ancestor between the check and the
+ * `rmdir` could get an empty directory outside the root removed. Closing that
+ * needs fd-relative syscalls Node does not expose, and it requires local write
+ * access to `openspec/specs` during an archive.
+ */
+async function pruneEmptyDirs(startDir, boundaryDir) {
+    let boundary;
+    try {
+        boundary = await fs.realpath(boundaryDir);
+    }
+    catch {
+        return;
+    }
+    let dir = startDir;
+    for (;;) {
+        let realDir;
+        try {
+            // lstat first: rmdir on a symlink fails anyway, but resolving one would
+            // walk us out of the tree, and the parent we then step to would be wrong.
+            const link = await fs.lstat(dir);
+            if (link.isSymbolicLink())
+                return;
+            realDir = await fs.realpath(dir);
+        }
+        catch {
+            return;
+        }
+        // Strictly inside the real boundary - the boundary itself is never pruned.
+        if (realDir === boundary || !realDir.startsWith(boundary + path.sep))
+            return;
+        try {
+            const entries = await fs.readdir(dir);
+            if (entries.length > 0)
+                return;
+            await fs.rmdir(dir);
+        }
+        catch {
+            return;
+        }
+        dir = path.dirname(dir);
+    }
 }
 /**
  * Write an updated spec to disk.
  */
 export async function writeUpdatedSpec(update, rebuilt, counts, options = {}) {
+    assertTrustedSpecPath(update.targetRoot, update.target);
     // Create target directory if needed
     const targetDir = path.dirname(update.target);
     await fs.mkdir(targetDir, { recursive: true });
+    await options.beforeMutate?.();
+    // Preserve the established in-place write semantics: symlink referents,
+    // hard-linked specs, ACLs, extended attributes, and filesystems without hard
+    // links must continue to behave as they did before capability retirement.
     await fs.writeFile(update.target, rebuilt);
     if (options.silent)
         return;
@@ -468,56 +912,5 @@ export function buildSpecSkeleton(specFolderName, changeName, purpose) {
     const titleBase = specFolderName;
     const purposeBody = purpose?.trim() || `TBD - created by archiving change ${changeName}. Update Purpose after archive.`;
     return `# ${titleBase} Specification\n\n## Purpose\n${purposeBody}\n\n## Requirements\n`;
-}
-function findMissingCurrentScenarios(current, incoming) {
-    // Multiplicity-aware: a name present N times in current and M times in
-    // incoming means max(0, N - M) instances are missing. Set membership would
-    // treat N>M as fully covered and let archive silently drop duplicates
-    // (residual #1246 / duplicate-scenario-name blind spot).
-    const remainingIncoming = new Map();
-    for (const scenario of parseScenarioBlocks(incoming.raw)) {
-        const name = scenario.name;
-        remainingIncoming.set(name, (remainingIncoming.get(name) ?? 0) + 1);
-    }
-    const missing = [];
-    for (const scenario of parseScenarioBlocks(current.raw)) {
-        const name = scenario.name;
-        const remaining = remainingIncoming.get(name) ?? 0;
-        if (remaining > 0) {
-            remainingIncoming.set(name, remaining - 1);
-        }
-        else {
-            missing.push(name);
-        }
-    }
-    return missing;
-}
-function parseScenarioBlocks(requirementRaw) {
-    const lines = requirementRaw.replace(/\r\n?/g, '\n').split('\n');
-    // A `#### Scenario:` inside a fenced example is not a real scenario. The
-    // validator's countScenarios already ignores fenced lines; the drift check
-    // must agree with it, or a fenced sample can false-abort an archive (or
-    // mask a genuinely dropped scenario).
-    const mask = buildCodeFenceMask(lines);
-    const scenarios = [];
-    let index = 0;
-    while (index < lines.length) {
-        const headerMatch = mask[index] ? null : lines[index].match(/^####\s*Scenario:\s*(.+)\s*$/);
-        if (!headerMatch) {
-            index++;
-            continue;
-        }
-        const start = index;
-        const name = headerMatch[1].trim();
-        index++;
-        while (index < lines.length && (mask[index] || !/^####\s*Scenario:\s*(.+)\s*$/.test(lines[index]))) {
-            index++;
-        }
-        scenarios.push({
-            name,
-            raw: lines.slice(start, index).join('\n').trimEnd(),
-        });
-    }
-    return scenarios;
 }
 //# sourceMappingURL=specs-apply.js.map

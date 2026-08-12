@@ -89,9 +89,9 @@ export function printStatusText(status) {
         }
         console.log(line);
     }
-    if (status.isComplete) {
+    if (status.isPlanningComplete) {
         console.log();
-        console.log(chalk.green('All artifacts complete!'));
+        console.log(chalk.green('All planning artifacts complete!'));
     }
 }
 //# sourceMappingURL=status.js.map

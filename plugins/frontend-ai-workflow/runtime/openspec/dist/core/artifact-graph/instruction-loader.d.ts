@@ -144,7 +144,9 @@ export interface ChangeStatus {
     nextSteps: string[];
     /** Machine-readable action constraints for agents */
     actionContext: ActionContext;
-    /** Whether all artifacts are complete */
+    /** Whether all planning artifacts are complete */
+    isPlanningComplete: boolean;
+    /** Compatibility alias for isPlanningComplete */
     isComplete: boolean;
     /** Artifact IDs required before apply phase (from schema's apply.requires) */
     applyRequires: string[];

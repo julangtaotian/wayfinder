@@ -2,6 +2,7 @@
  * Checks if a path contains glob pattern characters.
  */
 export declare function isGlobPattern(pattern: string): boolean;
+export declare function resolveArtifactOutputPath(changeDir: string, generates: string): string;
 /**
  * Resolves an artifact's output path(s) to concrete files that currently exist.
  * Returns absolute file paths. Glob matches are sorted for deterministic output.

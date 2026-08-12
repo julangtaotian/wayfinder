@@ -1,9 +1,8 @@
+import { type TelemetryConfig } from '../core/global-config.js';
 export declare const CONFIG_DIR_NAME = "openspec";
 export declare const CONFIG_FILE_NAME = "config.json";
-export interface TelemetryConfig {
-    anonymousId?: string;
-    noticeSeen?: boolean;
-}
+/** Re-export shared telemetry section type (single source of truth in global-config). */
+export type { TelemetryConfig };
 export interface GlobalConfig {
     telemetry?: TelemetryConfig;
     [key: string]: unknown;

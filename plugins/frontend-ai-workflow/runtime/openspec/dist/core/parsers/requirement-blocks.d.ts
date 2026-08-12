@@ -53,4 +53,14 @@ export interface DeltaPlan {
  * Parse a delta-formatted spec change file content into a DeltaPlan with raw blocks.
  */
 export declare function parseDeltaSpec(content: string): DeltaPlan;
+/**
+ * Scenario names the current requirement block has and the incoming
+ * (MODIFIED) block does not. A MODIFIED requirement replaces the whole block,
+ * so every name reported here would be dropped from the main spec.
+ *
+ * Shared by archive (which refuses to apply the block) and validate (which
+ * reports the same loss at authoring time, #1477), so the two cannot disagree
+ * about what counts as a dropped scenario.
+ */
+export declare function findMissingCurrentScenarios(current: RequirementBlock, incoming: RequirementBlock): string[];
 //# sourceMappingURL=requirement-blocks.d.ts.map

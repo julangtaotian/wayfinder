@@ -3,20 +3,20 @@
   "algorithm": "sha256",
   "runtime": {
     "name": "@fission-ai/openspec",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "entrypoint": "bin/openspec.js"
   },
   "packages": [
     {
       "path": ".",
       "name": "@fission-ai/openspec",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "license": "MIT",
       "licenseFiles": [
         "LICENSE"
       ],
-      "fileCount": 366,
-      "treeSha256": "1baba012277fd3871eb10f5fd15113b792858f902d3f03d8faecc3205aafcc03"
+      "fileCount": 376,
+      "treeSha256": "77b86504a83b600ea8ce84db1f907c2148b4c569c361aaaeb978dcafd1bf77d9"
     },
     {
       "path": "node_modules/@inquirer/ansi",

@@ -15,6 +15,7 @@ export declare const ChangeMetadataSchema: z.ZodObject<{
         id: z.ZodString;
     }, z.core.$strict>>;
     skip_specs: z.ZodOptional<z.ZodBoolean>;
+    retire_capabilities: z.ZodOptional<z.ZodBoolean>;
 }, z.core.$strip>;
 export type ChangeMetadata = z.infer<typeof ChangeMetadataSchema>;
 //# sourceMappingURL=schema.d.ts.map

@@ -7,7 +7,11 @@
 export interface SpecUpdate {
     /** Capability id relative to the specs root, forward-slash separated (e.g. "web" or "platform/session-layout"). */
     id: string;
+    /** Allowed root for the delta source. */
+    sourceRoot: string;
     source: string;
+    /** Allowed root for the main-spec target. */
+    targetRoot: string;
     target: string;
     exists: boolean;
 }
@@ -30,7 +34,74 @@ export declare function buildUpdatedSpec(update: SpecUpdate, changeName: string,
         renamed: number;
     };
     warnings: string[];
+    /**
+     * Every canonical `### Requirement:` block the delta could act on is gone.
+     * This is only a *candidate* signal for retirement (#1302): the validator, not
+     * this count, decides whether `rebuilt` is actually unwritable - it recognises
+     * requirement shapes this parser sweeps into the preamble, so a spec can be
+     * blockless here and still validate. See `isRetirableSpec` in archive.ts.
+     */
+    noRequirementBlocks: boolean;
+    /**
+     * Every non-blank line of the spec this merge cannot name.
+     *
+     * Retirement deletes the whole file, so the only safe question is whether the
+     * merge can account for all of it. `extractRequirementsSection` splits a spec
+     * into five slices, and auditing a subset is how this guard kept failing: for
+     * seven rounds it looked for requirement-SHAPED text and was beaten by a new
+     * disguise each time, and when it started asking where content landed it
+     * still read only the preamble and the tail - so content simply moved into a
+     * slice nobody checked, and authored prose sitting inside a removed block's
+     * raw was deleted while the report said only "Purpose" was lost.
+     *
+     * So this accounts for the whole file: the title, the `## Purpose` section,
+     * the `## Requirements` header, and, inside each requirement block, the parts
+     * that make up a requirement - its header, its statement, and its scenarios'
+     * bullets. Every other non-blank line is reported and refuses the retirement.
+     *
+     * Fails safe in every direction: a line this cannot classify counts as
+     * unaccounted, which refuses rather than deletes.
+     */
+    unaccountedContent: string[];
 }>;
+/**
+ * Retire a capability whose last requirement a delta removed: delete its main
+ * spec and prune any directories the deletion leaves empty. Returns false when
+ * there was nothing to delete.
+ *
+ * Gated by the caller on the change's `retire_capabilities` marker, so the one
+ * archive action that removes a file from `openspec/specs/` is always something
+ * the author asked for rather than something inferred from a delta's shape. The
+ * file is recoverable from git, which the report names; applying REMOVED already
+ * deletes requirement content from a main spec, so deleting the spec once
+ * nothing is left is the same operation carried to its end rather than a new
+ * kind of act.
+ *
+ * Only the generated `spec.md` is removed - a directory holding anything else (a
+ * nested capability, a hand-kept note) is left in place.
+ *
+ * The target must resolve inside the selected specs root. A capability-directory
+ * symlink must not turn a retirement marker into authorization to delete an
+ * unrelated external file. A symlinked `spec.md` itself is safe: unlink removes
+ * the link and leaves its target alone.
+ *
+ * Directory pruning IS bounded, by REAL paths rather than string prefixes:
+ * `path.resolve` collapses `..` but does not resolve symlinks, and `readdir` and
+ * `rmdir` both follow them, so a symlinked capability directory would otherwise
+ * let the walk delete directories outside the specs root entirely.
+ */
+export declare function retireSpec(update: SpecUpdate, mainSpecsDir: string, options?: {
+    silent?: boolean;
+    displayPath?: string;
+    beforeMutate?: () => Promise<void>;
+    verifyDisplaced?: (displacedPath: string) => Promise<void>;
+    deferDelete?: boolean;
+}): Promise<{
+    retired: boolean;
+    resolvedPath?: string;
+    displacedPath?: string;
+}>;
+export declare function finalizeRetiredSpec(target: string, displacedPath: string, mainSpecsDir: string): Promise<void>;
 /**
  * Write an updated spec to disk.
  */
@@ -42,6 +113,7 @@ export declare function writeUpdatedSpec(update: SpecUpdate, rebuilt: string, co
 }, options?: {
     silent?: boolean;
     displayPath?: string;
+    beforeMutate?: () => Promise<void>;
 }): Promise<void>;
 /**
  * Build a skeleton spec for new capabilities. When the delta spec authored a

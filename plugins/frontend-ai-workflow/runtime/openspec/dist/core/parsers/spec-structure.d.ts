@@ -1,5 +1,5 @@
 export interface MainSpecStructureIssue {
-    kind: 'delta-header' | 'requirement-outside-requirements';
+    kind: 'delta-header' | 'requirement-outside-requirements' | 'duplicate-requirement';
     line: number;
     header: string;
     message: string;

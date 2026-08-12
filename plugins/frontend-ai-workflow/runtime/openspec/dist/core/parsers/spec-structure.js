@@ -8,6 +8,7 @@ export function findMainSpecStructureIssues(content) {
     const stripped = stripFencedCodeBlocksPreservingLines(normalized);
     const lines = stripped.split('\n');
     const issues = [];
+    const requirementLines = new Map();
     const requirementsHeaderIndex = lines.findIndex(line => REQUIREMENTS_SECTION_HEADER.test(line));
     let requirementsEndIndex = lines.length;
     if (requirementsHeaderIndex !== -1) {
@@ -30,7 +31,7 @@ export function findMainSpecStructureIssues(content) {
                 line: i + 1,
                 header: trimmed,
                 message: `Main spec contains delta header "${trimmed}". ` +
-                    'Delta headers are only valid inside openspec/changes/<name>/specs/<capability>/spec.md ' +
+                    'Delta headers are only valid inside openspec/changes/<name>/specs/<capability-path>/spec.md ' +
                     'and truncate the parsed ## Requirements section.',
             });
             continue;
@@ -50,6 +51,21 @@ export function findMainSpecStructureIssues(content) {
                 message: `Requirement header "${trimmed}" appears outside the main ## Requirements section. ` +
                     'Main specs only parse requirements inside that section, so this requirement is currently invisible to validate, list, and archive.',
             });
+            continue;
+        }
+        const requirementName = requirementMatch[1].trim();
+        const previousLine = requirementLines.get(requirementName);
+        if (previousLine !== undefined) {
+            issues.push({
+                kind: 'duplicate-requirement',
+                line: i + 1,
+                header: trimmed,
+                message: `Requirement header "${trimmed}" duplicates the requirement declared on line ${previousLine}. ` +
+                    'Requirement names must be unique so spec updates cannot discard one block while updating another.',
+            });
+        }
+        else {
+            requirementLines.set(requirementName, i + 1);
         }
     }
     return issues;

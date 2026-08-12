@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.7.0"
+  generatedBy: "1.8.0"
 ---
 
 ## Bundled Runtime and Root Boundary
@@ -21,7 +21,9 @@ Normal completed delivery does not invoke this reference directly; it uses `fina
 
 This is an **agent-driven** operation - you will read delta specs and directly edit main specs to apply the changes. This allows intelligent merging (e.g., adding a scenario without copying the entire requirement).
 
-**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `view`). Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
+**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow and append it to every applicable unscoped example below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
+
+`<capability-path>` is the spec directory relative to `specs/`; preserve the full nested path returned by the runtime.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
@@ -97,7 +99,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
    a. **Read the delta spec** to understand the intended changes
 
-   b. **Read the main spec** at `<planningHome.root>/openspec/specs/<capability>/spec.md` (may not exist yet)
+   b. **Read the main spec** at `<planningHome.root>/openspec/specs/<capability-path>/spec.md` (may not exist yet)
 
    c. **Apply changes intelligently**:
 
@@ -108,13 +110,15 @@ This is an **agent-driven** operation - you will read delta specs and directly e
       **MODIFIED Requirements:**
       - Find the requirement in main spec
       - Apply the changes - this can be:
-        - Adding new scenarios (don't need to copy existing ones)
+        - Adding new scenarios the main spec does not have yet
         - Modifying existing scenarios
         - Changing the requirement description
       - Preserve scenarios/content not mentioned in the delta
 
       **REMOVED Requirements:**
       - Remove the entire requirement block from main spec
+      - Delete the whole main `spec.md` only when this removal leaves no requirements, the rest of the spec is canonical, the file resolves inside the real specs root, and `.openspec.yaml` declares `retire_capabilities: true`
+      - If the last requirement would be removed but any retirement condition fails, leave the main spec unchanged and report the blocking condition; never leave an empty `## Requirements` section
 
       **RENAMED Requirements:**
       - Find the FROM requirement, rename to TO
@@ -124,13 +128,17 @@ This is an **agent-driven** operation - you will read delta specs and directly e
         (this is what `openspec archive` does; it warns and moves on)
 
    d. **Create new main spec** if capability doesn't exist yet:
-      - Create `<planningHome.root>/openspec/specs/<capability>/spec.md`
+      - Create `<planningHome.root>/openspec/specs/<capability-path>/spec.md`
       - Add Purpose section: copy the delta's `## Purpose` body verbatim when it has one
         (this is what `openspec archive` does); only write a brief TBD placeholder when it does not
       - Add Requirements section with the ADDED requirements
       - Follow the **Main Spec Format Reference** below
 
-5. **Show summary**
+5. **Validate updated main specs**
+
+   Run `openspec validate --specs` with the same selected-root flags. If validation fails, report the errors and do not claim success.
+
+6. **Show summary**
 
    After applying all changes, summarize:
    - Which capabilities were updated
@@ -193,9 +201,9 @@ The system SHALL do something new.
 
 **Key Principle: Intelligent Merging**
 
-Unlike programmatic merging, you can apply **partial updates**:
-- To add a scenario, just include that scenario under MODIFIED - don't copy existing scenarios
-- The delta represents *intent*, not a wholesale replacement
+Unlike programmatic merging, you merge rather than overwrite:
+- A MODIFIED block carries the full surviving requirement, including every existing scenario; OpenSpec 1.8 rejects a block that drops a main-spec scenario
+- Preserve content that the delta does not change and keep its existing order
 - Use your judgment to merge changes sensibly
 
 **Output On Success**

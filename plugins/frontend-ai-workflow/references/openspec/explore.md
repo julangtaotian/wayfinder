@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.7.0"
+  generatedBy: "1.8.0"
 ---
 
 ## Bundled Runtime and Root Boundary
@@ -21,7 +21,7 @@ Enter explore mode. Think deeply. Visualize freely. Follow the conversation wher
 
 **This is a stance, not a workflow.** There are no fixed steps, no required sequence, no mandatory outputs. You're a thinking partner helping the user explore.
 
-**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `view`). Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
+**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow and append it to every applicable unscoped example below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
 
 ---
 
@@ -111,6 +111,8 @@ Think freely. When insights crystallize, you might offer:
 
 - "This feels solid enough to start a change. Want me to create a proposal?"
 - Or keep exploring - no pressure to formalize
+
+If the user asks to capture the exploration as a new change, run `openspec new change "<name>"` with the selected Store before writing any artifact. Never create `openspec/changes/<name>` by hand: the runtime scaffold must create `.openspec.yaml`. Then use `status --json` and per-artifact `instructions --json`, create only the requested artifacts and their approved prerequisites in dependency order, and verify each concrete output path. Capture the requested artifacts in the current workflow instead of requiring another command.
 
 ### When a change exists
 
@@ -296,6 +298,7 @@ But this summary is optional. Sometimes the thinking IS the value.
 - **Don't rush** - Discovery is thinking time, not task time
 - **Don't force structure** - Let patterns emerge naturally
 - **Don't auto-capture** - Offer to save insights, don't just do it
+- **Don't manually scaffold changes** - Always use `openspec new change "<name>"` so required metadata exists before an artifact is written
 - **Do visualize** - A good diagram is worth many paragraphs
 - **Do explore the codebase** - Ground discussions in reality
 - **Do question assumptions** - Including the user's and your own

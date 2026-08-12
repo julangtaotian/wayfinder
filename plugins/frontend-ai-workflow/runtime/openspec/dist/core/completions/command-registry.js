@@ -26,6 +26,14 @@ export const COMMAND_REGISTRY = [
                 name: 'no-animation',
                 description: 'Show a static welcome screen instead of the animated one',
             },
+            {
+                name: 'copilot-cloud',
+                description: 'Generate GitHub Copilot cloud coding-agent files (opt-in; default: prompt)',
+            },
+            {
+                name: 'no-copilot-cloud',
+                description: 'Skip generating GitHub Copilot cloud coding-agent files',
+            },
         ],
     },
     {

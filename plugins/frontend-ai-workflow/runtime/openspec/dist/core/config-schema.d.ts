@@ -16,6 +16,9 @@ export declare const GlobalConfigSchema: z.ZodObject<{
     }>>>;
     workflows: z.ZodOptional<z.ZodArray<z.ZodString>>;
     defaultStore: z.ZodOptional<z.ZodString>;
+    telemetry: z.ZodOptional<z.ZodObject<{
+        enabled: z.ZodOptional<z.ZodBoolean>;
+    }, z.core.$loose>>;
 }, z.core.$loose>;
 export type GlobalConfigType = z.infer<typeof GlobalConfigSchema>;
 /**

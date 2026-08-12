@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const BUNDLED_OPENSPEC_VERSION = '1.7.0';
+export const BUNDLED_OPENSPEC_VERSION = '1.8.0';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const runtimeRoot = path.resolve(scriptDir, '..', 'runtime', 'openspec');
@@ -56,6 +56,7 @@ export function runOpenSpecSync(args = [], {
   const runtimeEnv = {
     ...env,
     OPENSPEC_NO_UPDATE_CHECK: '1',
+    OPENSPEC_TELEMETRY: '0',
   };
   const result = spawnSync(process.execPath, [runtime.executablePath, ...args], {
     cwd,

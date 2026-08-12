@@ -97,7 +97,9 @@ program.hook('preAction', async (thisCommand, actionCommand) => {
 program.hook('postAction', async () => {
     await shutdown();
 });
-const availableToolIds = AI_TOOLS.filter((tool) => tool.skillsDir).map((tool) => tool.value);
+const availableToolIds = AI_TOOLS
+    .filter((tool) => tool.skillsDir || tool.globalSkillsDir)
+    .map((tool) => tool.value);
 const toolAliasNote = Object.entries(TOOL_ID_ALIASES)
     .map(([retired, current]) => `${retired} (now ${current})`)
     .join(', ');
@@ -109,6 +111,8 @@ program
     .option('--force', 'Auto-cleanup legacy files without prompting')
     .option('--profile <profile>', 'Override global config profile (core or custom)')
     .option('--no-animation', 'Show a static welcome screen instead of the animated one')
+    .option('--copilot-cloud', 'Set up GitHub Copilot cloud coding-agent files without prompting')
+    .option('--no-copilot-cloud', 'Skip GitHub Copilot cloud coding-agent files without prompting')
     .action(async (targetPath = '.', options) => {
     try {
         // Validate that the path is a valid directory
@@ -137,6 +141,7 @@ program
             force: options?.force,
             profile: options?.profile,
             animation: options?.animation,
+            copilotCloud: options?.copilotCloud,
         });
         await initCommand.execute(targetPath);
     }

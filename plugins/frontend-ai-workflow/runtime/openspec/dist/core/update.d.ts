@@ -28,6 +28,7 @@ export declare class UpdateCommand {
      * @param projectPath - Path to the project root containing the openspec directory
      */
     execute(projectPath: string): Promise<void>;
+    private syncCopilotCloudFiles;
     /**
      * Display message when all tools are up to date.
      */

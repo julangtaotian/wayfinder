@@ -257,4 +257,64 @@ function parseRenamedPairs(sectionBody) {
     }
     return pairs;
 }
+/**
+ * Scenario names the current requirement block has and the incoming
+ * (MODIFIED) block does not. A MODIFIED requirement replaces the whole block,
+ * so every name reported here would be dropped from the main spec.
+ *
+ * Shared by archive (which refuses to apply the block) and validate (which
+ * reports the same loss at authoring time, #1477), so the two cannot disagree
+ * about what counts as a dropped scenario.
+ */
+export function findMissingCurrentScenarios(current, incoming) {
+    // Multiplicity-aware: a name present N times in current and M times in
+    // incoming means max(0, N - M) instances are missing. Set membership would
+    // treat N>M as fully covered and let archive silently drop duplicates
+    // (residual #1246 / duplicate-scenario-name blind spot).
+    const remainingIncoming = new Map();
+    for (const scenario of parseScenarioBlocks(incoming.raw)) {
+        const name = scenario.name;
+        remainingIncoming.set(name, (remainingIncoming.get(name) ?? 0) + 1);
+    }
+    const missing = [];
+    for (const scenario of parseScenarioBlocks(current.raw)) {
+        const name = scenario.name;
+        const remaining = remainingIncoming.get(name) ?? 0;
+        if (remaining > 0) {
+            remainingIncoming.set(name, remaining - 1);
+        }
+        else {
+            missing.push(name);
+        }
+    }
+    return missing;
+}
+function parseScenarioBlocks(requirementRaw) {
+    const lines = requirementRaw.replace(/\r\n?/g, '\n').split('\n');
+    // A `#### Scenario:` inside a fenced example is not a real scenario. The
+    // validator's countScenarios already ignores fenced lines; the drift check
+    // must agree with it, or a fenced sample can false-abort an archive (or
+    // mask a genuinely dropped scenario).
+    const mask = buildCodeFenceMask(lines);
+    const scenarios = [];
+    let index = 0;
+    while (index < lines.length) {
+        const headerMatch = mask[index] ? null : lines[index].match(/^####\s*Scenario:\s*(.+)\s*$/);
+        if (!headerMatch) {
+            index++;
+            continue;
+        }
+        const start = index;
+        const name = headerMatch[1].trim();
+        index++;
+        while (index < lines.length && (mask[index] || !/^####\s*Scenario:\s*(.+)\s*$/.test(lines[index]))) {
+            index++;
+        }
+        scenarios.push({
+            name,
+            raw: lines.slice(start, index).join('\n').trimEnd(),
+        });
+    }
+    return scenarios;
+}
 //# sourceMappingURL=requirement-blocks.js.map

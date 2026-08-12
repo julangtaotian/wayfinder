@@ -31,6 +31,9 @@ export declare const ProjectConfigSchema: z.ZodObject<{
         }, z.core.$strip>>;
     }, z.core.$strip>>;
     store: z.ZodOptional<z.ZodString>;
+    githubCopilot: z.ZodOptional<z.ZodObject<{
+        cloudAgent: z.ZodOptional<z.ZodBoolean>;
+    }, z.core.$strip>>;
 }, z.core.$strip>;
 /** Normalized in-memory shape of a referenced store declaration. */
 export interface DeclarationEntry {

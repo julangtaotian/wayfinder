@@ -10,8 +10,8 @@ import { type AIToolOption } from './config.js';
  * the tools that are present.
  *
  * For tools with `detectionPaths`, checks those specific paths (files or
- * directories). Otherwise checks for the tool's `skillsDir` directory at
- * the project root. Only tools with a `skillsDir` property are considered.
+ * directories). Otherwise checks the project's `skillsDir`, or managed skill
+ * files in the user's home directory for a global skill target.
  */
 export declare function getAvailableTools(projectPath: string): AIToolOption[];
 //# sourceMappingURL=available-tools.d.ts.map

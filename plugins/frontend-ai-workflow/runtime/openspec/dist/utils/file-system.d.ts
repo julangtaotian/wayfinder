@@ -9,6 +9,16 @@ export declare class FileSystemUtils {
      * Falls back to path.resolve() so callers can still produce a stable absolute path.
      */
     static canonicalizeExistingPath(targetPath: string): string;
+    /**
+     * Refuses a target that leaves an allowed directory, including through an
+     * existing symlink in either the target or one of its parent directories.
+     * Missing suffixes are resolved from their nearest existing ancestor.
+     */
+    static assertPathWithin(allowedDirectory: string, targetPath: string): void;
+    static resolveProjectArtifactPath(projectPath: string, artifactPath: string): string;
+    static assertProjectArtifactPath(projectPath: string, targetPath: string): void;
+    private static isPathWithin;
+    private static canonicalizePotentialPath;
     private static isWindowsBasePath;
     private static normalizeSegments;
     static joinPath(basePath: string, ...segments: string[]): string;

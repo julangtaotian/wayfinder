@@ -23,12 +23,12 @@ export function buildActionContext(input) {
 export function buildNextSteps(input) {
     const readyArtifact = input.artifactStatuses.find((artifact) => artifact.status === 'ready');
     const steps = [];
+    const storeFlag = input.storeId ? ` --store ${input.storeId}` : '';
     if (readyArtifact) {
-        const storeFlag = input.storeId ? ` --store ${input.storeId}` : '';
         steps.push(`Run openspec instructions ${readyArtifact.id} --change "${input.changeName}"${storeFlag} --json before writing that artifact.`);
     }
     else if (input.allArtifactsComplete) {
-        steps.push('All planning artifacts are complete; review tasks before implementation.');
+        steps.push(`All planning artifacts are complete. Run openspec instructions apply --change "${input.changeName}"${storeFlag} --json to inspect implementation progress.`);
     }
     return steps;
 }

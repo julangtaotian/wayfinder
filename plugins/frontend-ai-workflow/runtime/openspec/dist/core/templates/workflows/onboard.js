@@ -211,6 +211,11 @@ I'll draft one based on our task.
 
 **DO:** Draft the proposal content (don't save yet):
 
+\`<capability-path>\` is the spec directory relative to \`specs/\` (for example,
+\`user-auth\` or \`identity/user-auth\`). Use the exact existing path for modified
+capabilities. For new capabilities, follow the project's established spec
+organization.
+
 \`\`\`
 Here's a draft proposal:
 
@@ -227,10 +232,11 @@ Here's a draft proposal:
 ## Capabilities
 
 ### New Capabilities
-- \`<capability-name>\`: [brief description]
+- \`<capability-path>\`: [brief description]
 
 ### Modified Capabilities
 <!-- If modifying existing behavior -->
+- \`<existing-capability-path>\`: [brief description]
 
 ## Impact
 
@@ -431,9 +437,9 @@ When a change is complete, we archive it. The archive path is derived from \`pla
 Archived changes become your project's decision history—you can always find them later to understand why something was built a certain way.
 \`\`\`
 
-**DO:**
+**DO:** Archive the change (\`--yes\` answers the confirmation prompts, which you cannot answer from a tool call):
 \`\`\`bash
-openspec archive "<name>"
+openspec archive "<name>" --yes
 \`\`\`
 
 **SHOW:**

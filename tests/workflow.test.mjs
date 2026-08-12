@@ -590,7 +590,7 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /静态检查命令：未配置（语义：missing）/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /operations:/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /归档前必须通过插件完成预览/);
-  assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.7\.0"/);
+  assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.8\.0"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /layout: "wayfinder"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /frontend-ai-workflow:facts:start/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /analysisStatus: "not-requested"/);
@@ -701,7 +701,7 @@ function createRuntimeIntegrityFixture(t) {
   });
   writeFixtureFile(runtimeRoot, 'package.json', `${JSON.stringify({
     name: '@fission-ai/openspec',
-    version: '1.7.0',
+    version: '1.8.0',
     license: 'MIT',
     bin: { openspec: './bin/openspec.js' },
     dependencies: { 'fixture-dependency': '1.0.0' },
@@ -728,7 +728,7 @@ test('插件内置规划运行时可独立执行', () => {
   assert.equal(result.source, 'bundled');
   assert.equal(result.stdout.trim(), BUNDLED_OPENSPEC_VERSION);
   const runtimeManifest = JSON.parse(fs.readFileSync(path.join(pluginRoot, 'runtime', 'openspec', 'package.json'), 'utf8'));
-  assert.equal(BUNDLED_OPENSPEC_VERSION, '1.7.0');
+  assert.equal(BUNDLED_OPENSPEC_VERSION, '1.8.0');
   assert.equal(runtimeManifest.version, BUNDLED_OPENSPEC_VERSION);
   assert.equal(runtimeManifest.bin.openspec, './bin/openspec.js');
   assert.equal(Object.hasOwn(runtimeManifest.dependencies, 'posthog-node'), false);
@@ -736,7 +736,9 @@ test('插件内置规划运行时可独立执行', () => {
   for (const dependency of Object.keys(runtimeManifest.dependencies)) {
     assert.equal(fs.existsSync(path.join(pluginRoot, 'runtime', 'openspec', 'node_modules', dependency)), true, dependency);
   }
-  assert.match(fs.readFileSync(path.join(pluginRoot, 'scripts', 'openspec-cli.mjs'), 'utf8'), /OPENSPEC_NO_UPDATE_CHECK: '1'/);
+  const wrapper = fs.readFileSync(path.join(pluginRoot, 'scripts', 'openspec-cli.mjs'), 'utf8');
+  assert.match(wrapper, /OPENSPEC_NO_UPDATE_CHECK: '1'/);
+  assert.match(wrapper, /OPENSPEC_TELEMETRY: '0'/);
 });
 
 test('内置 OpenSpec 完整性清单可重复计算且不包含环境路径', () => {
@@ -793,7 +795,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.12.0');
+  assert.equal(result.version, '0.13.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);
@@ -1481,7 +1483,7 @@ test('分层检查与完成入口阻止未完成变更并在成功后同步归�
   assert.equal(archivedAudit.selectedChangeScope.name, 'delivery');
 });
 
-test('OpenSpec 1.7 动态操作输入可见但不改变完成门禁', (t) => {
+test('OpenSpec 1.8 动态操作输入可见但不改变完成门禁', (t) => {
   const root = createVueFixture(t);
   initializeGitBaseline(root);
   writeManagedChange(root);
@@ -1507,6 +1509,162 @@ test('OpenSpec 1.7 动态操作输入可见但不改变完成门禁', (t) => {
   assert.equal(applyInstructions.root.source, 'nearest');
 });
 
+test('OpenSpec 1.8 统计缩进子任务并区分普通与严格校验', (t) => {
+  const root = createVueFixture(t);
+  initializeGitBaseline(root);
+  writeManagedChange(root, {
+    tasks: '- [x] [D-01] [A-01] 完成父任务。\n  - [ ] [D-01] [A-01] 完成缩进子任务。\n',
+  });
+  writeFixtureFile(root, 'requirements/REQ-2026-021-subtasks.md', renderGovernedDeliveryRequirement());
+
+  const apply = runOpenSpecSync(['instructions', 'apply', '--change', 'delivery', '--json'], { cwd: root });
+  assert.equal(apply.status, 0);
+  const instructions = JSON.parse(apply.stdout.slice(apply.stdout.indexOf('{')));
+  assert.deepEqual(instructions.progress, { total: 2, complete: 1, remaining: 1 });
+  assert.ok(instructions.tasks.some((item) => item.description.includes('缩进子任务') && item.done === false));
+
+  const checked = checkChange({
+    target: root,
+    requirement: 'requirements/REQ-2026-021-subtasks.md',
+    change: 'delivery',
+    stage: 'implement',
+  });
+  assert.equal(checked.progress.total, 2);
+  assert.equal(checked.progress.remaining, 1);
+
+  writeFixtureFile(root, 'openspec/specs/chinese-policy/spec.md', `## Purpose
+
+定义中文规范表述在普通校验和严格发布校验之间的稳定边界，避免多语言需求被普通模式错误拒绝。
+
+## Requirements
+
+### Requirement: 中文规范可以进行普通校验
+系统必须允许需求使用中文规范表述。
+
+#### Scenario: 校验中文规范
+- **WHEN** 需求没有使用英文规范关键词
+- **THEN** 普通模式允许通过关键词指导项
+`);
+  const normal = runOpenSpecSync(['validate', 'chinese-policy', '--type', 'spec', '--json', '--no-interactive'], { cwd: root });
+  assert.equal(normal.status, 0);
+  const strict = runOpenSpecSync(['validate', 'chinese-policy', '--type', 'spec', '--strict', '--json', '--no-interactive'], { cwd: root });
+  assert.notEqual(strict.status, 0);
+  assert.match(`${strict.stdout}\n${strict.stderr}`, /SHALL|MUST/u);
+});
+
+test('OpenSpec 1.8 提前阻止 MODIFIED 场景丢失并明确非交互归档参数', (t) => {
+  const root = createVueFixture(t);
+  runBootstrap({ target: root, write: true });
+  writeFixtureFile(root, 'openspec/specs/profile/spec.md', `## Purpose
+
+定义资料能力在多种操作场景下必须保持的稳定行为和兼容边界。
+
+## Requirements
+
+### Requirement: 用户可以管理资料
+系统 MUST 允许用户管理资料。
+
+#### Scenario: 查看资料
+- **WHEN** 用户打开资料页
+- **THEN** 系统显示资料
+
+#### Scenario: 更新资料
+- **WHEN** 用户保存合法资料
+- **THEN** 系统更新资料
+`);
+  writeFixtureFile(root, 'openspec/changes/omit-scenario/.openspec.yaml', 'schema: spec-driven\ncreated: 2026-08-12\n');
+  writeFixtureFile(root, 'openspec/changes/omit-scenario/specs/profile/spec.md', `## MODIFIED Requirements
+
+### Requirement: 用户可以管理资料
+系统 MUST 允许用户管理资料并显示更新时间。
+
+#### Scenario: 查看资料
+- **WHEN** 用户打开资料页
+- **THEN** 系统显示资料和更新时间
+`);
+
+  const invalid = runOpenSpecSync(['validate', 'omit-scenario', '--type', 'change', '--json', '--no-interactive'], { cwd: root });
+  assert.notEqual(invalid.status, 0);
+  assert.match(`${invalid.stdout}\n${invalid.stderr}`, /更新资料/u);
+
+  const archive = runOpenSpecSync(['archive', '--json'], { cwd: root, env: { ...process.env, CI: '1' } });
+  assert.equal(archive.status, 1);
+  const result = JSON.parse(archive.stdout.slice(archive.stdout.indexOf('{')));
+  assert.equal(result.status[0].code, 'archive_change_name_required');
+  assert.match(result.status[0].fix, /archive <change-name> --json/u);
+});
+
+test('OpenSpec 1.8 只在显式元数据下退役最后一项能力需求', (t) => {
+  const root = createVueFixture(t);
+  runBootstrap({ target: root, write: true });
+  writeFixtureFile(root, 'openspec/specs/legacy-capability/spec.md', `## Purpose
+
+定义即将退役的历史能力及其唯一剩余行为要求。
+
+## Requirements
+
+### Requirement: 历史能力仍可调用
+系统 MUST 允许调用历史能力。
+
+#### Scenario: 调用历史能力
+- **WHEN** 用户调用历史能力
+- **THEN** 系统返回历史结果
+`);
+  writeFixtureFile(root, 'openspec/changes/retire-legacy/.openspec.yaml', 'schema: spec-driven\ncreated: 2026-08-12\nretire_capabilities: true\n');
+  writeFixtureFile(root, 'openspec/changes/retire-legacy/proposal.md', `## Why
+
+历史能力已经退出使用，需要删除最后一项需求。
+
+## What Changes
+
+- 退役历史能力。
+
+## Capabilities
+
+### New Capabilities
+
+- 无。
+
+### Modified Capabilities
+
+- \`legacy-capability\`：删除最后一项需求。
+
+## Impact
+
+- 删除历史主规格。
+`);
+  writeFixtureFile(root, 'openspec/changes/retire-legacy/design.md', `## Context
+
+历史能力没有调用方。
+
+## Goals / Non-Goals
+
+**Goals:** 退役能力。
+
+**Non-Goals:** 不新增替代能力。
+
+## Decisions
+
+- 使用显式退役元数据。
+
+## Risks / Trade-offs
+
+- 无。
+`);
+  writeFixtureFile(root, 'openspec/changes/retire-legacy/tasks.md', '- [x] 完成退役验证。\n');
+  writeFixtureFile(root, 'openspec/changes/retire-legacy/specs/legacy-capability/spec.md', `## REMOVED Requirements
+
+### Requirement: 历史能力仍可调用
+**Reason**: 历史能力已经退出使用。
+**Migration**: 不再调用该能力。
+`);
+
+  const archived = runOpenSpecSync(['archive', 'retire-legacy', '--yes', '--json'], { cwd: root });
+  assert.equal(archived.status, 0, archived.stderr || archived.stdout);
+  assert.equal(fs.existsSync(path.join(root, 'openspec', 'specs', 'legacy-capability', 'spec.md')), false);
+  assert.equal(fs.existsSync(path.join(root, 'openspec', 'changes', 'retire-legacy')), false);
+});
+
 test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) => {
   const root = createVueFixture(t);
   initializeGitBaseline(root);
@@ -1523,6 +1681,8 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
     stage: 'precomplete',
   });
   assert.equal(authorized.ok, true);
+  assert.equal(authorized.planningStatus.isPlanningComplete, true);
+  assert.equal(authorized.planningArtifacts.isPlanningComplete, true);
   assert.equal(authorized.planningArtifacts.isComplete, true);
   assert.equal(authorized.planningArtifacts.skipSpecsMetadata, true);
   assert.equal(authorized.planningArtifacts.skipSpecsAuthorized, true);
@@ -1553,6 +1713,29 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
   }, path.join(root, 'openspec', 'changes', 'tooling-update'), path.join(root, 'requirements', 'REQ-2026-007-skip-specs.md'), gateErrors);
   assert.match(gateErrors.join('\n'), /tasks=unexpected/);
 
+  const compatibilityChangePath = path.join(
+    root,
+    'openspec',
+    'changes',
+    'compatibility-status',
+  );
+  const preferredFieldErrors = [];
+  const preferredField = validatePlanningArtifacts({
+    isPlanningComplete: false,
+    isComplete: true,
+    artifacts: [{ id: 'proposal', status: 'done' }],
+  }, compatibilityChangePath, path.join(root, 'requirements', 'REQ-2026-007-skip-specs.md'), preferredFieldErrors);
+  assert.equal(preferredField.isPlanningComplete, false);
+  assert.match(preferredFieldErrors.join('\n'), /isPlanningComplete 必须为 true/);
+
+  const legacyFieldErrors = [];
+  const legacyField = validatePlanningArtifacts({
+    isComplete: true,
+    artifacts: [{ id: 'proposal', status: 'done' }],
+  }, compatibilityChangePath, path.join(root, 'requirements', 'REQ-2026-007-skip-specs.md'), legacyFieldErrors);
+  assert.equal(legacyField.isPlanningComplete, true);
+  assert.deepEqual(legacyFieldErrors, []);
+
   const globalRootErrors = [];
   validatePlanningRoot(root, { root: { path: '/tmp/default-store', source: 'global_default' } }, '测试根', globalRootErrors);
   assert.match(globalRootErrors.join('\n'), /未经明确选择的机器默认 Store/);
@@ -1569,10 +1752,10 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
     stage: 'precomplete',
   });
   assert.equal(incomplete.ok, false);
-  assert.match(incomplete.errors.join('\n'), /isComplete 必须为 true|design=ready|design=blocked/);
+  assert.match(incomplete.errors.join('\n'), /isPlanningComplete 必须为 true|design=ready|design=blocked/);
 });
 
-test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.7 实际路径', (t) => {
+test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.8 实际路径', (t) => {
   const dateRoot = createVueFixture(t);
   initializeGitBaseline(dateRoot);
   const datedChange = '2026-07-04-date-prefix';
@@ -1620,25 +1803,34 @@ test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.7 实际路径
   assert.equal(fs.existsSync(path.join(nestedRoot, 'openspec', 'specs', 'platform', 'delivery-guard', 'spec.md')), true);
 });
 
-test('内部 OpenSpec 参考三方合并到 1.7 且保留插件硬门禁', () => {
+test('内部 OpenSpec 参考三方合并到 1.8 且保留插件硬门禁', () => {
   const referenceRoot = path.join(pluginRoot, 'references', 'openspec');
   const references = fs.readdirSync(referenceRoot)
     .filter((file) => file.endsWith('.md'))
     .map((file) => fs.readFileSync(path.join(referenceRoot, file), 'utf8'));
   assert.equal(references.length, 6);
   for (const reference of references) {
-    assert.match(reference, /generatedBy: "1\.7\.0"/);
+    assert.match(reference, /generatedBy: "1\.8\.0"/);
     assert.match(reference, /scripts\/(?:openspec-cli|finalize-change)\.mjs/);
     assert.match(reference, /global_default/);
     assert.doesNotMatch(reference, /Bash\(openspec:\*\)/);
   }
   const applyReference = fs.readFileSync(path.join(referenceRoot, 'apply-change.md'), 'utf8');
   const archiveReference = fs.readFileSync(path.join(referenceRoot, 'archive-change.md'), 'utf8');
+  const exploreReference = fs.readFileSync(path.join(referenceRoot, 'explore.md'), 'utf8');
   const proposeReference = fs.readFileSync(path.join(referenceRoot, 'propose.md'), 'utf8');
   const syncReference = fs.readFileSync(path.join(referenceRoot, 'sync-specs.md'), 'utf8');
+  const updateReference = fs.readFileSync(path.join(referenceRoot, 'update-change.md'), 'utf8');
   assert.match(applyReference, /operationGuidance/);
   assert.match(archiveReference, /User confirmation MUST NOT override a failed gate/);
   assert.match(archiveReference, /instructions archive --json/);
+  assert.match(archiveReference, /isPlanningComplete=true/);
+  assert.match(archiveReference, /retire_capabilities: true/);
+  assert.match(exploreReference, /openspec new change "<name>"/);
+  assert.match(proposeReference, /Planning boundary/);
   assert.match(proposeReference, /Set `skip_specs: true` only when the linked requirement/);
   assert.match(syncReference, /artifactPaths\.specs\.existingOutputPaths/);
+  assert.match(syncReference, /retire_capabilities: true/);
+  assert.match(syncReference, /validate --specs/);
+  assert.match(updateReference, /isPlanningComplete/);
 });

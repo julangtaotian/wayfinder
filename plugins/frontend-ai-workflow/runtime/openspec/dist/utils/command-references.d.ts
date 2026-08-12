@@ -26,6 +26,16 @@ import type { CommandInvocation } from '../core/command-generation/invocation.js
  */
 export declare function transformCommandInvocations(text: string, invocation: CommandInvocation): string;
 /**
+ * Whether a tool references skills by natural language rather than a slash
+ * command (see NATURAL_LANGUAGE_SKILL_TOOLS).
+ */
+export declare function usesNaturalLanguageSkillReferences(toolId: string): boolean;
+/**
+ * Keeps Codex's `$<name>` spelling first while making its canonical shared
+ * `.agents` tree usable by agents that invoke the same skills with `/<name>`.
+ */
+export declare function transformToCodexCompatibleSkillReferences(text: string): string;
+/**
  * Transforms command references to skill references using the default `/`
  * invocation prefix. Converts `/opsx:<command>` patterns to
  * `/openspec-<skill>` so that generated skills do not reference commands
@@ -46,9 +56,11 @@ export declare function transformToSkillReferences(text: string): string;
 /**
  * Returns the skill-reference transformer for a specific tool, honoring the
  * tool's documented skill invocation syntax (e.g. Kimi Code's
- * `/skill:openspec-propose`). Falls back to the default `/openspec-*` form.
+ * `/skill:openspec-propose`). Tools with no slash surface (e.g. Rovo Dev) get
+ * natural-language references ("the openspec-propose skill"); everything else
+ * falls back to the default `/openspec-*` form.
  *
- * @param toolId - The AI tool identifier (e.g. 'kimi', 'vibe')
+ * @param toolId - The AI tool identifier (e.g. 'kimi', 'vibe', 'rovodev')
  * @returns A transformer converting `/opsx:*` references to skill invocations
  */
 export declare function getSkillReferenceTransformer(toolId: string): (text: string) => string;

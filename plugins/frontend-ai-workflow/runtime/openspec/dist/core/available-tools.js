@@ -7,16 +7,25 @@
 import path from 'path';
 import * as fs from 'fs';
 import { AI_TOOLS } from './config.js';
+import { reconcileSharedSkillTargets } from './shared-skill-target.js';
+import { SKILL_NAMES } from './shared/tool-detection.js';
+import { resolveToolSkillsDir, toolSupportsSkills } from './shared/skill-paths.js';
 /**
  * Scans the project path for AI tool configuration directories and returns
  * the tools that are present.
  *
  * For tools with `detectionPaths`, checks those specific paths (files or
- * directories). Otherwise checks for the tool's `skillsDir` directory at
- * the project root. Only tools with a `skillsDir` property are considered.
+ * directories). Otherwise checks the project's `skillsDir`, or managed skill
+ * files in the user's home directory for a global skill target.
  */
 export function getAvailableTools(projectPath) {
-    return AI_TOOLS.filter((tool) => {
+    const available = AI_TOOLS.filter((tool) => {
+        if (!toolSupportsSkills(tool))
+            return false;
+        if (tool.globalSkillsDir) {
+            const skillsDir = resolveToolSkillsDir(projectPath, tool);
+            return SKILL_NAMES.some((skillName) => fs.existsSync(path.join(skillsDir, skillName, 'SKILL.md')));
+        }
         if (!tool.skillsDir)
             return false;
         if (tool.detectionPaths && tool.detectionPaths.length > 0) {
@@ -39,5 +48,7 @@ export function getAvailableTools(projectPath) {
             return false;
         }
     });
+    const activeProjectTools = new Set(reconcileSharedSkillTargets(projectPath, available.filter((tool) => tool.skillsDir)).map((tool) => tool.value));
+    return available.filter((tool) => tool.globalSkillsDir || activeProjectTools.has(tool.value));
 }
 //# sourceMappingURL=available-tools.js.map

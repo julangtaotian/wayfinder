@@ -12,12 +12,32 @@ export declare class Validator {
      * Validate delta-formatted spec files under a change directory.
      * Enforces:
      * - At least one delta across all files
-     * - ADDED/MODIFIED: each requirement has SHALL/MUST and at least one scenario
+     * - ADDED/MODIFIED: each requirement has at least one scenario; missing
+     *   English SHALL/MUST keywords are guidance unless strict mode is enabled
      * - REMOVED: names only; no scenario/description required
      * - RENAMED: pairs well-formed
      * - No duplicates within sections; no cross-section conflicts per spec
+     *
+     * When `options.mainSpecsDir` is given, MODIFIED blocks are also checked
+     * against the current main specs for the scenario loss archive refuses to
+     * apply (#1477). Omitting it keeps the change-only checks, so callers with
+     * no main specs root (and existing library callers) behave as before.
      */
-    validateChangeDeltaSpecs(changeDir: string): Promise<ValidationReport>;
+    validateChangeDeltaSpecs(changeDir: string, options?: {
+        mainSpecsDir?: string;
+    }): Promise<ValidationReport>;
+    /**
+     * Report MODIFIED requirements whose block omits a scenario the main spec
+     * still carries. Uses the same comparison archive applies, so validate can
+     * only report what archive would refuse.
+     *
+     * Silent when the main spec or the requirement header is absent: applying a
+     * MODIFIED against a base that is not there yet is a different failure (a
+     * sister change still in flight is the legitimate case), and archive is the
+     * gate for it. A spec that exists but cannot be read is not absent, though —
+     * archive aborts on it, so reporting it beats calling the change valid.
+     */
+    private findScenarioLossIssues;
     private formatInvalidMarkerMessage;
     private convertZodErrors;
     private applySpecRules;
@@ -29,7 +49,7 @@ export declare class Validator {
     private extractRequirementText;
     private containsShallOrMust;
     /**
-     * Build an error message for a requirement block whose body lacks SHALL/MUST.
+     * Build a message for a requirement block whose body lacks SHALL/MUST.
      *
      * When the SHALL/MUST keyword already appears in the requirement header (e.g.
      * `### Requirement: The system SHALL ...`) the original generic error

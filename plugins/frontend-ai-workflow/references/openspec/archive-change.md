@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.7.0"
+  generatedBy: "1.8.0"
 ---
 
 ## Hard-gated Runtime
@@ -38,7 +38,7 @@ Resolve `<plugin-root>` as the directory two levels above this reference folder.
 The wrapper performs:
 
 1. `precomplete` requirement validation;
-2. `isComplete=true` and artifact status checks; only metadata- and requirement-authorized specs `skipped` is accepted;
+2. `isPlanningComplete=true` and artifact status checks; a legacy response may fall back to `isComplete`, and only metadata- and requirement-authorized specs `skipped` is accepted;
 3. persistent evidence checks;
 4. strict bundled OpenSpec validation;
 5. archive instructions, root boundary and date-preserving archive-target conflict precheck;
@@ -53,5 +53,7 @@ The wrapper performs:
 - Existing `YYYY-MM-DD-` names keep their full name; ordinary and numeric-prefix names receive exactly one archive date.
 - Delta discovery uses `artifactPaths.specs.existingOutputPaths`, including nested capability paths; never infer a path from a glob.
 - Delta specs are synchronized during normal completion; there is no “archive without syncing” option.
+- A capability whose last requirement is removed may be retired only when `.openspec.yaml` explicitly declares `retire_capabilities: true`; the bundled runtime must report the deleted main spec, and a missing marker remains blocking.
+- The wrapper always supplies the explicit non-interactive change name, `--json` and `--yes`; it never guesses a missing confirmation flag from a failed prompt.
 - If spec rebuild, validation or archive movement fails, do not mark the requirement accepted.
 - `complete` remains a read-only audit stage for historical already-accepted requirements; new changes use `precomplete` before archive.

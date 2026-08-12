@@ -12,19 +12,21 @@ import { createRequire } from 'module';
 import { FileSystemUtils } from '../utils/file-system.js';
 import { classifyOpenSpecDir, storePointerProblem } from './project-config.js';
 import { findRepoPlanningRootSync } from './planning-home.js';
-import { getSkillReferenceTransformer, getTransformerForTool } from '../utils/command-references.js';
+import { getSkillReferenceTransformer, getTransformerForTool, usesNaturalLanguageSkillReferences } from '../utils/command-references.js';
 import { AI_TOOLS, OPENSPEC_DIR_NAME, resolveToolIdAlias, } from './config.js';
 import { PALETTE } from './styles/palette.js';
 import { isInteractive } from '../utils/interactive.js';
 import { serializeConfig } from './config-prompts.js';
 import { generateCommands, CommandAdapterRegistry, } from './command-generation/index.js';
 import { detectLegacyArtifacts, cleanupLegacyArtifacts, formatCleanupSummary, formatDeferredGlobalPromptSummary, formatDetectionSummary, getLegacyGlobalPromptMatches, omitGlobalLegacyPromptFiles, pickGlobalLegacyPromptFiles, } from './legacy-cleanup.js';
-import { getToolsWithSkillsDir, getToolStates, getSkillTemplates, getCommandContents, generateSkillContent, } from './shared/index.js';
+import { getToolsWithSkillsDir, getToolStates, getSkillTemplates, getCommandContents, generateSkillContent, hasGlobalSkillTarget, resolveToolSkillsDir, toolSupportsSkills, } from './shared/index.js';
 import { getGlobalConfig } from './global-config.js';
 import { getProfileWorkflows, ALL_WORKFLOWS } from './profiles.js';
 import { getAvailableTools } from './available-tools.js';
+import { writeSharedSkillTarget } from './shared-skill-target.js';
 import { migrateIfNeeded, migrateLegacyToolDirs, describeLegacyMigration, keptInPlaceNotice, hasMovableContent, scanInstalledWorkflows as scanInstalledWorkflowsShared } from './migration.js';
 import { resolveCommandSurfaceCapability, resolveCommandInvocation, shouldGenerateCommandsForTool, shouldGenerateSkillsForTool, shouldReconcileCommandFilesForTool, shouldRemoveSkillsForTool, } from './command-surface.js';
+import { writeCopilotCloudFiles, readCopilotCloudOptIn, hasExistingManagedCloudFiles, persistCopilotCloudOptIn, removeCopilotCloudFiles, findUnmanagedCloudFiles, listManagedCloudFiles, } from './github-copilot/cloud-agent.js';
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
 // -----------------------------------------------------------------------------
@@ -58,12 +60,14 @@ export class InitCommand {
     interactiveOption;
     profileOverride;
     animation;
+    copilotCloudOption;
     constructor(options = {}) {
         this.toolsArg = options.tools;
         this.force = options.force ?? false;
         this.interactiveOption = options.interactive;
         this.profileOverride = options.profile;
         this.animation = options.animation ?? true;
+        this.copilotCloudOption = options.copilotCloud;
     }
     async execute(targetPath) {
         const projectPath = path.resolve(targetPath);
@@ -120,7 +124,7 @@ export class InitCommand {
         // Get tool selection (pass detected tools for pre-selection)
         const selectedToolIds = await this.getSelectedTools(toolStates, extendMode, detectedTools, projectPath);
         // Validate selected tools
-        const validatedTools = this.validateTools(selectedToolIds, toolStates);
+        const validatedTools = this.validateTools(selectedToolIds, toolStates, projectPath);
         // Selecting a renamed tool is consent to leave its former directory:
         // init is about to write the current one, and leaving OpenSpec content
         // behind would give the user two installs of the same tool.
@@ -132,10 +136,16 @@ export class InitCommand {
             if (kept)
                 console.log(chalk.dim(kept));
         }
+        // Decide whether to generate GitHub Copilot cloud files. This is opt-in
+        // (see cloud-agent.ts): selecting the Copilot tool no longer silently
+        // writes a GitHub Actions workflow into the user's .github/. The decision
+        // is made before generation so the write can be gated, and persisted after
+        // config.yaml exists so future non-interactive updates honor it.
+        const copilotDecision = await this.resolveCopilotCloudDecision(projectPath, validatedTools);
         // Create directory structure and config
         await this.createDirectoryStructure(openspecPath, extendMode);
         // Generate skills and commands for each tool
-        const results = await this.generateSkillsAndCommands(projectPath, validatedTools);
+        const results = await this.generateSkillsAndCommands(projectPath, validatedTools, copilotDecision.write);
         // Legacy cleanup was deferred to avoid interfering with skill/command generation;
         // now that outputs are written, finalize the cleanup (e.g. remove stale files).
         if (deferredLegacyCleanup) {
@@ -143,8 +153,49 @@ export class InitCommand {
         }
         // Create config.yaml if needed
         const configStatus = await this.createConfig(openspecPath, extendMode);
+        // Persist an explicit Copilot cloud decision so `openspec update` (which
+        // never prompts) honors it. Best-effort: a config-write failure must not
+        // fail an otherwise-successful init.
+        if (copilotDecision.persist !== undefined) {
+            try {
+                await persistCopilotCloudOptIn(projectPath, copilotDecision.persist);
+            }
+            catch {
+                // Non-fatal: the files (if any) were still written correctly.
+            }
+        }
+        // An explicit opt-out means "no cloud files here": clean up any that a
+        // previous run (or an older OpenSpec) generated. Only OpenSpec-managed
+        // files are removed — a user-customized file is preserved.
+        let copilotRemoved = 0;
+        if (copilotDecision.optedOut) {
+            try {
+                copilotRemoved = await removeCopilotCloudFiles(projectPath);
+            }
+            catch {
+                // Non-fatal: removal targets files from a prior run; a failure here
+                // just leaves them for the next `openspec update` to clean up.
+            }
+        }
+        // Report the cloud outcome from what is actually on disk after the write,
+        // not from the decision alone: writing over a user-owned file is a no-op,
+        // and the alternate-agent path can remove a managed file — so list only
+        // managed files that exist, and separately flag any left-untouched ones.
+        const copilotSucceeded = [...results.createdTools, ...results.refreshedTools].some((tool) => tool.value === 'github-copilot');
+        const wroteCloud = copilotDecision.write && copilotSucceeded;
+        const copilotPresent = wroteCloud ? await listManagedCloudFiles(projectPath) : [];
+        const copilotCollisions = wroteCloud ? await findUnmanagedCloudFiles(projectPath) : [];
         // Display success message
-        this.displaySuccessMessage(projectPath, validatedTools, results, configStatus);
+        this.displaySuccessMessage(projectPath, validatedTools, results, configStatus, {
+            write: copilotDecision.write,
+            skippedUndecided: copilotDecision.skippedUndecided,
+            present: copilotPresent,
+            collisions: copilotCollisions,
+            removed: copilotRemoved,
+        });
+        if (results.failedTools.length > 0) {
+            throw new Error(`OpenSpec setup failed for: ${results.failedTools.map((tool) => tool.name).join(', ')}`);
+        }
     }
     // ═══════════════════════════════════════════════════════════
     // VALIDATION & SETUP
@@ -163,6 +214,59 @@ export class InitCommand {
         if (this.toolsArg !== undefined)
             return false;
         return isInteractive({ interactive: this.interactiveOption });
+    }
+    /**
+     * Decide whether to generate GitHub Copilot cloud files, and whether to
+     * persist that decision. Precedence:
+     *   1. `--copilot-cloud` / `--no-copilot-cloud` flag (explicit this run)
+     *   2. persisted opt-in in config.yaml
+     *   3. managed files already present (migration for pre-opt-in projects)
+     *   4. interactive confirm (default No)
+     *   5. non-interactive with no signal: skip, and don't persist a default
+     *
+     * @returns `write` — generate the files this run; `persist` — value to write
+     *   back to config (undefined = leave config untouched); `optedOut` — the user
+     *   explicitly declined, so any already-generated managed files should be
+     *   removed; `skippedUndecided` — selected but no signal and couldn't ask, so
+     *   the caller can hint that the opt-in exists.
+     */
+    async resolveCopilotCloudDecision(projectPath, tools) {
+        const copilotSelected = tools.some((tool) => tool.value === 'github-copilot');
+        if (!copilotSelected) {
+            // A flag that can't apply is a likely mistake — say so rather than no-op.
+            if (this.copilotCloudOption !== undefined) {
+                console.log(chalk.yellow('--copilot-cloud/--no-copilot-cloud was ignored because the github-copilot tool was not selected.'));
+            }
+            return { write: false, optedOut: false, skippedUndecided: false };
+        }
+        if (this.copilotCloudOption !== undefined) {
+            return {
+                write: this.copilotCloudOption,
+                persist: this.copilotCloudOption,
+                optedOut: !this.copilotCloudOption,
+                skippedUndecided: false,
+            };
+        }
+        const persistedOptIn = readCopilotCloudOptIn(projectPath);
+        if (typeof persistedOptIn === 'boolean') {
+            return { write: persistedOptIn, optedOut: !persistedOptIn, skippedUndecided: false };
+        }
+        if (await hasExistingManagedCloudFiles(projectPath)) {
+            return { write: true, optedOut: false, skippedUndecided: false };
+        }
+        if (this.canPromptInteractively()) {
+            const { confirm } = await import('@inquirer/prompts');
+            const answer = await confirm({
+                message: 'Set up GitHub Copilot cloud coding-agent files? This is for the GitHub-hosted ' +
+                    'Copilot coding agent (github.com), not Copilot in your editor. It writes two files: ' +
+                    '.github/workflows/copilot-setup-steps.yml and .github/agents/openspec.agent.md.',
+                default: false,
+            });
+            return { write: answer, persist: answer, optedOut: !answer, skippedUndecided: false };
+        }
+        // Non-interactive with no explicit signal: don't write, and leave the
+        // decision unpersisted so a later interactive run can still prompt.
+        return { write: false, optedOut: false, skippedUndecided: true };
     }
     resolveProfileOverride() {
         if (this.profileOverride === undefined) {
@@ -411,23 +515,34 @@ export class InitCommand {
         }
         return deduped;
     }
-    validateTools(toolIds, toolStates) {
+    validateTools(toolIds, toolStates, projectPath) {
         const validatedTools = [];
-        for (const toolId of toolIds) {
+        const reconciledToolIds = toolIds.includes('codex') && toolIds.includes('agents')
+            ? toolIds.filter((toolId) => toolId !== 'agents')
+            : toolIds;
+        if (reconciledToolIds.length !== toolIds.length) {
+            console.log(chalk.dim('Codex and agents share .agents/skills; writing one tree with Codex and generic skill references.'));
+        }
+        for (const toolId of reconciledToolIds) {
             const tool = AI_TOOLS.find((t) => t.value === toolId);
             if (!tool) {
                 const validToolIds = getToolsWithSkillsDir();
                 throw new Error(`Unknown tool '${toolId}'. Valid tools:\n  ${validToolIds.join('\n  ')}`);
             }
-            if (!tool.skillsDir) {
+            if (!toolSupportsSkills(tool)) {
                 const validToolsWithSkills = getToolsWithSkillsDir();
                 throw new Error(`Tool '${toolId}' does not support skill generation.\nTools with skill generation support:\n  ${validToolsWithSkills.join('\n  ')}`);
             }
             const preState = toolStates.get(tool.value);
+            const skillsPath = resolveToolSkillsDir(projectPath, tool);
+            const isGlobalSkillTarget = hasGlobalSkillTarget(tool);
             validatedTools.push({
                 value: tool.value,
                 name: tool.name,
                 skillsDir: tool.skillsDir,
+                skillsPath,
+                skillsRoot: isGlobalSkillTarget ? skillsPath : projectPath,
+                isGlobalSkillTarget,
                 wasConfigured: preState?.configured ?? false,
             });
         }
@@ -446,6 +561,7 @@ export class InitCommand {
                 path.join(openspecPath, 'changes', 'archive'),
             ];
             for (const dir of directories) {
+                FileSystemUtils.assertProjectArtifactPath(path.dirname(openspecPath), dir);
                 await FileSystemUtils.createDirectory(dir);
             }
             return;
@@ -458,6 +574,7 @@ export class InitCommand {
             path.join(openspecPath, 'changes', 'archive'),
         ];
         for (const dir of directories) {
+            FileSystemUtils.assertProjectArtifactPath(path.dirname(openspecPath), dir);
             await FileSystemUtils.createDirectory(dir);
         }
         spinner.stopAndPersist({
@@ -476,7 +593,7 @@ export class InitCommand {
      * @param tools - Selected tools with their skill directory metadata
      * @returns Created, refreshed, and failed tools plus removed artifact counts
      */
-    async generateSkillsAndCommands(projectPath, tools) {
+    async generateSkillsAndCommands(projectPath, tools, writeCopilotCloud) {
         const createdTools = [];
         const refreshedTools = [];
         const failedTools = [];
@@ -501,22 +618,24 @@ export class InitCommand {
                 const shouldGenerateCommands = shouldGenerateCommandsForTool(tool.value, delivery);
                 // Generate skill files if the selected delivery and tool capability allow skills
                 if (shouldGenerateSkills) {
-                    // Use tool-specific skillsDir
-                    const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
                     // Create skill directories and SKILL.md files
                     for (const { template, dirName } of skillTemplates) {
-                        const skillDir = path.join(skillsDir, dirName);
+                        const skillDir = path.join(tool.skillsPath, dirName);
                         const skillFile = path.join(skillDir, 'SKILL.md');
                         // Generate SKILL.md content with YAML frontmatter including generatedBy
                         const transformer = getTransformerForTool(tool.value, delivery, resolveCommandSurfaceCapability(tool.value), resolveCommandInvocation(tool.value));
                         const skillContent = generateSkillContent(template, OPENSPEC_VERSION, transformer);
                         // Write the skill file
+                        FileSystemUtils.assertPathWithin(tool.skillsRoot, skillFile);
                         await FileSystemUtils.writeFile(skillFile, skillContent);
                     }
+                    writeSharedSkillTarget(projectPath, tool.value);
                 }
-                if (shouldRemoveSkillsForTool(tool.value, delivery)) {
-                    const skillsDir = path.join(projectPath, tool.skillsDir, 'skills');
-                    removedSkillCount += await this.removeSkillDirs(skillsDir);
+                if (shouldRemoveSkillsForTool(tool.value, delivery) && !tool.isGlobalSkillTarget) {
+                    removedSkillCount += await this.removeSkillDirs(tool.skillsRoot, tool.skillsPath);
+                    // Retain an explicit selection even when this delivery mode produces
+                    // no skills, so a divergent legacy sibling cannot reclaim ownership.
+                    writeSharedSkillTarget(projectPath, tool.value);
                 }
                 // Generate commands if delivery includes commands
                 if (shouldGenerateCommands) {
@@ -524,7 +643,7 @@ export class InitCommand {
                     if (adapter) {
                         const generatedCommands = generateCommands(commandContents, adapter);
                         for (const cmd of generatedCommands) {
-                            const commandFile = path.isAbsolute(cmd.path) ? cmd.path : path.join(projectPath, cmd.path);
+                            const commandFile = FileSystemUtils.resolveProjectArtifactPath(projectPath, cmd.path);
                             await FileSystemUtils.writeFile(commandFile, cmd.fileContent);
                         }
                     }
@@ -540,6 +659,9 @@ export class InitCommand {
                 if (shouldReconcileCommandFilesForTool(tool.value, delivery)) {
                     removedCommandCount += await this.removeCommandFiles(projectPath, tool.value);
                 }
+                if (tool.value === 'github-copilot' && writeCopilotCloud) {
+                    await writeCopilotCloudFiles(projectPath);
+                }
                 spinner.succeed(`Setup complete for ${tool.name}`);
                 if (tool.wasConfigured) {
                     refreshedTools.push(tool);
@@ -551,6 +673,16 @@ export class InitCommand {
             catch (error) {
                 spinner.fail(`Failed for ${tool.name}`);
                 failedTools.push({ name: tool.name, error: error });
+            }
+        }
+        for (const tool of [...createdTools, ...refreshedTools]) {
+            for (const migration of migrateLegacyToolDirs(projectPath, [tool.value], 'after-generation')) {
+                if (hasMovableContent(migration)) {
+                    console.log(chalk.dim(`Migrated ${describeLegacyMigration(migration)}: ${migration.from} → ${migration.to}`));
+                }
+                const kept = keptInPlaceNotice(migration);
+                if (kept)
+                    console.log(chalk.dim(kept));
             }
         }
         return {
@@ -576,6 +708,7 @@ export class InitCommand {
         }
         try {
             const yamlContent = serializeConfig({ schema: DEFAULT_SCHEMA });
+            FileSystemUtils.assertProjectArtifactPath(path.dirname(openspecPath), configPath);
             await FileSystemUtils.writeFile(configPath, yamlContent);
             return 'created';
         }
@@ -586,9 +719,9 @@ export class InitCommand {
     // ═══════════════════════════════════════════════════════════
     // UI & OUTPUT
     // ═══════════════════════════════════════════════════════════
-    displaySuccessMessage(projectPath, tools, results, configStatus) {
+    displaySuccessMessage(projectPath, tools, results, configStatus, copilot) {
         console.log();
-        console.log(chalk.bold('OpenSpec Setup Complete'));
+        console.log(chalk.bold(results.failedTools.length > 0 ? 'OpenSpec Setup Incomplete' : 'OpenSpec Setup Complete'));
         console.log();
         // Show created vs refreshed tools
         if (results.createdTools.length > 0) {
@@ -604,21 +737,56 @@ export class InitCommand {
             const profile = this.profileOverride ?? globalConfig.profile ?? 'core';
             const delivery = globalConfig.delivery ?? 'both';
             const workflows = getProfileWorkflows(profile, globalConfig.workflows);
-            const toolDirs = [...new Set(successfulTools.map((t) => t.skillsDir))].join(', ');
-            const skillCount = successfulTools.some((tool) => shouldGenerateSkillsForTool(tool.value, delivery))
-                ? getSkillTemplates(workflows).length
-                : 0;
-            const commandCount = successfulTools.some((tool) => shouldGenerateCommandsForTool(tool.value, delivery))
-                ? getCommandContents(workflows).length
-                : 0;
-            if (skillCount > 0 && commandCount > 0) {
-                console.log(`${skillCount} skills and ${commandCount} commands in ${toolDirs}/`);
+            const usesGlobalSkillTarget = successfulTools.some((tool) => tool.isGlobalSkillTarget);
+            if (!usesGlobalSkillTarget) {
+                const toolDirs = [
+                    ...new Set(successfulTools
+                        .map((tool) => tool.skillsDir)
+                        .filter((skillsDir) => Boolean(skillsDir))),
+                ].join(', ');
+                const skillCount = successfulTools.some((tool) => shouldGenerateSkillsForTool(tool.value, delivery))
+                    ? getSkillTemplates(workflows).length
+                    : 0;
+                const commandCount = successfulTools.some((tool) => shouldGenerateCommandsForTool(tool.value, delivery))
+                    ? getCommandContents(workflows).length
+                    : 0;
+                if (skillCount > 0 && commandCount > 0) {
+                    console.log(`${skillCount} skills and ${commandCount} commands in ${toolDirs}/`);
+                }
+                else if (skillCount > 0) {
+                    console.log(`${skillCount} skills in ${toolDirs}/`);
+                }
+                else if (commandCount > 0) {
+                    console.log(`${commandCount} commands in ${toolDirs}/`);
+                }
             }
-            else if (skillCount > 0) {
-                console.log(`${skillCount} skills in ${toolDirs}/`);
-            }
-            else if (commandCount > 0) {
-                console.log(`${commandCount} commands in ${toolDirs}/`);
+            else {
+                const skillTools = successfulTools.filter((tool) => shouldGenerateSkillsForTool(tool.value, delivery));
+                const skillCount = skillTools.length * getSkillTemplates(workflows).length;
+                if (skillCount > 0) {
+                    const skillDirs = [...new Set(skillTools.map((tool) => tool.skillsPath))];
+                    console.log(`${skillCount} skills in ${skillDirs.join(', ')}`);
+                }
+                const commandContents = getCommandContents(workflows);
+                const commandTools = successfulTools.filter((tool) => shouldGenerateCommandsForTool(tool.value, delivery));
+                const commandCount = commandTools.length * commandContents.length;
+                if (commandCount > 0) {
+                    const commandDirs = [
+                        ...new Set(commandTools.flatMap((tool) => {
+                            const adapter = CommandAdapterRegistry.get(tool.value);
+                            if (!adapter)
+                                return [];
+                            return commandContents.map((command) => {
+                                const commandPath = adapter.getFilePath(command.id);
+                                const absolutePath = path.isAbsolute(commandPath)
+                                    ? commandPath
+                                    : path.join(projectPath, commandPath);
+                                return path.dirname(absolutePath);
+                            });
+                        })),
+                    ];
+                    console.log(`${commandCount} commands in ${commandDirs.join(', ')}`);
+                }
             }
         }
         // Show failures
@@ -637,6 +805,26 @@ export class InitCommand {
         }
         if (results.removedSkillCount > 0) {
             console.log(chalk.dim(`Removed: ${results.removedSkillCount} skill directories (delivery: commands)`));
+        }
+        // GitHub Copilot cloud files are opt-in — report what is actually on disk:
+        // list the managed files that now exist (never files we didn't write), flag
+        // any user-owned file we left untouched, note an opt-out cleanup, or (when
+        // skipped for want of a signal) say how to turn them on.
+        const copilotSucceeded = successfulTools.some((tool) => tool.value === 'github-copilot');
+        if (copilotSucceeded && copilot.write) {
+            if (copilot.present.length > 0) {
+                console.log(`GitHub Copilot cloud files: ${copilot.present.join(', ')}`);
+            }
+            if (copilot.collisions.length > 0) {
+                console.log(chalk.dim(`Left your existing ${copilot.collisions.join(' and ')} untouched — add the OpenSpec ` +
+                    `install step by hand so the Copilot cloud agent can run openspec.`));
+            }
+        }
+        else if (copilotSucceeded && copilot.removed > 0) {
+            console.log(chalk.dim(`Removed: ${copilot.removed} Copilot cloud agent file(s) (opted out of cloud files)`));
+        }
+        else if (copilotSucceeded && copilot.skippedUndecided) {
+            console.log(chalk.dim("Skipped GitHub Copilot cloud files (opt-in). Enable with 'openspec init --copilot-cloud'."));
         }
         // Show manual setup notes for tools that need extra configuration
         for (const tool of successfulTools) {
@@ -684,7 +872,13 @@ export class InitCommand {
                     hint = `Start your first change: ${transformer ? transformer(command) : command} "your idea"`;
                 }
                 else if (shouldGenerateSkillsForTool(tool.value, activeDelivery)) {
-                    hint = `Start your first change: ${getSkillReferenceTransformer(tool.value)(command)} "your idea"`;
+                    const skillReference = getSkillReferenceTransformer(tool.value)(command);
+                    // Tools with no slash surface (e.g. Rovo Dev) reference skills as
+                    // prose ("the openspec-propose skill"); phrase the hint so it reads
+                    // as an instruction rather than a dead command with an argument.
+                    hint = usesNaturalLanguageSkillReferences(tool.value)
+                        ? `Start your first change: ask ${tool.name} to use ${skillReference} with "your idea"`
+                        : `Start your first change: ${skillReference} "your idea"`;
                 }
                 else {
                     continue;
@@ -757,18 +951,19 @@ export class InitCommand {
             spinner: PROGRESS_SPINNER,
         }).start();
     }
-    async removeSkillDirs(skillsDir) {
+    async removeSkillDirs(skillsRoot, skillsDir) {
         let removed = 0;
         for (const workflow of ALL_WORKFLOWS) {
             const dirName = WORKFLOW_TO_SKILL_DIR[workflow];
             if (!dirName)
                 continue;
             const skillDir = path.join(skillsDir, dirName);
+            if (!fs.existsSync(skillDir))
+                continue;
+            FileSystemUtils.assertPathWithin(skillsRoot, skillDir);
             try {
-                if (fs.existsSync(skillDir)) {
-                    await fs.promises.rm(skillDir, { recursive: true, force: true });
-                    removed++;
-                }
+                await fs.promises.rm(skillDir, { recursive: true, force: true });
+                removed++;
             }
             catch {
                 // Ignore errors
@@ -783,7 +978,7 @@ export class InitCommand {
             return 0;
         for (const workflow of ALL_WORKFLOWS) {
             const cmdPath = adapter.getFilePath(workflow);
-            const fullPath = path.isAbsolute(cmdPath) ? cmdPath : path.join(projectPath, cmdPath);
+            const fullPath = FileSystemUtils.resolveProjectArtifactPath(projectPath, cmdPath);
             try {
                 if (fs.existsSync(fullPath)) {
                     await fs.promises.unlink(fullPath);

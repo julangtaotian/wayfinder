@@ -54,7 +54,7 @@ function runEngineCheck(root, args, label, errors) {
   return { ok: true, executed: true, data: parseEngineJson(result.stdout) };
 }
 
-// OpenSpec 1.7 的 JSON 根信息属于安全边界，不能只把它当作展示字段。
+// OpenSpec 的 JSON 根信息属于安全边界，不能只把它当作展示字段。
 export function validatePlanningRoot(root, data, label, errors) {
   if (!data?.root || typeof data.root.path !== 'string' || typeof data.root.source !== 'string') {
     errors.push(`${label}缺少可核验的规划根信息`);
@@ -94,10 +94,12 @@ export function validatePlanningArtifacts(statusData, changePath, requirementPat
   const skipSpecsMetadata = hasSkipSpecsMetadata(changePath);
   const skipSpecsAuthorized = skipSpecsMetadata && hasSkipSpecsDecision(requirementPath);
   const artifacts = Array.isArray(statusData?.artifacts) ? statusData.artifacts : [];
+  // 1.8.0 将规划完成与实施进度分开；旧响应继续通过兼容别名读取。
+  const isPlanningComplete = statusData?.isPlanningComplete ?? statusData?.isComplete;
   if (!statusData) {
     errors.push('规划状态没有返回可解析的 JSON');
-  } else if (statusData.isComplete !== true) {
-    errors.push('规划尚未完成：OpenSpec isComplete 必须为 true');
+  } else if (isPlanningComplete !== true) {
+    errors.push('规划尚未完成：OpenSpec isPlanningComplete 必须为 true');
   }
   if (!artifacts.length) errors.push('规划状态没有返回 artifact 列表');
   if (skipSpecsMetadata && !skipSpecsAuthorized) {
@@ -120,7 +122,8 @@ export function validatePlanningArtifacts(statusData, changePath, requirementPat
     errors.push(`规划 artifact 未完成或状态非法：${artifact?.id || 'unknown'}=${artifact?.status || 'missing'}`);
   }
   return {
-    isComplete: statusData?.isComplete === true,
+    isPlanningComplete: isPlanningComplete === true,
+    isComplete: isPlanningComplete === true,
     artifacts: artifacts.map((artifact) => ({ id: artifact?.id, status: artifact?.status })),
     skipSpecsMetadata,
     skipSpecsAuthorized,

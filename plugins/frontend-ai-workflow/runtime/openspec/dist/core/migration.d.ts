@@ -14,6 +14,8 @@ export interface LegacyToolRoot {
      * location may still be the live one for somebody.
      */
     needsConsent: boolean;
+    /** Migrations that need a freshly generated destination run afterward. */
+    timing?: 'before-generation' | 'after-generation';
 }
 /**
  * Former tool roots whose OpenSpec-managed content belongs under the tool's
@@ -32,8 +34,8 @@ export interface LegacyToolMigration {
     commandFiles: number;
     /**
      * OpenSpec-managed files left under the legacy root because the copy there
-     * differs from the one that survives — the user edited it, so it is reported
-     * rather than dropped.
+     * differs materially from the one that survives, so it is reported rather
+     * than dropped.
      */
     keptInPlace: number;
     /** Whether this move needs the user's consent first */
@@ -43,7 +45,7 @@ export interface LegacyToolMigration {
  * Reports the OpenSpec content sitting under each tool's legacy root, without
  * moving anything. Callers use this to ask before a move that needs consent.
  */
-export declare function findLegacyToolMigrations(projectPath: string): LegacyToolMigration[];
+export declare function findLegacyToolMigrations(projectPath: string, timing?: 'before-generation' | 'after-generation'): LegacyToolMigration[];
 /**
  * Moves OpenSpec-managed skill directories (openspec-*) and command files
  * (opsx-*) from a tool's legacy root to its current one. When the destination
@@ -55,7 +57,7 @@ export declare function findLegacyToolMigrations(projectPath: string): LegacyToo
  * @param toolIds - Restrict the move to these tools; omit to move every tool
  *        whose legacy root needs no consent
  */
-export declare function migrateLegacyToolDirs(projectPath: string, toolIds?: string[]): LegacyToolMigration[];
+export declare function migrateLegacyToolDirs(projectPath: string, toolIds?: string[], timing?: 'before-generation' | 'after-generation'): LegacyToolMigration[];
 /**
  * Summarizes what a migration moved, e.g. "6 skills and 6 commands".
  */

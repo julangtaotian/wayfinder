@@ -2,21 +2,49 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { resolveArtifactOutputs, resolveSchema } from '../core/artifact-graph/index.js';
 import { resolveSchemaForChange } from './change-metadata.js';
-const TASK_PATTERN = /^[-*]\s+\[[\sx]\]/i;
-const COMPLETED_TASK_PATTERN = /^[-*]\s+\[x\]/i;
-export function countTasksFromContent(content) {
-    const lines = content.split('\n');
-    let total = 0;
-    let completed = 0;
-    for (const line of lines) {
-        if (line.match(TASK_PATTERN)) {
-            total++;
-            if (line.match(COMPLETED_TASK_PATTERN)) {
-                completed++;
-            }
+/**
+ * A Markdown task line: a `-`/`*` bullet carrying a `[ ]` or `[x]` checkbox.
+ *
+ * Leading whitespace is allowed so nested sub-tasks count like their parents.
+ * Anchoring at column 0 made `  - [ ] 1.1.1 ...` invisible to progress, to the
+ * apply task list, and to archive's incomplete-task check, so a change with
+ * unfinished sub-tasks reported "✓ Complete" and archived without a warning.
+ *
+ * Permissive on purpose, and safe to keep that way: any character class
+ * tightened here - the `\s` inside the brackets, which lets a tab or
+ * non-breaking space stand for an empty box - drops lines that used to count,
+ * and a task this parser drops is a task `openspec archive` stops warning about.
+ *
+ * Deliberately unanchored at the end: `.` does not match `\r`, so writing the
+ * description group as `(.*)$` would reject every line of a CRLF tasks.md.
+ */
+const TASK_LINE_PATTERN = /^\s*[-*]\s*\[([\sxX])\]\s*(.*)/;
+/**
+ * Parses every task line in a tasks file, in document order.
+ *
+ * Every line matching the pattern counts, wherever it sits - inside a code
+ * fence, an HTML comment or an indented block, as before. Skipping fenced
+ * checkboxes was tried and dropped: every rule for deciding which fence is
+ * "real" has an input where a stray or unbalanced ``` swallows genuine tasks.
+ * Counting a documented example as work is a loud, bypassable false positive;
+ * losing a real task is a silent one.
+ */
+export function parseTaskLines(content) {
+    const tasks = [];
+    for (const line of content.split('\n')) {
+        const match = line.match(TASK_LINE_PATTERN);
+        if (match) {
+            tasks.push({ done: match[1].toLowerCase() === 'x', description: match[2].trim() });
         }
     }
-    return { total, completed };
+    return tasks;
+}
+export function countTasksFromContent(content) {
+    const tasks = parseTaskLines(content);
+    return {
+        total: tasks.length,
+        completed: tasks.filter((task) => task.done).length,
+    };
 }
 /**
  * Identifies the change's tracked-tasks artifact: the artifact whose `generates`

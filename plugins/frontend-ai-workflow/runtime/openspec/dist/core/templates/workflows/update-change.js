@@ -9,6 +9,8 @@ ${STORE_SELECTION_GUIDANCE}
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+\`/opsx:continue\` is an expanded-profile workflow and may not be installed. Before suggesting it anywhere below, verify that it is available. If it is unavailable, \`openspec status --change "<name>" --json\` shows the next artifact and \`openspec instructions "<artifact-id>" --change "<name>" --json\` explains how to create it.
+
 **Steps**
 
 1. **Select the change**
@@ -35,7 +37,7 @@ ${STORE_SELECTION_GUIDANCE}
    Parse the JSON to understand current state. The response includes:
    - \`schemaName\`: The workflow schema being used (e.g., "spec-driven")
    - \`artifacts\`: Array of artifacts with their status ("done", "skipped", "ready", "blocked")
-   - \`isComplete\`: Boolean indicating if all artifacts are complete
+   - \`isPlanningComplete\`: Boolean indicating if all planning artifacts are complete. Older CLI versions expose the same value as \`isComplete\`.
    - \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`actionContext\`: path and scope context. Use these instead of assuming repo-local paths.
 
    The artifact ids and paths come from the active schema - do NOT assume them, and do NOT branch on hardcoded artifact names. Custom schemas must work unchanged.
@@ -58,7 +60,7 @@ ${STORE_SELECTION_GUIDANCE}
    - If the user rejects a revision, do not write it - leave that artifact unchanged.
    - When a substantial rewrite is needed, get that artifact's rules and template first:
      \`\`\`bash
-     openspec instructions <artifact-id> --change "<name>" --json
+     openspec instructions "<artifact-id>" --change "<name>" --json
      \`\`\`
 
 6. **Point to the next step (guidance only - NEVER act on it)**
@@ -79,8 +81,7 @@ After each invocation, show:
 - Edit only the concrete files in \`existingOutputPaths\`; never write to a glob \`resolvedOutputPath\`.
 - Do not advance the build frontier: no new artifacts, no new files under glob artifacts - that is \`/opsx:continue\`'s job.
 - Confirm every edit with the user before writing.
-- If the request changes the change's *intent* rather than refining it, recommend starting fresh with \`/opsx:new\` (the "Update vs. Start Fresh" heuristic).
-- \`/opsx:continue\` and \`/opsx:new\` may not be installed (core profile). When suggesting one that is unavailable, point to the CLI instead: \`openspec status --change "<name>" --json\` shows the next artifact and \`openspec instructions <artifact-id> --change "<name>" --json\` explains how to create it.`,
+- If the request changes the change's *intent* rather than refining it, first verify whether the expanded-profile \`/opsx:new\` workflow is available. If it is, recommend starting fresh with \`/opsx:new\` (the "Update vs. Start Fresh" heuristic). If it is unavailable, ask for a distinct unused change name and recommend \`openspec new change "<new-change-name>"\` instead.`,
         license: 'MIT',
         compatibility: 'Requires openspec CLI.',
         metadata: { author: 'openspec', version: '1.0' },
@@ -98,6 +99,8 @@ ${STORE_SELECTION_GUIDANCE}
 
 **Input**: Optionally specify a change name after \`/opsx:update\` (e.g., \`/opsx:update add-auth\`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+\`/opsx:continue\` is an expanded-profile workflow and may not be installed. Before suggesting it anywhere below, verify that it is available. If it is unavailable, \`openspec status --change "<name>" --json\` shows the next artifact and \`openspec instructions "<artifact-id>" --change "<name>" --json\` explains how to create it.
+
 **Steps**
 
 1. **Select the change**
@@ -124,7 +127,7 @@ ${STORE_SELECTION_GUIDANCE}
    Parse the JSON to understand current state. The response includes:
    - \`schemaName\`: The workflow schema being used (e.g., "spec-driven")
    - \`artifacts\`: Array of artifacts with their status ("done", "skipped", "ready", "blocked")
-   - \`isComplete\`: Boolean indicating if all artifacts are complete
+   - \`isPlanningComplete\`: Boolean indicating if all planning artifacts are complete. Older CLI versions expose the same value as \`isComplete\`.
    - \`planningHome\`, \`changeRoot\`, \`artifactPaths\`, and \`actionContext\`: path and scope context. Use these instead of assuming repo-local paths.
 
    The artifact ids and paths come from the active schema - do NOT assume them, and do NOT branch on hardcoded artifact names. Custom schemas must work unchanged.
@@ -147,7 +150,7 @@ ${STORE_SELECTION_GUIDANCE}
    - If the user rejects a revision, do not write it - leave that artifact unchanged.
    - When a substantial rewrite is needed, get that artifact's rules and template first:
      \`\`\`bash
-     openspec instructions <artifact-id> --change "<name>" --json
+     openspec instructions "<artifact-id>" --change "<name>" --json
      \`\`\`
 
 6. **Point to the next step (guidance only - NEVER act on it)**
@@ -168,8 +171,7 @@ After each invocation, show:
 - Edit only the concrete files in \`existingOutputPaths\`; never write to a glob \`resolvedOutputPath\`.
 - Do not advance the build frontier: no new artifacts, no new files under glob artifacts - that is \`/opsx:continue\`'s job.
 - Confirm every edit with the user before writing.
-- If the request changes the change's *intent* rather than refining it, recommend starting fresh with \`/opsx:new\` (the "Update vs. Start Fresh" heuristic).
-- \`/opsx:continue\` and \`/opsx:new\` may not be installed (core profile). When suggesting one that is unavailable, point to the CLI instead: \`openspec status --change "<name>" --json\` shows the next artifact and \`openspec instructions <artifact-id> --change "<name>" --json\` explains how to create it.`
+- If the request changes the change's *intent* rather than refining it, first verify whether the expanded-profile \`/opsx:new\` workflow is available. If it is, recommend starting fresh with \`/opsx:new\` (the "Update vs. Start Fresh" heuristic). If it is unavailable, ask for a distinct unused change name and recommend \`openspec new change "<new-change-name>"\` instead.`
     };
 }
 //# sourceMappingURL=update-change.js.map
