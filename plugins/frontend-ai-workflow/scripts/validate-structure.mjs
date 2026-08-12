@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
 import {
   BUNDLED_PLAYWRIGHT_VERSION,
@@ -61,6 +61,12 @@ const RUNTIME_INTEGRITY_ASSETS = [
 ];
 // UI 验收的状态合同、报告器、模板和共享说明必须作为一个整体发布。
 const UI_REVIEW_ASSETS = [
+  'scripts/ui-review-contract.mjs',
+  'scripts/ui-review-config.mjs',
+  'scripts/ui-review-plan.mjs',
+  'scripts/ui-review-state.mjs',
+  'scripts/ui-review-storage.mjs',
+  'scripts/ui-review-workflow-cli.mjs',
   'scripts/ui-review-workflow.mjs',
   'scripts/ui-review-runner.mjs',
   'scripts/ui-review-report.mjs',
@@ -72,6 +78,51 @@ const UI_REVIEW_ASSETS = [
   'assets/templates/ui-review/config.json',
   'assets/templates/ui-review/playwright-adapter.mjs',
   'references/ui-review-workflow.md',
+];
+const UI_REVIEW_FILE_LIMITS = new Map([
+  ['plugins/frontend-ai-workflow/scripts/ui-review-workflow.mjs', 120],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-contract.mjs', 500],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-config.mjs', 500],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-plan.mjs', 500],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-state.mjs', 500],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-storage.mjs', 500],
+  ['plugins/frontend-ai-workflow/scripts/ui-review-workflow-cli.mjs', 500],
+  ['tests/ui-review-automation.test.mjs', 80],
+  ['tests/ui-review-automation/fixtures.mjs', 500],
+  ['tests/ui-review-automation/config.cases.mjs', 500],
+  ['tests/ui-review-automation/state.cases.mjs', 500],
+  ['tests/ui-review-automation/comparison.cases.mjs', 500],
+  ['tests/ui-review-automation/runtime-capture.cases.mjs', 500],
+  ['tests/ui-review-automation/cli-contract.cases.mjs', 500],
+]);
+const UI_REVIEW_PUBLIC_EXPORTS = [
+  'BUNDLED_UI_REVIEW_ADAPTER',
+  'DEFAULT_UI_REVIEW_CONFIG',
+  'UI_REVIEW_CONFIG_VERSION',
+  'UI_REVIEW_STATE_VERSION',
+  'completeRepairRun',
+  'completeReviewRun',
+  'completeVerifyRun',
+  'createCapturePlan',
+  'createReviewRun',
+  'createVerifyRun',
+  'evaluateRepairGate',
+  'loadUiReviewConfig',
+  'normalizeUiFinding',
+  'normalizeUiReviewConfig',
+  'readRunState',
+  'resolveSafeProjectPath',
+  'runUiReviewWorkflowCli',
+  'writeRunState',
+];
+const UI_REVIEW_LAYER_ORDER = [
+  'ui-review-contract.mjs',
+  'ui-review-config.mjs',
+  'ui-review-plan.mjs',
+  'ui-review-state.mjs',
+  'ui-review-storage.mjs',
+  'ui-review-workflow-cli.mjs',
+  'ui-review-workflow.mjs',
 ];
 const PLAYWRIGHT_RUNTIME_ASSETS = [
   'runtime/playwright/package.json',
@@ -213,6 +264,40 @@ function validateUiReviewAssets(errors) {
   }
 }
 
+async function validateUiReviewStructure(errors) {
+  for (const [file, limit] of UI_REVIEW_FILE_LIMITS) {
+    const absolutePath = path.join(repositoryRoot, file);
+    if (!fs.existsSync(absolutePath)) {
+      errors.push(`缺少 UI 验收模块化文件：${file}`);
+      continue;
+    }
+    const lines = fs.readFileSync(absolutePath, 'utf8').trimEnd().split(/\r?\n/u).length;
+    if (lines > limit) errors.push(`UI 验收模块超过 ${limit} 行：${file}（${lines} 行）`);
+  }
+
+  const entryPath = path.join(pluginRoot, 'scripts', 'ui-review-workflow.mjs');
+  if (fs.existsSync(entryPath)) {
+    const publicModule = await import(pathToFileURL(entryPath).href);
+    const actualExports = Object.keys(publicModule).sort();
+    const expectedExports = [...UI_REVIEW_PUBLIC_EXPORTS].sort();
+    if (JSON.stringify(actualExports) !== JSON.stringify(expectedExports)) {
+      errors.push(`UI 验收公共导出必须严格限定为：${expectedExports.join('、')}`);
+    }
+  }
+
+  // 领域层只能依赖更底层模块，避免兼容门面或 CLI 反向渗透到核心合同。
+  const layerIndex = new Map(UI_REVIEW_LAYER_ORDER.map((file, index) => [file, index]));
+  for (const file of UI_REVIEW_LAYER_ORDER) {
+    const source = fs.readFileSync(path.join(pluginRoot, 'scripts', file), 'utf8');
+    for (const match of source.matchAll(/from '\.\/(ui-review-[^']+\.mjs)'/gu)) {
+      const dependency = match[1];
+      if (layerIndex.has(dependency) && layerIndex.get(dependency) >= layerIndex.get(file)) {
+        errors.push(`UI 验收模块依赖方向错误：${file} -> ${dependency}`);
+      }
+    }
+  }
+}
+
 function validatePlaywrightRuntime(errors) {
   for (const file of PLAYWRIGHT_RUNTIME_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 Playwright 运行时资产：${file}`);
@@ -240,6 +325,7 @@ try {
   validateProjectProfileAssets(errors);
   validateRuntimeIntegrityAssets(errors);
   validateUiReviewAssets(errors);
+  await validateUiReviewStructure(errors);
   validatePlaywrightRuntime(errors);
 } catch (error) {
   errors.push(error.message);

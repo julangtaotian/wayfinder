@@ -1,11 +1,77 @@
+# 操作系统生成的本机文件
 .DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.Spotlight-V100/
+.Trashes/
+
+# 未共享的编辑器配置与临时文件
 .idea/
+.vscode/
+.history/
+.fleet/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.rej
+*.tmp
+
+# 本地环境配置；公开模板需要继续提交
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# 普通项目依赖和包管理器缓存
 node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# 插件固定内置的生产运行时必须随仓库发布
 !plugins/frontend-ai-workflow/runtime/openspec/node_modules/
 !plugins/frontend-ai-workflow/runtime/openspec/node_modules/**
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/.bin/
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/**/.bin/
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/.cache/
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/**/.cache/
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/.DS_Store
+plugins/frontend-ai-workflow/runtime/openspec/node_modules/**/.DS_Store
 !plugins/frontend-ai-workflow/runtime/playwright/node_modules/
 !plugins/frontend-ai-workflow/runtime/playwright/node_modules/**
-plugins/frontend-ai-workflow/runtime/playwright/node_modules/.DS_Store
 plugins/frontend-ai-workflow/runtime/playwright/node_modules/.bin/
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.bin/
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/.cache/
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.cache/
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/.DS_Store
+plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.DS_Store
+
+# 工具缓存与增量构建状态；不要宽泛忽略 dist、build 或 outputs
+.cache/
+.turbo/
+.vite/
+.parcel-cache/
+.sass-cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# 测试、覆盖率和通用浏览器报告；持久 UI 验收记录仍需提交
 coverage/
+test-results/
+playwright-report/
+blob-report/
+.nyc_output/
+
+# 运行日志与进程临时状态
 *.log
+*.pid
+*.seed

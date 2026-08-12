@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.13.0+codex.20260812072235",
+  "version": "0.13.0+codex.20260812084431",
   "description": "Reusable frontend delivery and project-local UI review with structured interactions, deterministic comparison, cross-platform bundled Chromium, optional visual fallback, safe repair, and verification.",
   "author": {
     "name": "lvshuai"
