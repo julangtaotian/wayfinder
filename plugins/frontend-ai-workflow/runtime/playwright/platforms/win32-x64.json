@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "platformKey": "win32-x64",
+  "platform": "win32",
+  "arch": "x64",
+  "playwrightVersion": "1.62.1",
+  "browsersPath": "platform-assets/win32-x64/.local-browsers",
+  "browser": {
+    "name": "chromium-headless-shell",
+    "revision": "1234",
+    "executable": "platform-assets/win32-x64/.local-browsers/chromium_headless_shell-1234/chrome-headless-shell-win64/chrome-headless-shell.exe",
+    "license": "platform-assets/win32-x64/.local-browsers/chromium_headless_shell-1234/chrome-headless-shell-win64/LICENSE.headless_shell"
+  },
+  "ffmpeg": {
+    "revision": "1011",
+    "executable": "platform-assets/win32-x64/.local-browsers/ffmpeg-1011/ffmpeg-win64.exe",
+    "license": "platform-assets/win32-x64/.local-browsers/ffmpeg-1011/COPYING.LGPLv2.1"
+  }
+}

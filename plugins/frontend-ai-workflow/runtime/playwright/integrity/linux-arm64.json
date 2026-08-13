@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 2,
+  "kind": "platform",
+  "algorithm": "sha256",
+  "runtime": {
+    "platformKey": "linux-arm64",
+    "platform": "linux",
+    "arch": "arm64",
+    "playwrightVersion": "1.62.1",
+    "browser": "chromium-headless-shell",
+    "browserRevision": "1234"
+  },
+  "files": [
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/.links/5f6a097adb3a27ef856d7515771f76604a246209",
+      "size": 126,
+      "sha256": "0c64a3ae9c9fea7592fc3aed5a549d29bf03976b2d20e076474e09f4555fa9d3"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/headless_command_resources.pak",
+      "size": 3033,
+      "sha256": "69dac576ca71db35e1716eefae2b4d7dac15012d18936d41c90e4222f4772583"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/headless_lib_data.pak",
+      "size": 740512,
+      "sha256": "9b4877b0b7201858f237d7ce3faf73abc89fd4fbc4ce0fd4352526465788208b"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/headless_lib_strings.pak",
+      "size": 4328287,
+      "sha256": "07fe1a3c41e2fc93ffdd96465dde2420c332aa79212b081ca43b3928cee6b11a"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/headless_shell",
+      "size": 314181896,
+      "sha256": "e8b500712730fd4cbd0261f675a27c5a79b2375276876f1e3f69db10ee080a72"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/icudtl.dat",
+      "size": 10876560,
+      "sha256": "9f48c7f9c7c94d516a14870707e910ab94d75ae640ff6842c4af53276cd26ebe"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/libEGL.so",
+      "size": 355528,
+      "sha256": "f5fd9479ad33b1000bc828e2936e872f7bd596f05ffe1555ea7fa540a36bae2e"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/libGLESv2.so",
+      "size": 355544,
+      "sha256": "cffc9543da5e843f672f2d6d430d9ee201bb3bde51f0daf2ef482062a0adeefb"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/libvk_swiftshader.so",
+      "size": 23801320,
+      "sha256": "e7874c65844589c8ba80fb8343ced58123a7b96076d11d2688d70f09c472e48d"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/libvulkan.so.1",
+      "size": 882160,
+      "sha256": "f44066635c73f32301d3bb731c9f31293cb2a64f03d3949cb469b6b17486ca9e"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/LICENSE.headless_shell",
+      "size": 2120830,
+      "sha256": "334f3e2d8a58954bc7152a8150bdd3e7f35e0d9bcf30dd323d4edcb7df5f36d5"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/v8_context_snapshot.bin",
+      "size": 740440,
+      "sha256": "185429ba20fa19f893644bf71810a84d7551dc4d51eba10796258062594474c5"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/chrome-linux/vk_swiftshader_icd.json",
+      "size": 107,
+      "sha256": "c9eef28b6b984fec220ef0abfecc40b502d46946706e47bfe97707027cb818bd"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/DEPENDENCIES_VALIDATED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/chromium_headless_shell-1234/INSTALLATION_COMPLETE",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/ffmpeg-1011/COPYING.LGPLv2.1",
+      "size": 26526,
+      "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/ffmpeg-1011/DEPENDENCIES_VALIDATED",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/ffmpeg-1011/ffmpeg-linux",
+      "size": 3367792,
+      "sha256": "b662355fff37fa4a0c2a353b26b3255f16a5e7fd358d97231e5a5eedd511158c"
+    },
+    {
+      "type": "file",
+      "path": "platform-assets/linux-arm64/.local-browsers/ffmpeg-1011/INSTALLATION_COMPLETE",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "type": "file",
+      "path": "platforms/linux-arm64.json",
+      "size": 751,
+      "sha256": "4f17ddcea3cca11ace8494e25f930e0681807cb72413d29992b1e8d6e8ca5334"
+    }
+  ]
+}

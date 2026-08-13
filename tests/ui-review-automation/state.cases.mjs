@@ -133,7 +133,7 @@ test('能力链路状态矩阵覆盖初始、操作、重复、空态与错误�
   const invalid = configV2Input();
   invalid.scenarios[0].interactions = [{ action: 'evaluate', value: 'document.body' }];
   assert.throws(() => normalizeUiReviewConfig(invalid, projectRoot), /不支持的交互动作/u);
-  const unsupported = inspectBundledPlaywright({ platform: 'win32', arch: 'x64', useCache: false });
+  const unsupported = inspectBundledPlaywright({ platform: 'win32', arch: 'arm64', useCache: false });
   assert.equal(unsupported.available, false);
   assert.match(unsupported.reason, /未携带/u);
 });

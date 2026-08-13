@@ -564,6 +564,16 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   const workflow = fs.readFileSync('.github/workflows/validate.yml', 'utf8');
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
   assert.match(workflow, /node-version: 20\.19\.0/);
+  for (const [runner, platform] of [
+    ['macos-15', 'darwin-arm64'],
+    ['macos-15-intel', 'darwin-x64'],
+    ['ubuntu-24.04', 'linux-x64'],
+    ['ubuntu-24.04-arm', 'linux-arm64'],
+    ['windows-2025', 'win32-x64'],
+  ]) {
+    assert.match(workflow, new RegExp(`- os: ${runner}\\n\\s+platform: ${platform}`));
+  }
+  assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
   assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), ['npm run verify']);
   assert.doesNotMatch(workflow, /npm test|npm run validate/);
 });

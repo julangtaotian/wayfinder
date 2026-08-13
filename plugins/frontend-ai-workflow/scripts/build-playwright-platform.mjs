@@ -5,15 +5,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   BUNDLED_PLAYWRIGHT_VERSION,
   DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
+  PLAYWRIGHT_PLATFORM_CONFIGS,
   SUPPORTED_PLAYWRIGHT_PLATFORMS,
   inspectBundledPlaywright,
   writePlaywrightIntegrity,
 } from './playwright-runtime.mjs';
-
-const HOST_OVERRIDES = {
-  'darwin-arm64': 'mac15-arm64',
-  'linux-x64': 'ubuntu24.04-x64',
-};
 
 function fail(message) {
   throw new Error(message);
@@ -33,6 +29,32 @@ function parseArgs(argv) {
   return options;
 }
 
+function runtimeAsset(runtimeRoot, relativePath, label) {
+  const resolved = path.resolve(runtimeRoot, relativePath);
+  const relative = path.relative(runtimeRoot, resolved);
+  if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    fail(`${label}越出了 Playwright 运行时`);
+  }
+  return resolved;
+}
+
+function copySupplementalBrowserLicense({ runtimeRoot, platformKey, browsersPath }) {
+  const sourcePlatform = PLAYWRIGHT_PLATFORM_CONFIGS[platformKey].browserLicenseSourcePlatform;
+  if (!sourcePlatform) return;
+  const sourceMetadata = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'platforms', `${sourcePlatform}.json`), 'utf8'));
+  const targetMetadata = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'platforms', `${platformKey}.json`), 'utf8'));
+  const source = runtimeAsset(runtimeRoot, sourceMetadata.browser.license, `${sourcePlatform}.browser.license`);
+  if (!fs.existsSync(source)) fail(`缺少可复用的 Chromium 授权文件：${source}`);
+  const relativeTarget = path.posix.relative(targetMetadata.browsersPath, targetMetadata.browser.license);
+  if (!relativeTarget || relativeTarget === '..' || relativeTarget.startsWith('../')) {
+    fail(`${platformKey}.browser.license 必须位于独立浏览器目录内`);
+  }
+  const target = path.resolve(browsersPath, ...relativeTarget.split('/'));
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  // Linux ARM64 上游包未附带通用 Chromium 授权文本，构建期从同版本 Linux x64 包补齐。
+  fs.copyFileSync(source, target);
+}
+
 export function buildPlaywrightPlatform({
   platformKey,
   write = false,
@@ -47,7 +69,7 @@ export function buildPlaywrightPlatform({
     write,
     platformKey,
     playwrightVersion: BUNDLED_PLAYWRIGHT_VERSION,
-    hostOverride: HOST_OVERRIDES[platformKey],
+    hostOverride: PLAYWRIGHT_PLATFORM_CONFIGS[platformKey].hostPlatform,
     output: path.relative(root, finalRoot).split(path.sep).join('/'),
     downloadsAtRuntime: false,
   };
@@ -56,6 +78,7 @@ export function buildPlaywrightPlatform({
 
   const stageRoot = path.join(root, 'platform-assets', `.build-${platformKey}-${process.pid}`);
   const browsersPath = path.join(stageRoot, '.local-browsers');
+  let published = false;
   fs.mkdirSync(browsersPath, { recursive: true });
   try {
     const cliPath = path.join(root, 'node_modules', 'playwright', 'cli.js');
@@ -64,13 +87,15 @@ export function buildPlaywrightPlatform({
       env: {
         ...process.env,
         PLAYWRIGHT_BROWSERS_PATH: browsersPath,
-        PLAYWRIGHT_HOST_PLATFORM_OVERRIDE: HOST_OVERRIDES[platformKey],
+        PLAYWRIGHT_HOST_PLATFORM_OVERRIDE: PLAYWRIGHT_PLATFORM_CONFIGS[platformKey].hostPlatform,
       },
       encoding: 'utf8',
       stdio: 'inherit',
     });
     if (result.error || result.status !== 0) fail(`下载 ${platformKey} Playwright 运行包失败：${result.error?.message || `退出码 ${result.status}`}`);
+    copySupplementalBrowserLicense({ runtimeRoot: root, platformKey, browsersPath });
     fs.renameSync(stageRoot, finalRoot);
+    published = true;
     const [platform, ...archParts] = platformKey.split('-');
     const inspection = inspectBundledPlaywright({
       runtimeRoot: root,
@@ -80,10 +105,15 @@ export function buildPlaywrightPlatform({
       useCache: false,
     });
     if (!inspection.available) fail(inspection.reason);
-    writePlaywrightIntegrity({ runtimeRoot: root });
+    writePlaywrightIntegrity({
+      runtimeRoot: root,
+      integrityPath: path.join(root, 'integrity'),
+      platformKeys: [platformKey],
+    });
     return { ...plan, inspection: { browser: inspection.browser, revision: inspection.browserRevision } };
   } catch (error) {
     fs.rmSync(stageRoot, { recursive: true, force: true });
+    if (published) fs.rmSync(finalRoot, { recursive: true, force: true });
     throw error;
   }
 }

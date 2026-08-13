@@ -6,7 +6,18 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const BUNDLED_PLAYWRIGHT_VERSION = '1.62.1';
 export const PLAYWRIGHT_RUNTIME_SCHEMA_VERSION = 2;
 export const PLAYWRIGHT_INTEGRITY_SCHEMA_VERSION = 2;
-export const SUPPORTED_PLAYWRIGHT_PLATFORMS = Object.freeze(['darwin-arm64', 'linux-x64']);
+// Node 平台键是公共合同，Playwright 主机名只用于构建期下载。
+export const PLAYWRIGHT_PLATFORM_CONFIGS = Object.freeze({
+  'darwin-arm64': Object.freeze({ hostPlatform: 'mac15-arm64' }),
+  'darwin-x64': Object.freeze({ hostPlatform: 'mac15' }),
+  'linux-x64': Object.freeze({ hostPlatform: 'ubuntu24.04-x64' }),
+  'linux-arm64': Object.freeze({
+    hostPlatform: 'ubuntu24.04-arm64',
+    browserLicenseSourcePlatform: 'linux-x64',
+  }),
+  'win32-x64': Object.freeze({ hostPlatform: 'win64' }),
+});
+export const SUPPORTED_PLAYWRIGHT_PLATFORMS = Object.freeze(Object.keys(PLAYWRIGHT_PLATFORM_CONFIGS));
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(scriptDir, '..');
@@ -235,19 +246,23 @@ export function verifyPlaywrightIntegrity({
 export function writePlaywrightIntegrity({
   runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
   integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
+  platformKeys = SUPPORTED_PLAYWRIGHT_PLATFORMS,
 } = {}) {
   const root = path.resolve(runtimeRoot);
   const integrityRoot = path.resolve(integrityPath);
+  for (const key of platformKeys) {
+    if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) throw new Error(`不支持的 Playwright 平台：${key}`);
+  }
   const shared = buildPlaywrightIntegrityManifest(root, { kind: 'shared' });
   writeJsonAtomic(path.join(integrityRoot, 'shared.json'), shared);
   let files = shared.files.length;
-  for (const key of SUPPORTED_PLAYWRIGHT_PLATFORMS) {
+  for (const key of platformKeys) {
     const [platform, ...archParts] = key.split('-');
     const manifest = buildPlaywrightIntegrityManifest(root, { platform, arch: archParts.join('-') });
     writeJsonAtomic(path.join(integrityRoot, `${key}.json`), manifest);
     files += manifest.files.length;
   }
-  return { ok: true, files, integrityPath: integrityRoot, platforms: [...SUPPORTED_PLAYWRIGHT_PLATFORMS] };
+  return { ok: true, files, integrityPath: integrityRoot, platforms: [...platformKeys] };
 }
 
 function unavailable(reason, details = {}) {

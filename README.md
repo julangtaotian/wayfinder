@@ -320,7 +320,7 @@ npm run verify
 
 `verify` 是本地与 CI 的统一只读门禁。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
 
-仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。当前 CI 已通过 `actions/checkout` 的 `lfs: true` 获取真实文件，并在 Linux x64 实际启动内置 Chromium；受支持平台不允许以跳过冒烟代替成功。
+仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。验证工作流通过 `actions/checkout` 的 `lfs: true` 获取真实文件，并配置为分别在 macOS ARM64、macOS x64、Linux x64、Linux ARM64 和 Windows x64 原生启动内置 Chromium；受支持平台不允许以跳过冒烟代替成功。
 
 ### 升级内置 Playwright
 
@@ -328,7 +328,7 @@ npm run verify
 2. 用 `build-playwright-platform.mjs --platform <platform-arch>` 预览发布计划，只有维护阶段才追加 `--write` 下载固定 Chromium headless shell 与 FFmpeg。
 3. 更新 `runtime/playwright/platforms/<platform-arch>.json` 的浏览器 revision、可执行文件和许可路径；平台资产只能位于自己的独立目录。
 4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建共享及各平台完整性清单，再运行 `--inspect`、`--check` 与目标平台上的 `--smoke`。
-5. 确认 `platform-assets` 文件由 Git LFS 跟踪，在 Apple Silicon Mac 与 Linux x64 都取得 `skipped: false` 的真实启动证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
+5. 确认 `platform-assets` 文件由 Git LFS 跟踪，在五个受支持平台都取得 `skipped: false` 的真实启动证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
 
 ### 升级内置 OpenSpec
 

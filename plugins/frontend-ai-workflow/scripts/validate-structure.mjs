@@ -4,6 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BUNDLED_OPENSPEC_VERSION, inspectBundledOpenSpec } from './openspec-cli.mjs';
 import {
   BUNDLED_PLAYWRIGHT_VERSION,
+  SUPPORTED_PLAYWRIGHT_PLATFORMS,
   inspectBundledPlaywright,
   verifyPlaywrightIntegrity,
 } from './playwright-runtime.mjs';
@@ -127,11 +128,11 @@ const UI_REVIEW_LAYER_ORDER = [
 const PLAYWRIGHT_RUNTIME_ASSETS = [
   'runtime/playwright/package.json',
   'runtime/playwright/package-lock.json',
-  'runtime/playwright/platforms/darwin-arm64.json',
-  'runtime/playwright/platforms/linux-x64.json',
   'runtime/playwright/integrity/shared.json',
-  'runtime/playwright/integrity/darwin-arm64.json',
-  'runtime/playwright/integrity/linux-x64.json',
+  ...SUPPORTED_PLAYWRIGHT_PLATFORMS.flatMap((platformKey) => [
+    `runtime/playwright/platforms/${platformKey}.json`,
+    `runtime/playwright/integrity/${platformKey}.json`,
+  ]),
   'runtime/playwright/node_modules/playwright/LICENSE',
   'runtime/playwright/node_modules/playwright-core/LICENSE',
   'runtime/playwright/node_modules/pngjs/LICENSE',

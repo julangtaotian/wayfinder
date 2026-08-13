@@ -2,12 +2,12 @@
 
 ## 基本信息
 
-- 状态：已验收
+- 状态：实施中
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：当前开发迭代
 - 关联页面或模块：`plugins/frontend-ai-workflow/skills/`、`plugins/frontend-ai-workflow/scripts/`、`plugins/frontend-ai-workflow/assets/templates/`、`tests/`
-- 关联变更：`add-plugin-ui-review-automation`、`prefer-portable-ui-review-capture`、`bundle-playwright-runtime`、`complete-ui-review-capability-chain`
+- 关联变更：`add-plugin-ui-review-automation`、`prefer-portable-ui-review-capture`、`bundle-playwright-runtime`、`complete-ui-review-capability-chain`、`expand-playwright-platform-runtime`
 
 ## 背景与目标
 
@@ -16,6 +16,8 @@
 本需求将现有 AI UI 验收合同提升为 `frontend-ai-workflow` 的正式公共能力。业务项目安装插件后，可以由 AI 工具或 CI 在本地执行 UI 验收、按报告受控修改源码并使用相同页面与视口复验；确定性的配置、状态和产物边界由插件脚本校验。插件固定内置 Playwright 运行时和配套 Chromium headless shell，业务项目通过适配器接收 Playwright API，不需要二次安装；Codex Browser 或同类视觉能力继续作为可选兜底，不能成为基础流程的单点依赖。
 
 在前三轮交付基础上，当前闭环仍有四个直接影响原目标的缺口：模板不能执行结构化交互，Playwright 只采集证据而不能形成确定性视觉结论，内置浏览器只覆盖 `darwin-arm64`，多个底层命令尚未形成跨工具统一入口。本轮只补齐这四层，不新增独立管理平台、通用 RPA、远程设计平台连接器或无人值守源码修改。
+
+2026-08-13 用户进一步确认 Playwright 不能只覆盖首批两个平台。兼容范围扩展为 Apple Silicon 与 Intel Mac、Linux x64 与 ARM64、Windows x64 五个平台运行包；各平台继续独立携带浏览器资产、许可和完整性清单，并通过对应原生 CI 真实启动验证。
 
 ## 决策台账
 
@@ -33,7 +35,7 @@
 | D-10 | Playwright 发布形态 | 已确认 | 固定 Playwright 版本、许可文件和仅供无头验收使用的 Chromium headless shell 随插件发布；运行前校验操作系统、CPU、包版本、浏览器可执行文件和完整性，不兼容时明确阻塞或使用已声明视觉兜底，不在用户机器下载依赖 | 用户明确要求“跟 OpenSpec 一样都下载到当前项目中，然后走项目里面的依赖，避免用户二次安装” |
 | D-11 | 结构化交互执行 | 已确认 | 新配置可以使用受限结构化步骤表达点击、悬停、填写、按键、选择、勾选、显隐等待、文本或 URL 断言和分段截图；默认适配器按顺序执行且所有选择器、值和产物路径参与场景指纹。禁止任意 JavaScript、Shell、动态模块和未声明外部文件；旧字符串交互继续只作为自定义适配器说明，不被静默解释 | 用户确认先补齐交互 DSL，并明确目标包含弹窗、下拉、表单等复杂 UI 验收 |
 | D-12 | 确定性视觉判断 | 已确认 | 插件使用 DOM/计算样式断言与受控图片区域比较形成 `passed`、`needs-fix` 或 `inconclusive` 三态结果；待分析、对齐失败、中置信度差异或证据不足不得写成通过。只有 `inconclusive` 且场景已声明视觉兜底时，才交给 Codex Browser 或同类能力。必要的固定轻量图片比较依赖随插件发布，业务项目零安装 | 用户确认补齐确定性视觉判断，同时保留视觉插件作为不确定场景兜底 |
-| D-13 | 首批跨平台运行包 | 已确认 | Playwright 运行时改为按 `platform-arch` 索引并独立校验的运行包，本轮必须覆盖现有 `darwin-arm64` 与 GitHub Actions 使用的 `linux-x64`；运行阶段只选择插件已携带的匹配包，不联网下载。Windows、Intel Mac、Linux ARM 和把所有平台塞进单一通用浏览器包均不在本轮范围 | 用户确认先补齐跨平台层；前述方案已明确第一阶段优先 Apple Silicon Mac 与 Linux x64 CI |
+| D-13 | 跨平台运行包 | 已确认 | Playwright 运行时按 `platform-arch` 索引并独立校验，必须覆盖 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`；运行阶段只选择插件已携带的匹配包，不联网下载，也不把多平台资产混入单一通用浏览器包 | 用户先确认 Apple Silicon Mac 与 Linux x64 首批支持；2026-08-13 进一步明确“Playwright 其它平台的也需要补充”，结合上一轮明确列出的 Intel Mac、Linux ARM 与 Windows 缺口确定本轮范围 |
 | D-14 | 跨工具统一编排 | 已确认 | 新增一个薄的 Node.js 入口统一组织计划、状态创建、结构化交互、证据采集、确定性判断、报告和复验，输出稳定 JSON 与退出码 `0=passed`、`1=needs-fix`、`2=inconclusive`、`3=blocked`；默认仍只预览，显式 `--write` 才产生运行产物。入口不启动任意项目命令、不自动修复源码、不提交推送，也不绑定特定 CI | 用户确认补齐一键流程编排，并坚持项目自动化或插件形态而非独立平台 |
 | D-15 | 真实项目迁移与预览就绪 | 已确认 | 版本 2 统一入口的预览只有在受信适配器摘要匹配、平台运行包可用、比较规则完整且复验上下文一致时才返回 `readyToWrite: true`；自定义版本 2 适配器在预览阶段即以 `blocked` 和退出码 3 停止且不创建产物，不自动覆盖、执行或降级。登录态、接口模拟和固定假数据必须由不含真实凭据的项目自有本地页面环境准备，不能写入受信适配器；迁移后建立独立基线。受控故障注入必须明确标记，不能代替真实源码当前态验收，验收环境或配置问题不得进入业务源码修复候选 | 2026-08-11 真实项目完整复跑暴露旧适配器迁移、预览假就绪和证据来源边界；用户确认调整 |
 
@@ -51,7 +53,7 @@
 - 更新插件结构校验、README 和测试，确保新增 Skills 与脚本随插件发布。
 - 新增受限结构化交互执行器，使常见弹窗、下拉、悬停、表单和状态切换不再要求每项目手写适配器。
 - 新增确定性 DOM/样式与图片区域比较，使用 `inconclusive` 承接无法可靠判断的结果并保留显式视觉兜底。
-- 将内置 Playwright 运行时调整为平台索引，首批覆盖 `darwin-arm64` 与 `linux-x64`，两个平台都必须真实启动 Chromium。
+- 将内置 Playwright 运行时扩展为五个平台索引，覆盖 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`，每个平台都必须在对应原生环境真实启动 Chromium。
 - 新增跨工具统一编排入口和稳定退出码，在不扩大自动修复权限的前提下串联验收与复验。
 - 增加真实项目迁移与预览就绪门禁：受信适配器保持不可定制，项目自有页面环境负责本地假登录和固定数据，预览不可执行时直接阻塞且不创建产物。
 
@@ -64,7 +66,7 @@
 - 在没有稳定节点、源码目标、修改边界或复验断言时执行自动修复。
 - 通用 RPA、任意脚本执行、验证码、Canvas/WebGL 语义理解、多窗口自动化和认证信息托管。
 - 独立视觉 SaaS、完整设计系统扫描器、远程 Figma/蓝湖同步或强制依赖 AI 视觉模型。
-- 本轮提供 Windows、Intel Mac、Linux ARM 浏览器运行包，或在运行阶段联网补装缺失平台资产。
+- Windows ARM64、Linux ARM32、其他操作系统或在运行阶段联网补装缺失平台资产。
 - 统一入口自动启动业务项目命令、自动修改源码、自动提交推送或回写远程 CI/PR 状态。
 - 自动覆盖版本 2 自定义适配器、把真实登录凭据写入配置或适配器，或把受控故障注入描述成真实源码回归。
 
@@ -74,8 +76,8 @@
 - 默认适配器能够执行受限结构化交互，并在最终状态采集节点与 DOM 观察；弹窗、下拉、悬停、表单、按键、断言和分段截图综合场景已经真实 Chromium 验证。
 - DOM、图片区域和混合比较已形成 `passed`、`needs-fix` 与 `inconclusive` 三态，差异图、不可修复问题、修复候选和视觉兜底分流均有独立合同。
 - 计算样式改为精确匹配，全遮罩零像素保持不确定；异步节点按步骤超时等待，不可修复问题使用排除实际差异值的稳定身份。
-- Playwright 共享运行时已携带 PNGJS 与 pixelmatch，浏览器资产拆为 `darwin-arm64` 和 `linux-x64` 独立运行包；Mac 本地真实启动、两套完整性及安装缓存已通过。
-- `ui-review-runner.mjs` 已统一预览、验收与复验，复验预览会前置校验上下文；版本 2 只执行摘要匹配且从插件目录加载的受信适配器，稳定返回四类退出码，不启动项目命令或自动修改源码。GitHub Actions 的 Linux x64 真实启动门禁已配置，仍需本分支推送后取得远端运行证据。
+- Playwright 共享运行时已携带 PNGJS 与 pixelmatch，浏览器资产拆为 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64` 五个独立运行包；五平台 880 个文件的完整性和安装缓存已通过，Apple Silicon Mac 本地真实启动成功。
+- `ui-review-runner.mjs` 已统一预览、验收与复验，复验预览会前置校验上下文；版本 2 只执行摘要匹配且从插件目录加载的受信适配器，稳定返回四类退出码，不启动项目命令或自动修改源码。GitHub Actions 五平台原生矩阵已配置，仍需本分支推送后取得其余平台的远端启动证据。
 - 真实翻译项目原版本 2 适配器包含假登录、接口路由和固定数据，已被正确识别为 `project-adapter`；但统一入口预览仍返回 `ok: true` 和退出码 0，Skill 也没有给出可重复的迁移、页面环境和受控证据标记步骤，导致预览成功不能证明可正式执行。
 
 ## 期望行为
@@ -143,10 +145,10 @@
 - 并且：`inconclusive` 不得进入自动修复；只有已声明且当前工具可用的视觉兜底可以补充最终结论，结果仍需通过相同状态校验。
 - 异常或边界：设计图片尺寸不兼容、动态区域未声明忽略、比较依赖或图片损坏时不得降级为零问题通过。
 
-### 场景：在 macOS ARM 与 Linux x64 使用内置浏览器
+### 场景：在五个受支持平台使用内置浏览器
 
 - 前置条件：插件发布物包含当前 `platform-arch` 对应的运行包、许可和独立完整性清单。
-- 当：本地 Apple Silicon Mac 或 Linux x64 CI 请求采集计划并启动浏览器冒烟验证。
+- 当：Apple Silicon Mac、Intel Mac、Linux x64、Linux ARM64 或 Windows x64 环境请求采集计划并启动浏览器冒烟验证。
 - 则：运行时选择唯一匹配包，真实启动 Chromium 并产生截图，不修改业务项目依赖，也不读取其他平台包作为回退。
 - 异常或边界：当前平台没有运行包、运行包混装、摘要变化或浏览器不可执行时输出 `blocked`，不得把平台跳过当成支持通过。
 
@@ -201,6 +203,7 @@
 | prefer-portable-ui-review-capture | D-08、D-09 | A-01、A-02、A-04、A-05、A-06 |
 | bundle-playwright-runtime | D-08、D-09、D-10 | A-02、A-05、A-06、A-07 |
 | complete-ui-review-capability-chain | D-01、D-03、D-06、D-07、D-08、D-09、D-10、D-11、D-12、D-13、D-14、D-15 | A-01、A-02、A-03、A-04、A-06、A-07、A-08、A-09、A-10、A-11、A-12、A-13 |
+| expand-playwright-platform-runtime | D-08、D-10、D-13 | A-07、A-10、A-12 |
 
 ## 修订记录
 
@@ -220,18 +223,20 @@
 | R-12 | 2026-08-11 | D-02、D-03、D-06、D-08、D-09、D-14、D-15 | A-01、A-02、A-03、A-04、A-06、A-11、A-13 | 完成三个 Skill、共享合同和统一入口就绪门禁调整；重新安装插件缓存后，真实项目原配置安全阻塞且零产物，受信页面环境 9 个场景、受控故障基线、同上下文复验、专项测试和 UAT 构建均通过。远端 Linux x64 真实启动证据仍由 V-11、A-10、A-12 单独保持未完成。 |
 | R-13 | 2026-08-11 | D-10、D-13 | A-10、A-12 | 核验分支 `codex/verification-hardening` 的 GitHub Actions 运行 `31465108200`：commit `f9fe3f80a8b68101ad19f2fcc459f1195eba45a0` 与当前远端 HEAD 一致，`ubuntu-latest` 上内置 Chromium 返回 `platformKey=linux-x64`、`skipped=false` 并生成 3017 字节截图；当前未提交改动未触碰 Linux 运行链，V-11、6.9、A-10 与 A-12 据此关闭。 |
 | R-14 | 2026-08-12 | D-01、D-07、D-10、D-13、D-14 | A-01、A-10、A-11、A-12 | 完成发布收尾：精确忽略 Playwright 运行时目录中的 `.DS_Store`，更新并重装缓存版本 `0.12.0+codex.20260812012020`，安装副本完整性和 Chromium 真实启动通过；当前 commit `ef389ca73b17dba2bb6d2048eb813e7d8e656a5b` 的 `ubuntu-latest` CI 再次成功。插件源码仓库按用户决定不初始化 Wayfinder，不影响插件面向业务项目提供初始化与检查能力。 |
+| R-15 | 2026-08-13 | D-08、D-10、D-13 | A-07、A-10、A-12 | 用户要求补充 Playwright 其他平台，兼容范围从两个运行包扩展到 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台；需求恢复为已确认，A-10、A-12 重新打开，新增 V-17 计划，并建立 `expand-playwright-platform-runtime` 受管变更。 |
+| R-16 | 2026-08-13 | D-08、D-10、D-13 | A-07、A-10、A-12 | 五个平台元数据、独立运行资产、SHA-256 清单和原生 CI 矩阵已落地；本地 164 项测试、统一 7 阶段门禁、8 个官方 Skill validator、Plugin validator、安装缓存 880 文件完整性及 `darwin-arm64` 真实截图通过。A-10、A-12 继续等待分支推送后的五平台原生 CI 证据。 |
 
 ## 兼容性与风险
 
 - 受影响页面、公共组件、路由、权限或接口：不修改业务页面；新增插件公共 Skill、脚本、模板和结构校验，属于所有安装项目可见的共享能力。
 - 历史数据与兼容策略：保留现有 `REQ-2026-019`、样例验收结果、字符串交互和命令式 `projectPlaywright.command`；新结构化交互与比较字段为增量合同。新状态必须能够识别历史基线并拒绝不安全降级，未知版本继续拒绝处理。
-- 上线与回滚注意事项：平台运行包必须独立校验且不能混用；Linux 发布资产显著增加体积，应保持平台目录可拆分和完整性可追踪。视觉兜底取决于当前 AI 工具是否提供能力；确定性判断与兜底都不能下结论时使用 `inconclusive`，不能伪造验收。统一入口只是现有底层命令的编排层，可以回退到细粒度命令而不改变历史配置。
+- 上线与回滚注意事项：平台运行包必须独立校验且不能混用；新增三个浏览器包会继续增加 Git LFS 和插件安装体积，应保持平台目录可拆分、摘要可追踪，并避免 CI 重复执行与当前平台无关的全量逻辑。视觉兜底取决于当前 AI 工具是否提供能力；确定性判断与兜底都不能下结论时使用 `inconclusive`，不能伪造验收。统一入口只是现有底层命令的编排层，可以回退到细粒度命令而不改变历史配置。
 
 ## 测试与验证
 
-- 测试文件策略：复用；目标路径：`tests/ui-review-automation.test.mjs`；基线证据：该文件已由 Git 跟踪并专门覆盖 UI 验收配置、状态、Playwright 适配器和复验合同；选择理由：结构化交互、确定性判断和统一入口继续属于同一手写专用功能。平台运行包选择与发布矩阵新建 `tests/ui-review-platform-runtime.test.mjs`，当前路径不存在且未被 Git 跟踪，避免将大体积平台发布职责继续堆入功能测试。
-- 验证范围：全量；执行命令：聚焦 `node --test tests/ui-review-automation.test.mjs`，随后 `npm test`、`npm run validate`、`npm run verify`；选择理由：新增公共 Skills 并修改插件结构校验、README 和发布资产，影响插件所有使用者及统一验证链路。
-- 自动测试：继续覆盖既有合同；新增弹窗、下拉、悬停和表单结构化步骤，未知动作与任意代码拒绝，截图前动画与字体稳定，结构范围和视觉范围结论分离，DOM 几何/样式和图片区域通过、失败、不确定三态，统一入口预览、写入、退出码和复验，平台包选择、独立完整性以及 macOS ARM 与 Linux x64 真实浏览器启动。
+- 测试文件策略：复用；目标路径：`tests/ui-review-platform-runtime.test.mjs`；基线证据：该文件已由 Git 跟踪并专门覆盖平台运行包选择、隔离、完整性和真实浏览器冒烟；选择理由：本次只扩展同一平台发布矩阵，不把平台职责重新并入 UI 功能聚合测试。
+- 验证范围：全量；执行命令：聚焦 `node --test tests/ui-review-platform-runtime.test.mjs`，随后 `npm test`、`npm run validate`、`npm run verify`，并由 GitHub Actions 在五个原生平台矩阵执行 `npm run verify`；选择理由：平台列表、结构校验、发布资产和共享验证入口影响所有插件安装者，且本机无法代替其他 CPU 与操作系统的真实启动证据。
+- 自动测试：扩展平台包选择、独立完整性、缺包、混装和摘要变化场景；在 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64` 对应原生 CI 中真实启动 Chromium 并生成截图，任何平台不得通过跳过冒烟伪装支持。
 - 人工检查：检查三个 Skill 的触发描述、职责边界、真实项目迁移步骤和串联方式；在真实翻译项目或隔离 fixture 上执行包含弹窗、下拉和表单的综合场景，确认自定义版本 2 适配器预览直接阻塞且不创建产物，迁移后的受信环境可完整执行，受控故障注入与真实源码当前态证据分开标记，视觉范围缺少几何、样式或图片证据时保持不确定。
 - 构建与静态检查：官方 Skill validator 检查三个新 Skill，官方 Plugin validator 检查 manifest，`git diff --check` 检查补丁格式，仓库 AI 标记策略测试保持通过。
 
@@ -255,6 +260,7 @@
 | V-14 | 自动 | UI-review 专项 30/30 覆盖样式精确比较、零有效像素不确定、异步节点等待、稳定问题指纹、复验预览前置校验和受信内置适配器摘要；`npm test` 112/112、`npm run verify` 154/154 且 7/7 阶段通过，结构校验、严格 OpenSpec 24/24、8 个官方 Skill validator、Plugin validator、适配器模板摘要一致和 `git diff --check` 全部通过 | 2026-08-11 | 通过 | `tests/ui-review-automation.test.mjs`、`plugins/frontend-ai-workflow/scripts/ui-review-*.mjs`、`plugins/frontend-ai-workflow/scripts/playwright-adapter-runner.mjs`、`scripts/verify.mjs` |
 | V-15 | 自动+人工 | Chromium 视口 `1440px × 900px` 与 `1280px × 800px`、DPR 1；检查项：原项目自定义适配器安全阻塞、迁移预览零产物、受控故障来源、同上下文复验、九场景真实当前态和 Browser 兜底边界。UI-review 专项 30/30、`npm test` 112/112、`npm run verify` 154/154 且 7/7 阶段通过，结构校验、严格 OpenSpec 24/24、三个官方 Skill validator、Plugin validator 与 `git diff --check` 全部通过；缓存版本 `0.12.0+codex.20260811083530` 重装且源码/缓存一致。真实翻译项目原配置预览为 `blocked/3`、`readyToWrite: false`、零产物；迁移后 9/9 预览就绪且零产物，受控基线检出 2 项，同上下文复验 `resolved=2`、`remaining=0`、`new=0`，真实当前态 9/9 通过、零 finding、零 Browser 兜底，专项测试 16/16 和 UAT 构建通过 | 2026-08-11 | 通过 | `tests/ui-review-automation.test.mjs`、三个 UI `SKILL.md`、`plugins/frontend-ai-workflow/references/ui-review-workflow.md`、翻译项目 `.frontend-ui-review/evidence/20260811-skill-contract-real-rerun/`、本机插件缓存；当前态截图 /Users/lvshuai/Desktop/ikang/architect/fanyi-hebing/frontend/.frontend-ui-review/evidence/20260811-skill-contract-real-rerun/.frontend-ui-review/runs/20260811-contract-controlled-verify/translation-list-manual-1440/actual.png |
 | V-16 | 自动 | 缓存版本更新为 `0.12.0+codex.20260812012020` 并从本地 marketplace 重装；安装副本的 Playwright 536 文件完整性通过，`darwin-arm64` Chromium 真实启动返回 `skipped=false`、`screenshotBytes=3509`；8 个官方 Skill validator、Plugin validator、仓库结构校验和 `git diff --check` 全部通过，运行时 `.DS_Store` 已被精确忽略 | 2026-08-12 | 通过 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json`、`.gitignore`、本机插件缓存 `/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow/frontend-ai-workflow/0.12.0+codex.20260812012020/` |
+| V-17 | 自动 | 本地阶段：平台专项 5/5、`npm test` 164/164、`npm run validate`、`npm run verify` 7/7、严格 OpenSpec 26/26、8 个官方 Skill validator、Plugin validator、Git LFS 属性和 `git diff --check` 均通过；源码与安装缓存的五平台清单均覆盖 880 个文件，`darwin-arm64` 返回 `skipped=false`、`screenshotBytes=3509`。待分支推送后继续核验 GitHub Actions `macos-15`、`macos-15-intel`、`ubuntu-24.04`、`ubuntu-24.04-arm`、`windows-2025` 原生启动与截图 | 2026-08-13 | 计划 | `tests/ui-review-platform-runtime.test.mjs`、`scripts/verify.mjs`、`.github/workflows/validate.yml`、本机插件缓存 `/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow/frontend-ai-workflow/0.13.0+codex.20260813022518/` |
 
 ## 验收标准
 
@@ -267,9 +273,9 @@
 - [x] [A-07] Playwright 包、匹配平台的 Chromium headless shell、许可和完整性元数据随插件发布；业务项目无需修改 `package.json` 或锁文件，平台或摘要不匹配时不会联网安装或生成虚假通过。
 - [x] [A-08] 新配置能够用受限结构化步骤完成弹窗、下拉、悬停和表单等常见交互；步骤顺序、断言、目标和截图可追踪，非法动作、任意代码和旧字符串猜测被拒绝。
 - [x] [A-09] 确定性 DOM/样式与图片区域比较能够区分 `passed`、`needs-fix` 和 `inconclusive`；分析未完成、证据不足、中置信度差异和对齐失败不能写成通过，视觉能力只处理已声明的不确定兜底。
-- [x] [A-10] 插件运行包首批覆盖 `darwin-arm64` 与 `linux-x64`，两个平台都必须使用各自完整性清单真实启动 Chromium 并生成截图；业务项目零安装，GitHub Actions 不再以平台跳过证明 Linux 支持。
+- [ ] [A-10] 插件运行包覆盖 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`，五个平台都必须使用各自完整性清单在原生环境真实启动 Chromium 并生成截图；业务项目零安装，CI 不得以平台跳过证明支持。
 - [x] [A-11] 其他 AI 工具和 CI 可以通过一个 Node.js 入口预览或显式执行验收与复验，获得稳定 JSON、产物和四类退出码；预览只有可正式执行时才返回 `readyToWrite: true`，入口不启动任意项目命令、不自动修改源码或扩大远程权限。
-- [x] [A-12] 新增聚焦测试、平台运行包测试、全量仓库验证、全部官方 Skill validator、Plugin validator 和复杂场景人工验收全部通过，且旧配置、细粒度命令和三 Skill 安全边界保持兼容。
+- [ ] [A-12] 聚焦平台测试、五平台原生冒烟、全量仓库验证、全部官方 Skill validator、Plugin validator 和安装缓存检查全部通过，且旧配置、细粒度命令和三 Skill 安全边界保持兼容。
 - [x] [A-13] 真实项目已有自定义版本 2 适配器时，预览在零产物前提下给出稳定阻塞和迁移方向；不含真实凭据的项目页面环境承载假登录与固定数据，受信适配器保持原样，迁移后使用独立基线完成验收；受控故障证据与真实源码当前态证据分开，环境问题不会触发业务源码修复。
 
 ## 验收—证据映射
@@ -285,9 +291,9 @@
 | A-07 | 内置 Playwright 运行时 | D-08、D-10 | 自动 | 运行时检查、完整性清单、真实 Chromium 启动测试和结构校验 | 固定包与浏览器随插件发布，目标项目零依赖安装，平台或摘要不匹配时安全失败 | V-07、V-08 |
 | A-08 | 结构化复杂交互 | D-04、D-08、D-11 | 自动+人工 | `tests/ui-review-automation.test.mjs`、模板配置与适配器、综合 UI fixture | 常见弹窗、下拉、悬停和表单步骤无需项目手写适配器即可执行；异步创建节点可在超时内等待；截图前等待有限动画、字体和双帧稳定；非法动作和任意代码失败关闭 | V-09、V-12、V-13、V-14 |
 | A-09 | 确定性视觉三态 | D-05、D-06、D-09、D-12 | 自动+人工 | 判断器聚焦测试、结构化结果、已声明视觉兜底人工记录 | 视觉范围必须含有效样式、几何或至少一个实际比较像素；样式精确匹配，零有效像素和其他证据不足不误报且只进入显式视觉兜底 | V-10、V-12、V-13、V-14 |
-| A-10 | macOS ARM 与 Linux x64 运行包 | D-08、D-10、D-13 | 自动 | 平台运行包测试、独立完整性清单、macOS 本地与 GitHub Actions Linux 冒烟截图 | 两个平台选择匹配运行包并真实启动；缺包、混装和摘要变化稳定阻塞 | V-11、V-12 |
+| A-10 | 五平台 Playwright 运行包 | D-08、D-10、D-13 | 自动 | 平台运行包测试、五套独立完整性清单和 GitHub Actions 原生平台冒烟截图 | 五个平台选择匹配运行包并真实启动；缺包、混装和摘要变化稳定阻塞 | V-11、V-17 |
 | A-11 | 跨工具统一入口 | D-01、D-03、D-07、D-14、D-15 | 自动 | 统一入口聚焦测试、JSON 结果与退出码断言 | 单入口在预览阶段即拒绝不可执行计划和非法复验上下文；只有完整就绪计划返回 `readyToWrite: true` | V-12、V-13、V-14、V-15 |
-| A-12 | 四层增强完整验证 | D-01、D-03、D-06～D-15 | 自动+人工 | 聚焦测试、全量验证、官方 validators、缓存安装与复杂场景验收证据 | 四层能力与真实项目迁移合同可用，源码、安装缓存和验收证据一致且未扩大权限 | V-09、V-10、V-11、V-12、V-13、V-14、V-15 |
+| A-12 | 四层增强与五平台完整验证 | D-01、D-03、D-06～D-15 | 自动+人工 | 聚焦测试、五平台 CI、全量验证、官方 validators、缓存安装与复杂场景验收证据 | 四层能力、五平台运行包与真实项目迁移合同可用，源码、安装缓存和验收证据一致且未扩大权限 | V-09、V-10、V-11、V-12、V-13、V-14、V-15、V-17 |
 | A-13 | 真实项目迁移与证据来源 | D-02、D-03、D-06、D-08、D-09、D-14、D-15 | 自动+人工 | 三个 UI Skill、共享合同、预览聚焦测试、真实翻译项目持久证据与安装缓存 | 原自定义适配器预览安全阻塞且零产物；受信页面环境完成 9 个场景和同上下文复验；受控与真实当前态证据分开且环境问题不进入修复 | V-15 |
 
 ## 待确认问题
