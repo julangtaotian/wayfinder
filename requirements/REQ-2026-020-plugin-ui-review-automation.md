@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：待验证
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：当前开发迭代
@@ -225,6 +225,7 @@
 | R-14 | 2026-08-12 | D-01、D-07、D-10、D-13、D-14 | A-01、A-10、A-11、A-12 | 完成发布收尾：精确忽略 Playwright 运行时目录中的 `.DS_Store`，更新并重装缓存版本 `0.12.0+codex.20260812012020`，安装副本完整性和 Chromium 真实启动通过；当前 commit `ef389ca73b17dba2bb6d2048eb813e7d8e656a5b` 的 `ubuntu-latest` CI 再次成功。插件源码仓库按用户决定不初始化 Wayfinder，不影响插件面向业务项目提供初始化与检查能力。 |
 | R-15 | 2026-08-13 | D-08、D-10、D-13 | A-07、A-10、A-12 | 用户要求补充 Playwright 其他平台，兼容范围从两个运行包扩展到 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台；需求恢复为已确认，A-10、A-12 重新打开，新增 V-17 计划，并建立 `expand-playwright-platform-runtime` 受管变更。 |
 | R-16 | 2026-08-13 | D-08、D-10、D-13 | A-07、A-10、A-12 | 五个平台元数据、独立运行资产、SHA-256 清单和原生 CI 矩阵已落地；本地 164 项测试、统一 7 阶段门禁、8 个官方 Skill validator、Plugin validator、安装缓存 880 文件完整性及 `darwin-arm64` 真实截图通过。A-10、A-12 继续等待分支推送后的五平台原生 CI 证据。 |
+| R-17 | 2026-08-13 | D-08、D-10、D-13 | A-10、A-12 | 修复 Windows Chromium `debug.log` 运行副作用、OpenSpec 真实路径别名和测试路径分隔符兼容后，commit `7b083c95458c03f2773e3c091a48164c7672f015` 的 GitHub Actions 运行 `31665699089` 在五个原生 Runner 全部成功；V-17 通过，A-10、A-12 关闭，需求推进到待验证。 |
 
 ## 兼容性与风险
 
@@ -260,7 +261,7 @@
 | V-14 | 自动 | UI-review 专项 30/30 覆盖样式精确比较、零有效像素不确定、异步节点等待、稳定问题指纹、复验预览前置校验和受信内置适配器摘要；`npm test` 112/112、`npm run verify` 154/154 且 7/7 阶段通过，结构校验、严格 OpenSpec 24/24、8 个官方 Skill validator、Plugin validator、适配器模板摘要一致和 `git diff --check` 全部通过 | 2026-08-11 | 通过 | `tests/ui-review-automation.test.mjs`、`plugins/frontend-ai-workflow/scripts/ui-review-*.mjs`、`plugins/frontend-ai-workflow/scripts/playwright-adapter-runner.mjs`、`scripts/verify.mjs` |
 | V-15 | 自动+人工 | Chromium 视口 `1440px × 900px` 与 `1280px × 800px`、DPR 1；检查项：原项目自定义适配器安全阻塞、迁移预览零产物、受控故障来源、同上下文复验、九场景真实当前态和 Browser 兜底边界。UI-review 专项 30/30、`npm test` 112/112、`npm run verify` 154/154 且 7/7 阶段通过，结构校验、严格 OpenSpec 24/24、三个官方 Skill validator、Plugin validator 与 `git diff --check` 全部通过；缓存版本 `0.12.0+codex.20260811083530` 重装且源码/缓存一致。真实翻译项目原配置预览为 `blocked/3`、`readyToWrite: false`、零产物；迁移后 9/9 预览就绪且零产物，受控基线检出 2 项，同上下文复验 `resolved=2`、`remaining=0`、`new=0`，真实当前态 9/9 通过、零 finding、零 Browser 兜底，专项测试 16/16 和 UAT 构建通过 | 2026-08-11 | 通过 | `tests/ui-review-automation.test.mjs`、三个 UI `SKILL.md`、`plugins/frontend-ai-workflow/references/ui-review-workflow.md`、翻译项目 `.frontend-ui-review/evidence/20260811-skill-contract-real-rerun/`、本机插件缓存；当前态截图 /Users/lvshuai/Desktop/ikang/architect/fanyi-hebing/frontend/.frontend-ui-review/evidence/20260811-skill-contract-real-rerun/.frontend-ui-review/runs/20260811-contract-controlled-verify/translation-list-manual-1440/actual.png |
 | V-16 | 自动 | 缓存版本更新为 `0.12.0+codex.20260812012020` 并从本地 marketplace 重装；安装副本的 Playwright 536 文件完整性通过，`darwin-arm64` Chromium 真实启动返回 `skipped=false`、`screenshotBytes=3509`；8 个官方 Skill validator、Plugin validator、仓库结构校验和 `git diff --check` 全部通过，运行时 `.DS_Store` 已被精确忽略 | 2026-08-12 | 通过 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json`、`.gitignore`、本机插件缓存 `/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow/frontend-ai-workflow/0.12.0+codex.20260812012020/` |
-| V-17 | 自动 | 本地阶段：平台专项 5/5、`npm test` 164/164、`npm run validate`、`npm run verify` 7/7、严格 OpenSpec 26/26、8 个官方 Skill validator、Plugin validator、Git LFS 属性和 `git diff --check` 均通过；源码与安装缓存的五平台清单均覆盖 880 个文件，`darwin-arm64` 返回 `skipped=false`、`screenshotBytes=3509`。待分支推送后继续核验 GitHub Actions `macos-15`、`macos-15-intel`、`ubuntu-24.04`、`ubuntu-24.04-arm`、`windows-2025` 原生启动与截图 | 2026-08-13 | 计划 | `tests/ui-review-platform-runtime.test.mjs`、`scripts/verify.mjs`、`.github/workflows/validate.yml`、本机插件缓存 `/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow/frontend-ai-workflow/0.13.0+codex.20260813022518/` |
+| V-17 | 自动 | 本地阶段：平台专项 5/5、`npm test` 165/165、`npm run validate`、`npm run verify` 7/7、严格 OpenSpec 26/26、8 个官方 Skill validator、Plugin validator、Git LFS 属性和 `git diff --check` 均通过；源码与安装缓存的五平台清单均覆盖 880 个文件，安装缓存 `darwin-arm64` 返回 `skipped=false`、`screenshotBytes=3509`。远端阶段：commit `7b083c95458c03f2773e3c091a48164c7672f015` 的运行 `31665699089` 五个原生任务全部成功，分别返回 `linux-x64/false/3017`、`darwin-x64/false/3506`、`linux-arm64/false/2814`、`win32-x64/false/1909`、`darwin-arm64/false/3506`（顺序为 `platformKey/skipped/screenshotBytes`），没有使用 Runner 跳过或交叉平台替代 | 2026-08-13 | 通过 | `tests/ui-review-platform-runtime.test.mjs`、`scripts/verify.mjs`、`.github/workflows/validate.yml`、本机插件缓存 `/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow/frontend-ai-workflow/0.13.0+codex.20260813022518/`、[五平台运行](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089)、[Linux x64](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089/job/94339671332)、[Intel Mac](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089/job/94339671344)、[Linux ARM64](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089/job/94339671357)、[Windows x64](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089/job/94339671371)、[Apple Silicon Mac](https://github.com/julangtaotian/wayfinder/actions/runs/31665699089/job/94339671414) |
 
 ## 验收标准
 
@@ -273,9 +274,9 @@
 - [x] [A-07] Playwright 包、匹配平台的 Chromium headless shell、许可和完整性元数据随插件发布；业务项目无需修改 `package.json` 或锁文件，平台或摘要不匹配时不会联网安装或生成虚假通过。
 - [x] [A-08] 新配置能够用受限结构化步骤完成弹窗、下拉、悬停和表单等常见交互；步骤顺序、断言、目标和截图可追踪，非法动作、任意代码和旧字符串猜测被拒绝。
 - [x] [A-09] 确定性 DOM/样式与图片区域比较能够区分 `passed`、`needs-fix` 和 `inconclusive`；分析未完成、证据不足、中置信度差异和对齐失败不能写成通过，视觉能力只处理已声明的不确定兜底。
-- [ ] [A-10] 插件运行包覆盖 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`，五个平台都必须使用各自完整性清单在原生环境真实启动 Chromium 并生成截图；业务项目零安装，CI 不得以平台跳过证明支持。
+- [x] [A-10] 插件运行包覆盖 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`，五个平台都必须使用各自完整性清单在原生环境真实启动 Chromium 并生成截图；业务项目零安装，CI 不得以平台跳过证明支持。
 - [x] [A-11] 其他 AI 工具和 CI 可以通过一个 Node.js 入口预览或显式执行验收与复验，获得稳定 JSON、产物和四类退出码；预览只有可正式执行时才返回 `readyToWrite: true`，入口不启动任意项目命令、不自动修改源码或扩大远程权限。
-- [ ] [A-12] 聚焦平台测试、五平台原生冒烟、全量仓库验证、全部官方 Skill validator、Plugin validator 和安装缓存检查全部通过，且旧配置、细粒度命令和三 Skill 安全边界保持兼容。
+- [x] [A-12] 聚焦平台测试、五平台原生冒烟、全量仓库验证、全部官方 Skill validator、Plugin validator 和安装缓存检查全部通过，且旧配置、细粒度命令和三 Skill 安全边界保持兼容。
 - [x] [A-13] 真实项目已有自定义版本 2 适配器时，预览在零产物前提下给出稳定阻塞和迁移方向；不含真实凭据的项目页面环境承载假登录与固定数据，受信适配器保持原样，迁移后使用独立基线完成验收；受控故障证据与真实源码当前态证据分开，环境问题不会触发业务源码修复。
 
 ## 验收—证据映射
