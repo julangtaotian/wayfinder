@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const BUNDLED_PLAYWRIGHT_VERSION = '1.62.1';
 export const PLAYWRIGHT_RUNTIME_SCHEMA_VERSION = 2;
 export const PLAYWRIGHT_INTEGRITY_SCHEMA_VERSION = 2;
+export const PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION = 1;
 // Node 平台键是公共合同，Playwright 主机名只用于构建期下载。
 export const PLAYWRIGHT_PLATFORM_CONFIGS = Object.freeze({
   'darwin-arm64': Object.freeze({ hostPlatform: 'mac15-arm64' }),
@@ -52,6 +53,40 @@ function sha256(content) {
 
 function platformKey(platform, arch) {
   return `${platform}-${arch}`;
+}
+
+export function readPlaywrightDistribution(runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT) {
+  const distributionPath = path.join(path.resolve(runtimeRoot), 'distribution.json');
+  if (!fs.existsSync(distributionPath)) {
+    return {
+      schemaVersion: PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION,
+      kind: 'source',
+      platformKey: null,
+      excludedPlatforms: [],
+      budgetBytes: null,
+      stripped: false,
+      path: null,
+    };
+  }
+  const distribution = readJson(distributionPath);
+  if (
+    distribution.schemaVersion !== PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION
+    || distribution.kind !== 'platform'
+    || !SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(distribution.platformKey)
+    || !Number.isSafeInteger(distribution.budgetBytes)
+    || distribution.budgetBytes <= 0
+    || typeof distribution.stripped !== 'boolean'
+  ) {
+    throw new Error('Playwright 平台成品描述格式不受支持');
+  }
+  const expectedExcluded = SUPPORTED_PLAYWRIGHT_PLATFORMS.filter((key) => key !== distribution.platformKey).sort();
+  const actualExcluded = Array.isArray(distribution.excludedPlatforms)
+    ? [...distribution.excludedPlatforms].sort()
+    : [];
+  if (JSON.stringify(actualExcluded) !== JSON.stringify(expectedExcluded)) {
+    throw new Error('Playwright 平台成品排除列表与支持矩阵不一致');
+  }
+  return { ...distribution, excludedPlatforms: actualExcluded, path: distributionPath };
 }
 
 function safeRuntimeAsset(runtimeRoot, relativePath, label) {
@@ -215,6 +250,23 @@ function verifyOneManifest(expectedPath, actual, label) {
   return { ok: errors.length === 0, files: actual.files.length, errors };
 }
 
+function distributionLayoutErrors(runtimeRoot, integrityRoot, distribution) {
+  if (distribution.kind !== 'platform') return [];
+  const errors = [];
+  const allowed = new Map([
+    [path.join(runtimeRoot, 'platform-assets'), new Set([distribution.platformKey])],
+    [path.join(runtimeRoot, 'platforms'), new Set([`${distribution.platformKey}.json`])],
+    [integrityRoot, new Set(['shared.json', `${distribution.platformKey}.json`])],
+  ]);
+  for (const [directory, allowedNames] of allowed) {
+    if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) continue;
+    for (const name of fs.readdirSync(directory).filter((entry) => entry !== '.DS_Store')) {
+      if (!allowedNames.has(name)) errors.push(`Playwright 平台成品混入未授权资产：${normalizedRelative(runtimeRoot, path.join(directory, name))}`);
+    }
+  }
+  return errors;
+}
+
 export function verifyPlaywrightIntegrity({
   runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
   integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
@@ -225,12 +277,26 @@ export function verifyPlaywrightIntegrity({
   const root = path.resolve(runtimeRoot);
   const integrityRoot = path.resolve(integrityPath);
   try {
+    const distribution = readPlaywrightDistribution(root);
     const shared = verifyOneManifest(
       path.join(integrityRoot, 'shared.json'),
       buildPlaywrightIntegrityManifest(root, { kind: 'shared' }),
       'Playwright 共享运行时',
     );
-    const keys = verifyAllPlatforms ? SUPPORTED_PLAYWRIGHT_PLATFORMS : [platformKey(platform, arch)];
+    const requestedKey = platformKey(platform, arch);
+    if (distribution.kind === 'platform' && !verifyAllPlatforms && requestedKey !== distribution.platformKey) {
+      return {
+        ok: false,
+        files: shared.files,
+        shared,
+        platforms: {},
+        distribution,
+        errors: [`当前插件成品只携带 ${distribution.platformKey}，不能校验 ${requestedKey}`],
+      };
+    }
+    const keys = distribution.kind === 'platform'
+      ? [distribution.platformKey]
+      : (verifyAllPlatforms ? SUPPORTED_PLAYWRIGHT_PLATFORMS : [requestedKey]);
     const platforms = {};
     for (const key of keys) {
       const [targetPlatform, ...archParts] = key.split('-');
@@ -238,12 +304,17 @@ export function verifyPlaywrightIntegrity({
       const actual = buildPlaywrightIntegrityManifest(root, { platform: targetPlatform, arch: targetArch });
       platforms[key] = verifyOneManifest(path.join(integrityRoot, `${key}.json`), actual, `Playwright ${key} 运行包`);
     }
-    const errors = [...shared.errors, ...Object.values(platforms).flatMap((result) => result.errors)];
+    const errors = [
+      ...distributionLayoutErrors(root, integrityRoot, distribution),
+      ...shared.errors,
+      ...Object.values(platforms).flatMap((result) => result.errors),
+    ];
     return {
       ok: errors.length === 0,
       files: shared.files + Object.values(platforms).reduce((sum, result) => sum + result.files, 0),
       shared,
       platforms,
+      distribution,
       errors,
     };
   } catch (error) {
@@ -254,23 +325,27 @@ export function verifyPlaywrightIntegrity({
 export function writePlaywrightIntegrity({
   runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
   integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
-  platformKeys = SUPPORTED_PLAYWRIGHT_PLATFORMS,
+  platformKeys,
 } = {}) {
   const root = path.resolve(runtimeRoot);
   const integrityRoot = path.resolve(integrityPath);
-  for (const key of platformKeys) {
+  const distribution = readPlaywrightDistribution(root);
+  const selectedPlatformKeys = platformKeys || (
+    distribution.kind === 'platform' ? [distribution.platformKey] : SUPPORTED_PLAYWRIGHT_PLATFORMS
+  );
+  for (const key of selectedPlatformKeys) {
     if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) throw new Error(`不支持的 Playwright 平台：${key}`);
   }
   const shared = buildPlaywrightIntegrityManifest(root, { kind: 'shared' });
   writeJsonAtomic(path.join(integrityRoot, 'shared.json'), shared);
   let files = shared.files.length;
-  for (const key of platformKeys) {
+  for (const key of selectedPlatformKeys) {
     const [platform, ...archParts] = key.split('-');
     const manifest = buildPlaywrightIntegrityManifest(root, { platform, arch: archParts.join('-') });
     writeJsonAtomic(path.join(integrityRoot, `${key}.json`), manifest);
     files += manifest.files.length;
   }
-  return { ok: true, files, integrityPath: integrityRoot, platforms: [...platformKeys] };
+  return { ok: true, files, integrityPath: integrityRoot, platforms: [...selectedPlatformKeys] };
 }
 
 function unavailable(reason, details = {}) {
@@ -300,8 +375,17 @@ export function inspectBundledPlaywright({
   if (useCache && cachedInspections.has(key) && (!verifyIntegrity || cachedInspections.get(key).integrity?.ok)) {
     return cachedInspections.get(key);
   }
-  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) return unavailable(`插件未携带 ${key} 的 Playwright 运行包`, { platform, arch });
   const root = path.resolve(runtimeRoot);
+  let distribution;
+  try {
+    distribution = readPlaywrightDistribution(root);
+  } catch (error) {
+    return unavailable(`无法检查 Playwright 平台成品：${error.message}`, { platform, arch });
+  }
+  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) return unavailable(`插件未携带 ${key} 的 Playwright 运行包`, { platform, arch, distribution });
+  if (distribution.kind === 'platform' && distribution.platformKey !== key) {
+    return unavailable(`当前插件成品只携带 ${distribution.platformKey}，不支持 ${key}`, { platform, arch, distribution });
+  }
   const requiredFiles = ['package.json', 'package-lock.json', 'node_modules/playwright/package.json', 'node_modules/playwright/index.mjs'];
   const missing = requiredFiles.filter((relativePath) => !fs.existsSync(path.join(root, relativePath)));
   if (missing.length) return unavailable(`插件内置 Playwright 共享运行时文件不完整：${missing.join('、')}`);
@@ -364,6 +448,7 @@ export function inspectBundledPlaywright({
       modulePath: path.join(root, 'node_modules', 'playwright', 'index.mjs'),
       browsersPath,
       integrity,
+      distribution,
       reason: null,
     };
     if (useCache) cachedInspections.set(key, inspection);

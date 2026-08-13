@@ -35,3 +35,10 @@ jobs:
         with:
           node-version: 20.19.0
       - run: npm run verify
+      - name: Build and verify platform plugin package
+        run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-package-report-${{ matrix.platform }}
+          path: dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
+          if-no-files-found: error

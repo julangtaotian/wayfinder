@@ -22,7 +22,7 @@
 - 对已确认“不改变可观察行为”的工具、文档或纯内部变更支持受控 `skip_specs`；其他变更仍必须提供 delta specs，完成入口不暴露跳过参数。
 - 通过插件提供通用技能，减少每个仓库重复维护 `.codex/skills`。
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
-- 随插件提供共享 Playwright、`darwin-arm64` 与 `linux-x64` 独立浏览器运行包；业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
+- 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
 当前完整回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn。Monorepo 和多个前端应用的专属编排不在本版本范围内。
 
@@ -190,7 +190,7 @@ node <插件根>/scripts/ui-review-runner.mjs review --target <项目> --scenari
 
 返回值包含固定运行时与平台、结构化交互、比较规则、预计产物和安全边界。稳定退出码为 `0=通过`、`1=需修改/复验失败`、`2=不确定`、`3=阻塞`；默认预览不创建目录。版本 1 老配置继续保持原指纹和采集语义，其字符串交互不会被猜测执行。
 
-当前仓库内置 `darwin-arm64` 与 `linux-x64` 两套独立浏览器资产，共享 Playwright、PNG 解码和像素比较代码。每套资产独立校验 Chromium、FFmpeg、许可和摘要；Windows、Intel Mac、Linux ARM 等未支持平台明确阻塞，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
+当前仓库保留 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五套规范源资产，共享 Playwright、PNG 解码和像素比较代码。发布入口为当前原生平台生成独立成品，每个成品只携带一套 Chromium、FFmpeg、许可和摘要；未支持或成品不匹配的平台明确阻塞，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
 
 ### 5. `$frontend-ui-fix`
 
@@ -329,6 +329,13 @@ npm run verify
 3. 更新 `runtime/playwright/platforms/<platform-arch>.json` 的浏览器 revision、可执行文件和许可路径；平台资产只能位于自己的独立目录。
 4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建共享及各平台完整性清单，再运行 `--inspect`、`--check` 与目标平台上的 `--smoke`。
 5. 确认 `platform-assets` 文件由 Git LFS 跟踪，在五个受支持平台都取得 `skipped: false` 的真实启动证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
+
+### 生成单平台插件成品
+
+1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output <安全暂存目录>` 预览平台、排除资产和体积预算；预览不创建目录。
+2. 仅在 `<platform-arch>` 与当前原生平台一致时追加 `--write`。成品完整保留共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时排除其他四个平台资产。
+3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。许可、FFmpeg、共享运行时和完整性文件不得用于体积裁剪。
+4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改 Git LFS 规范源；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
 
 ### 升级内置 OpenSpec
 

@@ -64,6 +64,10 @@ plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.DS_Store
 .stylelintcache
 *.tsbuildinfo
 
+# 单平台插件成品由确定性发布入口重建，不提交暂存 marketplace
+/dist/frontend-ai-workflow-*/
+/dist/frontend-ai-workflow-*.stage-*/
+
 # 测试、覆盖率和通用浏览器报告；持久 UI 验收记录仍需提交
 coverage/
 test-results/

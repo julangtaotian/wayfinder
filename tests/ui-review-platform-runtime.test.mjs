@@ -15,6 +15,10 @@ import {
   writePlaywrightIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 import { buildPlaywrightPlatform } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
+import {
+  PLATFORM_PLUGIN_SIZE_BUDGETS,
+  packagePluginPlatform,
+} from '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs';
 
 const EXPECTED_PLATFORMS = [
   'darwin-arm64',
@@ -48,9 +52,7 @@ function platformMetadata(platform, arch) {
   };
 }
 
-function createRuntimeFixture(context) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-runtime-'));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+function populateRuntimeFixture(root) {
   fs.mkdirSync(path.join(root, 'node_modules', 'playwright'), { recursive: true });
   fs.mkdirSync(path.join(root, 'node_modules', 'playwright-core'), { recursive: true });
   fs.mkdirSync(path.join(root, 'platforms'), { recursive: true });
@@ -76,7 +78,49 @@ function createRuntimeFixture(context) {
     }
   }
   writePlaywrightIntegrity({ runtimeRoot: root, integrityPath: path.join(root, 'integrity') });
+}
+
+function createRuntimeFixture(context) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-runtime-'));
+  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  populateRuntimeFixture(root);
   return root;
+}
+
+function createPluginFixture(context) {
+  const repositoryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-plugin-'));
+  context.after(() => fs.rmSync(repositoryRoot, { recursive: true, force: true }));
+  const pluginRoot = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow');
+  const runtimeRoot = path.join(pluginRoot, 'runtime', 'playwright');
+  fs.mkdirSync(path.join(pluginRoot, '.codex-plugin'), { recursive: true });
+  fs.mkdirSync(path.join(pluginRoot, 'skills', 'fixture'), { recursive: true });
+  fs.writeFileSync(path.join(repositoryRoot, 'package.json'), `${JSON.stringify({ name: 'fixture-repository', version: '0.13.0' })}\n`);
+  fs.writeFileSync(path.join(pluginRoot, '.codex-plugin', 'plugin.json'), `${JSON.stringify({
+    name: 'frontend-ai-workflow',
+    version: '0.13.0+codex.fixture',
+    skills: './skills/',
+  })}\n`);
+  fs.writeFileSync(path.join(pluginRoot, 'skills', 'fixture', 'SKILL.md'), '# Fixture\n');
+  populateRuntimeFixture(runtimeRoot);
+  return { repositoryRoot, pluginRoot, runtimeRoot };
+}
+
+function packagingOptions(context, platformKey = 'darwin-arm64') {
+  const fixture = createPluginFixture(context);
+  const distRoot = path.join(fixture.repositoryRoot, 'dist');
+  const outputRoot = path.join(distRoot, `frontend-ai-workflow-${platformKey}`);
+  const [currentPlatform, ...archParts] = platformKey.split('-');
+  return {
+    ...fixture,
+    platformKey,
+    currentPlatform,
+    currentArch: archParts.join('-'),
+    distRoot,
+    outputRoot,
+    allowedRoots: [distRoot],
+    validatePackage: async () => ({ ok: true }),
+    smokeTest: async () => ({ ok: true, skipped: false, platformKey, screenshotBytes: 256 }),
+  };
 }
 
 test('平台运行时区分共享文件、平台资产和独立完整性', (context) => {
@@ -238,6 +282,111 @@ test('平台选择拒绝缺包、混装、摘要变化和未支持平台', (cont
   const unsupported = inspectBundledPlaywright({ platform: 'win32', arch: 'arm64', useCache: false });
   assert.equal(unsupported.available, false);
   assert.match(unsupported.reason, /未携带 win32-arm64/u);
+});
+
+test('平台插件成品预览保持零写入并公开带余量预算', async (context) => {
+  const options = packagingOptions(context);
+  const result = await packagePluginPlatform(options);
+  assert.equal(result.write, false);
+  assert.equal(result.platformKey, 'darwin-arm64');
+  assert.equal(result.budgetBytes, PLATFORM_PLUGIN_SIZE_BUDGETS['darwin-arm64']);
+  assert.deepEqual(result.excludedPlatforms.sort(), EXPECTED_PLATFORMS.filter((key) => key !== 'darwin-arm64'));
+  assert.equal(fs.existsSync(options.outputRoot), false);
+});
+
+test('平台插件成品只保留匹配资产并重建完整性', async (context) => {
+  const options = packagingOptions(context);
+  const result = await packagePluginPlatform({ ...options, write: true });
+  const packagedPluginRoot = path.join(options.outputRoot, 'plugins', 'frontend-ai-workflow');
+  const packagedRuntimeRoot = path.join(packagedPluginRoot, 'runtime', 'playwright');
+  assert.equal(result.write, true);
+  assert.equal(result.sizeBytes > 0, true);
+  assert.equal(result.headroomBytes, result.budgetBytes - result.sizeBytes);
+  assert.equal(fs.existsSync(path.join(options.outputRoot, 'package-report.json')), true);
+  assert.equal(fs.existsSync(path.join(packagedPluginRoot, 'skills', 'fixture', 'SKILL.md')), true);
+  assert.equal(fs.existsSync(path.join(packagedRuntimeRoot, 'platform-assets', 'darwin-arm64')), true);
+  assert.deepEqual(fs.readdirSync(path.join(packagedRuntimeRoot, 'platform-assets')), ['darwin-arm64']);
+  assert.deepEqual(fs.readdirSync(path.join(packagedRuntimeRoot, 'platforms')), ['darwin-arm64.json']);
+  assert.deepEqual(fs.readdirSync(path.join(packagedRuntimeRoot, 'integrity')).sort(), ['darwin-arm64.json', 'shared.json']);
+  const distribution = JSON.parse(fs.readFileSync(path.join(packagedRuntimeRoot, 'distribution.json'), 'utf8'));
+  assert.equal(distribution.kind, 'platform');
+  assert.equal(distribution.platformKey, 'darwin-arm64');
+  assert.equal(distribution.budgetBytes, PLATFORM_PLUGIN_SIZE_BUDGETS['darwin-arm64']);
+  const integrity = verifyPlaywrightIntegrity({
+    runtimeRoot: packagedRuntimeRoot,
+    integrityPath: path.join(packagedRuntimeRoot, 'integrity'),
+    verifyAllPlatforms: true,
+  });
+  assert.equal(integrity.ok, true, integrity.errors.join('\n'));
+  const marketplace = JSON.parse(fs.readFileSync(path.join(options.outputRoot, '.agents', 'plugins', 'marketplace.json'), 'utf8'));
+  assert.equal(marketplace.plugins[0].source.path, './plugins/frontend-ai-workflow');
+  await assert.rejects(() => packagePluginPlatform({ ...options, write: true }), /拒绝覆盖/u);
+});
+
+test('平台插件成品拒绝危险路径和非原生写入', async (context) => {
+  const options = packagingOptions(context);
+  await assert.rejects(
+    () => packagePluginPlatform({ ...options, outputRoot: options.repositoryRoot }),
+    /安全暂存范围/u,
+  );
+  await assert.rejects(
+    () => packagePluginPlatform({ ...options, platformKey: 'linux-x64', write: true }),
+    /当前原生平台/u,
+  );
+  assert.equal(fs.existsSync(options.outputRoot), false);
+});
+
+test('平台插件成品超预算或校验失败时清理半成品', async (context) => {
+  const options = packagingOptions(context);
+  const budgets = { ...PLATFORM_PLUGIN_SIZE_BUDGETS, 'darwin-arm64': 1 };
+  await assert.rejects(
+    () => packagePluginPlatform({ ...options, write: true, budgets }),
+    /超过预算/u,
+  );
+  assert.equal(fs.existsSync(options.outputRoot), false);
+  assert.equal(fs.existsSync(options.distRoot) ? fs.readdirSync(options.distRoot).some((name) => name.includes('.stage-')) : false, false);
+
+  await assert.rejects(
+    () => packagePluginPlatform({
+      ...options,
+      write: true,
+      validatePackage: async () => ({ ok: false, reason: 'fixture invalid' }),
+    }),
+    /结构校验失败/u,
+  );
+  assert.equal(fs.existsSync(options.outputRoot), false);
+});
+
+test('Linux ARM64 只对暂存 Chromium 去除调试符号', async (context) => {
+  const options = packagingOptions(context, 'linux-arm64');
+  const metadata = platformMetadata('linux', 'arm64');
+  const sourceExecutable = path.join(options.runtimeRoot, metadata.browser.executable);
+  fs.writeFileSync(sourceExecutable, Buffer.alloc(8192, 7));
+  writePlaywrightIntegrity({ runtimeRoot: options.runtimeRoot, integrityPath: path.join(options.runtimeRoot, 'integrity') });
+  const sourceBefore = fs.readFileSync(sourceExecutable);
+  const execute = (command, args) => {
+    if (command === 'strip') {
+      const executable = args.at(-1);
+      fs.writeFileSync(executable, fs.readFileSync(executable).subarray(0, 4096));
+      return { status: 0, stdout: '', stderr: '' };
+    }
+    if (command === 'readelf') return { status: 0, stdout: 'There are no debug sections.\n', stderr: '' };
+    return { status: 1, stdout: '', stderr: `unexpected command: ${command}` };
+  };
+  const result = await packagePluginPlatform({ ...options, write: true, execute });
+  const packagedExecutable = path.join(
+    options.outputRoot,
+    'plugins',
+    'frontend-ai-workflow',
+    'runtime',
+    'playwright',
+    metadata.browser.executable,
+  );
+  assert.equal(result.stripped, true);
+  assert.equal(result.stripBeforeBytes, 8192);
+  assert.equal(result.stripAfterBytes, 4096);
+  assert.deepEqual(fs.readFileSync(sourceExecutable), sourceBefore);
+  assert.equal(fs.statSync(packagedExecutable).size, 4096);
 });
 
 test('当前受支持平台必须真实启动内置 Chromium 并截图', async () => {

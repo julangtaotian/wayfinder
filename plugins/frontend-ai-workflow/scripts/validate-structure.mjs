@@ -6,8 +6,10 @@ import {
   BUNDLED_PLAYWRIGHT_VERSION,
   SUPPORTED_PLAYWRIGHT_PLATFORMS,
   inspectBundledPlaywright,
+  readPlaywrightDistribution,
   verifyPlaywrightIntegrity,
 } from './playwright-runtime.mjs';
+import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plugin-platform.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -74,6 +76,7 @@ const UI_REVIEW_ASSETS = [
   'scripts/playwright-adapter-runner.mjs',
   'scripts/playwright-runtime.mjs',
   'scripts/build-playwright-platform.mjs',
+  'scripts/package-plugin-platform.mjs',
   'scripts/ui-review-interactions.mjs',
   'scripts/ui-review-comparator.mjs',
   'assets/templates/ui-review/config.json',
@@ -125,14 +128,10 @@ const UI_REVIEW_LAYER_ORDER = [
   'ui-review-workflow-cli.mjs',
   'ui-review-workflow.mjs',
 ];
-const PLAYWRIGHT_RUNTIME_ASSETS = [
+const PLAYWRIGHT_SHARED_RUNTIME_ASSETS = [
   'runtime/playwright/package.json',
   'runtime/playwright/package-lock.json',
   'runtime/playwright/integrity/shared.json',
-  ...SUPPORTED_PLAYWRIGHT_PLATFORMS.flatMap((platformKey) => [
-    `runtime/playwright/platforms/${platformKey}.json`,
-    `runtime/playwright/integrity/${platformKey}.json`,
-  ]),
   'runtime/playwright/node_modules/playwright/LICENSE',
   'runtime/playwright/node_modules/playwright-core/LICENSE',
   'runtime/playwright/node_modules/pngjs/LICENSE',
@@ -265,8 +264,9 @@ function validateUiReviewAssets(errors) {
   }
 }
 
-async function validateUiReviewStructure(errors) {
+async function validateUiReviewStructure(errors, distribution) {
   for (const [file, limit] of UI_REVIEW_FILE_LIMITS) {
+    if (distribution.kind === 'platform' && file.startsWith('tests/')) continue;
     const absolutePath = path.join(repositoryRoot, file);
     if (!fs.existsSync(absolutePath)) {
       errors.push(`缺少 UI 验收模块化文件：${file}`);
@@ -299,8 +299,19 @@ async function validateUiReviewStructure(errors) {
   }
 }
 
-function validatePlaywrightRuntime(errors) {
-  for (const file of PLAYWRIGHT_RUNTIME_ASSETS) {
+function validatePlaywrightRuntime(errors, distribution) {
+  const platformKeys = distribution.kind === 'platform'
+    ? [distribution.platformKey]
+    : SUPPORTED_PLAYWRIGHT_PLATFORMS;
+  const requiredAssets = [
+    ...PLAYWRIGHT_SHARED_RUNTIME_ASSETS,
+    ...platformKeys.flatMap((platformKey) => [
+      `runtime/playwright/platforms/${platformKey}.json`,
+      `runtime/playwright/integrity/${platformKey}.json`,
+    ]),
+  ];
+  if (distribution.kind === 'platform') requiredAssets.push('runtime/playwright/distribution.json');
+  for (const file of requiredAssets) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 Playwright 运行时资产：${file}`);
   }
   const runtime = inspectBundledPlaywright();
@@ -311,10 +322,22 @@ function validatePlaywrightRuntime(errors) {
   }
   const integrity = verifyPlaywrightIntegrity({ verifyAllPlatforms: true });
   if (!integrity.ok) errors.push(`Playwright 跨平台完整性校验失败：${integrity.errors.join('；')}`);
+  if (distribution.kind === 'platform') {
+    const expectedBudget = PLATFORM_PLUGIN_SIZE_BUDGETS[distribution.platformKey];
+    if (distribution.budgetBytes !== expectedBudget) {
+      errors.push(`平台成品体积预算不一致：${distribution.budgetBytes} / ${expectedBudget}`);
+    }
+    if (distribution.stripped !== (distribution.platformKey === 'linux-arm64')) {
+      errors.push(`平台成品去符号标记不正确：${distribution.platformKey}`);
+    }
+    const sizeBytes = measureLogicalSize(pluginRoot);
+    if (sizeBytes > expectedBudget) errors.push(`平台成品超过体积预算：${sizeBytes} > ${expectedBudget}`);
+  }
 }
 
 const errors = [];
 try {
+  const distribution = readPlaywrightDistribution();
   validatePlugin(errors);
   validateRuntime(errors);
   validateMarketplace(errors);
@@ -326,8 +349,8 @@ try {
   validateProjectProfileAssets(errors);
   validateRuntimeIntegrityAssets(errors);
   validateUiReviewAssets(errors);
-  await validateUiReviewStructure(errors);
-  validatePlaywrightRuntime(errors);
+  await validateUiReviewStructure(errors, distribution);
+  validatePlaywrightRuntime(errors, distribution);
 } catch (error) {
   errors.push(error.message);
 }
