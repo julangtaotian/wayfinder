@@ -1342,7 +1342,7 @@ test('经典 Table 页面忠实还原蓝湖结构、数据、操作列和分页'
     const source = read(path.join(root, 'src', 'TableScenario.vue'));
     const theme = read(path.join(root, 'src', 'theme.css'));
     const classicTableTag = source.match(/<el-table\s+class="classic-data-table"[\s\S]*?>/u)?.[0] || '';
-    const classicRowsBlock = source.match(/classicRows:\s*\[([\s\S]*?)\n\s*\],\n\s*singleSelected/u)?.[1] || '';
+    const classicRowsBlock = source.match(/classicRows:\s*\[([\s\S]*?)\r?\n\s*\],\r?\n\s*singleSelected/u)?.[1] || '';
 
     for (const text of [
       '基础表格页',

@@ -53,6 +53,12 @@ Playwright 的 Linux ARM64 Chromium headless shell 压缩包不包含授权文�
 
 继续复用 `tests/ui-review-platform-runtime.test.mjs`。fixture 为五个平台生成最小独立资产，断言共享清单不包含平台文件、每个平台只能引用自身目录、所有清单都能验证，并保留缺包、混装、摘要变化和未支持平台测试；真实浏览器测试只启动当前原生平台包。
 
+### 6. Windows 原生验证保持文本、路径和测试进程可移植
+
+仓库文本统一以 LF 检出，Playwright 的 LFS 平台资产继续显式使用 `-text`，避免 Windows 自动转换内置运行时文本后触发完整性误报。传给 Git pathspec 和诊断信息的仓库相对路径统一使用正斜杠；需要模拟 FFmpeg 的测试通过 Node 可执行文件加脚本参数启动，不依赖 Windows 不支持的 shebang 执行语义。
+
+这些调整只修正原生验证基础设施，不改变 UI Review 的配置、运行结果或平台支持范围。继续保留字节级完整性校验，不在运行时对已检出的文件进行换行归一化，以免掩盖真实篡改。
+
 ## Risks / Trade-offs
 
 - [三个新增浏览器包显著增加 Git LFS、检出和插件缓存体积] → 保持平台目录独立和 LFS 跟踪，不在普通 Git 对象中存储二进制；CI 只运行一次统一验证任务/平台，避免额外重复矩阵。

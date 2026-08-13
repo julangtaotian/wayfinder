@@ -562,6 +562,7 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
 
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   const workflow = fs.readFileSync('.github/workflows/validate.yml', 'utf8');
+  const attributes = fs.readFileSync('.gitattributes', 'utf8');
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
   assert.match(workflow, /node-version: 20\.19\.0/);
   for (const [runner, platform] of [
@@ -571,11 +572,13 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
     ['ubuntu-24.04-arm', 'linux-arm64'],
     ['windows-2025', 'win32-x64'],
   ]) {
-    assert.match(workflow, new RegExp(`- os: ${runner}\\n\\s+platform: ${platform}`));
+    assert.match(workflow, new RegExp(`- os: ${runner}\\r?\\n\\s+platform: ${platform}`));
   }
   assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
   assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), ['npm run verify']);
   assert.doesNotMatch(workflow, /npm test|npm run validate/);
+  assert.match(attributes, /^\* text=auto eol=lf$/mu);
+  assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
 });
 
 test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {

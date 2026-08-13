@@ -24,6 +24,11 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizedRepositoryPath(value) {
+  // Git pathspec 和机器可读诊断统一使用仓库正斜杠，避免 Windows 反斜杠被当作转义符。
+  return String(value || '').split(path.sep).join('/');
+}
+
 function isPlaceholder(value) {
   return !value || /^(待填写|未填写|-|—)$/u.test(value);
 }
@@ -440,9 +445,9 @@ function validateTaskReferences(changePath, decisions, acceptanceIds, selectedSc
     const content = fs.readFileSync(file, 'utf8');
     const decisionIds = new Set([...content.matchAll(/\b(D-\d{2,})\b/gu)].map((match) => match[1]));
     const acceptanceReferences = new Set([...content.matchAll(/\b(A-\d{2,})\b/gu)].map((match) => match[1]));
-    const label = path.relative(change.rootPath, file) || path.basename(file);
+    const label = normalizedRepositoryPath(path.relative(change.rootPath, file)) || path.basename(file);
     const isTasks = path.resolve(file) === path.resolve(change.tasksPath);
-    const isSpecification = label.startsWith(`specs${path.sep}`);
+    const isSpecification = label.startsWith('specs/');
     const isBusinessPlan = isSpecification || ['proposal.md', 'design.md'].includes(path.basename(file));
     if (isTasks) {
       taskDecisionIds = decisionIds;
@@ -497,7 +502,8 @@ function inspectGitBaseline(root) {
 }
 
 function isGitTracked(root, relativePath) {
-  return spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', relativePath], { encoding: 'utf8' }).status === 0;
+  const pathspec = normalizedRepositoryPath(relativePath);
+  return spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', pathspec], { encoding: 'utf8' }).status === 0;
 }
 
 function persistentEvidencePath(value) {

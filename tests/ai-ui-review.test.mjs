@@ -57,8 +57,7 @@ function createPng(filePath, width = 320, height = 180) {
 function createRenderingTools(tempRoot) {
   const ffmpegPath = path.join(tempRoot, 'fake-ffmpeg.mjs');
   const fontPath = path.join(tempRoot, 'fake-font.ttf');
-  fs.writeFileSync(ffmpegPath, `#!/usr/bin/env node
-import fs from 'node:fs';
+  fs.writeFileSync(ffmpegPath, `import fs from 'node:fs';
 
 const args = process.argv.slice(2);
 if (args.includes('-version')) process.exit(0);
@@ -72,9 +71,9 @@ if (!inputPath || !outputPath) {
 // 测试替身只验证生成编排与两文件合同，真实绘制效果由视觉验收证据覆盖。
 fs.copyFileSync(inputPath, outputPath);
 `);
-  fs.chmodSync(ffmpegPath, 0o755);
   fs.writeFileSync(fontPath, 'test-font', 'utf8');
-  return { ffmpegPath, fontPath };
+  // 显式使用 Node 执行测试替身，避免 Windows 依赖 shebang 与可执行权限。
+  return { ffmpegPath: process.execPath, ffmpegArgs: [ffmpegPath], fontPath };
 }
 
 function checkedNode(overrides = {}) {

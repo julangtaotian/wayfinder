@@ -405,10 +405,18 @@ export function renderDeterministicAssessmentMarkdown({ scenario, assessment, ru
   return `${lines.join('\n')}\n`;
 }
 
-function resolveExecutable(preferred, candidates) {
-  for (const candidate of [preferred, ...candidates].filter(Boolean)) {
-    const result = spawnSync(candidate, ['-version'], { encoding: 'utf8' });
-    if (result.status === 0) return candidate;
+function resolveExecutable(preferred, preferredArgs, candidates) {
+  const normalizedArgs = preferredArgs === undefined ? [] : preferredArgs;
+  if (!Array.isArray(normalizedArgs) || normalizedArgs.some((item) => typeof item !== 'string')) {
+    fail('FFmpeg 前置参数必须是字符串数组。');
+  }
+  const executables = [
+    ...(preferred ? [{ command: preferred, args: normalizedArgs }] : []),
+    ...candidates.filter(Boolean).map((command) => ({ command, args: [] })),
+  ];
+  for (const executable of executables) {
+    const result = spawnSync(executable.command, [...executable.args, '-version'], { encoding: 'utf8' });
+    if (result.status === 0) return executable;
   }
   fail('找不到可用的 FFmpeg，无法生成标注截图。');
 }
@@ -513,6 +521,7 @@ export function generateUiReview({
   outputDir,
   allowedOutputRoot = defaultOutputRoot,
   ffmpegPath,
+  ffmpegArgs,
   fontPath,
 }) {
   const dimensions = parsePngDimensions(screenshotPath);
@@ -522,14 +531,14 @@ export function generateUiReview({
   fs.mkdirSync(outputParent, { recursive: true });
   const stageRoot = fs.mkdtempSync(path.join(outputParent, `.${path.basename(safeOutputDir)}-staging-`));
   try {
-    const binary = resolveExecutable(ffmpegPath, ['/opt/homebrew/bin/ffmpeg', 'ffmpeg']);
+    const executable = resolveExecutable(ffmpegPath, ffmpegArgs, ['/opt/homebrew/bin/ffmpeg', 'ffmpeg']);
     const font = resolveFont(fontPath);
     const pngPath = path.join(stageRoot, 'ui-review.png');
     const markdownPath = path.join(stageRoot, 'ui-review.md');
     const drawing = buildDrawFilters(review, stageRoot, font);
     const result = spawnSync(
-      binary,
-      ['-hide_banner', '-loglevel', 'error', '-y', '-i', screenshotPath, '-vf', drawing.filter, '-frames:v', '1', pngPath],
+      executable.command,
+      [...executable.args, '-hide_banner', '-loglevel', 'error', '-y', '-i', screenshotPath, '-vf', drawing.filter, '-frames:v', '1', pngPath],
       { encoding: 'utf8' },
     );
     for (const textPath of drawing.texts) fs.rmSync(textPath, { force: true });
