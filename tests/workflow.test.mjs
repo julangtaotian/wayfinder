@@ -1807,9 +1807,12 @@ test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.8 实际路径
     stage: 'precomplete',
   });
   assert.equal(nestedPreview.ok, true);
-  assert.ok(nestedPreview.planningStatus.artifactPaths.specs.existingOutputPaths.some(
-    (item) => item.endsWith('specs/platform/delivery-guard/spec.md'),
-  ));
+  const nestedSpecPaths = nestedPreview.planningStatus.artifactPaths.specs.existingOutputPaths
+    .map((item) => item.split(path.sep).join('/'));
+  assert.ok(
+    nestedSpecPaths.some((item) => item.endsWith('specs/platform/delivery-guard/spec.md')),
+    JSON.stringify(nestedSpecPaths),
+  );
   const nestedCompleted = finalizeChange({
     target: nestedRoot,
     requirement: 'requirements/REQ-2026-010-nested.md',
