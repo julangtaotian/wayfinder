@@ -1470,7 +1470,7 @@ test('分层检查与完成入口阻止未完成变更并在成功后同步归�
     requirement: 'requirements/REQ-2026-004-finalize.md',
     change: 'delivery',
   });
-  assert.equal(preview.ok, true);
+  assert.equal(preview.ok, true, preview.check.errors.join('\n'));
   assert.equal(preview.write, false);
   assert.equal(fs.existsSync(path.join(root, 'openspec', 'changes', 'delivery')), true);
 
@@ -1508,7 +1508,7 @@ test('OpenSpec 1.8 动态操作输入可见但不改变完成门禁', (t) => {
     change: 'delivery',
     stage: 'precomplete',
   });
-  assert.equal(checked.ok, true);
+  assert.equal(checked.ok, true, checked.errors.join('\n'));
   assert.equal(checked.commandEvidence.archiveInstructions.status, 'passed');
   assert.equal(checked.archiveInstructions.root.source, 'nearest');
   assert.match(checked.archiveInstructions.context, /实现必须遵守根目录 AGENTS\.md/);
@@ -1693,7 +1693,7 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
     change: 'tooling-update',
     stage: 'precomplete',
   });
-  assert.equal(authorized.ok, true);
+  assert.equal(authorized.ok, true, authorized.errors.join('\n'));
   assert.equal(authorized.planningStatus.isPlanningComplete, true);
   assert.equal(authorized.planningArtifacts.isPlanningComplete, true);
   assert.equal(authorized.planningArtifacts.isComplete, true);
@@ -1753,6 +1753,10 @@ test('规划完成门禁区分合法 skipped、未完成和未知状态', (t) =>
   validatePlanningRoot(root, { root: { path: '/tmp/default-store', source: 'global_default' } }, '测试根', globalRootErrors);
   assert.match(globalRootErrors.join('\n'), /未经明确选择的机器默认 Store/);
 
+  const canonicalRootErrors = [];
+  validatePlanningRoot(root, { root: { path: fs.realpathSync.native(root), source: 'nearest' } }, '规范根', canonicalRootErrors);
+  assert.deepEqual(canonicalRootErrors, []);
+
   const incompleteRoot = createVueFixture(t);
   initializeGitBaseline(incompleteRoot);
   writeManagedChange(incompleteRoot);
@@ -1782,7 +1786,7 @@ test('日期名称、数字前缀和嵌套规格使用 OpenSpec 1.8 实际路径
     change: datedChange,
     stage: 'precomplete',
   });
-  assert.equal(dated.ok, true);
+  assert.equal(dated.ok, true, dated.errors.join('\n'));
   assert.equal(path.basename(dated.archive.targetPath), datedChange);
   assert.equal(path.basename(archiveTarget(dateRoot, datedChange)), datedChange);
   assert.match(path.basename(archiveTarget(dateRoot, '123-feature')), /^\d{4}-\d{2}-\d{2}-123-feature$/);

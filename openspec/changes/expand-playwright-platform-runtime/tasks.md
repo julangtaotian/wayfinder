@@ -16,6 +16,7 @@
 - [x] 3.2 运行聚焦平台测试、五平台完整性检查和当前 `darwin-arm64` Chromium 真实截图冒烟，确认 `skipped=false`。（D-10、D-13；A-10、A-12）
 - [x] 3.3 运行 `npm test`、`npm run validate`、`npm run verify`、严格 OpenSpec 校验、官方 Skill 与 Plugin validators、安装缓存检查和 `git diff --check`。（D-08、D-10、D-13；A-07、A-12）
 - [x] 3.4 修复 Windows 原生 CI 暴露的文本换行、仓库路径和测试 FFmpeg 启动兼容问题，并复跑相关专用测试与统一验证。（D-08、D-10、D-13；A-07、A-10、A-12）
+- [x] 3.5 精确兼容 Windows Chromium `debug.log` 运行副作用和 OpenSpec 真实路径别名，并证明其他未登记文件与跨根目录仍失败关闭。（D-10、D-13；A-10、A-12）
 
 ## 4. 验收证据与收尾
 

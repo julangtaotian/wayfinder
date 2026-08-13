@@ -104,6 +104,32 @@ test('平台运行时区分共享文件、平台资产和独立完整性', (cont
   assert.deepEqual(Object.keys(integrity.platforms).sort(), EXPECTED_PLATFORMS);
 });
 
+test('Windows Chromium 固定诊断日志不污染完整性且其他新增文件仍被阻止', (context) => {
+  const runtimeRoot = createRuntimeFixture(context);
+  const integrityPath = path.join(runtimeRoot, 'integrity');
+  const metadata = platformMetadata('win32', 'x64');
+  const executableDirectory = path.dirname(path.join(runtimeRoot, metadata.browser.executable));
+  fs.writeFileSync(path.join(executableDirectory, 'debug.log'), 'Chromium runtime diagnostics\n');
+
+  const knownSideEffect = verifyPlaywrightIntegrity({
+    runtimeRoot,
+    integrityPath,
+    platform: 'win32',
+    arch: 'x64',
+  });
+  assert.equal(knownSideEffect.ok, true, knownSideEffect.errors.join('\n'));
+
+  fs.writeFileSync(path.join(executableDirectory, 'unexpected.log'), 'unexpected runtime file\n');
+  const unexpectedFile = verifyPlaywrightIntegrity({
+    runtimeRoot,
+    integrityPath,
+    platform: 'win32',
+    arch: 'x64',
+  });
+  assert.equal(unexpectedFile.ok, false);
+  assert.match(unexpectedFile.errors.join('\n'), /新增未登记文件.*unexpected\.log/u);
+});
+
 test('平台构建预览使用统一的 Playwright 主机映射', () => {
   const expectedHosts = {
     'darwin-arm64': 'mac15-arm64',

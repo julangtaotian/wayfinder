@@ -131,7 +131,15 @@ function platformRuntimeFiles(runtimeRoot, key) {
     throw new Error(`Playwright 平台运行包缺少浏览器目录：${key}`);
   }
   const records = [fileRecord(runtimeRoot, metadataPath)];
-  visitFiles(runtimeRoot, browsersPath, records);
+  const excludedRuntimeFiles = new Set();
+  if (key === 'win32-x64') {
+    // Windows Chromium 会在可执行文件旁生成固定诊断日志，只排除这一条已知运行副作用。
+    const browserExecutable = safeRuntimeAsset(runtimeRoot, metadata.browser?.executable, `${key}.browser.executable`);
+    excludedRuntimeFiles.add(normalizedRelative(runtimeRoot, path.join(path.dirname(browserExecutable), 'debug.log')));
+  }
+  visitFiles(runtimeRoot, browsersPath, records, {
+    exclude: (relativePath) => excludedRuntimeFiles.has(relativePath),
+  });
   return records.sort((left, right) => left.path.localeCompare(right.path));
 }
 

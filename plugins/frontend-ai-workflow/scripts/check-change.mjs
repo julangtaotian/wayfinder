@@ -37,6 +37,20 @@ function resolveChangePath(root, change) {
   return candidate;
 }
 
+function comparableFilesystemPath(value) {
+  let resolved = path.resolve(value);
+  try {
+    resolved = fs.realpathSync.native(resolved);
+  } catch {
+    try {
+      resolved = fs.realpathSync(resolved);
+    } catch {
+      // 路径不存在时仍保留绝对路径比较，由后续安全边界和存在性检查负责阻塞。
+    }
+  }
+  return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+}
+
 function taskProgress(changePath) {
   const tasksPath = path.join(changePath, 'tasks.md');
   if (!fs.existsSync(tasksPath)) return { total: 0, complete: 0, remaining: 0 };
@@ -64,7 +78,7 @@ export function validatePlanningRoot(root, data, label, errors) {
     errors.push(`${label}解析到未经明确选择的机器默认 Store：${data.root.path}`);
     return;
   }
-  if (path.resolve(data.root.path) !== path.resolve(root)) {
+  if (comparableFilesystemPath(data.root.path) !== comparableFilesystemPath(root)) {
     errors.push(`${label}规划根与当前项目不一致：${data.root.path}`);
   }
 }
