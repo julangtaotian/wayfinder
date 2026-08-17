@@ -29,3 +29,6 @@
 - [x] 5.1 将根包和插件提升到 0.15.0，更新 manifest 公共描述、Skill 清单、结构校验、README、模板发布资产和版本一致性测试。（D-01、D-12、D-14；A-01、A-05、A-10）
 - [x] 5.2 在 Vue 3 + Vite + Vitest fixture 中真实运行带 TC 定位的聚焦测试，并验证零测试失败、重复执行稳定和未认证 runner 的有限声明。（D-09、D-12、D-14；A-04、A-05、A-06、A-10）
 - [x] 5.3 从 outputs 验证运行时执行专用测试、全量测试、结构校验、统一验证、严格 OpenSpec 校验、官方 Skill/Plugin validators、AI 标记策略和 `git diff --check`；验证后清理根安装与临时运行时，并记录未认证框架与外部依赖边界。（D-12、D-13、D-14；A-05、A-07、A-09、A-10）
+- [x] 5.4 修复统一验证的仓库内临时 fixture Git 隔离、Windows npm JS 入口和准备/清理生命周期，使 `npm run verify` 在五平台保持单一、自包含入口。（D-14；A-10）
+- [x] 5.5 在既有手写测试中增加被忽略父目录、失败清理、Windows 命令构造和 CI 单入口回归。（D-14；A-10）
+- [ ] 5.6 在修复提交上重新取得 GitHub Actions 五平台发布证据。（D-14；A-10）

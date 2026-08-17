@@ -7,6 +7,10 @@ import { spawnSync } from 'node:child_process';
 import { inspectTestContext } from '../plugins/frontend-ai-workflow/scripts/inspect-test-context.mjs';
 import { validateTestPlan } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
 import { validateDeclaredTestPlan } from '../plugins/frontend-ai-workflow/scripts/check-change.mjs';
+import {
+  prepareFrontendTestRuntime,
+  resolveNpmInvocation,
+} from '../scripts/prepare-frontend-test-runtime.mjs';
 
 function writeFile(root, relativePath, content) {
   const filePath = path.join(root, relativePath);
@@ -250,6 +254,44 @@ test('[TC-05] frontend-test Skill 合同声明四类意图、测试专属写入�
   assert.match(skill, /Never modify business source/u);
   assert.match(skill, /zero-test result is blocked/u);
   assert.match(skill, /updates the same case rather than appending a duplicate/u);
+});
+
+test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
+  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-prepare-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const npmEntry = path.resolve(root, 'virtual', 'npm-cli.js');
+  const nodePath = path.resolve(root, 'virtual', 'node.exe');
+  const invocation = resolveNpmInvocation({
+    platform: 'win32',
+    environment: { npm_execpath: npmEntry },
+    nodePath,
+    fileExists: (target) => target === npmEntry,
+  });
+  assert.deepEqual(invocation, {
+    command: nodePath,
+    args: [npmEntry],
+    source: 'npm_execpath',
+  });
+
+  let executed = null;
+  const prepared = prepareFrontendTestRuntime({
+    repositoryRoot: root,
+    platform: 'win32',
+    environment: { npm_execpath: npmEntry },
+    nodePath,
+    fileExists: (target) => target === npmEntry || target.endsWith(path.join('vitest', 'vitest.mjs')),
+    execute: (command, args, options) => {
+      executed = { command, args, options };
+      return { status: 0 };
+    },
+    report: () => {},
+  });
+  assert.equal(executed.command, nodePath);
+  assert.equal(executed.args[0], npmEntry);
+  assert.equal(executed.args.includes('install'), true);
+  assert.equal(executed.command.endsWith('npm.cmd'), false);
+  assert.equal(prepared.npmSource, 'npm_execpath');
+  assert.ok(prepared.runtimeRoot.startsWith(path.join(root, 'outputs')));
 });
 
 test('[TC-03] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {

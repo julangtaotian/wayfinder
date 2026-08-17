@@ -67,7 +67,9 @@ TC 的验证类型为视觉时，方案记录现有 UI Review 场景、视口和
 
 ### 8. Vitest 仅作为 outputs 内的按需验证运行时
 
-根 `package.json` 不声明 Vitest，也不生成根锁文件。`npm run prepare:test-runtime` 使用 Node.js 标准库包装 npm，把固定版本 Vitest、锁文件与下载缓存全部限制在被定向忽略的 `outputs/frontend-test-runtime/`；专用 Node 测试只从该目录调用 Vitest，对 fixture 中带 `TC-*` 标题的专用测试执行真实聚焦验证，并断言根 `node_modules` 不存在验证专用 Vitest。`npm run verify` 将跨平台临时目录定向到 `outputs/verify-runtime/tmp` 并按最外层所有权自动回收，验证结束后由 `npm run cleanup:test-runtime` 删除 Vitest 输出子目录；插件发布结构、业务 fixture 和业务项目不执行或携带该安装。（D-12、D-14；A-05、A-10）
+根 `package.json` 不声明 Vitest，也不生成根锁文件。准备脚本优先使用 npm 注入的 JS 入口并由当前 Node 进程执行，避免 Windows 直接启动 `.cmd`；固定版本 Vitest、锁文件与下载缓存全部限制在被定向忽略的 `outputs/frontend-test-runtime/`。专用 Node 测试只从该目录调用 Vitest，对 fixture 中带 `TC-*` 标题的专用测试执行真实聚焦验证，并断言根 `node_modules` 不存在验证专用 Vitest。
+
+`npm run verify` 自己负责准备和回收 Vitest 运行时，仍将跨平台临时目录定向到 `outputs/verify-runtime/tmp`，同时以该目录作为 Git 向上发现边界，避免仓库内临时 fixture 继承父仓库的忽略规则；CI 只调用这一统一入口并保留 `always()` 兜底清理。插件发布结构、业务 fixture 和业务项目不执行或携带该安装。（D-12、D-14；A-05、A-10）
 
 ## Risks / Trade-offs
 
@@ -76,6 +78,8 @@ TC 的验证类型为视觉时，方案记录现有 UI Review 场景、视口和
 - [AI 可能生成实现细节或弱断言] → Skill 要求可观察断言、D/A 来源和产品缺陷交接；校验器不把文件存在视为通过。（D-05、D-07、D-09）
 - [新增完成门禁误伤历史变更] → 只在 `test_plan: required` 时启用，缺少声明保持兼容。（D-02、D-06）
 - [Vitest 增加开发安装体积或污染根目录] → 只按需安装在被定向忽略的 `outputs/frontend-test-runtime/`，验证后清理；不进入根依赖、插件成品或业务项目。（D-12、D-14）
+- [仓库内临时 fixture 继承父 Git 状态] → 统一验证显式设置 Git 向上发现边界，并用被忽略父目录回归证明 fixture 扫描不受主仓库规则污染。（D-14）
+- [Windows 无法直接启动 npm.cmd] → 使用当前 Node 执行 npm JS 入口，不依赖 shell 参数拼接；无安全入口时使用中文错误失败关闭。（D-14）
 - [未认证 runner 的执行输出差异] → 首版只正式声明 Vitest fixture，其他 runner 披露有限支持并依赖项目证据。（D-12）
 
 ## Migration Plan

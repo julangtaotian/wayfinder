@@ -25,7 +25,11 @@ import {
   verifyRuntimeIntegrity,
   writeRuntimeIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs';
-import { buildVerificationSteps, runVerification } from '../scripts/verify.mjs';
+import {
+  buildVerificationEnvironment,
+  buildVerificationSteps,
+  runVerification,
+} from '../scripts/verify.mjs';
 
 const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 const expectedPublicSkills = [
@@ -532,8 +536,11 @@ test('插件只公开团队自有技能', () => {
   assert.equal(skills.some((name) => name.startsWith('openspec-')), false);
 });
 
-test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () => {
-  const steps = buildVerificationSteps();
+test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) => {
+  const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'verification-runner-')));
+  t.after(() => fs.rmSync(verificationRoot, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(verificationRoot, 'tests'), { recursive: true });
+  const steps = buildVerificationSteps(verificationRoot);
   assert.deepEqual(steps.map((step) => step.id), [
     'tests',
     'structure',
@@ -549,12 +556,17 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   const tempRoots = [];
   const messages = [];
   const errors = [];
+  const lifecycle = [];
   const failed = runVerification({
+    repositoryRoot: verificationRoot,
     execute: (step, _root, tempRoot) => {
       executed.push(step.id);
       tempRoots.push(tempRoot);
       return { status: step.id === 'openspec' ? 2 : 0 };
     },
+    environment: {},
+    prepareRuntime: () => lifecycle.push('prepare'),
+    cleanupRuntime: () => lifecycle.push('cleanup'),
     report: (message) => messages.push(message),
     reportError: (message) => errors.push(message),
   });
@@ -562,11 +574,10 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   assert.equal(failed.failedStep, 'openspec');
   assert.deepEqual(failed.completed, ['tests', 'structure']);
   assert.deepEqual(executed, ['tests', 'structure', 'openspec']);
-  assert.ok(tempRoots.every((tempRoot) => tempRoot === path.resolve('outputs/verify-runtime/tmp')));
-  const inheritedVerificationRuntime = [process.env.TMPDIR, process.env.TMP, process.env.TEMP]
-    .filter(Boolean)
-    .some((tempRoot) => path.resolve(tempRoot) === path.resolve('outputs/verify-runtime/tmp'));
-  assert.equal(fs.existsSync(path.resolve('outputs/verify-runtime')), inheritedVerificationRuntime);
+  assert.deepEqual(lifecycle, ['prepare', 'cleanup']);
+  const expectedTempRoot = path.join(verificationRoot, 'outputs', 'verify-runtime', 'tmp');
+  assert.ok(tempRoots.every((tempRoot) => tempRoot === expectedTempRoot));
+  assert.equal(fs.existsSync(path.join(verificationRoot, 'outputs', 'verify-runtime')), false);
   assert.match(errors[0], /OpenSpec 全量严格校验/);
 
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -587,7 +598,6 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
   assert.match(workflow, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform \}\}/);
   assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), [
-    'npm run prepare:test-runtime',
     'npm run verify',
   ]);
   assert.match(workflow, /run: npm run cleanup:test-runtime/u);
@@ -595,6 +605,36 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   assert.doesNotMatch(workflow, /npm test|npm run validate/);
   assert.match(attributes, /^\* text=auto eol=lf$/mu);
   assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
+});
+
+test('[TC-06] 统一验证隔离仓库内临时 fixture 的父 Git 状态', (t) => {
+  const outputsRoot = path.resolve('outputs');
+  fs.mkdirSync(outputsRoot, { recursive: true });
+  const ceilingRoot = fs.mkdtempSync(path.join(outputsRoot, 'verify-git-ceiling-'));
+  t.after(() => fs.rmSync(ceilingRoot, { recursive: true, force: true }));
+  writeFixtureFile(ceilingRoot, '.gitignore', 'fixture/\n');
+  writeFixtureFile(ceilingRoot, 'fixture/src/router/index.js', 'export const routes = [];\n');
+  const fixtureRoot = path.join(ceilingRoot, 'fixture');
+  const sourcePath = path.join(fixtureRoot, 'src/router/index.js');
+
+  const inherited = spawnSync('git', ['-C', fixtureRoot, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' });
+  assert.equal(inherited.status, 0, inherited.stderr);
+  assert.equal(path.resolve(inherited.stdout.trim()), path.resolve('.'));
+  const ignored = spawnSync('git', ['check-ignore', '--quiet', path.relative(path.resolve('.'), sourcePath)], {
+    cwd: path.resolve('.'),
+  });
+  assert.equal(ignored.status, 0, 'fixture 源码应先命中父仓库忽略规则');
+
+  const environment = buildVerificationEnvironment(ceilingRoot, process.env);
+  const isolated = spawnSync('git', ['-C', fixtureRoot, 'rev-parse', '--is-inside-work-tree'], {
+    encoding: 'utf8',
+    env: environment,
+  });
+  assert.notEqual(isolated.status, 0, '统一验证环境不得让 fixture 继承父仓库 Git');
+  assert.equal(environment.TMPDIR, ceilingRoot);
+  assert.equal(environment.TMP, ceilingRoot);
+  assert.equal(environment.TEMP, ceilingRoot);
+  assert.equal(environment.GIT_CEILING_DIRECTORIES.split(path.delimiter).includes(ceilingRoot), true);
 });
 
 test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {

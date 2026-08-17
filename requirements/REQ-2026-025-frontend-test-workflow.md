@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：实施中
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.15.0
@@ -150,6 +150,7 @@
 | R-03 | 2026-08-17 | D-01～D-14 | A-01～A-10 | 需求与规划实施校验通过，按新建专用测试策略进入测试先行实施；V-01～V-05 保持计划。 |
 | R-04 | 2026-08-17 | D-01～D-14 | A-01～A-10 | 首版 Skill、模板、上下文检查、三阶段校验、完成门禁、Vue Vitest fixture 和 0.15.0 发布资产均已实现；V-01～V-05 已按真实结果更新，等待完成阶段验收。 |
 | R-05 | 2026-08-17 | D-14 | A-05、A-10 | 用户要求项目根目录不保留验证安装与临时产物；Vitest 运行时迁移到 `outputs/frontend-test-runtime/`，V-01～V-05 已重新验证，依赖隔离与全量验证任务完成。 |
+| R-06 | 2026-08-17 | D-14 | A-10 | 五平台 CI 揭示仓库内临时 fixture 继承父 Git 忽略规则，以及 Windows 直接启动 `npm.cmd` 的确定性缺陷；重新打开跨平台运行时、统一验证和发布验证任务，V-03、V-05 恢复为计划。 |
 
 ## 兼容性与风险
 
@@ -160,9 +161,9 @@
 
 ## 测试与验证
 
-- 测试文件策略：新建；目标路径：`tests/frontend-test-workflow.test.mjs`；基线证据：当前路径不存在且未被 Git 跟踪；选择理由：测试用例工作流包含独立的上下文、方案合同、校验阶段、写入边界和 fixture 闭环，应使用职责清晰的专用测试，不继续扩充综合工作流测试。
-- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；活动变更与目标：`openspec/changes/add-frontend-test-workflow/test-plan.md`；需求修订基线：R-05。
-- 验证范围：全量；执行命令：先运行 `npm run prepare:test-runtime`，再运行 `node --test tests/frontend-test-workflow.test.mjs`、`npm test`、`npm run validate`、`npm run verify`、严格 OpenSpec 校验及官方 Skill/Plugin validators，最后运行 `npm run cleanup:test-runtime`；所有新验证产物进入 `outputs/<验证主题>/`，统一验证器自动回收 `outputs/verify-runtime/`；选择理由：新增公共 Skill、需求/变更集成、完成门禁和发布元数据影响所有插件安装者。
+- 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs` 与 `tests/workflow.test.mjs`；Git 基线：两个手写测试均已受版本控制；选择理由：前者已负责 Vitest 验证运行时，后者已负责统一验证与项目扫描，分别追加 Windows npm 启动、运行时生命周期和 Git 隔离场景最符合现有职责。
+- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；活动变更与目标：`openspec/changes/add-frontend-test-workflow/test-plan.md`；需求修订基线：R-06。
+- 验证范围：全量；执行命令：先运行 `npm run prepare:test-runtime` 和专用聚焦测试，再运行可自行准备与清理运行时的 `npm run verify`、`npm run validate`、严格 OpenSpec 校验及官方 Skill/Plugin validators，最后用 `npm run cleanup:test-runtime` 兜底清理；所有新验证产物进入 `outputs/<验证主题>/`；选择理由：修复跨平台统一验证、CI 发布门禁和所有插件安装者共享的验证入口。
 - 自动测试：只读上下文、方案模板、TC 唯一与引用、占位和危险路径、需求修订过期、生成测试保护、无测试设施、Vue 3 + Vite + Vitest 专用测试、聚焦结果、重复执行、完成门禁和机器可读诊断。
 - 人工检查：核对 `$frontend-test` 的职责边界、自然语言路由、失败分类以及与 `$frontend-change`、UI Review 的交接说明，不执行视觉验收。
 - 构建与静态检查：插件结构、公开 Skill 列表、manifest、README、版本一致性、官方 validators、AI 标记策略和 `git diff --check`。
@@ -171,11 +172,11 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | `node --test tests/frontend-test-workflow.test.mjs`，覆盖上下文、三阶段校验、过期方案、完成门禁和 Skill 合同，13/13 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-01 | 自动 | `node --test tests/frontend-test-workflow.test.mjs`，覆盖上下文、三阶段校验、过期方案、完成门禁、Skill 合同和 Windows npm JS 入口，14/14 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-02 | 自动 | 从 `outputs/frontend-test-runtime/` 运行 Vue 3 + Vite + Vitest fixture，连续两次发现 TC-03；不存在目标时保持非零 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-03 | 自动 | `npm run verify`，自动定向并回收 `outputs/verify-runtime/tmp`，8/8 阶段、187/187 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、189/189 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-04 | 自动 | 官方 Skill quick validator 9/9 与 Plugin validator 1/1 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-05 | 自动 | 核对 0.15.0、CI 准备/清理链路、补丁格式、根目录依赖/锁文件缺失，并通过清理命令删除本轮可重建运行时 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-05 | 自动 | 本地已核对 0.15.0、Windows 无 shell npm 启动、CI 单入口、补丁格式和根目录清洁；等待修复提交的五平台 Actions | 待执行 | 未执行 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 
 ## 验收标准
 
@@ -188,7 +189,7 @@
 - [x] [A-07] 缺少测试设施时不安装依赖、不生成不可执行自动测试、不修改业务源码，并提供明确人工验证边界。
 - [x] [A-08] 需求新增 R-* 修订后旧测试方案被识别为过期，未更新前阻止实施与完成。
 - [x] [A-09] 视觉和人工用例复用现有 UI Review 与 V-* 证据合同，不重复建设浏览器运行时或视觉修复链路。
-- [x] [A-10] 0.15.0 的 Skill、脚本、模板、README、manifest、结构校验、专用测试、全量验证和官方 validators 一致通过。
+- [ ] [A-10] 0.15.0 的 Skill、脚本、模板、README、manifest、结构校验、专用测试、全量验证和官方 validators 一致通过。
 
 ## 验收—证据映射
 
@@ -203,7 +204,7 @@
 | A-07 | 空态和写入边界 | D-07、D-08、D-13 | 自动 | 无测试设施 fixture 与仓库差异 | 不安装依赖、不改业务源码、不伪造自动测试 | V-01、V-05 |
 | A-08 | 需求修订失效 | D-10 | 自动 | R-* 基线 fixture | 更晚修订使旧方案在 implement/complete 阶段阻断 | V-01 |
 | A-09 | 视觉与人工交接 | D-11 | 自动 | Skill、规则和模板静态合同 | 视觉用例引用既有 UI Review 和 V-*，不复制运行时 | V-01、V-04 |
-| A-10 | 发布一致性 | D-14 | 自动 | manifest、README、结构校验、全量验证和 validators | 0.15.0 元数据与全部门禁一致通过，验证运行时只位于 outputs 且根目录清洁 | V-03、V-04、V-05 |
+| A-10 | 发布一致性 | D-14 | 自动 | manifest、README、结构校验、全量验证和 validators | 待重新证明五平台入口一致通过、验证运行时只位于 outputs 且根目录清洁 | V-03、V-04、V-05 |
 
 ## 待确认问题
 

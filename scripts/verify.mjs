@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { prepareFrontendTestRuntime } from './prepare-frontend-test-runtime.mjs';
+import { cleanupFrontendTestRuntime } from './cleanup-frontend-test-runtime.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultRepositoryRoot = path.resolve(scriptDir, '..');
@@ -81,17 +83,24 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
   ];
 }
 
-function executeStep(step, repositoryRoot, tempRoot) {
+export function buildVerificationEnvironment(tempRoot, environment = process.env) {
+  const inheritedCeilings = environment.GIT_CEILING_DIRECTORIES;
+  return {
+    ...environment,
+    TMPDIR: tempRoot,
+    TMP: tempRoot,
+    TEMP: tempRoot,
+    // 测试 fixture 位于仓库 outputs 内时，不得向上继承主仓库的 Git 忽略规则。
+    GIT_CEILING_DIRECTORIES: [tempRoot, inheritedCeilings].filter(Boolean).join(path.delimiter),
+    OPENSPEC_NO_UPDATE_CHECK: '1',
+    OPENSPEC_TELEMETRY: '0',
+  };
+}
+
+function executeStep(step, repositoryRoot, tempRoot, environment) {
   return spawnSync(process.execPath, step.args, {
     cwd: repositoryRoot,
-    env: {
-      ...process.env,
-      TMPDIR: tempRoot,
-      TMP: tempRoot,
-      TEMP: tempRoot,
-      OPENSPEC_NO_UPDATE_CHECK: '1',
-      OPENSPEC_TELEMETRY: '0',
-    },
+    env: buildVerificationEnvironment(tempRoot, environment),
     stdio: 'inherit',
   });
 }
@@ -99,6 +108,9 @@ function executeStep(step, repositoryRoot, tempRoot) {
 export function runVerification({
   repositoryRoot = defaultRepositoryRoot,
   execute = executeStep,
+  environment = process.env,
+  prepareRuntime = (root) => prepareFrontendTestRuntime({ repositoryRoot: root, environment }),
+  cleanupRuntime = (root) => cleanupFrontendTestRuntime({ repositoryRoot: root }),
   report = (message) => console.log(message),
   reportError = (message) => console.error(message),
 } = {}) {
@@ -106,16 +118,17 @@ export function runVerification({
   const steps = buildVerificationSteps(root);
   const completed = [];
   const { runtimeRoot, tempRoot } = resolveVerificationRuntime(root);
-  const inheritedTempRoots = [process.env.TMPDIR, process.env.TMP, process.env.TEMP]
+  const inheritedTempRoots = [environment.TMPDIR, environment.TMP, environment.TEMP]
     .filter(Boolean)
     .map((item) => path.resolve(item));
   const ownsRuntime = !inheritedTempRoots.includes(path.resolve(tempRoot));
   fs.mkdirSync(tempRoot, { recursive: true });
 
   try {
+    if (ownsRuntime) prepareRuntime(root);
     for (const [index, step] of steps.entries()) {
       report(`[verify ${index + 1}/${steps.length}] ${step.label}`);
-      const result = execute(step, root, tempRoot);
+      const result = execute(step, root, tempRoot, environment);
       if (result.error || result.status !== 0) {
         const reason = result.error?.message || `退出码 ${result.status ?? '未知'}`;
         reportError(`统一验证失败：${step.label}（${reason}）`);
@@ -128,7 +141,13 @@ export function runVerification({
     return { ok: true, completed, failedStep: null, status: 0 };
   } finally {
     // 只有最外层验证负责回收，避免嵌套验证删除仍在使用的共享临时目录。
-    if (ownsRuntime) fs.rmSync(runtimeRoot, { recursive: true, force: true });
+    if (ownsRuntime) {
+      try {
+        cleanupRuntime(root);
+      } finally {
+        fs.rmSync(runtimeRoot, { recursive: true, force: true });
+      }
+    }
   }
 }
 

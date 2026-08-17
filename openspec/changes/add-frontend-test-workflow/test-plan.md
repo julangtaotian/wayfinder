@@ -2,10 +2,10 @@
 
 ## 基本信息
 
-- 状态：已验证
+- 状态：已实现
 - 需求：`requirements/REQ-2026-025-frontend-test-workflow.md`
 - 变更：add-frontend-test-workflow
-- 需求修订基线：R-05
+- 需求修订基线：R-06
 - 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 
 ## 测试上下文
@@ -126,5 +126,49 @@
 - 测试定位：`[TC-05] frontend-test Skill 合同`
 - 聚焦命令：`node --test --test-name-pattern="Skill 合同" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01、V-04
+- 结果分类：通过
+- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+
+### TC-06：统一验证隔离仓库内临时 fixture 的父 Git 状态
+
+- 状态：通过
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-14
+- 关联验收：A-10
+- 关联规格：frontend-test-workflow / Vue Vitest fixture 完成闭环
+- 状态矩阵：错误态
+- 前置条件：验证临时目录位于主仓库被忽略的 `outputs/verify-runtime/tmp`
+- 测试数据：未初始化 Git 的 Vue fixture 与父仓库忽略规则
+- 测试替身：统一验证注入的系统临时目录和 Git 向上发现边界
+- 操作：在统一验证环境中检查 fixture Git 状态并执行项目范围扫描回归
+- 可观察断言：fixture 不继承父仓库 Git，源码进入扫描范围，WXML 观察和内容指纹保持有效
+- 目标测试：`tests/workflow.test.mjs`
+- 测试定位：`[TC-06] 统一验证隔离父 Git`
+- 聚焦命令：`node --test --test-name-pattern="统一验证隔离父 Git|范围清单完整记账|WXML 静态观察|项目地图" tests/workflow.test.mjs`
+- 关联验证：V-03
+- 结果分类：通过
+- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+
+### TC-07：统一验证跨平台准备并回收 Vitest 运行时
+
+- 状态：通过
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-14
+- 关联验收：A-10
+- 关联规格：frontend-test-workflow / Vue Vitest fixture 完成闭环
+- 状态矩阵：刷新
+- 前置条件：通过 npm 或可解析 npm JS 入口调用统一验证
+- 测试数据：Windows 平台命令构造、准备成功、阶段失败与清理回调
+- 测试替身：注入的文件存在检查、子进程执行器和运行时生命周期函数
+- 操作：解析 Windows npm 调用并分别执行成功与失败的统一验证生命周期
+- 可观察断言：不直接启动 `npm.cmd`，准备先于测试，成功和失败都清理，CI 只调用统一验证入口
+- 目标测试：`tests/frontend-test-workflow.test.mjs`
+- 测试定位：`[TC-07] 跨平台验证运行时`
+- 聚焦命令：`node --test --test-name-pattern="跨平台验证运行时|Windows npm" tests/frontend-test-workflow.test.mjs`
+- 关联验证：V-03、V-05
 - 结果分类：通过
 - 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
