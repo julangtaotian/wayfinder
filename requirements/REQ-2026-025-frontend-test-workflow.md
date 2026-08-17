@@ -176,7 +176,7 @@
 | V-02 | 自动 | 从 `outputs/frontend-test-runtime/` 运行 Vue 3 + Vite + Vitest fixture，连续两次发现 TC-03；不存在目标时保持非零 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、189/189 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-04 | 自动 | 官方 Skill quick validator 9/9 与 Plugin validator 1/1 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-05 | 自动 | 本地已核对 0.15.0、Windows 无 shell npm 启动、CI 单入口、补丁格式和根目录清洁；等待修复提交的五平台 Actions | 待执行 | 未执行 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-05 | 自动 | 运行 `32014080607` 已有四平台通过；Windows 路径断言已修复并通过本地聚焦与统一验证，等待新提交的五平台 Actions | 待执行 | 未执行 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 
 ## 验收标准
 

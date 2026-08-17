@@ -1647,7 +1647,12 @@ test('OpenSpec 1.9 独立检查归档任务并拒绝错误根批量命令', (t) 
     env: { ...process.env, XDG_CONFIG_HOME: path.join(outsideRoot, '.config') },
   });
   assert.notEqual(outside.status, 0);
-  assert.match(`${outside.stdout}\n${outside.stderr}`, /OpenSpec root|openspec\/config\.ya?ml|not.*project/iu);
+  const outsideDiagnostics = JSON.parse(outside.stdout);
+  assert.equal(outsideDiagnostics.status?.[0]?.code, 'no_registered_stores');
+  assert.equal(outsideDiagnostics.status?.[0]?.target, 'store.id');
+  const configPathPattern = /openspec[\\/]config\.ya?ml/iu;
+  assert.match(outsideDiagnostics.status[0].message, configPathPattern);
+  assert.match(String.raw`Declared in D:\a\wayfinder\outputs\openspec\config.yaml`, configPathPattern);
 });
 
 test('OpenSpec 1.9 保留任务编号歧义诊断', (t) => {

@@ -172,3 +172,25 @@
 - 关联验证：V-03、V-05
 - 结果分类：通过
 - 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+
+### TC-08：Windows 结构化错误保持稳定断言
+
+- 状态：通过
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-14
+- 关联验收：A-10
+- 关联规格：verifiable-change-delivery / 检查交付就绪
+- 状态矩阵：错误态
+- 前置条件：错误根 fixture 的 `openspec/config.yaml` 指向未注册 Store
+- 测试数据：`no_registered_stores` 错误码与包含 POSIX 或 Windows 分隔符的配置路径
+- 测试替身：插件内置 OpenSpec 1.9 运行时与隔离配置目录
+- 操作：从错误根运行 `validate --all --json --no-interactive` 并解析结构化诊断
+- 可观察断言：命令非零、错误码稳定为 `no_registered_stores`，诊断路径同时兼容 `/` 与 `\\`
+- 目标测试：`tests/workflow.test.mjs`
+- 测试定位：`OpenSpec 1.9 独立检查归档任务并拒绝错误根批量命令`
+- 聚焦命令：`node --test --test-name-pattern="独立检查归档任务" tests/workflow.test.mjs`
+- 关联验证：V-03、V-05
+- 结果分类：通过
+- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`

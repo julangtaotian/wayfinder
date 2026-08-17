@@ -2,17 +2,18 @@
 
 ## 结论
 
-提交 `ad05ef3` 暴露的两条失败链路已修复：统一验证通过 Git 向上发现边界隔离仓库内临时 fixture，Windows 通过当前 Node 执行 npm JS 入口，不再直接启动 `npm.cmd`。本地聚焦测试、独立全量测试和自包含统一验证均通过；修复提交尚未推送，因此真实 GitHub Actions 五平台发布证据仍待重跑，不能据此关闭 A-10。
+提交 `ad05ef3` 暴露的两条失败链路已修复：统一验证通过 Git 向上发现边界隔离仓库内临时 fixture，Windows 通过当前 Node 执行 npm JS 入口，不再直接启动 `npm.cmd`。提交 `62ec4d2` 的 GitHub Actions 运行 `32014080607` 已证明 Linux x64/ARM64 与 macOS Intel/ARM64 全部通过；Windows 进一步暴露的测试可移植性问题也已修复：错误根回归现在先解析并断言稳定的 `no_registered_stores` 错误码，再同时接受 `/` 与 `\\` 配置路径。新提交尚未取得五平台复跑结果，A-10 保持未完成。
 
 ## 聚焦验证
 
 - `node --test tests/frontend-test-workflow.test.mjs`：14/14 通过，新增 TC-07 验证 Windows npm JS 入口与运行时目录边界。
 - 原 CI 四个 Linux/macOS 失败断言在与统一验证相同的临时目录和 Git 边界下聚焦复跑：4/4 通过。
 - TC-06 在主仓库被忽略目录中建立未初始化 Git 的 fixture：未隔离时能够复现父仓库继承，注入统一验证环境后 Git 向上发现被阻断。
+- TC-08 聚焦验证 1/1 通过，并显式断言 Windows 反斜杠样本；不会再用整段平台相关错误文案作为唯一判定依据。
 - Vitest 3.2.4、npm 锁文件和缓存均按需写入 `outputs/frontend-test-runtime/`；项目根目录没有生成 `node_modules/` 或 `package-lock.json`。
 - Vue fixture 的 Vitest 聚焦命令连续两次发现并通过 `[TC-03] 两数相加`，测试文件前后内容一致。
 - 使用不存在的测试目标运行同一 fixture 时返回非零，未把零测试发现记为通过。
-- 当前变更的 implement 测试方案校验通过，7 条自动 TC 均使用安全的专用测试定位。
+- 当前变更的 implement 测试方案校验通过，8 条自动 TC 均使用安全的专用测试定位。
 
 ## 全量与结构验证
 
