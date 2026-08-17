@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   BUNDLED_PLAYWRIGHT_VERSION,
@@ -27,6 +29,10 @@ const EXPECTED_PLATFORMS = [
   'linux-x64',
   'win32-x64',
 ];
+const packagePluginScript = fileURLToPath(new URL(
+  '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs',
+  import.meta.url,
+));
 
 function platformMetadata(platform, arch) {
   const key = `${platform}-${arch}`;
@@ -292,6 +298,21 @@ test('平台插件成品预览保持零写入并公开带余量预算', async (c
   assert.equal(result.budgetBytes, PLATFORM_PLUGIN_SIZE_BUDGETS['darwin-arm64']);
   assert.deepEqual(result.excludedPlatforms.sort(), EXPECTED_PLATFORMS.filter((key) => key !== 'darwin-arm64'));
   assert.equal(fs.existsSync(options.outputRoot), false);
+});
+
+test('平台插件 CLI 缺省参数继承矩阵平台且保持预览零写入', (context) => {
+  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-cli-'));
+  context.after(() => fs.rmSync(temporaryRoot, { recursive: true, force: true }));
+  const outputRoot = path.join(temporaryRoot, 'preview-output');
+  const result = spawnSync(process.execPath, [packagePluginScript, '--output', outputRoot], {
+    encoding: 'utf8',
+    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: 'darwin-arm64' },
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const plan = JSON.parse(result.stdout);
+  assert.equal(plan.platformKey, 'darwin-arm64');
+  assert.equal(plan.write, false);
+  assert.equal(fs.existsSync(outputRoot), false);
 });
 
 test('平台插件成品只保留匹配资产并重建完整性', async (context) => {

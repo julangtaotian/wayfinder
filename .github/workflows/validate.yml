@@ -36,7 +36,7 @@ jobs:
           node-version: 20.19.0
       - run: npm run verify
       - name: Build and verify platform plugin package
-        run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write
+        run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write --platform ${{ matrix.platform }}
       - uses: actions/upload-artifact@v4
         with:
           name: plugin-package-report-${{ matrix.platform }}

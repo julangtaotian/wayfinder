@@ -39,10 +39,6 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-function normalizedRelative(root, target) {
-  return path.relative(root, target).split(path.sep).join('/');
-}
-
 function isInside(root, target) {
   const relative = path.relative(root, target);
   return Boolean(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
@@ -75,21 +71,47 @@ function validateOutputRoot({ outputRoot, repositoryRoot, pluginRoot, allowedRoo
   return resolvedOutput;
 }
 
-function packageCopyFilter(sourceRoot, platformKey) {
-  return (source) => {
-    const relative = normalizedRelative(sourceRoot, source);
-    if (!relative) return true;
-    if (path.basename(source) === '.DS_Store') return false;
-    if (relative === 'runtime/playwright/distribution.json') return false;
-    if (relative === 'runtime/playwright/integrity' || relative.startsWith('runtime/playwright/integrity/')) return false;
-    if (relative.startsWith('runtime/playwright/platform-assets/')) {
-      return relative.split('/')[3] === platformKey;
-    }
-    if (relative.startsWith('runtime/playwright/platforms/')) {
-      return relative.split('/')[3] === `${platformKey}.json`;
-    }
-    return true;
-  };
+function copyEntry(source, target) {
+  fs.cpSync(source, target, {
+    recursive: true,
+    dereference: false,
+    filter: (candidate) => path.basename(candidate) !== '.DS_Store',
+  });
+}
+
+function copyDirectoryEntries(sourceRoot, targetRoot, excludedEntries = []) {
+  const excluded = new Set(excludedEntries);
+  fs.mkdirSync(targetRoot, { recursive: true });
+  for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
+    if (entry.name === '.DS_Store' || excluded.has(entry.name)) continue;
+    copyEntry(path.join(sourceRoot, entry.name), path.join(targetRoot, entry.name));
+  }
+}
+
+function copyPlatformPluginSource({ sourcePluginRoot, stagePluginRoot, platformKey }) {
+  // 按固定目录层级复制，避免依赖不同系统下 fs.cpSync 回调路径的字符串格式。
+  copyDirectoryEntries(sourcePluginRoot, stagePluginRoot, ['runtime']);
+
+  const sourceRuntimeRoot = path.join(sourcePluginRoot, 'runtime');
+  const packagedRuntimeRoot = path.join(stagePluginRoot, 'runtime');
+  copyDirectoryEntries(sourceRuntimeRoot, packagedRuntimeRoot, ['playwright']);
+
+  const sourcePlaywrightRoot = path.join(sourceRuntimeRoot, 'playwright');
+  const packagedPlaywrightRoot = path.join(packagedRuntimeRoot, 'playwright');
+  copyDirectoryEntries(sourcePlaywrightRoot, packagedPlaywrightRoot, [
+    'distribution.json',
+    'integrity',
+    'platform-assets',
+    'platforms',
+  ]);
+  copyEntry(
+    path.join(sourcePlaywrightRoot, 'platform-assets', platformKey),
+    path.join(packagedPlaywrightRoot, 'platform-assets', platformKey),
+  );
+  copyEntry(
+    path.join(sourcePlaywrightRoot, 'platforms', `${platformKey}.json`),
+    path.join(packagedPlaywrightRoot, 'platforms', `${platformKey}.json`),
+  );
 }
 
 function sha256File(filePath) {
@@ -144,12 +166,12 @@ function writeMarketplaceRoot({ marketplaceRoot, repositoryRoot, platformKey }) 
   });
 }
 
-function defaultValidatePackage({ marketplaceRoot, pluginRoot }) {
+function defaultValidatePackage({ marketplaceRoot, pluginRoot, platformKey }) {
   const validator = path.join(pluginRoot, 'scripts', 'validate-structure.mjs');
   const result = spawnSync(process.execPath, [validator], {
     cwd: marketplaceRoot,
     encoding: 'utf8',
-    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: `${process.platform}-${process.arch}` },
+    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: platformKey },
   });
   return {
     ok: !result.error && result.status === 0,
@@ -227,11 +249,7 @@ export async function packagePluginPlatform({
   const packagedRuntimeRoot = path.join(stagePluginRoot, 'runtime', 'playwright');
   let stripEvidence = { stripped: false, stripBeforeBytes: null, stripAfterBytes: null, sourceHash: null };
   try {
-    fs.cpSync(sourcePluginRoot, stagePluginRoot, {
-      recursive: true,
-      dereference: false,
-      filter: packageCopyFilter(sourcePluginRoot, platformKey),
-    });
+    copyPlatformPluginSource({ sourcePluginRoot, stagePluginRoot, platformKey });
     writeMarketplaceRoot({ marketplaceRoot: stageRoot, repositoryRoot: sourceRepositoryRoot, platformKey });
     writeJson(path.join(packagedRuntimeRoot, 'distribution.json'), {
       schemaVersion: PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION,
@@ -302,7 +320,7 @@ export async function packagePluginPlatform({
 }
 
 function parseArgs(argv) {
-  const options = { platformKey: null, outputRoot: null, write: false };
+  const options = { write: false };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--write') options.write = true;

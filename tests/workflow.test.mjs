@@ -576,6 +576,7 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
     assert.match(workflow, new RegExp(`- os: ${runner}\\r?\\n\\s+platform: ${platform}`));
   }
   assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
+  assert.match(workflow, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform \}\}/);
   assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), ['npm run verify']);
   assert.doesNotMatch(workflow, /npm test|npm run validate/);
   assert.match(attributes, /^\* text=auto eol=lf$/mu);
