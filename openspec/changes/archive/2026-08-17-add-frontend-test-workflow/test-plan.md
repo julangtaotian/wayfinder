@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern="测试上下文只读识别" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01、V-02
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-02：三阶段方案合同阻断非法事实和状态
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test --test-name-pattern="plan 阶段|implement 阶段|complete 阶段" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-03：项目原生测试实现保持专用定位和幂等
 
@@ -83,7 +83,7 @@
 - 聚焦命令：`node --test --test-name-pattern="Vue Vitest fixture" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-04：显式测试方案门禁保持历史兼容
 
@@ -105,7 +105,7 @@
 - 聚焦命令：`node --test --test-name-pattern="门禁|历史兼容" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01、V-03、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-05：公共 Skill 保持测试写入和视觉交接边界
 
@@ -127,7 +127,7 @@
 - 聚焦命令：`node --test --test-name-pattern="Skill 合同" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01、V-04
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-06：统一验证隔离仓库内临时 fixture 的父 Git 状态
 
@@ -149,7 +149,7 @@
 - 聚焦命令：`node --test --test-name-pattern="统一验证隔离父 Git|范围清单完整记账|WXML 静态观察|项目地图" tests/workflow.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-07：统一验证跨平台准备并回收 Vitest 运行时
 
@@ -171,7 +171,7 @@
 - 聚焦命令：`node --test --test-name-pattern="跨平台验证运行时|Windows npm" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-03、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-08：Windows 结构化错误保持稳定断言
 
@@ -193,7 +193,7 @@
 - 聚焦命令：`node --test --test-name-pattern="独立检查归档任务" tests/workflow.test.mjs`
 - 关联验证：V-03、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`
 
 ### TC-09：跨平台高风险规则形成可执行合同
 
@@ -215,4 +215,4 @@
 - 聚焦命令：`node --test --test-name-pattern="跨平台高风险变更规则合同" tests/workflow.test.mjs`
 - 关联验证：V-06
 - 结果分类：通过
-- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+- 证据：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md`

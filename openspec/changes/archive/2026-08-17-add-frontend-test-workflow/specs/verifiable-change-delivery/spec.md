@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 跨平台高风险变更必须显式标记并分层取证
 
@@ -18,6 +18,8 @@
 
 - **WHEN** 聚焦测试和统一验证已在本地通过，但仓库声明的某个平台任务尚未成功
 - **THEN** 工作流分别记录本地结果和外部待执行项，保持发布证据未完成且不声称跨平台通过
+
+## MODIFIED Requirements
 
 ### Requirement: 检查必须区分工作流、变更和交付层级
 

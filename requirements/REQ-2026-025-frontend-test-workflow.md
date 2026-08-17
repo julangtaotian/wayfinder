@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.15.0
@@ -173,7 +173,7 @@
 ## 测试与验证
 
 - 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs`；基线证据：Git 可用且该手写专用测试已受版本控制；选择理由：该文件已负责测试用例工作流和 Vitest 验证运行时，继续承载 Windows npm 启动与生命周期回归最符合现有职责；统一验证与项目扫描场景继续由已受版本控制的 `tests/workflow.test.mjs` 提供配套回归。
-- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；活动变更与目标：`openspec/changes/add-frontend-test-workflow/test-plan.md`；需求修订基线：R-07。
+- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；归档变更与目标：`openspec/changes/archive/2026-08-17-add-frontend-test-workflow/test-plan.md`；需求修订基线：R-07。
 - 验证范围：全量；执行命令：先运行 `npm run prepare:test-runtime` 和专用聚焦测试，再运行可自行准备与清理运行时的 `npm run verify`、`npm run validate`、严格 OpenSpec 校验及官方 Skill/Plugin validators，最后用 `npm run cleanup:test-runtime` 兜底清理；所有新验证产物进入 `outputs/<验证主题>/`；选择理由：修复跨平台统一验证、CI 发布门禁和所有插件安装者共享的验证入口。
 - 自动测试：只读上下文、方案模板、TC 唯一与引用、占位和危险路径、需求修订过期、生成测试保护、无测试设施、Vue 3 + Vite + Vitest 专用测试、聚焦结果、重复执行、完成门禁、机器可读诊断和跨平台高风险规则合同。
 - 人工检查：核对 `$frontend-test` 的职责边界、自然语言路由、失败分类以及与 `$frontend-change`、UI Review 的交接说明，不执行视觉验收。
@@ -183,12 +183,12 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | `node --test tests/frontend-test-workflow.test.mjs`，覆盖上下文、三阶段校验、过期方案、完成门禁、Skill 合同和 Windows npm JS 入口，14/14 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-02 | 自动 | 从 `outputs/frontend-test-runtime/` 运行 Vue 3 + Vite + Vitest fixture，连续两次发现 TC-03；不存在目标时保持非零 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、190/190 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-04 | 自动 | 官方 Skill quick validator 9/9 与 Plugin validator 1/1 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-05 | 自动 | GitHub Actions 运行 `32015566890` 在提交 `15bdc0f` 上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 `npm run verify` | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-06 | 自动 | 跨平台高风险清单、仓库与模板标记、`frontend-change` 条件读取、TC-09、190/190 本地全量与官方 validators 已通过；GitHub Actions 运行 `32017643296` 在精确提交 `cc7d62781accd3d7c4c84190206e01c1498e95e8` 上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台统一验证、运行时清理和插件打包 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-01 | 自动 | `node --test tests/frontend-test-workflow.test.mjs`，覆盖上下文、三阶段校验、过期方案、完成门禁、Skill 合同和 Windows npm JS 入口，14/14 | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
+| V-02 | 自动 | 从 `outputs/frontend-test-runtime/` 运行 Vue 3 + Vite + Vitest fixture，连续两次发现 TC-03；不存在目标时保持非零 | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
+| V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、190/190 自动断言 | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
+| V-04 | 自动 | 官方 Skill quick validator 9/9 与 Plugin validator 1/1 | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
+| V-05 | 自动 | GitHub Actions 运行 `32015566890` 在提交 `15bdc0f` 上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 `npm run verify` | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
+| V-06 | 自动 | 跨平台高风险清单、仓库与模板标记、`frontend-change` 条件读取、TC-09、190/190 本地全量与官方 validators 已通过；GitHub Actions 运行 `32017643296` 在精确提交 `cc7d62781accd3d7c4c84190206e01c1498e95e8` 上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台统一验证、运行时清理和插件打包 | 2026-08-17 | 通过 | `openspec/changes/archive/2026-08-17-add-frontend-test-workflow/verification.md` |
 
 ## 验收标准
 
