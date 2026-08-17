@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.14.0+codex.20260817021150",
-  "description": "Reusable frontend delivery and project-local UI review with structured interactions, deterministic comparison, cross-platform bundled Chromium, optional visual fallback, safe repair, and verification.",
+  "version": "0.15.0+codex.20260817073523",
+  "description": "Reusable frontend delivery with traceable test-case planning, project-native test verification, and project-local deterministic UI review.",
   "author": {
     "name": "lvshuai"
   },
@@ -11,6 +11,7 @@
     "workflow",
     "openspec",
     "requirements",
+    "testing",
     "ui-review",
     "codex"
   ],
@@ -18,7 +19,7 @@
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.9 change lifecycle with archived-task validation, and run portable UI review with structured interactions, deterministic DOM or image comparison, bundled Chromium for Apple Silicon and Intel Mac, Linux x64 and ARM64, and Windows x64, optional visual fallback, explicitly gated source repair, and same-context verification without a separate management platform.",
+    "longDescription": "Inspect frontend repositories, create governed requirements, drive an OpenSpec 1.9 change lifecycle, form traceable TC test plans, implement project-native tests only when requested, gate completion on real evidence, and run portable deterministic UI review without a separate management platform.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [
@@ -28,7 +29,7 @@
     "defaultPrompt": [
       "Initialize this frontend repository with the shared AI workflow.",
       "Turn my feature description into a reviewable requirement document.",
-      "Review a configured frontend page through the unified deterministic runner, use visual fallback only for declared inconclusive results, safely fix approved UI findings, and verify the result."
+      "Analyze the selected change, form traceable frontend test cases, and implement or verify them only when requested."
     ]
   }
 }

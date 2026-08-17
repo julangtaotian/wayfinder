@@ -31,6 +31,7 @@ const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 const expectedPublicSkills = [
   'frontend-change',
   'frontend-requirement-write',
+  'frontend-test',
   'frontend-ui-fix',
   'frontend-ui-review',
   'frontend-ui-verify',
@@ -545,11 +546,13 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   ]);
 
   const executed = [];
+  const tempRoots = [];
   const messages = [];
   const errors = [];
   const failed = runVerification({
-    execute: (step) => {
+    execute: (step, _root, tempRoot) => {
       executed.push(step.id);
+      tempRoots.push(tempRoot);
       return { status: step.id === 'openspec' ? 2 : 0 };
     },
     report: (message) => messages.push(message),
@@ -559,12 +562,18 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   assert.equal(failed.failedStep, 'openspec');
   assert.deepEqual(failed.completed, ['tests', 'structure']);
   assert.deepEqual(executed, ['tests', 'structure', 'openspec']);
+  assert.ok(tempRoots.every((tempRoot) => tempRoot === path.resolve('outputs/verify-runtime/tmp')));
+  const inheritedVerificationRuntime = [process.env.TMPDIR, process.env.TMP, process.env.TEMP]
+    .filter(Boolean)
+    .some((tempRoot) => path.resolve(tempRoot) === path.resolve('outputs/verify-runtime/tmp'));
+  assert.equal(fs.existsSync(path.resolve('outputs/verify-runtime')), inheritedVerificationRuntime);
   assert.match(errors[0], /OpenSpec 全量严格校验/);
 
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   const workflow = fs.readFileSync('.github/workflows/validate.yml', 'utf8');
   const attributes = fs.readFileSync('.gitattributes', 'utf8');
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
+  assert.equal(packageJson.scripts['cleanup:test-runtime'], 'node scripts/cleanup-frontend-test-runtime.mjs');
   assert.match(workflow, /node-version: 20\.19\.0/);
   for (const [runner, platform] of [
     ['macos-15', 'darwin-arm64'],
@@ -577,7 +586,12 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', () =
   }
   assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
   assert.match(workflow, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform \}\}/);
-  assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), ['npm run verify']);
+  assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), [
+    'npm run prepare:test-runtime',
+    'npm run verify',
+  ]);
+  assert.match(workflow, /run: npm run cleanup:test-runtime/u);
+  assert.match(workflow, /if: always\(\)/u);
   assert.doesNotMatch(workflow, /npm test|npm run validate/);
   assert.match(attributes, /^\* text=auto eol=lf$/mu);
   assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
@@ -810,7 +824,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.14.0');
+  assert.equal(result.version, '0.15.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);
@@ -1582,6 +1596,12 @@ test('OpenSpec 1.9 独立检查归档任务并拒绝错误根批量命令', (t) 
 
   const outsideRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'openspec-no-root-'));
   t.after(() => fs.rmSync(outsideRoot, { recursive: true, force: true }));
+  // 建立配置边界，避免 outputs 内的临时目录向上误解析到真实仓库根目录。
+  writeFixtureFile(
+    outsideRoot,
+    'openspec/config.yaml',
+    'schema: spec-driven\nstore: missing-validation-root\n',
+  );
   const outside = runOpenSpecSync(['validate', '--all', '--json', '--no-interactive'], {
     cwd: outsideRoot,
     env: { ...process.env, XDG_CONFIG_HOME: path.join(outsideRoot, '.config') },

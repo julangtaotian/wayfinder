@@ -5,7 +5,8 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const excludedDirectories = new Set(['.git', 'node_modules']);
+// outputs 只保存验证产物，不属于需要扫描的项目源码。
+const excludedDirectories = new Set(['.git', 'node_modules', 'outputs']);
 const textExtensions = new Set([
   '.cjs',
   '.css',

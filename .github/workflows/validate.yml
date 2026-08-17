@@ -34,7 +34,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0
+      - run: npm run prepare:test-runtime
       - run: npm run verify
+      - name: Clean frontend test runtime
+        if: always()
+        run: npm run cleanup:test-runtime
       - name: Build and verify platform plugin package
         run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write --platform ${{ matrix.platform }}
       - uses: actions/upload-artifact@v4

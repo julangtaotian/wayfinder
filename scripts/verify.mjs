@@ -6,6 +6,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultRepositoryRoot = path.resolve(scriptDir, '..');
 
+function resolveVerificationRuntime(repositoryRoot) {
+  const outputsRoot = path.join(repositoryRoot, 'outputs');
+  const runtimeRoot = path.join(outputsRoot, 'verify-runtime');
+  const relativeRuntime = path.relative(outputsRoot, runtimeRoot);
+  if (!relativeRuntime || relativeRuntime.startsWith('..') || path.isAbsolute(relativeRuntime)) {
+    throw new Error(`验证临时目录必须位于 outputs 内：${runtimeRoot}`);
+  }
+  return { runtimeRoot, tempRoot: path.join(runtimeRoot, 'tmp') };
+}
+
 function discoverTests(repositoryRoot) {
   const testsRoot = path.join(repositoryRoot, 'tests');
   return fs.readdirSync(testsRoot)
@@ -71,11 +81,14 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
   ];
 }
 
-function executeStep(step, repositoryRoot) {
+function executeStep(step, repositoryRoot, tempRoot) {
   return spawnSync(process.execPath, step.args, {
     cwd: repositoryRoot,
     env: {
       ...process.env,
+      TMPDIR: tempRoot,
+      TMP: tempRoot,
+      TEMP: tempRoot,
       OPENSPEC_NO_UPDATE_CHECK: '1',
       OPENSPEC_TELEMETRY: '0',
     },
@@ -92,20 +105,31 @@ export function runVerification({
   const root = fs.realpathSync(path.resolve(repositoryRoot));
   const steps = buildVerificationSteps(root);
   const completed = [];
+  const { runtimeRoot, tempRoot } = resolveVerificationRuntime(root);
+  const inheritedTempRoots = [process.env.TMPDIR, process.env.TMP, process.env.TEMP]
+    .filter(Boolean)
+    .map((item) => path.resolve(item));
+  const ownsRuntime = !inheritedTempRoots.includes(path.resolve(tempRoot));
+  fs.mkdirSync(tempRoot, { recursive: true });
 
-  for (const [index, step] of steps.entries()) {
-    report(`[verify ${index + 1}/${steps.length}] ${step.label}`);
-    const result = execute(step, root);
-    if (result.error || result.status !== 0) {
-      const reason = result.error?.message || `退出码 ${result.status ?? '未知'}`;
-      reportError(`统一验证失败：${step.label}（${reason}）`);
-      return { ok: false, completed, failedStep: step.id, status: result.status ?? 1 };
+  try {
+    for (const [index, step] of steps.entries()) {
+      report(`[verify ${index + 1}/${steps.length}] ${step.label}`);
+      const result = execute(step, root, tempRoot);
+      if (result.error || result.status !== 0) {
+        const reason = result.error?.message || `退出码 ${result.status ?? '未知'}`;
+        reportError(`统一验证失败：${step.label}（${reason}）`);
+        return { ok: false, completed, failedStep: step.id, status: result.status ?? 1 };
+      }
+      completed.push(step.id);
     }
-    completed.push(step.id);
-  }
 
-  report(`统一验证通过：${completed.length} 个阶段全部完成。`);
-  return { ok: true, completed, failedStep: null, status: 0 };
+    report(`统一验证通过：${completed.length} 个阶段全部完成。`);
+    return { ok: true, completed, failedStep: null, status: 0 };
+  } finally {
+    // 只有最外层验证负责回收，避免嵌套验证删除仍在使用的共享临时目录。
+    if (ownsRuntime) fs.rmSync(runtimeRoot, { recursive: true, force: true });
+  }
 }
 
 function isEntryPoint() {

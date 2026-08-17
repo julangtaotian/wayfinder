@@ -74,6 +74,9 @@ test-results/
 playwright-report/
 blob-report/
 .nyc_output/
+/outputs/frontend-test-runtime/
+/outputs/verify-runtime/
+/outputs/validator-runtime/
 
 # 运行日志与进程临时状态
 *.log

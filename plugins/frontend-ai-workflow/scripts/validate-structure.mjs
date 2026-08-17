@@ -18,6 +18,7 @@ const repositoryRoot = path.resolve(pluginRoot, '..', '..');
 const PUBLIC_SKILLS = [
   'frontend-change',
   'frontend-requirement-write',
+  'frontend-test',
   'frontend-ui-fix',
   'frontend-ui-review',
   'frontend-ui-verify',
@@ -56,6 +57,12 @@ const DELIVERY_GUARD_ASSETS = [
 const PROJECT_PROFILE_ASSETS = [
   'scripts/project-target-profile.mjs',
   'references/project-detection.md',
+];
+const TEST_WORKFLOW_ASSETS = [
+  'scripts/inspect-test-context.mjs',
+  'scripts/validate-test-plan.mjs',
+  'assets/templates/openspec/test-plan.md',
+  'references/test-case-guidelines.md',
 ];
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
@@ -252,6 +259,12 @@ function validateProjectProfileAssets(errors) {
   }
 }
 
+function validateTestWorkflowAssets(errors) {
+  for (const file of TEST_WORKFLOW_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少测试用例工作流资产：${file}`);
+  }
+}
+
 function validateRuntimeIntegrityAssets(errors) {
   for (const file of RUNTIME_INTEGRITY_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
@@ -347,6 +360,7 @@ try {
   validateRequirementMigrationAssets(errors);
   validateDeliveryGuardAssets(errors);
   validateProjectProfileAssets(errors);
+  validateTestWorkflowAssets(errors);
   validateRuntimeIntegrityAssets(errors);
   validateUiReviewAssets(errors);
   await validateUiReviewStructure(errors, distribution);

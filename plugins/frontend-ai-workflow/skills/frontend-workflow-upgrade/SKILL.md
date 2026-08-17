@@ -36,5 +36,5 @@ If the preview reports a legacy layout, ordinary upgrade must not move files. In
 - Never overwrite requirement documents, project context, planning changes, or business code.
 - Never use a version upgrade as permission for unrelated cleanup.
 - Keep project-owned content outside managed blocks byte-for-byte unchanged.
-- Upgrading to workflow 0.14.0 adopts OpenSpec 1.9.0 archived-task validation, root failure and unexpected-scope semantics while retaining the planning-completion and explicit deep-analysis contracts; it must not rename, relocate or rewrite existing requirements, changes or specifications.
+- Upgrading to workflow 0.15.0 adds the optional `test_plan: required` gate, `$frontend-test`, and project-native test-case assets while retaining OpenSpec 1.9.0, planning-completion, explicit deep-analysis, and historical-change compatibility; it must not rename, relocate or rewrite existing requirements, changes, specifications, or tests.
 - Do not use the requirement preview as authorization to migrate a requirement. The maintainer must confirm each document's business facts, state, decision ledger and evidence mapping separately.

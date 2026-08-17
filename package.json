@@ -1,10 +1,12 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "private": true,
   "type": "module",
   "description": "Team marketplace and Codex plugin for reusable frontend AI workflows.",
   "scripts": {
+    "prepare:test-runtime": "node scripts/prepare-frontend-test-runtime.mjs",
+    "cleanup:test-runtime": "node scripts/cleanup-frontend-test-runtime.mjs",
     "test": "node --test tests/*.test.mjs",
     "validate": "node plugins/frontend-ai-workflow/scripts/validate-structure.mjs",
     "openspec:version": "node plugins/frontend-ai-workflow/scripts/openspec-cli.mjs --version",

@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
 import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
+import { validateTestPlan } from './validate-test-plan.mjs';
 
 const CHECK_STAGES = new Set(['implement', 'precomplete']);
 
@@ -89,6 +90,32 @@ function hasSkipSpecsMetadata(changePath) {
   return /^skip_specs:\s*true\s*(?:#.*)?$/mu.test(fs.readFileSync(metadataPath, 'utf8'));
 }
 
+export function requiresTestPlan(changePath) {
+  const metadataPath = path.join(changePath, '.openspec.yaml');
+  if (!fs.existsSync(metadataPath)) return false;
+  return /^test_plan:\s*required\s*(?:#.*)?$/mu.test(fs.readFileSync(metadataPath, 'utf8'));
+}
+
+export function validateDeclaredTestPlan({ changePath, requirementPath, stage }) {
+  const required = requiresTestPlan(changePath);
+  if (!required) return { required, validation: null, errors: [], warnings: [] };
+  const planPath = path.join(changePath, 'test-plan.md');
+  if (!fs.existsSync(planPath)) {
+    return {
+      required,
+      validation: null,
+      errors: [`变更声明 test_plan: required，但测试方案不存在：${planPath}`],
+      warnings: [],
+    };
+  }
+  const validation = validateTestPlan(planPath, {
+    requirement: requirementPath,
+    change: changePath,
+    stage: stage === 'precomplete' ? 'complete' : 'implement',
+  });
+  return { required, validation, errors: validation.errors, warnings: validation.warnings };
+}
+
 function hasSkipSpecsDecision(requirementPath) {
   const content = fs.readFileSync(requirementPath, 'utf8');
   const heading = /^##\s+决策台账\s*$/mu.exec(content);
@@ -169,6 +196,11 @@ export function checkChange({
   const requirementValidation = validateRequirementDecisions(requirementPath, { changePath, stage });
   errors.push(...requirementValidation.errors);
   warnings.push(...requirementValidation.warnings);
+  const declaredTestPlan = validateDeclaredTestPlan({ changePath, requirementPath, stage });
+  const testPlanRequired = declaredTestPlan.required;
+  const testPlanValidation = declaredTestPlan.validation;
+  errors.push(...declaredTestPlan.errors);
+  warnings.push(...declaredTestPlan.warnings);
 
   const status = runEngineCheck(root, ['status', '--change', changeName, '--json'], '规划状态检查', errors);
   if (status.ok) validatePlanningRoot(root, status.data, '规划状态检查', errors);
@@ -215,12 +247,18 @@ export function checkChange({
       },
       openSpecStatus: { status: status.ok ? 'passed' : 'failed', executed: true },
       openSpecStrictValidation: { status: strictValidation.ok ? 'passed' : 'failed', executed: true },
+      testPlan: {
+        status: !testPlanRequired ? 'not-required' : (testPlanValidation?.ok ? 'passed' : 'failed'),
+        executed: testPlanRequired && Boolean(testPlanValidation),
+      },
       archiveInstructions: {
         status: stage !== 'precomplete' ? 'not-run' : archiveInstructions ? 'passed' : 'failed',
         executed: stage === 'precomplete',
       },
     },
     requirementValidation,
+    testPlanRequired,
+    testPlanValidation,
     planningStatus: status.data,
     planningArtifacts,
     archiveInstructions,

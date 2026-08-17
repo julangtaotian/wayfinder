@@ -9,6 +9,7 @@
 - 初始化项目级 `AGENTS.md`、Wayfinder 项目导航和内部规划配置。
 - 把自然语言需求整理成可评审的 Markdown 文档。
 - 使用一个统一入口推进探索、规划、修订、实施、同步和归档。
+- 使用 `$frontend-test` 只读盘点测试上下文、形成可追踪 `TC-*` 方案，并在明确请求后按项目原生设施实现与聚焦验证测试。
 - 用需求状态、`V-*` 验证记录、人工视觉证据和测试 Git 基线约束交付完成，未满足条件时不允许归档。
 - 以交互状态矩阵覆盖初始数据、真实用户操作、刷新、空态、错误态与卸载，并为旧需求提供只读升级缺口预览。
 - 检查必需文件、项目脚本、工作流版本和内置规划引擎状态。
@@ -24,11 +25,11 @@
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 - 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
-当前完整回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn。Monorepo 和多个前端应用的专属编排不在本版本范围内。
+当前项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo 和多个前端应用的专属编排不在本版本范围内。
 
 ## 安装
 
-前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.14.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
+前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.15.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
 
 ```bash
 codex plugin marketplace add /absolute/path/to/frontend-ai-workflow
@@ -39,7 +40,7 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 
 ## 使用
 
-对外提供以下 8 个团队命令。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
+对外提供以下 9 个团队命令。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
 
 使用前请通过 Codex 打开目标前端仓库。安装或更新插件后，建议新建 Codex 任务，以加载最新版命令。调用时输入 `$命令名`，后面直接跟自然语言要求即可。
 
@@ -166,7 +167,21 @@ $frontend-change 验证、同步并归档当前变更
 
 **达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 归档”，不用学习 OpenSpec 的内部命令。
 
-### 4. `$frontend-ui-review`
+### 4. `$frontend-test`
+
+**作用**：把已确认需求形成可审查的 `TC-*` 测试方案，并按用户意图区分只读分析、方案写入、测试实现和聚焦验证。
+
+**使用示例**：
+
+```text
+$frontend-test 先盘点当前变更的测试覆盖，不要修改文件
+$frontend-test 为当前活动变更形成测试用例
+$frontend-test 按方案实现并验证 TC-03
+```
+
+只读分析会识别项目已有测试命令、runner、配置、目录、手写测试、生成基线和 Git 证据。形成方案时只在活动变更内维护 `test-plan.md`；实现阶段只修改对应测试代码，不安装业务依赖、不修改业务源码。聚焦命令必须真实发现计划 TC 才能记录通过，零测试、产品缺陷、测试错误、需求歧义、环境阻塞和历史无关失败会分别报告。视觉用例复用既有 UI Review 证据，不重复建设浏览器流程。
+
+### 5. `$frontend-ui-review`
 
 **作用**：按项目内配置打开真实页面，对照本地设计图或设计规范生成实际截图、标注截图、Markdown 报告和可继续处理的运行状态。
 
@@ -192,7 +207,7 @@ node <插件根>/scripts/ui-review-runner.mjs review --target <项目> --scenari
 
 当前仓库保留 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五套规范源资产，共享 Playwright、PNG 解码和像素比较代码。发布入口为当前原生平台生成独立成品，每个成品只携带一套 Chromium、FFmpeg、许可和摘要；未支持或成品不匹配的平台明确阻塞，只能使用场景已经声明的视觉兜底，不会在用户机器现场下载。
 
-### 5. `$frontend-ui-fix`
+### 6. `$frontend-ui-fix`
 
 **作用**：只在用户明确要求后，根据验收报告声明的源码文件、稳定锚点和修改边界应用最小修复。
 
@@ -204,7 +219,7 @@ $frontend-ui-fix 应用 build-101 的 UI 验收修复
 
 默认 `autoFix: "suggest"` 只输出建议；当前任务显式授权后才会修改。它拒绝直接修改 `main` / `master`、拒绝覆盖重叠的未提交改动，并且修复后只进入“待复验”，不会直接标记通过，也不会自动提交、推送或创建 PR。
 
-### 6. `$frontend-ui-verify`
+### 7. `$frontend-ui-verify`
 
 **作用**：使用与基线完全相同的页面、视口、设计依据、目标节点、交互和首次实际采集器重新验收，区分已关闭、未解决和新增问题；不能在项目 Playwright 与视觉兜底之间切换。
 
@@ -216,7 +231,7 @@ $frontend-ui-verify 复验 build-101 的修复结果
 
 只有未解决与新增问题都为空时才通过；场景上下文已经变化时会要求重新开始独立验收。
 
-### 7. `$frontend-workflow-check`
+### 8. `$frontend-workflow-check`
 
 **作用**：只读检查当前项目是否正确接入工作流，以及工作流能否正常运行。
 
@@ -242,7 +257,7 @@ $frontend-workflow-check 检查当前项目的工作流是否健康
 
 **达到的目的**：快速判断当前项目能否正常使用这套流程，并定位缺失配置或版本问题。
 
-### 8. `$frontend-workflow-upgrade`
+### 9. `$frontend-workflow-upgrade`
 
 **作用**：公共工作流发布新版本后，安全升级业务项目中的受管规则。
 
@@ -260,7 +275,7 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 确认升级
 ```
 
-它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.14.0 / OpenSpec 1.9.0；不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复或者发生冲突时，会停止升级并说明原因。
+它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.15.0 / OpenSpec 1.9.0；不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格、测试方案或测试代码，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复或者发生冲突时，会停止升级并说明原因。
 
 升级预览还会只读检查 `requirements/REQ-*.md`，列出活跃或状态未知需求缺少的决策台账、验收映射和统一状态；它不会改写任何历史需求，迁移必须逐份确认业务事实后再进行。
 
@@ -281,6 +296,9 @@ $frontend-change 根据需求文档生成实施规划，暂时不要修改业务
 # 确认规划后开始开发
 $frontend-change 开始实施当前变更
 
+# 需要独立测试方案或测试实现时执行
+$frontend-test 为当前活动变更形成测试用例并实现聚焦测试
+
 # 开发完成后验证和归档
 $frontend-change 验证、同步并归档当前变更
 
@@ -296,7 +314,7 @@ $frontend-workflow-check 检查当前项目的工作流是否健康
 $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 ```
 
-可以简单记为：`bootstrap` 管接入，`requirement-write` 管需求，`change` 管开发过程，`ui-review / ui-fix / ui-verify` 管 UI 验收闭环，`check` 管检查，`upgrade` 管升级。
+可以简单记为：`bootstrap` 管接入，`requirement-write` 管需求，`change` 管开发过程，`test` 管测试用例闭环，`ui-review / ui-fix / ui-verify` 管 UI 验收闭环，`check` 管检查，`upgrade` 管升级。
 
 ## 项目落地文件
 
@@ -315,10 +333,12 @@ wayfinder/frontend.md
 ## 本地开发
 
 ```bash
+npm run prepare:test-runtime
 npm run verify
+npm run cleanup:test-runtime
 ```
 
-`verify` 是本地与 CI 的统一只读门禁。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
+`prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，并会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。日志、截图、临时 fixture、下载内容和其他验证产物也统一写入各自的 `outputs/<验证主题>/`，不要使用项目根目录或系统临时目录。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
 
 仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。验证工作流通过 `actions/checkout` 的 `lfs: true` 获取真实文件，并配置为分别在 macOS ARM64、macOS x64、Linux x64、Linux ARM64 和 Windows x64 原生启动内置 Chromium；受支持平台不允许以跳过冒烟代替成功。
 
@@ -332,7 +352,7 @@ npm run verify
 
 ### 生成单平台插件成品
 
-1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output <安全暂存目录>` 预览平台、排除资产和体积预算；预览不创建目录。
+1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output outputs/<平台成品目录>` 预览平台、排除资产和体积预算；预览不创建目录。
 2. 仅在 `<platform-arch>` 与当前原生平台一致时追加 `--write`。成品完整保留共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时排除其他四个平台资产。
 3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。许可、FFmpeg、共享运行时和完整性文件不得用于体积裁剪。
 4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改 Git LFS 规范源；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
@@ -341,7 +361,7 @@ npm run verify
 
 内置运行时按“候选先行、验证后替换”升级：
 
-1. 在独立临时目录精确安装目标版本，使用 `--omit=dev --ignore-scripts --no-audit --no-fund`，不在现有运行时目录直接安装。
+1. 在 `outputs/<OpenSpec 升级验证目录>/` 精确安装目标版本，使用 `--omit=dev --ignore-scripts --no-audit --no-fund`，不在项目根目录或现有运行时目录直接安装。
 2. 从官方包内容和生产依赖闭包组装候选，核验 `package.json` 版本、`bin/openspec.js`、根 LICENSE、每个直接生产依赖和依赖许可证。
 3. 用候选执行版本命令、当前仓库 `validate --all --strict --json`、`validate --archived --json` 和兼容场景；全部通过后才备份并替换 `plugins/frontend-ai-workflow/runtime/openspec`。
 4. 显式运行 `node plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs --write`，生成不含绝对路径和时间戳的生产包许可证与 SHA-256 清单。

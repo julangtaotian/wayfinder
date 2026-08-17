@@ -44,6 +44,7 @@ Use when the user wants to start a defined change and no matching active change 
 - Use the requirement's `D-*` and `A-*` IDs in specifications, design, and tasks. Do not create plan tasks from `暂定` or `待确认` decisions.
 - After creating the managed change, add or update its row in the requirement's `关联变更范围`, then validate the requirement with that change path before describing the plan as implementation-ready.
 - Turn every matrix row marked `覆盖` into a test or explicit manual verification task. Keep any `不适用` reason visible in the plan; do not treat refresh and empty-state coverage as a substitute for initial-data or real-user-operation coverage.
+- When the requirement marks an independent test plan as required, create or update `<change-root>/test-plan.md`, preserve `test_plan: required` in metadata, and run the test-plan validator at `plan` stage before calling the change implementation-ready.
 - Create the change, proposal, specifications, design, and task list through the bundled runtime.
 - Use `skip_specs: true` only when an applicable confirmed requirement decision explicitly states that this change does not alter observable behavior. Never expose it as a convenience flag or infer it from missing delta specs.
 - Stop when the change is ready for implementation and summarize the acceptance boundary.
@@ -66,6 +67,7 @@ Use when planning artifacts are complete and the user asks to start or continue 
 - Re-run the requirement validator with `--change <change-root> --stage implement` before implementation. Resolve unknown, pending, conflicting, or test-baseline references by revising the requirement and plan first.
 - Set a confirmed requirement to `实施中` when implementation begins; do not implement a requirement already in `待验证` or `已验收`.
 - Re-read the interaction-state matrix before selecting tests. Implement the covered initial, user-action, refresh, empty, error, and lifecycle cases that apply to the change; revise the requirement when the matrix no longer matches actual impact.
+- If `.openspec.yaml` declares `test_plan: required`, read the same `test-plan.md` and run its `implement` validator before changing source or tests. Use `$frontend-test` for explicit test-code implementation; product implementation remains owned by this change workflow.
 - Implement tasks in order unless dependencies justify a different sequence.
 - Follow repository conventions, run focused verification, and mark only genuinely completed tasks.
 - Pause and return to Revise when implementation exposes a material planning conflict.
@@ -76,6 +78,7 @@ Use when implementation is finished and the user asks to finalize the change.
 
 1. Confirm required tasks and acceptance scenarios are complete.
 2. Run relevant project tests and inspect implementation evidence; update the related `V-*` records only with actual results, check the acceptance boxes, and set the requirement status to `待验证`.
+   When `test_plan: required` is declared, require the plan to be `已验证` and pass the `complete` validator before updating completion evidence.
 3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isPlanningComplete=true` (with `isComplete` only as a legacy response fallback), and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
 4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags.
 5. Report verification results, synchronized capabilities, archive location, final requirement status, and any residual risk.
