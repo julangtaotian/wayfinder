@@ -33,6 +33,7 @@
 | D-12 | 首版兼容证明 | 已确认 | 使用 Vue 3 + Vite + Vitest fixture 证明分析、方案、实现、聚焦执行和重复执行闭环；其他已配置 runner 可遵循项目模式，但首版不声明完整兼容认证 | 用户确认的首版范围 |
 | D-13 | 明确排除 | 已确认 | 不包含自动安装测试框架、业务源码修复、管理后台、远程用例平台、覆盖率仪表盘、Mutation Testing、性能或安全专项、全历史测试重写和默认全量测试 | 用户确认的首版范围 |
 | D-14 | 发布与依赖 | 已确认 | 插件生产脚本仅使用 Node.js 标准库；真实 Vitest 兼容证据使用按需准备的 `outputs/frontend-test-runtime/`，验证依赖、锁文件和缓存不得写入项目根目录，验证后删除该运行时；公共能力保持 0.15.0 | 用户确认项目根目录清洁与 outputs 统一落点 |
+| D-15 | 跨平台高风险标记 | 已确认 | 修改 CI、文件路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断时，必须显式标记为“跨平台高风险”，读取共享检查清单，优先断言稳定结构字段并补充与受影响平台差异对应的确定性回归；本地通过不得替代真实 CI 矩阵证据 | 用户要求整理近期 Actions 失败经验并固化标记，避免重复犯错 |
 
 ## 范围
 
@@ -46,6 +47,7 @@
 - 更新项目健康检查与完成入口，使已声明测试方案的非法、过期或未完成状态保持可见并阻止错误完成。
 - 在 Vue 3 + Vite + Vitest fixture 上验证新建专用测试、聚焦执行、零测试发现、重复执行和失败分类边界。
 - 更新 README、插件 manifest、公开 Skill 清单、结构校验和版本元数据。
+- 新增跨平台 CI 防回归清单和高风险标记，将路径、临时仓库、Windows 子进程与结构化诊断断言纳入变更实施和交付检查。
 
 ### 不包含
 
@@ -108,6 +110,14 @@
 - 并且：未更新方案前不得继续实现或完成。
 - 异常或边界：不自动改写历史用例或假定所有用例仍然有效。
 
+### 场景：跨平台高风险变更进入交付
+
+- 前置条件：变更影响 CI、路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断。
+- 当：工作流规划、实现或验证该变更。
+- 则：在变更资料中显式标记“跨平台高风险”，读取共享检查清单，并为实际受影响的平台差异增加确定性回归。
+- 并且：机器输出优先断言稳定字段，路径按平台规范化或兼容两类分隔符；真实 CI 矩阵没有全部通过前，不得把发布证据标为完成。
+- 异常或边界：没有外部 runner 权限时如实保留待执行证据，不用本地模拟结果冒充真实平台通过。
+
 ## 页面与交互
 
 - 入口与操作路径：用户通过 `$frontend-test` 或自然语言请求分析、形成用例、实现测试、验证和复验；`$frontend-change` 在相关阶段消费同一测试方案。
@@ -139,7 +149,7 @@
 
 | 变更 | 决策范围 | 验收范围 |
 | --- | --- | --- |
-| add-frontend-test-workflow | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08、D-09、D-10、D-11、D-12、D-13、D-14 | A-01、A-02、A-03、A-04、A-05、A-06、A-07、A-08、A-09、A-10 |
+| add-frontend-test-workflow | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08、D-09、D-10、D-11、D-12、D-13、D-14、D-15 | A-01、A-02、A-03、A-04、A-05、A-06、A-07、A-08、A-09、A-10、A-11 |
 
 ## 修订记录
 
@@ -151,20 +161,21 @@
 | R-04 | 2026-08-17 | D-01～D-14 | A-01～A-10 | 首版 Skill、模板、上下文检查、三阶段校验、完成门禁、Vue Vitest fixture 和 0.15.0 发布资产均已实现；V-01～V-05 已按真实结果更新，等待完成阶段验收。 |
 | R-05 | 2026-08-17 | D-14 | A-05、A-10 | 用户要求项目根目录不保留验证安装与临时产物；Vitest 运行时迁移到 `outputs/frontend-test-runtime/`，V-01～V-05 已重新验证，依赖隔离与全量验证任务完成。 |
 | R-06 | 2026-08-17 | D-14 | A-10 | 五平台 CI 揭示仓库内临时 fixture 继承父 Git 忽略规则，以及 Windows 直接启动 `npm.cmd` 的确定性缺陷；重新打开跨平台运行时、统一验证和发布验证任务，V-03、V-05 恢复为计划。 |
+| R-07 | 2026-08-17 | D-15 | A-10、A-11 | 用户要求将近期连续 Actions 失败的共性原因固化为跨平台高风险标记、共享检查清单和自动合同测试；V-05 记录现有修复提交的五平台通过证据，新增 V-06 并重新打开守护规则发布验证任务。 |
 
 ## 兼容性与风险
 
 - 受影响页面、公共组件、路由、权限或接口：不涉及业务页面；影响公共 Skill 清单、需求/变更规划、测试代码写入边界、项目检查和完成门禁。
 - 历史数据与兼容策略：没有测试方案的历史需求与变更继续可读；只有当前变更显式声明测试方案时启用新门禁，不自动补写历史测试事实。
 - 上线与回滚注意事项：新增能力必须随插件版本、结构校验和官方 validators 一起发布；失败时可以移除新 Skill 与关联门禁，不改变业务项目已有测试。
-- 主要风险：测试方案可能与规格重复、跨 runner 发现语义不一致、AI 生成脆弱断言、完成门禁误伤历史变更；通过派生事实引用、项目原生模式、首版兼容声明和显式启用降低风险。
+- 主要风险：测试方案可能与规格重复、跨 runner 发现语义不一致、AI 生成脆弱断言、完成门禁误伤历史变更，以及跨平台规则退化为只读清单；通过派生事实引用、项目原生模式、首版兼容声明、显式启用和自动合同测试降低风险。
 
 ## 测试与验证
 
 - 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs` 与 `tests/workflow.test.mjs`；Git 基线：两个手写测试均已受版本控制；选择理由：前者已负责 Vitest 验证运行时，后者已负责统一验证与项目扫描，分别追加 Windows npm 启动、运行时生命周期和 Git 隔离场景最符合现有职责。
-- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；活动变更与目标：`openspec/changes/add-frontend-test-workflow/test-plan.md`；需求修订基线：R-06。
+- 独立测试方案：需要；触发条件：本需求新增独立测试用例工作流并需要自举验证；活动变更与目标：`openspec/changes/add-frontend-test-workflow/test-plan.md`；需求修订基线：R-07。
 - 验证范围：全量；执行命令：先运行 `npm run prepare:test-runtime` 和专用聚焦测试，再运行可自行准备与清理运行时的 `npm run verify`、`npm run validate`、严格 OpenSpec 校验及官方 Skill/Plugin validators，最后用 `npm run cleanup:test-runtime` 兜底清理；所有新验证产物进入 `outputs/<验证主题>/`；选择理由：修复跨平台统一验证、CI 发布门禁和所有插件安装者共享的验证入口。
-- 自动测试：只读上下文、方案模板、TC 唯一与引用、占位和危险路径、需求修订过期、生成测试保护、无测试设施、Vue 3 + Vite + Vitest 专用测试、聚焦结果、重复执行、完成门禁和机器可读诊断。
+- 自动测试：只读上下文、方案模板、TC 唯一与引用、占位和危险路径、需求修订过期、生成测试保护、无测试设施、Vue 3 + Vite + Vitest 专用测试、聚焦结果、重复执行、完成门禁、机器可读诊断和跨平台高风险规则合同。
 - 人工检查：核对 `$frontend-test` 的职责边界、自然语言路由、失败分类以及与 `$frontend-change`、UI Review 的交接说明，不执行视觉验收。
 - 构建与静态检查：插件结构、公开 Skill 列表、manifest、README、版本一致性、官方 validators、AI 标记策略和 `git diff --check`。
 
@@ -174,9 +185,10 @@
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 自动 | `node --test tests/frontend-test-workflow.test.mjs`，覆盖上下文、三阶段校验、过期方案、完成门禁、Skill 合同和 Windows npm JS 入口，14/14 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-02 | 自动 | 从 `outputs/frontend-test-runtime/` 运行 Vue 3 + Vite + Vitest fixture，连续两次发现 TC-03；不存在目标时保持非零 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、189/189 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-03 | 自动 | `npm run verify` 自行准备与回收 Vitest 运行时，隔离仓库内临时 fixture 的父 Git 发现，8/8 阶段、190/190 自动断言 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 | V-04 | 自动 | 官方 Skill quick validator 9/9 与 Plugin validator 1/1 | 2026-08-17 | 通过 | `openspec/changes/add-frontend-test-workflow/verification.md` |
-| V-05 | 自动 | 运行 `32014080607` 已有四平台通过；Windows 路径断言已修复并通过本地聚焦与统一验证，等待新提交的五平台 Actions | 待执行 | 未执行 | `openspec/changes/add-frontend-test-workflow/verification.md` |
+| V-05 | 自动 | GitHub Actions 运行 `32015566890` 在提交 `15bdc0f` 上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 `npm run verify` | 2026-08-17 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32015566890` |
+| V-06 | 自动 | 跨平台高风险清单、仓库与模板标记、`frontend-change` 条件读取、TC-09、190/190 本地全量与官方 validators 已通过；等待守护规则提交后的 GitHub Actions 五平台矩阵 | 待执行 | 未执行 | `openspec/changes/add-frontend-test-workflow/verification.md` |
 
 ## 验收标准
 
@@ -190,6 +202,7 @@
 - [x] [A-08] 需求新增 R-* 修订后旧测试方案被识别为过期，未更新前阻止实施与完成。
 - [x] [A-09] 视觉和人工用例复用现有 UI Review 与 V-* 证据合同，不重复建设浏览器运行时或视觉修复链路。
 - [ ] [A-10] 0.15.0 的 Skill、脚本、模板、README、manifest、结构校验、专用测试、全量验证和官方 validators 一致通过。
+- [ ] [A-11] 跨平台高风险变更会被显式标记，并由共享清单、稳定结构断言、平台差异回归和真实矩阵证据共同约束。
 
 ## 验收—证据映射
 
@@ -204,7 +217,8 @@
 | A-07 | 空态和写入边界 | D-07、D-08、D-13 | 自动 | 无测试设施 fixture 与仓库差异 | 不安装依赖、不改业务源码、不伪造自动测试 | V-01、V-05 |
 | A-08 | 需求修订失效 | D-10 | 自动 | R-* 基线 fixture | 更晚修订使旧方案在 implement/complete 阶段阻断 | V-01 |
 | A-09 | 视觉与人工交接 | D-11 | 自动 | Skill、规则和模板静态合同 | 视觉用例引用既有 UI Review 和 V-*，不复制运行时 | V-01、V-04 |
-| A-10 | 发布一致性 | D-14 | 自动 | manifest、README、结构校验、全量验证和 validators | 待重新证明五平台入口一致通过、验证运行时只位于 outputs 且根目录清洁 | V-03、V-04、V-05 |
+| A-10 | 发布一致性 | D-14、D-15 | 自动 | manifest、README、结构校验、全量验证和 validators | 现有修复提交已五平台通过；守护规则变更仍需新矩阵证明入口一致、运行时隔离且根目录清洁 | V-03、V-04、V-05、V-06 |
+| A-11 | 跨平台防回归 | D-15 | 自动 | 仓库规则、共享参考、Skill 合同、TC-09 与 Actions 矩阵 | 高风险触发条件、稳定断言、平台差异回归和外部证据边界均可审计且由自动测试防止丢失 | V-06 |
 
 ## 待确认问题
 

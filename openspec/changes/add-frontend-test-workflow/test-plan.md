@@ -5,7 +5,7 @@
 - 状态：已实现
 - 需求：`requirements/REQ-2026-025-frontend-test-workflow.md`
 - 变更：add-frontend-test-workflow
-- 需求修订基线：R-06
+- 需求修订基线：R-07
 - 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 
 ## 测试上下文
@@ -192,5 +192,27 @@
 - 测试定位：`OpenSpec 1.9 独立检查归档任务并拒绝错误根批量命令`
 - 聚焦命令：`node --test --test-name-pattern="独立检查归档任务" tests/workflow.test.mjs`
 - 关联验证：V-03、V-05
+- 结果分类：通过
+- 证据：`openspec/changes/add-frontend-test-workflow/verification.md`
+
+### TC-09：跨平台高风险规则形成可执行合同
+
+- 状态：通过
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：单元
+- 关联决策：D-15
+- 关联验收：A-10、A-11
+- 关联规格：verifiable-change-delivery / 变更命中跨平台风险触发器、断言包含平台相关诊断、本地验证通过但外部矩阵尚未运行
+- 状态矩阵：刷新、错误态
+- 前置条件：仓库规则、受管 AGENTS 模板、`frontend-change` Skill 和共享检查清单均存在
+- 测试数据：CI、路径、临时目录、子进程、包管理器入口、环境变量、稳定结构字段和五平台证据关键词
+- 测试替身：静态合同读取，不调用外部 CI
+- 操作：检查高风险标记、条件读取、稳定断言、平台差异回归、外部证据边界和发布资产清单
+- 可观察断言：任一规则文件被删除或关键约束丢失时测试失败，且本地验证不会被描述为真实五平台通过
+- 目标测试：`tests/workflow.test.mjs`
+- 测试定位：`[TC-09] 跨平台高风险变更规则合同`
+- 聚焦命令：`node --test --test-name-pattern="跨平台高风险变更规则合同" tests/workflow.test.mjs`
+- 关联验证：V-06
 - 结果分类：通过
 - 证据：`openspec/changes/add-frontend-test-workflow/verification.md`

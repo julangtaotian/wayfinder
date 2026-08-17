@@ -1193,6 +1193,31 @@ test('变更验证规则优先选择当前需求影响面的测试', () => {
   assert.match(skill, /full project test command only/);
 });
 
+test('[TC-09] 跨平台高风险变更规则合同', () => {
+  const repositoryRules = fs.readFileSync('AGENTS.md', 'utf8');
+  const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const checklist = fs.readFileSync(path.join(pluginRoot, 'references', 'cross-platform-ci-checklist.md'), 'utf8');
+  const structureValidator = fs.readFileSync(path.join(pluginRoot, 'scripts', 'validate-structure.mjs'), 'utf8');
+
+  for (const rules of [repositoryRules, agentsTemplate]) {
+    assert.match(rules, /跨平台高风险/);
+    assert.match(rules, /CI.*路径.*临时目录.*子进程.*包管理器入口.*环境变量.*机器可读诊断/su);
+    assert.match(rules, /code.*target.*status/su);
+  }
+
+  assert.match(changeSkill, /cross-platform-ci-checklist\.md/u);
+  assert.match(changeSkill, /cross-platform risk/u);
+  assert.match(changeSkill, /actual CI-matrix evidence/u);
+  assert.match(checklist, /GIT_CEILING_DIRECTORIES/u);
+  assert.match(checklist, /npm\.cmd/u);
+  assert.match(checklist, /POSIX.*Windows/su);
+  assert.match(checklist, /code.*target.*status/su);
+  assert.match(checklist, /本地.*真实 CI 矩阵/su);
+  assert.match(checklist, /精确提交 SHA/u);
+  assert.match(structureValidator, /references\/cross-platform-ci-checklist\.md/u);
+});
+
 test('新功能测试策略保护生成基线并要求专用测试决策', () => {
   const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
