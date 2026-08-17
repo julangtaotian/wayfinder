@@ -1731,7 +1731,7 @@ test('OpenSpec 1.9 保护任意四级场景并保持非交互归档输出有限'
 
   const plainArchive = runOpenSpecSync(['archive'], {
     cwd: root,
-    env: { ...process.env, CI: '1', OPEN_SPEC_INTERACTIVE: '0' },
+    env: { ...process.env, CI: '1', FORCE_COLOR: '1', OPEN_SPEC_INTERACTIVE: '0' },
   });
   assert.equal(plainArchive.status, 1);
   assert.ok(`${plainArchive.stdout}${plainArchive.stderr}`.length < 4096);

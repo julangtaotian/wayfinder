@@ -58,6 +58,11 @@ export function runOpenSpecSync(args = [], {
     OPENSPEC_NO_UPDATE_CHECK: '1',
     OPENSPEC_TELEMETRY: '0',
   };
+  if (stdio !== 'inherit') {
+    // 被插件捕获的输出必须保持稳定，不能受 CI 或父进程的终端颜色配置影响。
+    delete runtimeEnv.FORCE_COLOR;
+    runtimeEnv.NO_COLOR = '1';
+  }
   const result = spawnSync(process.execPath, [runtime.executablePath, ...args], {
     cwd,
     encoding,
