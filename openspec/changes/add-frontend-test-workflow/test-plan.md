@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：已实现
+- 状态：已验证
 - 需求：`requirements/REQ-2026-025-frontend-test-workflow.md`
 - 变更：add-frontend-test-workflow
 - 需求修订基线：R-07
@@ -145,7 +145,7 @@
 - 操作：在统一验证环境中检查 fixture Git 状态并执行项目范围扫描回归
 - 可观察断言：fixture 不继承父仓库 Git，源码进入扫描范围，WXML 观察和内容指纹保持有效
 - 目标测试：`tests/workflow.test.mjs`
-- 测试定位：`[TC-06] 统一验证隔离父 Git`
+- 测试定位：`[TC-06] 统一验证隔离仓库内临时 fixture 的父 Git 状态`
 - 聚焦命令：`node --test --test-name-pattern="统一验证隔离父 Git|范围清单完整记账|WXML 静态观察|项目地图" tests/workflow.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
@@ -167,7 +167,7 @@
 - 操作：解析 Windows npm 调用并分别执行成功与失败的统一验证生命周期
 - 可观察断言：不直接启动 `npm.cmd`，准备先于测试，成功和失败都清理，CI 只调用统一验证入口
 - 目标测试：`tests/frontend-test-workflow.test.mjs`
-- 测试定位：`[TC-07] 跨平台验证运行时`
+- 测试定位：`[TC-07] Windows npm 使用 JS 入口准备验证运行时`
 - 聚焦命令：`node --test --test-name-pattern="跨平台验证运行时|Windows npm" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-03、V-05
 - 结果分类：通过
