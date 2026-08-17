@@ -207,6 +207,16 @@ export declare function getLegacyWorkflowIdsForTool(detection: LegacyDetectionRe
  */
 export declare function omitGlobalLegacyPromptFiles(detection: LegacyDetectionResult): LegacyDetectionResult;
 /**
+ * Returns a detection snapshot with the repo-local slash-command artifacts of
+ * the given tools removed. The legacy-upgrade path uses this to skip cleaning a
+ * tool's legacy files when its replacement was deliberately NOT written — e.g. a
+ * Codex upgrade suppressed because the shared `.agents` root is already owned by
+ * another tool. Deleting the legacy prompt without writing its replacement would
+ * violate the cleanup contract ("remove X because replacement Y now exists") and
+ * strip the tool's only OpenSpec integration.
+ */
+export declare function omitToolLegacyArtifacts(detection: LegacyDetectionResult, toolIds: readonly string[]): LegacyDetectionResult;
+/**
  * Builds a detection snapshot containing only the selected global Codex prompt
  * matches for replacement-gated cleanup.
  */

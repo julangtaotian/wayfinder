@@ -12,5 +12,20 @@ export declare function reconcileSharedSkillTargets(projectPath: string, tools: 
  * Non-shared roots are always active.
  */
 export declare function isSharedSkillTargetActive(projectPath: string, toolId: string): boolean;
+/**
+ * The tool that already owns `toolId`'s shared skills root, when a DIFFERENT
+ * one does. Returns the owner's tool id only when the root already carries an
+ * ownership signal (a marker or generated skills) AND reconciliation resolves
+ * it to another tool. An empty or unclaimed root returns undefined, so a
+ * genuine first-time legacy upgrade — e.g. a Codex-only user with no `.agents`
+ * yet — is never reported as owned.
+ */
+export declare function sharedSkillRootOwner(projectPath: string, toolId: string): string | undefined;
+/**
+ * Whether generating `toolId` into its shared skills root would clobber a tree
+ * a DIFFERENT tool already owns — the guard the legacy-upgrade path uses before
+ * writing skills. See {@link sharedSkillRootOwner} for the ownership rules.
+ */
+export declare function sharedSkillRootOwnedByOther(projectPath: string, toolId: string): boolean;
 export declare function writeSharedSkillTarget(projectPath: string, toolId: string): void;
 //# sourceMappingURL=shared-skill-target.d.ts.map

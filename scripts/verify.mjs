@@ -39,6 +39,16 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
       ],
     },
     {
+      id: 'openspec-archived',
+      label: 'OpenSpec 归档任务校验',
+      args: [
+        path.join(pluginScripts, 'openspec-cli.mjs'),
+        'validate',
+        '--archived',
+        '--no-interactive',
+      ],
+    },
+    {
       id: 'runtime-version',
       label: 'OpenSpec 运行时版本',
       args: [path.join(pluginScripts, 'openspec-cli.mjs'), '--version'],

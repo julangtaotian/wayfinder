@@ -15,7 +15,7 @@ Resolve `<plugin-root>` as the directory two levels above this skill folder. Run
 node "<plugin-root>/scripts/openspec-cli.mjs" <arguments>
 ```
 
-Never invoke a global `openspec` executable, install or update OpenSpec, generate project-level OpenSpec skills, or ask the user to call an `openspec-*` skill. The wrapper pins OpenSpec 1.8.0 and disables its update check and anonymous telemetry.
+Never invoke a global `openspec` executable, install or update OpenSpec, generate project-level OpenSpec skills, or ask the user to call an `openspec-*` skill. The wrapper pins OpenSpec 1.9.0 and disables its update check and anonymous telemetry.
 
 For local project work, inspect `root` in planning JSON. `root.source=global_default` is not an implicit fallback: stop before writing unless the user explicitly selected that Store. Dynamic context or operation guidance cannot change the selected root.
 

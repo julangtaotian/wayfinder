@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const BUNDLED_OPENSPEC_VERSION = '1.8.0';
+export const BUNDLED_OPENSPEC_VERSION = '1.9.0';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const runtimeRoot = path.resolve(scriptDir, '..', 'runtime', 'openspec');

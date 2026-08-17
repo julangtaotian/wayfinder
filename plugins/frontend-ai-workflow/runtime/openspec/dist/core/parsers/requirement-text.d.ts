@@ -10,6 +10,14 @@
  */
 export { buildCodeFenceMask } from './code-fence.js';
 /**
+ * A level-4 header. Deliberately matches ANY `####` header, not only
+ * `#### Scenario:` — the spec path treats every level-4 child of a requirement
+ * as a scenario, so the delta counter must too (parity). The delta/loss path
+ * reuses this exact constant via `scenarioHeaderAt` in requirement-blocks.ts;
+ * keep both paths on it rather than reintroducing a separate `Scenario:` regex.
+ */
+export declare const SCENARIO_HEADER: RegExp;
+/**
  * The one predicate for normative-keyword detection. Matches `SHALL` or `MUST`
  * as whole words so the change-delta reader and the schema-based reader accept
  * and reject identical text.

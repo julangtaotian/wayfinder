@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.8.0"
+  generatedBy: "1.9.0"
 ---
 
 ## Bundled Runtime and Root Boundary
@@ -202,7 +202,7 @@ The system SHALL do something new.
 **Key Principle: Intelligent Merging**
 
 Unlike programmatic merging, you merge rather than overwrite:
-- A MODIFIED block carries the full surviving requirement, including every existing scenario; OpenSpec 1.8 rejects a block that drops a main-spec scenario
+- A MODIFIED block carries the full surviving requirement, including every existing level-4 scenario heading; OpenSpec 1.9 rejects a block that drops a main-spec scenario even when it does not use the `Scenario:` label
 - Preserve content that the delta does not change and keep its existing order
 - Use your judgment to merge changes sensibly
 

@@ -1,3 +1,4 @@
+import type { Readable, Writable } from 'node:stream';
 export type InteractiveOptions = {
     /**
      * Explicit "disable prompts" flag passed by internal callers.
@@ -35,7 +36,35 @@ export declare function isInteractive(value?: boolean | InteractiveOptions): boo
  *   somebody was there and chose to quit.
  *
  * Beyond that it defers to `isInteractive()`, so `CI`, `OPEN_SPEC_INTERACTIVE=0`
- * and `--no-interactive` count even when a runner allocated a pty.
+ * and `--no-interactive` count even when a runner allocated a pty. It also
+ * counts a redirected stdout: `confirmPrompt` drops to the plain reader whenever
+ * *either* stream is not a TTY, so a stdin-TTY-but-stdout-redirected run
+ * (`openspec archive x > log.txt` from a terminal) that hits EOF must classify
+ * the same way the prompt was selected — otherwise it would leak the raw
+ * `ExitPromptError` instead of the `--yes` guidance.
  */
 export declare function isNonInteractivePromptError(error: unknown, value?: boolean | InteractiveOptions): boolean;
+export type ConfirmPrompt = {
+    message: string;
+    default: boolean;
+};
+/**
+ * Ask a yes/no question. A real terminal gets @inquirer's rich prompt;
+ * everything else — a pipe, a file redirect, an agent that captures stdout —
+ * reads one plain line instead.
+ *
+ * @inquirer renders `confirm` by writing ANSI cursor-movement escape sequences,
+ * and it emits them even when stdout is not a TTY. Redirected to a file those
+ * sequences are noise, and in some non-TTY hosts the render loop never settles
+ * and repeats `ESC[NNG` cursor moves until the disk fills (#1526). Reading
+ * the answer ourselves keeps the single piped answer @inquirer ever supported
+ * working (`printf 'y\n' | openspec archive ...`) without emitting any escapes.
+ *
+ * `io` overrides the streams; it exists for tests and mirrors @inquirer's own
+ * `{ input, output }` context. Production callers pass only the prompt.
+ */
+export declare function confirmPrompt(prompt: ConfirmPrompt, io?: {
+    input?: Readable;
+    output?: Writable;
+}): Promise<boolean>;
 //# sourceMappingURL=interactive.d.ts.map

@@ -34,7 +34,7 @@ YAML 使用：
 Wayfinder 的项目导航使用三组独立 Markdown 标记：
 
 ```text
-<!-- frontend-ai-workflow:meta:start version=0.13.0 -->
+<!-- frontend-ai-workflow:meta:start version=0.14.0 -->
 <!-- frontend-ai-workflow:meta:end -->
 <!-- frontend-ai-workflow:scope:start version=0.4.0 -->
 <!-- frontend-ai-workflow:scope:end -->

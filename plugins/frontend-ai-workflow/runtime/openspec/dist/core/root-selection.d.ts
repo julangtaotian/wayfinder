@@ -119,7 +119,7 @@ export declare function toPlanningHome(root: ResolvedOpenSpecRoot): PlanningHome
 export declare function resolveRootForCommand(selector: StoreSelectorOptions, output?: {
     json?: boolean;
     failurePayload?: Record<string, unknown>;
-    /** Diagnostic commands inspect what exists; they never scaffold. */
+    /** Commands that require an existing root set this to false. */
     allowImplicitRoot?: boolean;
 }): Promise<ResolvedOpenSpecRoot | null>;
 //# sourceMappingURL=root-selection.d.ts.map

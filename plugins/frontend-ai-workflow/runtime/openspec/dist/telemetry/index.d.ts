@@ -27,7 +27,9 @@ export declare function trackCommand(commandName: string, version: string): Prom
 /**
  * Show first-run telemetry notice if not already seen.
  */
-export declare function maybeShowTelemetryNotice(): Promise<void>;
+export declare function maybeShowTelemetryNotice(options?: {
+    silent?: boolean;
+}): Promise<void>;
 /**
  * Flush pending telemetry events.
  * Call this before CLI exit.

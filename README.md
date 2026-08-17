@@ -16,9 +16,9 @@
 - 在用户明确要求时，按可审计的文件范围完成 AI 深度项目地图与风险分析。
 - 深度扫描在读取前排除敏感配置和 Git 忽略项，使用稳定快照指纹提示项目地图是否过期。
 - 使用受控需求状态、关联变更范围、逐任务引用和默认 dry-run 的完成入口形成不可绕过的归档门禁。
-- 固定内置 OpenSpec 1.8.0，理解规划完成新语义、动态 apply/archive 指导、嵌套规格、缩进任务与能力退役，并阻止本地项目静默落到机器默认 Store。
+- 固定内置 OpenSpec 1.9.0，理解规划完成、意外范围报告、归档任务校验、嵌套规格、缩进任务与能力退役，并阻止批量命令在错误规划根静默通过。
 - 使用生产包、声明许可证和包树 SHA-256 清单核验内置 OpenSpec，默认检查不会改写清单。
-- 用同一个 `npm run verify` 在本地和 CI 串行执行测试、插件结构、OpenSpec 严格校验、运行时版本与完整性检查。
+- 用同一个 `npm run verify` 在本地和 CI 串行执行测试、插件结构、OpenSpec 严格校验、归档任务校验、运行时版本与完整性检查。
 - 对已确认“不改变可观察行为”的工具、文档或纯内部变更支持受控 `skip_specs`；其他变更仍必须提供 delta specs，完成入口不暴露跳过参数。
 - 通过插件提供通用技能，减少每个仓库重复维护 `.codex/skills`。
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
@@ -28,7 +28,7 @@
 
 ## 安装
 
-前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.13.0 已内置并固定 OpenSpec 1.8.0，使用者不需要全局安装或升级 OpenSpec。
+前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.14.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
 
 ```bash
 codex plugin marketplace add /absolute/path/to/frontend-ai-workflow
@@ -138,7 +138,7 @@ $frontend-change 根据需求文档生成实施规划，暂时不要修改业务
 $frontend-change 开始实施当前变更
 ```
 
-它会读取已经确认的规划、OpenSpec 1.8 返回的项目 context 与 apply guidance，按照任务顺序修改业务代码、补充必要测试，并记录包含缩进子任务的完成情况。动态指导只能补充项目约束，不能改写需求、用户选择或门禁。
+它会读取已经确认的规划、OpenSpec 1.9 返回的项目 context 与 apply guidance，按照任务顺序修改业务代码、补充必要测试，并记录包含缩进子任务的完成情况。动态指导只能补充项目约束，不能改写需求、用户选择或门禁；实现发现规划外范围时必须先报告，不能静默缩减或延后规定行为。
 
 **需求发生变化时修订方案**：
 
@@ -260,7 +260,7 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 确认升级
 ```
 
-它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.13.0 / OpenSpec 1.8.0；不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复或者发生冲突时，会停止升级并说明原因。
+它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.14.0 / OpenSpec 1.9.0；不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复或者发生冲突时，会停止升级并说明原因。
 
 升级预览还会只读检查 `requirements/REQ-*.md`，列出活跃或状态未知需求缺少的决策台账、验收映射和统一状态；它不会改写任何历史需求，迁移必须逐份确认业务事实后再进行。
 
@@ -343,7 +343,7 @@ npm run verify
 
 1. 在独立临时目录精确安装目标版本，使用 `--omit=dev --ignore-scripts --no-audit --no-fund`，不在现有运行时目录直接安装。
 2. 从官方包内容和生产依赖闭包组装候选，核验 `package.json` 版本、`bin/openspec.js`、根 LICENSE、每个直接生产依赖和依赖许可证。
-3. 用候选执行版本命令、当前仓库 `validate --all --strict --json` 和兼容场景；全部通过后才备份并替换 `plugins/frontend-ai-workflow/runtime/openspec`。
+3. 用候选执行版本命令、当前仓库 `validate --all --strict --json`、`validate --archived --json` 和兼容场景；全部通过后才备份并替换 `plugins/frontend-ai-workflow/runtime/openspec`。
 4. 显式运行 `node plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs --write`，生成不含绝对路径和时间戳的生产包许可证与 SHA-256 清单。
 5. 同步包装器固定版本、第三方声明、内部参考、模板、插件版本和测试；包装器保持 `OPENSPEC_NO_UPDATE_CHECK=1`，不调用全局安装或 `openspec update`。
 6. 运行 `npm run verify` 和插件 cachebuster 重装。验证未全部通过时恢复备份，不发布部分替换结果。

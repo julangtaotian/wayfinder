@@ -23,18 +23,6 @@ export declare function getUserSchemasDir(): string;
  * @returns The path to the project's schemas directory
  */
 export declare function getProjectSchemasDir(projectRoot: string): string;
-/**
- * Determines whether a directory entry represents a schema directory candidate.
- *
- * Returns true for real directories and for symlinks whose target is a
- * directory. `fs.Dirent.isDirectory()` reports the raw entry type, so a symlink
- * (even one pointing at a directory) has `isDirectory() === false`; we
- * dereference such entries via `fs.statSync` to admit symlinked schema dirs
- * while still rejecting symlinks-to-files and broken/dangling symlinks.
- *
- * @param parentDir - The directory containing the entry
- * @param entry - The directory entry from `fs.readdirSync(..., { withFileTypes: true })`
- */
 export declare function isSchemaDir(parentDir: string, entry: fs.Dirent): boolean;
 /**
  * Resolves a schema name to its directory path.

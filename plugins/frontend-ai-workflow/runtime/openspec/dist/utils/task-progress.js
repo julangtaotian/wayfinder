@@ -64,24 +64,43 @@ function findTrackedTasksArtifact(schema) {
  * when the schema cannot be resolved or no tracked-tasks artifact exists.
  * `resolveSchema` throws on an unresolvable/misnamed schema; we swallow that so
  * the caller falls back to a single top-level `tasks.md` and never crashes.
+ * A `schemaGlobCache`, when supplied, memoizes the schema-name → glob lookup for
+ * the duration of one run.
  */
-function resolveTrackedTasksGlob(changeDir, projectRoot) {
+function resolveTrackedTasksGlob(changeDir, projectRoot, schemaGlobCache) {
     try {
         const schemaName = resolveSchemaForChange(changeDir, undefined, projectRoot);
+        if (schemaGlobCache?.has(schemaName))
+            return schemaGlobCache.get(schemaName);
         const schema = resolveSchema(schemaName, projectRoot);
-        return findTrackedTasksArtifact(schema)?.generates;
+        const generates = findTrackedTasksArtifact(schema)?.generates;
+        schemaGlobCache?.set(schemaName, generates);
+        return generates;
     }
     catch {
         return undefined;
     }
 }
-async function countSingleTopLevelTasksFile(changeDir) {
-    const tasksPath = path.join(changeDir, 'tasks.md');
+/** Resolves the task files selected by the schema's apply tracking rule. */
+export function resolveTaskFilesForChange(changeDir, projectRoot, schemaGlobCache) {
+    const generates = resolveTrackedTasksGlob(changeDir, projectRoot, schemaGlobCache);
+    return generates ? resolveArtifactOutputs(changeDir, generates) : [];
+}
+/**
+ * Reads one task file and counts its checkboxes. ENOENT (a glob file that
+ * vanished between resolve and read, or the absent single top-level `tasks.md`)
+ * means zero tasks, exactly as before. Any other error (permissions, I/O,
+ * ENOTDIR) is recorded in `unreadable` so a caller can surface it; the count
+ * still contributes zero, so existing callers see no change.
+ */
+async function countTaskFile(file, unreadable) {
     try {
-        const content = await fs.readFile(tasksPath, 'utf-8');
+        const content = await fs.readFile(file, 'utf-8');
         return countTasksFromContent(content);
     }
-    catch {
+    catch (error) {
+        if (error?.code !== 'ENOENT')
+            unreadable.push(file);
         return { total: 0, completed: 0 };
     }
 }
@@ -92,31 +111,36 @@ async function countSingleTopLevelTasksFile(changeDir) {
  * artifact (`resolveArtifactOutputs`) — so progress is no longer blind to nested
  * `tasks.md` files (#1202). Falls back to a single top-level `tasks.md` (exactly
  * as before) when the schema is unresolvable, no tracked-tasks artifact is found,
- * or the glob matches no file. Never throws.
+ * or the glob matches no file. Also reports task files that exist but could not
+ * be read. Per-file read errors are captured (never thrown); the only throw path
+ * is a malformed/unsafe schema whose glob resolution rejects (path traversal or
+ * a linked-directory cycle in `resolveArtifactOutputs`). Pass `schemaGlobCache`
+ * to memoize schema→glob resolution across many changes in one run.
+ */
+export async function getTaskProgressDetailForChange(changesDir, changeName, projectRoot, schemaGlobCache) {
+    const changeDir = path.join(changesDir, changeName);
+    const files = resolveTaskFilesForChange(changeDir, projectRoot, schemaGlobCache);
+    const targets = files.length > 0 ? files : [path.join(changeDir, 'tasks.md')];
+    const unreadable = [];
+    let total = 0;
+    let completed = 0;
+    for (const file of targets) {
+        const progress = await countTaskFile(file, unreadable);
+        total += progress.total;
+        completed += progress.completed;
+    }
+    return { total, completed, unreadable };
+}
+/**
+ * The task-completion counter `status`, `list`, and `archive` share. Delegates
+ * to `getTaskProgressDetailForChange` and drops the `unreadable` detail, so its
+ * returned totals are unchanged. Throws only on the same malformed/unsafe-schema
+ * glob-resolution path as that function (existing behavior; callers guard it as
+ * they did before).
  */
 export async function getTaskProgressForChange(changesDir, changeName, projectRoot) {
-    const changeDir = path.join(changesDir, changeName);
-    const generates = resolveTrackedTasksGlob(changeDir, projectRoot);
-    if (generates) {
-        const files = resolveArtifactOutputs(changeDir, generates);
-        if (files.length > 0) {
-            let total = 0;
-            let completed = 0;
-            for (const file of files) {
-                try {
-                    const content = await fs.readFile(file, 'utf-8');
-                    const progress = countTasksFromContent(content);
-                    total += progress.total;
-                    completed += progress.completed;
-                }
-                catch {
-                    // Swallow files that vanish between glob and read, as before.
-                }
-            }
-            return { total, completed };
-        }
-    }
-    return countSingleTopLevelTasksFile(changeDir);
+    const { total, completed } = await getTaskProgressDetailForChange(changesDir, changeName, projectRoot);
+    return { total, completed };
 }
 export function formatTaskStatus(progress) {
     if (progress.total === 0)

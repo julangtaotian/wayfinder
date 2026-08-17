@@ -3,20 +3,20 @@
   "algorithm": "sha256",
   "runtime": {
     "name": "@fission-ai/openspec",
-    "version": "1.8.0",
+    "version": "1.9.0",
     "entrypoint": "bin/openspec.js"
   },
   "packages": [
     {
       "path": ".",
       "name": "@fission-ai/openspec",
-      "version": "1.8.0",
+      "version": "1.9.0",
       "license": "MIT",
       "licenseFiles": [
         "LICENSE"
       ],
-      "fileCount": 376,
-      "treeSha256": "77b86504a83b600ea8ce84db1f907c2148b4c569c361aaaeb978dcafd1bf77d9"
+      "fileCount": 380,
+      "treeSha256": "5b839256836cdb7452d91200e2fb12a7aaa3f28556ab74f586cafda9909372a2"
     },
     {
       "path": "node_modules/@inquirer/ansi",
@@ -230,13 +230,13 @@
     {
       "path": "node_modules/ansi-regex",
       "name": "ansi-regex",
-      "version": "6.2.2",
+      "version": "5.0.1",
       "license": "MIT",
       "licenseFiles": [
         "license"
       ],
       "fileCount": 5,
-      "treeSha256": "5f63a966ee16fef69caeaedf65895093245346ae95dc8940621aea76d8193743"
+      "treeSha256": "65f18ea0b8d8f9d872c6c9f497fca1b425985f41e71d7268a45e4356bc5f326b"
     },
     {
       "path": "node_modules/ansi-styles",
@@ -382,6 +382,17 @@
       "treeSha256": "87031b987a6a026b0ab177e8649ff5323586873e5a9dcbe31d1702eda6ca66bb"
     },
     {
+      "path": "node_modules/fast-glob/node_modules/glob-parent",
+      "name": "glob-parent",
+      "version": "5.1.2",
+      "license": "ISC",
+      "licenseFiles": [
+        "LICENSE"
+      ],
+      "fileCount": 5,
+      "treeSha256": "dd378934eee133f02649034f77442bc271ad1f5658dee09f111a69da0b26ea1a"
+    },
+    {
       "path": "node_modules/fastq",
       "name": "fastq",
       "version": "1.20.1",
@@ -413,17 +424,6 @@
       ],
       "fileCount": 8,
       "treeSha256": "81434ec96cb9f2fcaf960f229c24a36a56d31c1826a8f44a89292d96bb215b0a"
-    },
-    {
-      "path": "node_modules/glob-parent",
-      "name": "glob-parent",
-      "version": "5.1.2",
-      "license": "ISC",
-      "licenseFiles": [
-        "LICENSE"
-      ],
-      "fileCount": 5,
-      "treeSha256": "dd378934eee133f02649034f77442bc271ad1f5658dee09f111a69da0b26ea1a"
     },
     {
       "path": "node_modules/iconv-lite",
@@ -723,7 +723,18 @@
       "treeSha256": "bc03ece4fe8fbcab84a5036f89d7c5d291ab02d02e2ea36e38bf3498ac87acc5"
     },
     {
-      "path": "node_modules/strip-ansi",
+      "path": "node_modules/string-width/node_modules/ansi-regex",
+      "name": "ansi-regex",
+      "version": "6.3.0",
+      "license": "MIT",
+      "licenseFiles": [
+        "license"
+      ],
+      "fileCount": 5,
+      "treeSha256": "d9633d15cc11f68336cec494b5ea8aa17859324d809e5dca88ef84dbf40dc191"
+    },
+    {
+      "path": "node_modules/string-width/node_modules/strip-ansi",
       "name": "strip-ansi",
       "version": "7.2.0",
       "license": "MIT",
@@ -732,6 +743,17 @@
       ],
       "fileCount": 5,
       "treeSha256": "2415c3a6c3614d7d3278eae54ba5feab3d9bf2b0d0fc0bcf1b167c3e9215c3a5"
+    },
+    {
+      "path": "node_modules/strip-ansi",
+      "name": "strip-ansi",
+      "version": "6.0.1",
+      "license": "MIT",
+      "licenseFiles": [
+        "license"
+      ],
+      "fileCount": 5,
+      "treeSha256": "6ab81eef54b21af1156830817f9f1c8adc0dcf72d35c7f923bbd7152ffd939c4"
     },
     {
       "path": "node_modules/to-regex-range",
@@ -767,17 +789,6 @@
       "treeSha256": "7882a70a367a0516b28119ae2aa311ca31d8227a9f1d381ec27ac949025625c7"
     },
     {
-      "path": "node_modules/wrap-ansi/node_modules/ansi-regex",
-      "name": "ansi-regex",
-      "version": "5.0.1",
-      "license": "MIT",
-      "licenseFiles": [
-        "license"
-      ],
-      "fileCount": 5,
-      "treeSha256": "65f18ea0b8d8f9d872c6c9f497fca1b425985f41e71d7268a45e4356bc5f326b"
-    },
-    {
       "path": "node_modules/wrap-ansi/node_modules/string-width",
       "name": "string-width",
       "version": "4.2.3",
@@ -787,17 +798,6 @@
       ],
       "fileCount": 5,
       "treeSha256": "672b86eb12e42dce03094f65e17702aed563f8680468b176daab9c01adbf8a6f"
-    },
-    {
-      "path": "node_modules/wrap-ansi/node_modules/strip-ansi",
-      "name": "strip-ansi",
-      "version": "6.0.1",
-      "license": "MIT",
-      "licenseFiles": [
-        "license"
-      ],
-      "fileCount": 5,
-      "treeSha256": "8e3abc867ba0847945fffec02403c8d2366bc5c09bf16087c1dfe459785c4d27"
     },
     {
       "path": "node_modules/yaml",

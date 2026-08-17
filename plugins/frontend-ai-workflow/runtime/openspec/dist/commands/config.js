@@ -8,7 +8,7 @@ import { OPENSPEC_DIR_NAME } from '../core/config.js';
 import { hasProjectConfigDrift } from '../core/profile-sync-drift.js';
 import { UpdateCommand } from '../core/update.js';
 import { asErrorMessage, isPromptCancellationError } from './shared-output.js';
-const WORKFLOW_PROMPT_META = {
+export const WORKFLOW_PROMPT_META = {
     propose: {
         name: 'Propose change',
         description: 'Create proposal, design, and tasks from a request',
@@ -28,6 +28,10 @@ const WORKFLOW_PROMPT_META = {
     apply: {
         name: 'Apply tasks',
         description: 'Implement tasks from the current change',
+    },
+    update: {
+        name: 'Update change',
+        description: 'Revise the planning artifacts of an existing change',
     },
     ff: {
         name: 'Fast-forward',

@@ -17,6 +17,7 @@ export interface AIToolOption {
     globalSkillsDir?: string;
     detectionPaths?: string[];
     setupNote?: string;
+    requiresIdeRestart?: boolean;
 }
 export declare const AI_TOOLS: AIToolOption[];
 /**

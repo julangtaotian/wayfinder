@@ -14,7 +14,7 @@ import { getSkillReferenceTransformer, getTransformerForTool, transformToSkillRe
 import { AI_TOOLS, OPENSPEC_DIR_NAME } from './config.js';
 import { generateCommands, CommandAdapterRegistry, } from './command-generation/index.js';
 import { getToolVersionStatus, getSkillTemplates, getCommandContents, generateSkillContent, getToolsWithSkillsDir, hasGlobalSkillTarget, resolveToolSkillsDir, toolSupportsSkills, } from './shared/index.js';
-import { detectLegacyArtifacts, cleanupLegacyArtifacts, formatDeferredGlobalPromptSummary, formatCleanupSummary, formatDetectionSummary, getLegacyGlobalPromptMatches, getLegacyWorkflowIdsForTool, getToolsFromLegacyArtifacts, omitGlobalLegacyPromptFiles, pickGlobalLegacyPromptFiles, } from './legacy-cleanup.js';
+import { detectLegacyArtifacts, cleanupLegacyArtifacts, formatDeferredGlobalPromptSummary, formatCleanupSummary, formatDetectionSummary, getLegacyGlobalPromptMatches, getLegacyWorkflowIdsForTool, getToolsFromLegacyArtifacts, omitGlobalLegacyPromptFiles, omitToolLegacyArtifacts, pickGlobalLegacyPromptFiles, } from './legacy-cleanup.js';
 import { isInteractive } from '../utils/interactive.js';
 import { getGlobalConfig } from './global-config.js';
 import { getProfileWorkflows, ALL_WORKFLOWS, CORE_WORKFLOWS } from './profiles.js';
@@ -23,7 +23,7 @@ import { getAvailableTools } from './available-tools.js';
 import { WORKFLOW_TO_SKILL_DIR, getConfiguredToolsForProfileSync, getToolsNeedingProfileSync, } from './profile-sync-drift.js';
 import { scanInstalledWorkflows as scanInstalledWorkflowsShared, migrateIfNeeded as migrateIfNeededShared, findLegacyToolMigrations, migrateLegacyToolDirs, describeLegacyMigration, legacyMigrationNotice, keptInPlaceNotice, hasMovableContent, } from './migration.js';
 import { resolveCommandSurfaceCapability, resolveCommandInvocation, shouldGenerateCommandsForTool, shouldGenerateSkillsForTool, shouldReconcileCommandFilesForTool, shouldRemoveSkillsForTool, } from './command-surface.js';
-import { writeSharedSkillTarget } from './shared-skill-target.js';
+import { writeSharedSkillTarget, sharedSkillRootOwner } from './shared-skill-target.js';
 import { includesGitHubCopilot, writeCopilotCloudFiles, removeCopilotCloudFiles, isCopilotCloudEnabled, readCopilotCloudOptIn, findUnmanagedCloudFiles } from './github-copilot/cloud-agent.js';
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
@@ -647,7 +647,7 @@ export class UpdateCommand {
         const canPrompt = isInteractive();
         if (this.force) {
             const legacyUpgrade = await this.upgradeLegacyTools(projectPath, detection, canPrompt, desiredWorkflows, delivery);
-            await this.performImmediateLegacyCleanup(projectPath, detection);
+            await this.performImmediateLegacyCleanup(projectPath, detection, legacyUpgrade.skippedSharedSkillTools);
             return {
                 ...legacyUpgrade,
                 deferredGlobalCleanup: pickGlobalLegacyPromptFiles(detection, detection.globalSlashCommandFiles),
@@ -668,7 +668,7 @@ export class UpdateCommand {
         });
         if (shouldCleanup) {
             const legacyUpgrade = await this.upgradeLegacyTools(projectPath, detection, canPrompt, desiredWorkflows, delivery);
-            await this.performImmediateLegacyCleanup(projectPath, detection);
+            await this.performImmediateLegacyCleanup(projectPath, detection, legacyUpgrade.skippedSharedSkillTools);
             return {
                 ...legacyUpgrade,
                 deferredGlobalCleanup: pickGlobalLegacyPromptFiles(detection, detection.globalSlashCommandFiles),
@@ -683,8 +683,10 @@ export class UpdateCommand {
     /**
      * Cleans approved repo-local legacy artifacts before configured tools refresh.
      */
-    async performImmediateLegacyCleanup(projectPath, detection) {
-        const immediateDetection = omitGlobalLegacyPromptFiles(detection);
+    async performImmediateLegacyCleanup(projectPath, detection, skippedSharedSkillTools = []) {
+        // Tools whose upgrade was skipped (shared root owned by another) had no
+        // replacement written, so their repo-local legacy files must be preserved.
+        const immediateDetection = omitToolLegacyArtifacts(omitGlobalLegacyPromptFiles(detection), skippedSharedSkillTools);
         if (immediateDetection.hasLegacyArtifacts) {
             await this.performLegacyCleanup(projectPath, immediateDetection);
         }
@@ -788,6 +790,7 @@ export class UpdateCommand {
         const inferredCodexWorkflows = getLegacyWorkflowIdsForTool(detection, 'codex');
         // Create skills/commands for selected tools using effective profile+delivery.
         const newlyConfigured = [];
+        const skippedSharedSkillTools = [];
         const workflowOverrides = {};
         for (const toolId of selectedTools) {
             const tool = AI_TOOLS.find((t) => t.value === toolId);
@@ -807,6 +810,30 @@ export class UpdateCommand {
                 }
                 const skillTemplates = getSkillTemplates(toolWorkflows);
                 const commandContents = getCommandContents(toolWorkflows);
+                // A shared skills root (e.g. `.agents`) already owned by another tool
+                // must not be overwritten by a tool inferred from legacy artifacts: a
+                // Codex install detected only from global `~/.codex/prompts` would
+                // otherwise rewrite an existing vendor-neutral `agents` tree with
+                // Codex-specific syntax and flip its ownership marker `agents → codex`.
+                // Leave the established owner in place. (init applies the same
+                // one-writer rule up front when both targets are selected.)
+                //
+                // Skipping here means the tool is never recorded as configured, so a
+                // persistent legacy signal re-offers it on later runs. Because no
+                // replacement is written, this tool is also exempted from immediate
+                // legacy cleanup (see skippedSharedSkillTools) — otherwise a repo-local
+                // `.codex/prompts` would be deleted with nothing put in its place. That
+                // repeat is idempotent and harmless — the alternative is the silent
+                // hijack this prevents.
+                const sharedOwner = shouldGenerateSkills
+                    ? sharedSkillRootOwner(projectPath, tool.value)
+                    : undefined;
+                if (sharedOwner) {
+                    const ownerName = AI_TOOLS.find((candidate) => candidate.value === sharedOwner)?.name ?? sharedOwner;
+                    spinner.info(`Skipped ${tool.name}: ${tool.skillsDir}/skills is already managed by another tool (${ownerName}).`);
+                    skippedSharedSkillTools.push(tool.value);
+                    continue;
+                }
                 // Create skill files when delivery includes skills
                 if (shouldGenerateSkills) {
                     for (const { template, dirName } of skillTemplates) {
@@ -847,7 +874,7 @@ export class UpdateCommand {
         if (newlyConfigured.length > 0) {
             console.log();
         }
-        return { newlyConfiguredTools: newlyConfigured, workflowOverrides };
+        return { newlyConfiguredTools: newlyConfigured, workflowOverrides, skippedSharedSkillTools };
     }
 }
 //# sourceMappingURL=update.js.map

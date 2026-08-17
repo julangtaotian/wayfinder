@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.13.0+codex.20260813071428",
+  "version": "0.14.0+codex.20260817021150",
   "description": "Reusable frontend delivery and project-local UI review with structured interactions, deterministic comparison, cross-platform bundled Chromium, optional visual fallback, safe repair, and verification.",
   "author": {
     "name": "lvshuai"
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.8 change lifecycle, and run portable UI review with structured interactions, deterministic DOM or image comparison, bundled Chromium for Apple Silicon and Intel Mac, Linux x64 and ARM64, and Windows x64, optional visual fallback, explicitly gated source repair, and same-context verification without a separate management platform.",
+    "longDescription": "Inspect Vue and React repositories, create durable project guidance and governed requirements, drive an OpenSpec 1.9 change lifecycle with archived-task validation, and run portable UI review with structured interactions, deterministic DOM or image comparison, bundled Chromium for Apple Silicon and Intel Mac, Linux x64 and ARM64, and Windows x64, optional visual fallback, explicitly gated source repair, and same-context verification without a separate management platform.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [

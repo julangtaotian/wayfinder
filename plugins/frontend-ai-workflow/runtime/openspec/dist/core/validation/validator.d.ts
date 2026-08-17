@@ -20,12 +20,15 @@ export declare class Validator {
      *
      * When `options.mainSpecsDir` is given, MODIFIED blocks are also checked
      * against the current main specs for the scenario loss archive refuses to
-     * apply (#1477). Omitting it keeps the change-only checks, so callers with
-     * no main specs root (and existing library callers) behave as before.
+     * apply (#1477). When `options.projectRoot` is given, the schema's tracked
+     * task files are checked for ambiguous numbering (#1520). Omitting either
+     * option keeps existing library and archive callers behaving as before.
      */
     validateChangeDeltaSpecs(changeDir: string, options?: {
         mainSpecsDir?: string;
+        projectRoot?: string;
     }): Promise<ValidationReport>;
+    private collectTaskNumberingIssues;
     /**
      * Report MODIFIED requirements whose block omits a scenario the main spec
      * still carries. Uses the same comparison archive applies, so validate can

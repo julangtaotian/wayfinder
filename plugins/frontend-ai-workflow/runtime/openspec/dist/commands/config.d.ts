@@ -10,6 +10,11 @@ interface ProfileStateDiff {
     hasChanges: boolean;
     lines: string[];
 }
+interface WorkflowPromptMeta {
+    name: string;
+    description: string;
+}
+export declare const WORKFLOW_PROMPT_META: Record<string, WorkflowPromptMeta>;
 /**
  * Resolve the effective current profile state from global config defaults.
  */

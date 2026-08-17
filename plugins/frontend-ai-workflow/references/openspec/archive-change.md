@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.8.0"
+  generatedBy: "1.9.0"
 ---
 
 ## Hard-gated Runtime

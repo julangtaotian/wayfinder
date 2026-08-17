@@ -10,7 +10,7 @@ import { emitStoreRootBanner, isRootSelectionError, resolveOpenSpecRoot, toRootO
 import { findSpecUpdates, buildUpdatedSpec, writeUpdatedSpec, retireSpec, finalizeRetiredSpec, } from './specs-apply.js';
 import { discoverSpecFiles, hasAnyFileUnder } from '../utils/spec-discovery.js';
 import { METADATA_FILENAME, readRetireCapabilitiesMarker, readSkipSpecsMarker } from '../utils/change-metadata.js';
-import { isNonInteractivePromptError } from '../utils/interactive.js';
+import { confirmPrompt, isNonInteractivePromptError } from '../utils/interactive.js';
 import { FileSystemUtils } from '../utils/file-system.js';
 import { folderStyleNameProblem } from './id.js';
 function isMissingPathError(error) {
@@ -202,9 +202,8 @@ function rerunCommand(root, changeName, options) {
  * `User force closed the prompt` (#1479).
  */
 async function confirmOrBlock(prompt, blocked) {
-    const { confirm } = await import('@inquirer/prompts');
     try {
-        return await confirm(prompt);
+        return await confirmPrompt(prompt);
     }
     catch (error) {
         if (isNonInteractivePromptError(error)) {
@@ -1602,6 +1601,14 @@ export class ArchiveCommand {
         if (changeDirs.length === 0) {
             console.log('No active changes found.');
             return null;
+        }
+        // A picker needs a real terminal, and @inquirer's `select` writes ANSI
+        // cursor escapes to stdout even when it is redirected — the same #1526
+        // mechanism the confirm prompts were fixed for. When either stream is not a
+        // TTY, refuse up front with the guidance the caught ExitPromptError would
+        // give, rather than render an escape-spewing menu into a pipe or file.
+        if (!process.stdin.isTTY || !process.stdout.isTTY) {
+            throw new ArchiveBlockedError('archive_change_name_required', 'A change name is required: no terminal is available to choose one from a list.', withStoreFlag(root, `openspec archive <change-name> ${rerunFlags(options).join(' ')}`));
         }
         // Build choices with progress inline to avoid duplicate lists
         let choices = changeDirs.map(name => ({ name, value: name }));
