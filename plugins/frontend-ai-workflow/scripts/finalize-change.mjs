@@ -50,6 +50,56 @@ export function rewriteRequirementForArchive(content, changeName, archiveName, {
   return buildEvidenceReferenceRewrites(accepted, changeName, archiveName);
 }
 
+export function rewriteTestPlanForArchive(content, changeName, archiveName) {
+  const matches = [...String(content).matchAll(/^(-\s*变更：\s*)(.+?)\s*$/gmu)];
+  if (matches.length !== 1) throw new Error(`测试方案变更字段数量异常：${matches.length}`);
+  const rawValue = matches[0][2].trim();
+  const currentName = rawValue.startsWith('`') && rawValue.endsWith('`')
+    ? rawValue.slice(1, -1).trim()
+    : rawValue;
+  if (currentName !== changeName && currentName !== archiveName) {
+    throw new Error(`测试方案变更与归档目标不一致：${currentName || '空值'}`);
+  }
+  const changeRenamed = currentName !== archiveName;
+  const renamed = changeRenamed
+    ? String(content).replace(matches[0][0], `${matches[0][1]}${archiveName}`)
+    : String(content);
+  const references = buildEvidenceReferenceRewrites(renamed, changeName, archiveName);
+  return {
+    content: references.content,
+    rewrites: references.rewrites,
+    changeRenamed,
+  };
+}
+
+function prepareTestPlanRewrite(changePath, changeName, archiveName) {
+  const testPlanPath = path.join(changePath, 'test-plan.md');
+  const metadataPath = path.join(changePath, '.openspec.yaml');
+  const required = fs.existsSync(metadataPath)
+    && /^test_plan:\s*required\s*$/mu.test(fs.readFileSync(metadataPath, 'utf8'));
+  if (!required || !fs.existsSync(testPlanPath)) {
+    return {
+      exists: false,
+      required,
+      testPlanPath,
+      content: null,
+      rewrites: [],
+      changeRenamed: false,
+    };
+  }
+  const rewritten = rewriteTestPlanForArchive(
+    fs.readFileSync(testPlanPath, 'utf8'),
+    changeName,
+    archiveName,
+  );
+  return {
+    exists: true,
+    required,
+    testPlanPath,
+    ...rewritten,
+  };
+}
+
 function atomicWrite(file, content) {
   const temporary = path.join(path.dirname(file), `.${path.basename(file)}.finalize-${process.pid}-${Date.now()}`);
   try {
@@ -142,6 +192,8 @@ function partialFailure({
   archiveWarnings,
   archiveTarget,
   rewrites,
+  testPlanRewrites = [],
+  testPlanChangeRenamed = false,
   failedStage,
   error,
 }) {
@@ -157,6 +209,8 @@ function partialFailure({
     archiveWarnings,
     archiveTarget,
     rewrites,
+    testPlanRewrites,
+    testPlanChangeRenamed,
     failedStage,
     recovery: {
       change: check?.changeName || null,
@@ -173,7 +227,30 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
   if (!recovery) return null;
   const original = fs.readFileSync(recovery.requirementPath, 'utf8');
   const next = rewriteRequirementForArchive(original, recovery.changeName, recovery.archiveName, { allowAccepted: true });
+  let testPlan;
+  try {
+    testPlan = prepareTestPlanRewrite(recovery.changePath, recovery.changeName, recovery.archiveName);
+  } catch (error) {
+    return partialFailure({
+      write,
+      check: { changeName: recovery.changeName },
+      actions: [],
+      archiveResult: { archivedAs: recovery.archiveName },
+      archiveRoot: null,
+      archiveWarnings: [],
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      failedStage: 'test-plan-rewrite',
+      error: `归档恢复无法生成测试方案迁移：${error.message}`,
+    });
+  }
   const actions = [
+    ...(testPlan.required ? [{
+      action: 'recover-test-plan',
+      target: testPlan.testPlanPath,
+      rewrites: testPlan.rewrites,
+      changeRenamed: testPlan.changeRenamed,
+    }] : []),
     { action: 'recover-references', target: recovery.requirementPath, rewrites: next.rewrites },
     { action: 'post-archive-audit', target: recovery.changePath },
   ];
@@ -186,8 +263,30 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       recovery: true,
       archiveTarget: recovery.changePath,
       rewrites: next.rewrites,
+      testPlanRewrites: testPlan.rewrites,
+      testPlanChangeRenamed: testPlan.changeRenamed,
       actions,
     };
+  }
+  if (testPlan.exists) {
+    try {
+      services.atomicWrite(testPlan.testPlanPath, testPlan.content);
+    } catch (error) {
+      return partialFailure({
+        write,
+        check: { changeName: recovery.changeName },
+        actions,
+        archiveResult: { archivedAs: recovery.archiveName },
+        archiveRoot: null,
+        archiveWarnings: [],
+        archiveTarget: recovery.changePath,
+        rewrites: next.rewrites,
+        testPlanRewrites: testPlan.rewrites,
+        testPlanChangeRenamed: testPlan.changeRenamed,
+        failedStage: 'test-plan-write',
+        error: `归档恢复测试方案写入失败：${error.message}`,
+      });
+    }
   }
   try {
     services.atomicWrite(recovery.requirementPath, next.content);
@@ -201,6 +300,8 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       archiveWarnings: [],
       archiveTarget: recovery.changePath,
       rewrites: next.rewrites,
+      testPlanRewrites: testPlan.rewrites,
+      testPlanChangeRenamed: testPlan.changeRenamed,
       failedStage: 'requirement-write',
       error: `归档恢复写入失败：${error.message}`,
     });
@@ -219,6 +320,8 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       archiveWarnings: audit.warnings,
       archiveTarget: recovery.changePath,
       rewrites: next.rewrites,
+      testPlanRewrites: testPlan.rewrites,
+      testPlanChangeRenamed: testPlan.changeRenamed,
       failedStage: 'post-archive-audit',
       error: `归档恢复审计失败：${audit.errors.join('；')}`,
     });
@@ -231,6 +334,8 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     recovery: true,
     archiveTarget: recovery.changePath,
     rewrites: next.rewrites,
+    testPlanRewrites: testPlan.rewrites,
+    testPlanChangeRenamed: testPlan.changeRenamed,
     actions,
     postArchiveAudit: audit,
     requirementStatus: '已验收',
@@ -268,9 +373,29 @@ export function finalizeChange({
     check.changeName,
     predictedArchiveName,
   );
+  let predictedTestPlan;
+  try {
+    predictedTestPlan = prepareTestPlanRewrite(check.changePath, check.changeName, predictedArchiveName);
+  } catch (error) {
+    return {
+      ok: false,
+      code: 'test_plan_rewrite_failed',
+      status: 'failed',
+      write,
+      check,
+      actions: [],
+      errors: [`无法生成测试方案归档迁移：${error.message}`],
+    };
+  }
   const actions = [
     { action: 'validate', target: check.changeName },
     { action: 'sync-and-archive', target: check.archive?.targetPath || null },
+    ...(predictedTestPlan.required ? [{
+      action: 'rewrite-test-plan-references',
+      target: path.join(check.archive?.targetPath || check.changePath, 'test-plan.md'),
+      rewrites: predictedTestPlan.rewrites,
+      changeRenamed: predictedTestPlan.changeRenamed,
+    }] : []),
     { action: 'rewrite-evidence-references', target: check.requirementPath, rewrites: predictedRequirement.rewrites },
     { action: 'mark-requirement-accepted', target: check.requirementPath },
     { action: 'post-archive-audit', target: check.archive?.targetPath || null },
@@ -285,6 +410,8 @@ export function finalizeChange({
       actions,
       archiveTarget: check.archive?.targetPath || null,
       rewrites: predictedRequirement.rewrites,
+      testPlanRewrites: predictedTestPlan.rewrites,
+      testPlanChangeRenamed: predictedTestPlan.changeRenamed,
     };
   }
 
@@ -331,6 +458,43 @@ export function finalizeChange({
     check.changeName,
     archiveName,
   );
+  let nextTestPlan;
+  try {
+    nextTestPlan = prepareTestPlanRewrite(archiveTarget, check.changeName, archiveName);
+  } catch (error) {
+    return partialFailure({
+      write,
+      check,
+      actions,
+      archiveResult,
+      archiveRoot,
+      archiveWarnings,
+      archiveTarget,
+      rewrites: nextRequirement.rewrites,
+      failedStage: 'test-plan-rewrite',
+      error: `变更已归档，但测试方案迁移无法生成：${error.message}`,
+    });
+  }
+  if (nextTestPlan.exists) {
+    try {
+      services.atomicWrite(nextTestPlan.testPlanPath, nextTestPlan.content);
+    } catch (error) {
+      return partialFailure({
+        write,
+        check,
+        actions,
+        archiveResult,
+        archiveRoot,
+        archiveWarnings,
+        archiveTarget,
+        rewrites: nextRequirement.rewrites,
+        testPlanRewrites: nextTestPlan.rewrites,
+        testPlanChangeRenamed: nextTestPlan.changeRenamed,
+        failedStage: 'test-plan-write',
+        error: `变更已归档，但测试方案迁移写入失败：${error.message}`,
+      });
+    }
+  }
   try {
     services.atomicWrite(check.requirementPath, nextRequirement.content);
   } catch (error) {
@@ -343,6 +507,8 @@ export function finalizeChange({
       archiveWarnings,
       archiveTarget,
       rewrites: nextRequirement.rewrites,
+      testPlanRewrites: nextTestPlan.rewrites,
+      testPlanChangeRenamed: nextTestPlan.changeRenamed,
       failedStage: 'requirement-write',
       error: `变更已归档，但需求状态或证据引用更新失败：${error.message}`,
     });
@@ -361,6 +527,8 @@ export function finalizeChange({
       archiveWarnings: [...archiveWarnings, ...audit.warnings],
       archiveTarget,
       rewrites: nextRequirement.rewrites,
+      testPlanRewrites: nextTestPlan.rewrites,
+      testPlanChangeRenamed: nextTestPlan.changeRenamed,
       failedStage: 'post-archive-audit',
       error: `变更已归档，但归档后完整审计失败：${audit.errors.join('；')}`,
     });
@@ -377,6 +545,8 @@ export function finalizeChange({
     archiveWarnings,
     archiveTarget,
     rewrites: nextRequirement.rewrites,
+    testPlanRewrites: nextTestPlan.rewrites,
+    testPlanChangeRenamed: nextTestPlan.changeRenamed,
     postArchiveAudit: audit,
     requirementStatus: '已验收',
   };

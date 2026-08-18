@@ -2,10 +2,13 @@
 
 ## 当前结论
 
-- R-04 正在修复真实矩阵发现的 `actions/upload-artifact@v4` Node.js 20 弃用警告；目标版本为官方当前 v7，现有产物名称、路径和失败语义保持不变。
+- R-05 本地实施与验证已完成：首次真实归档暴露的测试方案变更名、证据路径和重复恢复问题已有确定性回归保护，部分归档已安全撤回，活动变更恢复完整。
+- 完成器现已同时迁移需求与归档测试方案，并在正常归档和重复恢复中共用同一改写逻辑；测试方案写入失败使用稳定 `failedStage: test-plan-write`，恢复不重跑项目命令。
+- TC-04 聚焦回归、验证证据测试 6/6、统一验证 8/8 和官方 validators 均通过；V-03、V-05 已刷新为当前工作区证据，只有修复提交对应的 V-06 五平台矩阵仍待执行，当前不得重新归档。
+- R-04 已完成：`actions/upload-artifact` 升级到官方当前 v7，现有产物名称、路径和失败语义保持不变，Node.js 20 action 弃用警告已在 Validate #32 中消失；该运行只作为 R-04 历史证据，不证明 R-05 修复。
 - V-05 已通过：`npm run verify` 的 8 个阶段全部完成，包含 `npm test` 196/196、结构校验、当前严格 OpenSpec 28/28、归档严格 OpenSpec 37/37、运行时完整性与本机浏览器启动；9 个 Skill 和插件清单另由官方 validators 校验通过。
-- V-06 已重新打开：Validate #31 仍作为旧提交历史基线，但不能证明 R-04；升级后的同一提交尚未完成五平台复验。
-- 先前 precomplete 与完成预览只适用于 R-03，R-04 完成新的本地证据与真实矩阵前不具备归档条件。
+- V-06 的 Validate #32 仅证明 R-04 提交 `444c67a51d66106e6f39d089e9cf70a859992cdf`；它不覆盖尚未提交的 R-05 归档恢复修复，当前 V-06 因此保持计划。
+- 当前任务进度 25/26；仅剩修复提交五平台 CI、证据更新与正式归档，在该层证据完成前不进入 precomplete。
 
 ## 已执行证据
 
@@ -16,24 +19,32 @@
 | V-03 | 通过 | `evidence/V-03.json` | 命令退出 0，精确命中 TC-04；归档改写、幂等、危险目标和恢复通过 |
 | V-04 | 通过 | `evidence/V-04.json` | 命令退出 0，精确命中 TC-05；UI 报告身份字段通过，UI 全量回归 30/30 |
 | V-05 | 通过 | `evidence/V-05.json` | `npm run verify` 退出 0，精确命中 TC-06 两次；统一验证 8 阶段全部完成 |
-| V-06 | 待复验 | `evidence/V-06.json` | 当前文件保留 Validate #31 的旧提交历史基线；R-04 完成后必须用新运行覆盖并重新远程复查 |
+| V-06 | R-04 历史通过；R-05 待执行 | `evidence/V-06.json` | Validate #32 只对应 `444c67a51d66106e6f39d089e9cf70a859992cdf`；修复提交尚无五平台结果，不作为当前完成证据 |
 | V-07 | 通过 | `evidence/V-07.json` | 命令退出 0，精确命中 TC-03；严格/历史/外部边界与项目只读审计通过 |
 
-## 历史 CI 矩阵基线
+## 历史真实 CI 矩阵（R-04）
 
-- 运行：`https://github.com/julangtaotian/wayfinder/actions/runs/32105343499`
-- 提交：`fff45089c22b9718ec6afb86321248719865312e`
+- 运行：`https://github.com/julangtaotian/wayfinder/actions/runs/32108061059`
+- 提交：`444c67a51d66106e6f39d089e9cf70a859992cdf`
 - 结果：`darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 全部通过。
 - 产物：五个平台分别生成 `plugin-package-report-<platform>`，与矩阵任务一一对应。
-- 待修复警告：五个平台均提示 `actions/upload-artifact@v4` 的 Node.js 20 已弃用并被 GitHub 强制使用 Node.js 24；R-04 升级到 v7 后必须由新矩阵确认该警告消失。
+- 警告复核：运行摘要 Annotations 为空；五个平台任务页均未出现 `Node.js 20` 或 `actions/upload-artifact@v4`，原弃用警告已消失。
+- 当前边界：该矩阵早于 R-05 归档恢复修复，不更新当前 V-06；必须在修复提交上重新运行并远程复查五个平台任务。
 
 ## 其他本地回归
+
+- R-05 TC-04 红灯：首次回归因缺少 `testPlanRewrites` 失败，证明用例能捕获真实缺陷；原始日志位于 `outputs/verification-evidence-integrity/tc04-r05-red.log`。
+- R-05 TC-04 绿灯：聚焦回归 1/1 通过，验证真实目录移动、需求与测试方案双文件迁移、`test-plan-write` 部分失败和恢复；原始日志位于 `outputs/verification-evidence-integrity/tc04-r05-green-final.log`。
+- R-05 相关回归：`tests/verification-evidence-integrity.test.mjs` 6/6 通过；原始日志位于 `outputs/verification-evidence-integrity/verification-evidence-tests-r05-final.log`。
+- R-05 统一验证：`npm run verify` 8/8 阶段通过，包含 `npm test` 196/196、结构校验、当前严格 OpenSpec 28/28、归档严格 OpenSpec 37/37、运行时完整性、Playwright 完整性和本机浏览器启动；V-01～V-05、V-07 使用当前工作区指纹 `1af6767b6f848515e60e854c090a24086f412cd12f1f2362dfe849e3ad9a9c25`。
+- R-05 官方 Skill validator：9/9 通过；原始日志位于 `outputs/verification-evidence-integrity/official-skill-validator-r05.log`。
+- R-05 官方 Plugin validator：通过；原始日志位于 `outputs/verification-evidence-integrity/official-plugin-validator-r05.log`。
 
 - R-04 聚焦回归：`node --test --test-name-pattern="统一验证固定阶段顺序、短路失败并由 CI 单一调用" tests/workflow.test.mjs`，1/1 通过；已断言 `actions/upload-artifact@v7` 存在且 v1～v6 均不存在。
 - R-04 结构校验：`npm run validate` 通过；工作流继续保留五平台矩阵、单一 `npm run verify` 入口、平台包构建、唯一产物名称和 `if-no-files-found: error`。
 - R-04 本地机器证据：V-01～V-05、V-07 已按新工作区指纹重新生成；`npm run verify` 的 8 个阶段全部完成，其中 `npm test` 196/196、当前严格 OpenSpec 28/28、归档严格 OpenSpec 37/37。
-- R-03 `check-change --stage precomplete`：曾通过；R-04 已重新打开跨平台验收，因此该历史结果不作为当前完成结论。
-- R-03 `finalize-change` 完成预览：曾通过且未写入；R-04 取得新 V-06 前不重新执行完成预览。
+- R-04 `check-change --stage precomplete`：通过；22/22 项任务完成，7 份证据均有效，门禁只消费持久证据且没有重跑项目命令，错误与警告均为空。
+- R-04 `finalize-change` 完成预览：通过且未写入；预览目标为 `openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity`，识别 9 处证据引用改写并包含归档后审计。
 - 官方 Skill validator：9/9 通过；原始日志位于 `outputs/verification-evidence-integrity/official-skill-validator.log`。
 - 官方 Plugin validator：通过；原始日志位于 `outputs/verification-evidence-integrity/official-plugin-validator.log`。
 - `node --test tests/frontend-test-workflow.test.mjs`：14/14 通过，真实 Vue 3 + Vite + Vitest fixture 覆盖测试发现、零测试失败和重复执行稳定性。

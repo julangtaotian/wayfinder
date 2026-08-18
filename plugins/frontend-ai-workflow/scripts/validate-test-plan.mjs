@@ -123,11 +123,19 @@ function parseRequirement(content) {
   return { decisions, acceptanceIds, revisions, verifications, status };
 }
 
-function scopedReferences(content, changeName) {
+export function changeScopeCandidates(changePath) {
+  const exact = path.basename(changePath);
+  if (path.basename(path.dirname(changePath)) !== 'archive') return [exact];
+  const logical = exact.replace(/^\d{4}-\d{2}-\d{2}-/u, '');
+  return logical === exact ? [exact] : [exact, logical];
+}
+
+function scopedReferences(content, changePath) {
   const section = getSection(content, '关联变更范围') || '';
+  const candidates = new Set(changeScopeCandidates(changePath));
   for (const line of section.split(/\r?\n/u)) {
     const cells = line.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim());
-    if (stripCode(cells[0]) !== changeName) continue;
+    if (!candidates.has(stripCode(cells[0]))) continue;
     return {
       decisions: new Set(String(cells[1] || '').match(/D-\d{2,}/gu) || []),
       acceptances: new Set(String(cells[2] || '').match(/A-\d{2,}/gu) || []),
@@ -305,7 +313,7 @@ export function validateTestPlan(plan, {
   const stale = Boolean(latestRevision && revisionBaseline !== latestRevision);
   if (!/^R-\d{2,}$/u.test(revisionBaseline || '')) errors.push(`需求修订基线无效：${revisionBaseline || '空值'}`);
   if (stale) errors.push(`测试方案已过期：需求最新修订为 ${latestRevision}，方案基线为 ${revisionBaseline || '空值'}`);
-  const scope = scopedReferences(requirementContent, changeName);
+  const scope = scopedReferences(requirementContent, changePath);
   if (!scope.decisions.size || !scope.acceptances.size) errors.push(`需求没有所选变更的可执行范围：${changeName}`);
 
   const testCases = parseCaseBlocks(content, errors);

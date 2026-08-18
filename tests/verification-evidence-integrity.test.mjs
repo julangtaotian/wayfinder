@@ -14,6 +14,7 @@ import {
   validateVerificationEvidenceRecords,
 } from '../plugins/frontend-ai-workflow/scripts/verification-evidence.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
+import { changeScopeCandidates } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
 import {
   buildEvidenceReferenceRewrites,
   finalizeChange,
@@ -48,7 +49,7 @@ function createFixture(context, { evidenceRequired = true } = {}) {
     evidenceRequired ? 'verification_evidence: required' : '',
     '',
   ].filter((line, index, values) => line || index === values.length - 1).join('\n'));
-  write(root, 'openspec/changes/evidence-change/test-plan.md', '# fixture plan\n');
+  write(root, 'openspec/changes/evidence-change/test-plan.md', '# fixture plan\n\n- 变更：evidence-change\n');
   return {
     root,
     changePath: path.join(root, 'openspec', 'changes', 'evidence-change'),
@@ -319,6 +320,11 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
     '',
   ].join('\n');
   const archiveName = '2026-08-18-evidence-change';
+  assert.deepEqual(changeScopeCandidates('/project/openspec/changes/evidence-change'), ['evidence-change']);
+  assert.deepEqual(
+    changeScopeCandidates(`/project/openspec/changes/archive/${archiveName}`),
+    [archiveName, 'evidence-change'],
+  );
   const planned = buildEvidenceReferenceRewrites(content, 'evidence-change', archiveName);
   assert.equal(planned.rewrites.length, 2);
   assert.equal(planned.content.includes('openspec/changes/archive/2026-08-18-evidence-change/verification.md'), true);
@@ -388,6 +394,139 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
   assert.equal(unsafeArchive.ok, false);
   assert.equal(unsafeArchive.failedStage, 'archive-target');
   assert.equal(unsafeWriteCalls, 0);
+
+  const successfulFixture = createFixture(context);
+  fs.writeFileSync(successfulFixture.requirementPath, content, 'utf8');
+  fs.writeFileSync(successfulFixture.changePath + '/test-plan.md', [
+    '# 测试方案',
+    '',
+    '- 变更：evidence-change',
+    '- 证据：`openspec/changes/evidence-change/evidence/V-01.json`',
+    '',
+  ].join('\n'), 'utf8');
+  const successfulArchiveTarget = path.join(successfulFixture.root, 'openspec', 'changes', 'archive', archiveName);
+  const successfulCheck = {
+    ok: true,
+    root: successfulFixture.root,
+    requirementPath: successfulFixture.requirementPath,
+    changePath: successfulFixture.changePath,
+    changeName: 'evidence-change',
+    archive: { available: true, targetPath: successfulArchiveTarget },
+  };
+  const preview = finalizeChange({
+    target: successfulFixture.root,
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+    change: 'evidence-change',
+  }, {
+    checkChange: () => successfulCheck,
+  });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.testPlanRewrites.length, 1);
+  assert.equal(preview.testPlanChangeRenamed, true);
+
+  let auditCalls = 0;
+  const finalized = finalizeChange({
+    target: successfulFixture.root,
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+    change: 'evidence-change',
+    write: true,
+  }, {
+    checkChange: () => successfulCheck,
+    runOpenSpecSync: () => {
+      fs.mkdirSync(path.dirname(successfulArchiveTarget), { recursive: true });
+      fs.renameSync(successfulFixture.changePath, successfulArchiveTarget);
+      return {
+        available: true,
+        status: 0,
+        stdout: JSON.stringify({ archive: { archivedAs: archiveName }, root: { path: successfulFixture.root, source: 'nearest' } }),
+        stderr: '',
+      };
+    },
+    postArchiveAudit: ({ requirementPath, changePath }) => {
+      auditCalls += 1;
+      const archivedRequirement = fs.readFileSync(requirementPath, 'utf8');
+      const archivedPlan = fs.readFileSync(path.join(changePath, 'test-plan.md'), 'utf8');
+      assert.match(archivedRequirement, /- 状态：已验收/u);
+      assert.match(archivedRequirement, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
+      assert.match(archivedPlan, /- 变更：2026-08-18-evidence-change/u);
+      assert.match(archivedPlan, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
+      assert.doesNotMatch(archivedPlan, /openspec\/changes\/evidence-change\/evidence/u);
+      return { ok: true, errors: [], warnings: [] };
+    },
+  });
+  assert.equal(finalized.ok, true);
+  assert.equal(finalized.code, 'finalized');
+  assert.equal(finalized.testPlanRewrites.length, 1);
+  assert.equal(finalized.testPlanChangeRenamed, true);
+  assert.equal(auditCalls, 1);
+
+  const writeFailureFixture = createFixture(context);
+  fs.writeFileSync(writeFailureFixture.requirementPath, content, 'utf8');
+  fs.writeFileSync(writeFailureFixture.changePath + '/test-plan.md', '- 变更：evidence-change\n- 证据：`openspec/changes/evidence-change/evidence/V-01.json`\n', 'utf8');
+  const writeFailureArchiveTarget = path.join(writeFailureFixture.root, 'openspec', 'changes', 'archive', archiveName);
+  const writeFailure = finalizeChange({
+    target: writeFailureFixture.root,
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+    change: 'evidence-change',
+    write: true,
+  }, {
+    checkChange: () => ({
+      ...successfulCheck,
+      root: writeFailureFixture.root,
+      requirementPath: writeFailureFixture.requirementPath,
+      changePath: writeFailureFixture.changePath,
+      archive: { available: true, targetPath: writeFailureArchiveTarget },
+    }),
+    runOpenSpecSync: () => {
+      fs.mkdirSync(path.dirname(writeFailureArchiveTarget), { recursive: true });
+      fs.renameSync(writeFailureFixture.changePath, writeFailureArchiveTarget);
+      return {
+        available: true,
+        status: 0,
+        stdout: JSON.stringify({ archive: { archivedAs: archiveName }, root: { path: writeFailureFixture.root, source: 'nearest' } }),
+        stderr: '',
+      };
+    },
+    atomicWrite: (file, nextContent) => {
+      if (path.basename(file) === 'test-plan.md') throw new Error('fixture test plan rename failed');
+      fs.writeFileSync(file, nextContent, 'utf8');
+    },
+    postArchiveAudit: () => ({ ok: true, errors: [], warnings: [] }),
+  });
+  assert.equal(writeFailure.ok, false);
+  assert.equal(writeFailure.code, 'archive_partial_failure');
+  assert.equal(writeFailure.failedStage, 'test-plan-write');
+  assert.equal(writeFailure.archiveTarget, writeFailureArchiveTarget);
+  assert.equal(writeFailure.recovery.repeatable, true);
+
+  const recoveryFixture = createFixture(context);
+  const recoveryArchiveTarget = path.join(recoveryFixture.root, 'openspec', 'changes', 'archive', archiveName);
+  const acceptedRequirement = rewriteRequirementForArchive(content, 'evidence-change', archiveName);
+  fs.writeFileSync(recoveryFixture.requirementPath, acceptedRequirement.content, 'utf8');
+  fs.writeFileSync(recoveryFixture.changePath + '/test-plan.md', '- 变更：evidence-change\n- 证据：`openspec/changes/evidence-change/evidence/V-01.json`\n', 'utf8');
+  fs.mkdirSync(path.dirname(recoveryArchiveTarget), { recursive: true });
+  fs.renameSync(recoveryFixture.changePath, recoveryArchiveTarget);
+  let recoveryAuditCalls = 0;
+  const recovered = finalizeChange({
+    target: recoveryFixture.root,
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+    change: 'evidence-change',
+    write: true,
+  }, {
+    checkChange: () => { throw new Error('变更目录不存在：fixture'); },
+    postArchiveAudit: ({ changePath }) => {
+      recoveryAuditCalls += 1;
+      const archivedPlan = fs.readFileSync(path.join(changePath, 'test-plan.md'), 'utf8');
+      assert.match(archivedPlan, /- 变更：2026-08-18-evidence-change/u);
+      assert.match(archivedPlan, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
+      return { ok: true, errors: [], warnings: [] };
+    },
+  });
+  assert.equal(recovered.ok, true);
+  assert.equal(recovered.code, 'archive_recovered');
+  assert.equal(recovered.testPlanRewrites.length, 1);
+  assert.equal(recovered.testPlanChangeRenamed, true);
+  assert.equal(recoveryAuditCalls, 1);
 });
 
 test('[TC-05] UI 报告运行身份一致性', () => {

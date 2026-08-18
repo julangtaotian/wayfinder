@@ -55,11 +55,11 @@ CLI 默认只返回 `readyToWrite`、规范化命令和预计路径；只有 `--
 
 ### 5. 完成入口预计算改写，归档后以实际目标提交需求
 
-预览阶段根据 `check-change` 的安全活动路径和预计 archive target 生成引用改写表，不修改文件。正式执行仍先通过 precomplete，再调用内置 OpenSpec 归档；以引擎返回的 `archivedAs` 为准构造最终前缀，重新核对预览与实际目标，然后在内存中同时生成“已验收状态 + 引用迁移”的需求内容，采用同目录临时文件和 rename 原子写入。（D-10，A-04）
+预览阶段根据 `check-change` 的安全活动路径和预计 archive target 生成需求与测试方案的改写计划，不修改文件。正式执行仍先通过 precomplete，再调用内置 OpenSpec 归档；以引擎返回的 `archivedAs` 为准构造最终前缀，在内存中分别生成“已验收状态 + 引用迁移”的需求内容，以及“完整归档变更名 + 归档证据路径”的测试方案内容，并对两个文件分别采用同目录临时文件和 rename 原子写入。（D-10，A-04）
 
-写入后立即以实际归档变更路径运行 requirement complete、test-plan complete 和证据完整性审计。全部通过才返回 `ok: true`。重复调用若活动变更不存在但唯一归档目标与需求关联一致，则进入 recovery/audit 分支，不再次归档或添加日期。（D-10、D-11，A-04、A-05）
+写入后立即以实际归档变更路径运行 requirement complete、test-plan complete 和证据完整性审计。全部通过才返回 `ok: true`。重复调用若活动变更不存在但唯一归档目标存在，则进入 recovery/audit 分支，重新计算并幂等写入需求与归档测试方案，不再次归档、添加日期或重跑项目命令。（D-10、D-11，A-04、A-05）
 
-OpenSpec 目录移动与需求文件无法形成真正跨文件事务。因此归档成功后的任何写入或审计失败都返回 `archive_partial_failure`、`archiveTarget`、`rewrites`、`failedStage` 和恢复命令参数；不尝试回滚已经同步的主规格，也不把用户确认当成跳过门禁。（D-11，A-05）
+OpenSpec 目录移动、需求文件和归档测试方案无法形成真正跨文件事务。因此归档成功后的任一文件写入或审计失败都返回 `archive_partial_failure`、`archiveTarget`、需求与测试方案改写、`failedStage` 和恢复命令参数；恢复顺序固定为先修复归档测试方案、再更新需求状态与引用、最后完整审计，不尝试回滚已经同步的主规格，也不把用户确认当成跳过门禁。（D-11，A-05）
 
 ### 6. UI 报告身份由完成状态统一投影
 

@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-18T06:35:07.432Z",
+  "completedAt": "2026-08-18T07:26:08.391Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "fff45089c22b9718ec6afb86321248719865312e",
+    "commit": "444c67a51d66106e6f39d089e9cf70a859992cdf",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,9 +24,9 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 244,
+      "bytes": 245,
       "path": "outputs/verification-evidence/harden-verification-evidence-integrity/V-03/stdout.log",
-      "sha256": "f4228e325a7c78dc9af850e0064809e48c27a975ce6f4ce912f96f766ce2f848",
+      "sha256": "b1371c27d04b316de9627512910aee8f43520fe55f7e49fcce6952e8d90d1172",
       "stream": "stdout"
     },
     {
@@ -38,7 +38,7 @@
   ],
   "requirement": "requirements/REQ-2026-026-verification-evidence-integrity.md",
   "schemaVersion": 1,
-  "startedAt": "2026-08-18T06:35:07.339Z",
+  "startedAt": "2026-08-18T07:26:08.286Z",
   "status": "passed",
-  "workspaceFingerprint": "ac5d426159965e1fba0e928023ae0f7de93709f97a49e85a3ffa6c994ad0f7d5"
+  "workspaceFingerprint": "1af6767b6f848515e60e854c090a24086f412cd12f1f2362dfe849e3ad9a9c25"
 }

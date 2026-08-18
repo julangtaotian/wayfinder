@@ -9,43 +9,41 @@
       "plugin-package-report-linux-x64",
       "plugin-package-report-win32-x64"
     ],
-    "commit": "fff45089c22b9718ec6afb86321248719865312e",
-    "durationSeconds": 173,
+    "commit": "444c67a51d66106e6f39d089e9cf70a859992cdf",
+    "durationSeconds": 217,
     "jobs": [
       {
         "name": "darwin-arm64",
         "status": "passed",
-        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510714"
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059/job/95621466616"
       },
       {
         "name": "darwin-x64",
         "status": "passed",
-        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510710"
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059/job/95621466612"
       },
       {
         "name": "linux-x64",
         "status": "passed",
-        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510721"
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059/job/95621466621"
       },
       {
         "name": "linux-arm64",
         "status": "passed",
-        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510764"
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059/job/95621466730"
       },
       {
         "name": "win32-x64",
         "status": "passed",
-        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510768"
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059/job/95621466734"
       }
     ],
     "remotelyVerified": true,
-    "runNumber": 31,
+    "runNumber": 32,
     "trigger": "push",
-    "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499",
-    "verifiedAt": "2026-08-18T06:14:23Z",
-    "warnings": [
-      "五个平台均提示 actions/upload-artifact@v4 的 Node.js 20 已弃用，GitHub 当前强制使用 Node.js 24 执行；不影响本次任务成功结论。"
-    ],
+    "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32108061059",
+    "verifiedAt": "2026-08-18T06:48:34Z",
+    "warnings": [],
     "workflow": "Validate"
   },
   "kind": "external-ci",

@@ -5,7 +5,7 @@
 - 状态：已实现
 - 需求：`requirements/REQ-2026-026-verification-evidence-integrity.md`
 - 变更：harden-verification-evidence-integrity
-- 需求修订基线：R-04
+- 需求修订基线：R-05
 - 默认聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs`
 
 ## 测试上下文
@@ -96,10 +96,10 @@
 - 关联规格：verifiable-change-delivery / 完成入口必须迁移证据引用并执行归档后审计；归档引用迁移必须幂等且可恢复
 - 状态矩阵：用户操作、刷新、错误态
 - 前置条件：隔离 OpenSpec fixture 已通过 precomplete，需求引用活动变更下的 Markdown 与多个 JSON 证据
-- 测试数据：正常归档、无关 URL/其他变更、重复执行、需求 rename 失败和归档后证据缺失
-- 测试替身：注入 OpenSpec 归档结果、原子写入器和 complete 审计器
-- 操作：运行完成预览、正式归档、重复恢复和两个部分失败分支
-- 可观察断言：预览零写入；正式引用使用实际 archivedAs；重复无双日期；失败返回 archiveTarget、rewrites、failedStage 且不报告完整成功
+- 测试数据：正常归档、归档测试方案中的活动变更名与证据路径、无关 URL/其他变更、重复执行、需求或测试方案 rename 失败和归档后证据缺失
+- 测试替身：隔离文件系统 fixture、注入的 OpenSpec 归档目录移动结果与 complete 审计器
+- 操作：运行完成预览、真实目录移动后的正式归档、测试方案写入失败、重复恢复和归档后证据缺失分支
+- 可观察断言：预览零写入；需求和归档测试方案均使用实际 archivedAs；恢复可幂等补齐两类文件；失败返回 archiveTarget、两类 rewrites、稳定 failedStage 且不报告完整成功或重跑项目命令
 - 目标测试：`tests/verification-evidence-integrity.test.mjs`
 - 测试定位：`[TC-04] 归档引用迁移与恢复`
 - 聚焦命令：`node --test --test-name-pattern="归档引用迁移与恢复" tests/verification-evidence-integrity.test.mjs`
@@ -144,9 +144,10 @@
 - 测试替身：注入 platform、process.execPath、环境、文件存在检查和 CI 证据清单
 - 操作：构造各平台调用和错误，执行成功/失败清理，并分别评估聚焦、本地全量和真实矩阵状态
 - 可观察断言：Windows 不直启 `.cmd`，路径诊断稳定，CI 使用 Node.js 24 的 upload-artifact v7 且保持上传合同，产物只在 outputs，清理保留原始错误，矩阵不完整不能由本地通过替代
-- 目标测试：`tests/workflow.test.mjs`
+- 目标测试：`tests/verification-evidence-integrity.test.mjs`
 - 测试定位：`[TC-06] 跨平台证据执行与发布边界`
-- 聚焦命令：`node --test --test-name-pattern="统一验证固定阶段顺序、短路失败并由 CI 单一调用" tests/workflow.test.mjs`
+- 聚焦命令：`node --test --test-name-pattern="跨平台证据执行与发布边界" tests/verification-evidence-integrity.test.mjs`
+- 配套回归：`tests/workflow.test.mjs` 校验工作流仅使用 `actions/upload-artifact@v7`，并保持五平台矩阵、统一验证入口与上传失败语义。
 - 关联验证：V-05、V-06
 - 结果分类：未执行
-- 证据：待生成
+- 证据：待执行

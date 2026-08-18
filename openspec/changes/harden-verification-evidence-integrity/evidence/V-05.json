@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-18T06:37:28.485Z",
+  "completedAt": "2026-08-18T07:27:07.239Z",
   "evidenceId": "V-05",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "fff45089c22b9718ec6afb86321248719865312e",
+    "commit": "444c67a51d66106e6f39d089e9cf70a859992cdf",
     "dirty": true
   },
   "kind": "local-command",
@@ -25,7 +25,7 @@
     {
       "bytes": 41464,
       "path": "outputs/verification-evidence/harden-verification-evidence-integrity/V-05/stdout.log",
-      "sha256": "594676fe52558f84f3fb3744d11c430d0b3eb97587db8b3ee9c28f380eee2fe1",
+      "sha256": "ca182f395b3f805aab8b2ce1a16e1ae4fc994e7e650c8594075b606940121b45",
       "stream": "stdout"
     },
     {
@@ -37,7 +37,7 @@
   ],
   "requirement": "requirements/REQ-2026-026-verification-evidence-integrity.md",
   "schemaVersion": 1,
-  "startedAt": "2026-08-18T06:36:43.799Z",
+  "startedAt": "2026-08-18T07:26:22.734Z",
   "status": "passed",
-  "workspaceFingerprint": "ac5d426159965e1fba0e928023ae0f7de93709f97a49e85a3ffa6c994ad0f7d5"
+  "workspaceFingerprint": "1af6767b6f848515e60e854c090a24086f412cd12f1f2362dfe849e3ad9a9c25"
 }
