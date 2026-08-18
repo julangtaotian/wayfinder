@@ -157,6 +157,7 @@
 | R-01 | 2026-08-18 | D-01～D-15 | A-01～A-09 | 用户确认开始实现；先建立已确认需求，机器证据、完成门禁、归档引用和 UI 报告自识别进入首版规划，验证保持计划。 |
 | R-02 | 2026-08-18 | D-01～D-15 | A-01～A-09 | 建立并关联 `harden-verification-evidence-integrity`，启用必需独立测试方案；验证保持计划，等待 OpenSpec 规划完成。 |
 | R-03 | 2026-08-18 | D-01～D-15 | A-01～A-09 | 需求与测试方案 implement 门禁通过，按新建专用手写测试策略进入测试先行实施；V-01～V-07 保持计划。 |
+| R-04 | 2026-08-18 | D-14 | A-09 | 根据真实矩阵暴露的 Node.js 20 action 弃用警告，把 `actions/upload-artifact` 从 v4 升级到官方当前 v7；该技术修订不改变产物名称、路径或插件可观察行为，复用 `tests/workflow.test.mjs` 增加版本回归，并将 V-06 与任务 6.5～6.6 重新打开，等待新提交五平台复验。 |
 
 ## 兼容性与风险
 
@@ -168,8 +169,8 @@
 
 ## 测试与验证
 
-- 测试文件策略：新建；目标路径：`tests/verification-evidence-integrity.test.mjs`；基线证据：Git 可用且该路径当前不存在、未被跟踪；选择理由：本需求跨越证据执行、需求完成、归档迁移和 UI 报告，建立职责集中的合同测试比继续扩大现有测试文件更易审查；既有 `tests/frontend-test-workflow.test.mjs`、`tests/workflow.test.mjs` 和 `tests/ui-review-automation.test.mjs` 继续提供配套回归。
-- 独立测试方案：需要；触发条件：新增机器证据格式、执行入口与跨阶段完成门禁；活动变更与目标：`openspec/changes/harden-verification-evidence-integrity/test-plan.md`；需求修订基线：R-03。
+- 测试文件策略：复用；目标路径：`tests/workflow.test.mjs`；基线证据：Git 可用且该手写测试文件已受版本控制；选择理由：R-04 只调整仓库统一 CI 工作流，现有测试已集中断言矩阵、运行时、单一验证入口和平台包上传链，追加 action 版本保护比新建孤立测试更易维护；原始证据能力继续由 `tests/verification-evidence-integrity.test.mjs` 覆盖。
+- 独立测试方案：需要；触发条件：新增机器证据格式、执行入口与跨阶段完成门禁；活动变更与目标：`openspec/changes/harden-verification-evidence-integrity/test-plan.md`；需求修订基线：R-04。
 - 验证范围：全量；执行命令：新专用测试的聚焦命令、受影响既有测试、`npm test`、`npm run validate`、严格 OpenSpec 校验、官方 Skill validator、官方 Plugin validator 和真实五平台 CI；选择理由：修改所有插件使用者共享的完成、归档和 UI 证据链。
 - 自动测试：本地真实执行、零测试、非零退出、工作区指纹过期、未知 schema、危险/多路径、历史兼容、预览零写入、归档改写/幂等/部分失败恢复、UI 报告字段一致性、POSIX/Windows 路径和稳定机器诊断。
 - 人工检查：核对 Skill 文案没有宣称完成门禁会重跑，没有把外部 CI 引用说成本地真实执行，UI 报告可独立定位对应状态文件。
@@ -184,7 +185,7 @@
 | V-03 | 自动 | `node --test --test-name-pattern="归档引用迁移与恢复" tests/verification-evidence-integrity.test.mjs` | 2026-08-18 | 通过 | `openspec/changes/harden-verification-evidence-integrity/verification.md`、`openspec/changes/harden-verification-evidence-integrity/evidence/V-03.json` |
 | V-04 | 自动 | `node --test --test-name-pattern="UI 报告运行身份一致性" tests/verification-evidence-integrity.test.mjs` | 2026-08-18 | 通过 | `openspec/changes/harden-verification-evidence-integrity/verification.md`、`openspec/changes/harden-verification-evidence-integrity/evidence/V-04.json` |
 | V-05 | 自动 | `npm run verify`，并执行官方 Skill/Plugin validators、根目录清洁与 AI 标记禁入检查 | 2026-08-18 | 通过 | `openspec/changes/harden-verification-evidence-integrity/verification.md`、`openspec/changes/harden-verification-evidence-integrity/evidence/V-05.json` |
-| V-06 | 自动 | 计划：同一提交的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 发布矩阵 | 待执行 | 计划 | `openspec/changes/harden-verification-evidence-integrity/verification.md` |
+| V-06 | 自动 | 计划：升级 `actions/upload-artifact@v7` 后，在同一提交复跑 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台矩阵并确认 Node.js 20 action 警告消失 | 待执行 | 计划 | `openspec/changes/harden-verification-evidence-integrity/verification.md` |
 | V-07 | 自动 | `node --test --test-name-pattern="证据完成门禁与历史兼容" tests/verification-evidence-integrity.test.mjs` | 2026-08-18 | 通过 | `openspec/changes/harden-verification-evidence-integrity/verification.md`、`openspec/changes/harden-verification-evidence-integrity/evidence/V-07.json` |
 
 ## 验收标准
@@ -208,10 +209,10 @@
 | A-03 | TC/V/JSON 与多路径关联 | D-07、D-09 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：同 ID、同需求、同定位与多路径逐项校验 | V-02、V-07 |
 | A-04 | 归档引用改写与归档后审计 | D-10 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：预览、实际目标改写与归档后审计合同通过 | V-03 |
 | A-05 | 归档幂等与故障恢复 | D-10、D-11 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：幂等、部分失败、危险目标与恢复上下文通过 | V-03 |
-| A-06 | 历史兼容且不降级新合同 | D-08 | 自动+人工 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：三类结构化警告与不改写历史合同通过 | V-07 |
-| A-07 | UI Markdown 自识别且与状态一致 | D-12 | 自动+人工 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：报告身份字段和 UI 全量 30/30 回归通过 | V-04 |
+| A-06 | 历史兼容且不降级新合同 | D-08 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：三类结构化警告与不改写历史合同通过 | V-07 |
+| A-07 | UI Markdown 自识别且与状态一致 | D-12 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：报告身份字段和 UI 全量 30/30 回归通过 | V-04 |
 | A-08 | 标准库、outputs 与根目录清洁 | D-13 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 通过：统一验证、官方 validators、根目录清洁与 AI 标记禁入检查通过，临时运行时已清理 | V-05 |
-| A-09 | 三层验证与五平台证据边界 | D-06、D-14 | 自动+人工 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 未通过：聚焦、本地全量和官方 validators 已通过，仍等待同一提交五平台真实矩阵 | V-01、V-05、V-06 |
+| A-09 | 三层验证与五平台证据边界 | D-06、D-14 | 自动 | `openspec/changes/harden-verification-evidence-integrity/verification.md` | 待复验：旧提交矩阵已通过但包含 Node.js 20 action 弃用警告；R-04 必须在升级后的同一提交重新完成聚焦、本地全量和五平台矩阵 | V-01、V-05、V-06 |
 
 ## 待确认问题
 

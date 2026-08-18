@@ -1,0 +1,55 @@
+{
+  "change": "harden-verification-evidence-integrity",
+  "evidenceId": "V-06",
+  "external": {
+    "artifacts": [
+      "plugin-package-report-darwin-arm64",
+      "plugin-package-report-darwin-x64",
+      "plugin-package-report-linux-arm64",
+      "plugin-package-report-linux-x64",
+      "plugin-package-report-win32-x64"
+    ],
+    "commit": "fff45089c22b9718ec6afb86321248719865312e",
+    "durationSeconds": 173,
+    "jobs": [
+      {
+        "name": "darwin-arm64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510714"
+      },
+      {
+        "name": "darwin-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510710"
+      },
+      {
+        "name": "linux-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510721"
+      },
+      {
+        "name": "linux-arm64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510764"
+      },
+      {
+        "name": "win32-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499/job/95613510768"
+      }
+    ],
+    "remotelyVerified": true,
+    "runNumber": 31,
+    "trigger": "push",
+    "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32105343499",
+    "verifiedAt": "2026-08-18T06:14:23Z",
+    "warnings": [
+      "五个平台均提示 actions/upload-artifact@v4 的 Node.js 20 已弃用，GitHub 当前强制使用 Node.js 24 执行；不影响本次任务成功结论。"
+    ],
+    "workflow": "Validate"
+  },
+  "kind": "external-ci",
+  "requirement": "requirements/REQ-2026-026-verification-evidence-integrity.md",
+  "schemaVersion": 1,
+  "status": "passed"
+}

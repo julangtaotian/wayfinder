@@ -73,6 +73,12 @@ Markdown 头部用稳定字段展示相对路径，不写绝对工作区。状�
 
 错误对象以 `code`、`status`、`target`、`evidenceId`、`locatorMatches`、`fresh`、`archiveTarget` 和 `failedStage` 为稳定断言，中文消息只承载解释。fixture 和日志全部进入 `outputs/verification-evidence-integrity/` 或测试注入的 outputs 子目录，成功与失败均只清理本次创建范围。（D-13、D-14，A-08、A-09）
 
+### 8. CI 产物上传使用 Node.js 24 action
+
+R-04 将 `.github/workflows/validate.yml` 的 `actions/upload-artifact` 从 v4 升级到官方当前 v7。官方 v6 已把默认运行时切换到 Node.js 24，v7 继续支持现有的压缩单文件上传，并在官方 README 中作为当前用法；本项目不启用 v7 新增的 `archive: false`，因此产物名称、路径、压缩语义和 `if-no-files-found: error` 保持不变。（D-14，A-09）
+
+该调整命中 CI 跨平台高风险项，影响仓库声明的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五个平台。`tests/workflow.test.mjs` 负责确定性断言 action 主版本和现有上传合同；本地统一验证证明共享入口未回退；只有升级后同一提交的真实五平台任务成功且不再出现 `actions/upload-artifact@v4` Node.js 20 弃用警告，V-06 才能重新标记为通过。（D-14，A-09）
+
 ## Risks / Trade-offs
 
 - [首版证据不能抵抗恶意手改 JSON] → 明确可靠性边界为插件真实捕获、内容摘要与当前工作区复算；不宣称签名或第三方认证。（D-06、D-15）

@@ -597,6 +597,9 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) 
   }
   assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform \}\}/);
   assert.match(workflow, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform \}\}/);
+  // 产物上传必须使用默认运行于 Node.js 24 的 action，避免 CI 重新出现 Node.js 20 弃用警告。
+  assert.match(workflow, /actions\/upload-artifact@v7/u);
+  assert.doesNotMatch(workflow, /actions\/upload-artifact@v[1-6]\b/u);
   assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), [
     'npm run verify',
   ]);

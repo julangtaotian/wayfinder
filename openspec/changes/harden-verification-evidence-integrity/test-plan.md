@@ -5,7 +5,7 @@
 - 状态：已实现
 - 需求：`requirements/REQ-2026-026-verification-evidence-integrity.md`
 - 变更：harden-verification-evidence-integrity
-- 需求修订基线：R-03
+- 需求修订基线：R-04
 - 默认聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs`
 
 ## 测试上下文
@@ -129,7 +129,7 @@
 - 结果分类：通过
 - 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-04.json`
 
-### TC-06：跨平台子进程路径诊断和三层证据保持边界
+### TC-06：跨平台子进程、CI action 与三层证据保持边界
 
 - 状态：已实现
 - 优先级：P0
@@ -140,13 +140,13 @@
 - 关联规格：verification-evidence-integrity / 证据执行与诊断必须跨平台稳定
 - 状态矩阵：用户操作、刷新、错误态
 - 前置条件：共享跨平台清单、仓库五平台矩阵和证据 fixture 可读
-- 测试数据：POSIX/Windows 分隔符、空格/中文路径、Windows npm_execpath、缺失 npm JS 入口、outputs 清理、稳定错误字段和未完成矩阵
+- 测试数据：POSIX/Windows 分隔符、空格/中文路径、Windows npm_execpath、缺失 npm JS 入口、outputs 清理、稳定错误字段、`actions/upload-artifact@v7` 和未完成矩阵
 - 测试替身：注入 platform、process.execPath、环境、文件存在检查和 CI 证据清单
 - 操作：构造各平台调用和错误，执行成功/失败清理，并分别评估聚焦、本地全量和真实矩阵状态
-- 可观察断言：Windows 不直启 `.cmd`，路径诊断稳定，产物只在 outputs，清理保留原始错误，矩阵不完整不能由本地通过替代
-- 目标测试：`tests/verification-evidence-integrity.test.mjs`
+- 可观察断言：Windows 不直启 `.cmd`，路径诊断稳定，CI 使用 Node.js 24 的 upload-artifact v7 且保持上传合同，产物只在 outputs，清理保留原始错误，矩阵不完整不能由本地通过替代
+- 目标测试：`tests/workflow.test.mjs`
 - 测试定位：`[TC-06] 跨平台证据执行与发布边界`
-- 聚焦命令：`node --test --test-name-pattern="跨平台证据执行与发布边界" tests/verification-evidence-integrity.test.mjs`
+- 聚焦命令：`node --test --test-name-pattern="统一验证固定阶段顺序、短路失败并由 CI 单一调用" tests/workflow.test.mjs`
 - 关联验证：V-05、V-06
 - 结果分类：未执行
-- 证据：本地统一验证见 `openspec/changes/harden-verification-evidence-integrity/evidence/V-05.json`；真实矩阵 V-06 待执行
+- 证据：待生成

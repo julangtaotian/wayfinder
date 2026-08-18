@@ -40,7 +40,8 @@ jobs:
         run: npm run cleanup:test-runtime
       - name: Build and verify platform plugin package
         run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write --platform ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v4
+      - name: Upload platform package report
+        uses: actions/upload-artifact@v7
         with:
           name: plugin-package-report-${{ matrix.platform }}
           path: dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json

@@ -33,5 +33,7 @@
 
 - [x] 6.1 更新 `$frontend-test`、`$frontend-change`、相关规则/模板、README 和结构合同，明确证据执行、完成零重跑、历史/外部边界和 UI 报告字段。（D-01、D-05～D-08、D-12、D-15、A-02、A-06、A-07）
 - [x] 6.2 在 `outputs/verification-evidence-integrity/` 运行专用与受影响聚焦测试、`npm test`、`npm run validate`、严格 OpenSpec、官方 Skill/Plugin validators，并检查根目录清洁和 AI 标记禁入。（D-13、D-14、A-08、A-09）
-- [ ] 6.3 在同一提交上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 真实矩阵；记录运行 URL、精确提交、各任务状态及失败复盘，未完整成功时保持 V-06 未通过。（D-06、D-14、A-09）
-- [ ] 6.4 按真实结果更新 `test-plan.md`、`verification.md` 与需求 V/A 映射，运行 precomplete 和完成预览；不得以用户确认替代失败门禁。（D-05、D-07、D-10、D-14、A-01～A-09）
+- [x] 6.3 在同一提交上完成 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 真实矩阵；记录运行 URL、精确提交、各任务状态及失败复盘，未完整成功时保持 V-06 未通过。（D-06、D-14、A-09）
+- [x] 6.4 按真实结果更新 `test-plan.md`、`verification.md` 与需求 V/A 映射，运行 precomplete 和完成预览；不得以用户确认替代失败门禁。（D-05、D-07、D-10、D-14、A-01～A-09）
+- [x] 6.5 把 CI 产物上传 action 从 v4 升级到官方当前 v7，保持名称、路径和缺失产物失败语义，并在 `tests/workflow.test.mjs` 增加 Node.js 24 action 版本回归。（D-14、A-09）
+- [ ] 6.6 重新生成受影响本地证据并在升级后的同一提交复跑五平台矩阵，确认所有任务、平台包产物和 Node.js 20 action 警告状态，再更新 V-06、precomplete 与完成预览。（D-06、D-14、A-09）
