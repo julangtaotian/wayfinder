@@ -190,7 +190,20 @@ test('视觉范围在证据不足时不通过，并确定判断固定与相对�
 });
 
 test('确定性报告区分结构通过与视觉通过措辞', () => {
+  const reportContext = {
+    schemaVersion: 2,
+    runId: 'comparison-report',
+    scenarioFingerprint: 'fixture-fingerprint',
+    capture: 'project-playwright',
+    baselineRunId: null,
+    statePath: '.frontend-ui-review/runs/comparison-report/state.json',
+    evidencePaths: ['.frontend-ui-review/runs/comparison-report/actual.png'],
+    status: 'passed',
+    observationCount: 0,
+    findingCount: 0,
+  };
   const structureReport = renderDeterministicAssessmentMarkdown({
+    context: reportContext,
     scenario: { id: 'structure', url: 'http://127.0.0.1/', comparison: { scope: 'structure', mode: 'dom' } },
     assessment: { outcome: 'passed', observations: [], findings: [] },
   });
@@ -198,6 +211,7 @@ test('确定性报告区分结构通过与视觉通过措辞', () => {
   assert.match(structureReport, /不代表视觉还原通过/u);
 
   const visualReport = renderDeterministicAssessmentMarkdown({
+    context: reportContext,
     scenario: { id: 'visual', url: 'http://127.0.0.1/', comparison: { scope: 'visual', mode: 'dom' } },
     assessment: { outcome: 'passed', observations: [], findings: [] },
   });

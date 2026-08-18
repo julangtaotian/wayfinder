@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { checkChange } from './check-change.mjs';
+import { checkChange, validateDeclaredTestPlan } from './check-change.mjs';
+import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
+import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
 
 function parseEngineJson(output) {
   const start = String(output || '').indexOf('{');
@@ -14,14 +16,38 @@ function parseEngineJson(output) {
   }
 }
 
-function acceptedRequirementContent(requirementPath) {
-  const content = fs.readFileSync(requirementPath, 'utf8');
-  const matches = [...content.matchAll(/^-\s*状态：\s*(.+?)\s*$/gmu)];
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// 只改写 Markdown 行内代码中的所选活动变更路径，URL、其他变更和普通文字保持原样。
+export function buildEvidenceReferenceRewrites(content, changeName, archiveName) {
+  const sourcePrefix = `openspec/changes/${changeName}/`;
+  const targetPrefix = `openspec/changes/archive/${archiveName}/`;
+  const rewrites = [];
+  const rewritten = String(content).replace(/`([^`]+)`/gu, (match, candidate) => {
+    if (!candidate.startsWith(sourcePrefix)) return match;
+    const target = `${targetPrefix}${candidate.slice(sourcePrefix.length)}`;
+    rewrites.push({ from: candidate, to: target });
+    return `\`${target}\``;
+  });
+  return {
+    content: rewritten,
+    rewrites: [...new Map(rewrites.map((item) => [item.from, item])).values()],
+  };
+}
+
+export function rewriteRequirementForArchive(content, changeName, archiveName, { allowAccepted = false } = {}) {
+  const matches = [...String(content).matchAll(/^(-\s*状态：\s*)(.+?)\s*$/gmu)];
   if (matches.length !== 1) throw new Error(`需求状态字段数量异常：${matches.length}`);
-  if (matches[0][1].trim() !== '待验证') {
-    throw new Error(`完成写入前需求必须为“待验证”，当前为“${matches[0][1].trim()}”`);
+  const currentStatus = matches[0][2].trim();
+  if (currentStatus !== '待验证' && !(allowAccepted && currentStatus === '已验收')) {
+    throw new Error(`完成写入前需求必须为“待验证”，当前为“${currentStatus}”`);
   }
-  return content.replace(matches[0][0], '- 状态：已验收');
+  const accepted = currentStatus === '已验收'
+    ? String(content)
+    : String(content).replace(new RegExp(`^${escapeRegExp(matches[0][0])}$`, 'mu'), '- 状态：已验收');
+  return buildEvidenceReferenceRewrites(accepted, changeName, archiveName);
 }
 
 function atomicWrite(file, content) {
@@ -34,31 +60,243 @@ function atomicWrite(file, content) {
   }
 }
 
+function archivedChangeCandidates(root, changeName) {
+  const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
+  if (!fs.existsSync(archiveRoot)) return [];
+  return fs.readdirSync(archiveRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && (
+      entry.name === changeName || entry.name.endsWith(`-${changeName}`)
+    ))
+    .map((entry) => path.join(archiveRoot, entry.name))
+    .sort();
+}
+
+function safeArchiveTarget(root, archiveName, { mustExist = false } = {}) {
+  if (
+    typeof archiveName !== 'string'
+    || !archiveName
+    || path.basename(archiveName) !== archiveName
+    || path.win32.basename(archiveName) !== archiveName
+  ) {
+    throw new Error(`归档名称不安全：${archiveName || '空值'}`);
+  }
+  const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
+  const target = path.join(archiveRoot, archiveName);
+  const relative = path.relative(archiveRoot, target);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`归档目标越出安全范围：${target}`);
+  }
+  if (mustExist && (!fs.existsSync(target) || !fs.statSync(target).isDirectory())) {
+    throw new Error(`规划引擎报告成功但实际归档目录不存在：${target}`);
+  }
+  return target;
+}
+
+function resolveRecoveryContext({ target, requirement, change }) {
+  const root = resolveProjectRoot(target);
+  assertSafeProjectRoot(root);
+  const requirementPath = path.resolve(root, requirement || '');
+  const relative = path.relative(root, requirementPath);
+  if (!requirement || !relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`需求路径越出项目范围：${requirement || '空值'}`);
+  }
+  if (!fs.existsSync(requirementPath)) throw new Error(`需求文件不存在：${requirementPath}`);
+  const candidates = archivedChangeCandidates(root, change);
+  if (candidates.length !== 1) return null;
+  return {
+    root,
+    requirementPath,
+    changeName: change,
+    changePath: candidates[0],
+    archiveName: path.basename(candidates[0]),
+  };
+}
+
+function postArchiveAudit({ requirementPath, changePath }) {
+  const requirementValidation = validateRequirementDecisions(requirementPath, {
+    changePath,
+    stage: 'complete',
+  });
+  const testPlan = validateDeclaredTestPlan({
+    changePath,
+    requirementPath,
+    stage: 'precomplete',
+  });
+  const errors = [...requirementValidation.errors, ...testPlan.errors];
+  return {
+    ok: errors.length === 0,
+    requirementValidation,
+    testPlanRequired: testPlan.required,
+    testPlanValidation: testPlan.validation,
+    errors,
+    warnings: [...requirementValidation.warnings, ...testPlan.warnings],
+  };
+}
+
+function partialFailure({
+  write,
+  check,
+  actions,
+  archiveResult,
+  archiveRoot,
+  archiveWarnings,
+  archiveTarget,
+  rewrites,
+  failedStage,
+  error,
+}) {
+  return {
+    ok: false,
+    code: 'archive_partial_failure',
+    status: 'partial',
+    write,
+    check,
+    actions,
+    archiveResult,
+    archiveRoot,
+    archiveWarnings,
+    archiveTarget,
+    rewrites,
+    failedStage,
+    recovery: {
+      change: check?.changeName || null,
+      archiveTarget,
+      repeatable: true,
+      projectCommandsExecuted: false,
+    },
+    errors: [error],
+  };
+}
+
+function recoverArchivedChange({ target, requirement, change, write }, services) {
+  const recovery = resolveRecoveryContext({ target, requirement, change });
+  if (!recovery) return null;
+  const original = fs.readFileSync(recovery.requirementPath, 'utf8');
+  const next = rewriteRequirementForArchive(original, recovery.changeName, recovery.archiveName, { allowAccepted: true });
+  const actions = [
+    { action: 'recover-references', target: recovery.requirementPath, rewrites: next.rewrites },
+    { action: 'post-archive-audit', target: recovery.changePath },
+  ];
+  if (!write) {
+    return {
+      ok: true,
+      code: 'archive_recovery_ready',
+      status: 'ready',
+      write: false,
+      recovery: true,
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      actions,
+    };
+  }
+  try {
+    services.atomicWrite(recovery.requirementPath, next.content);
+  } catch (error) {
+    return partialFailure({
+      write,
+      check: { changeName: recovery.changeName },
+      actions,
+      archiveResult: { archivedAs: recovery.archiveName },
+      archiveRoot: null,
+      archiveWarnings: [],
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      failedStage: 'requirement-write',
+      error: `归档恢复写入失败：${error.message}`,
+    });
+  }
+  const audit = services.postArchiveAudit({
+    requirementPath: recovery.requirementPath,
+    changePath: recovery.changePath,
+  });
+  if (!audit.ok) {
+    return partialFailure({
+      write,
+      check: { changeName: recovery.changeName },
+      actions,
+      archiveResult: { archivedAs: recovery.archiveName },
+      archiveRoot: null,
+      archiveWarnings: audit.warnings,
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      failedStage: 'post-archive-audit',
+      error: `归档恢复审计失败：${audit.errors.join('；')}`,
+    });
+  }
+  return {
+    ok: true,
+    code: 'archive_recovered',
+    status: 'passed',
+    write: true,
+    recovery: true,
+    archiveTarget: recovery.changePath,
+    rewrites: next.rewrites,
+    actions,
+    postArchiveAudit: audit,
+    requirementStatus: '已验收',
+  };
+}
+
 // 正常完成入口不接受跳过校验或跳过规格参数，默认仅返回动作预览。
 export function finalizeChange({
   target = process.cwd(),
   requirement,
   change,
   write = false,
-} = {}) {
-  const check = checkChange({ target, requirement, change, stage: 'precomplete' });
+} = {}, injected = {}) {
+  const services = {
+    checkChange,
+    runOpenSpecSync,
+    atomicWrite,
+    postArchiveAudit,
+    ...injected,
+  };
+  let check;
+  try {
+    check = services.checkChange({ target, requirement, change, stage: 'precomplete' });
+  } catch (error) {
+    if (!/变更目录不存在/u.test(error.message)) throw error;
+    const recovered = recoverArchivedChange({ target, requirement, change, write }, services);
+    if (recovered) return recovered;
+    throw error;
+  }
+  if (!check.ok) return { ok: false, write, check, actions: [] };
+  const predictedArchiveName = path.basename(check.archive?.targetPath || '');
+  const originalRequirement = fs.readFileSync(check.requirementPath, 'utf8');
+  const predictedRequirement = rewriteRequirementForArchive(
+    originalRequirement,
+    check.changeName,
+    predictedArchiveName,
+  );
   const actions = [
     { action: 'validate', target: check.changeName },
     { action: 'sync-and-archive', target: check.archive?.targetPath || null },
+    { action: 'rewrite-evidence-references', target: check.requirementPath, rewrites: predictedRequirement.rewrites },
     { action: 'mark-requirement-accepted', target: check.requirementPath },
+    { action: 'post-archive-audit', target: check.archive?.targetPath || null },
   ];
-  if (!check.ok) return { ok: false, write, check, actions: [] };
+  if (!write) {
+    return {
+      ok: true,
+      code: 'finalize_ready',
+      status: 'ready',
+      write,
+      check,
+      actions,
+      archiveTarget: check.archive?.targetPath || null,
+      rewrites: predictedRequirement.rewrites,
+    };
+  }
 
-  const nextRequirement = acceptedRequirementContent(check.requirementPath);
-  if (!write) return { ok: true, write, check, actions };
-
-  const archived = runOpenSpecSync(
+  const archived = services.runOpenSpecSync(
     ['archive', check.changeName, '--json', '--yes'],
     { cwd: check.root, encoding: 'utf8' },
   );
   if (!archived.available || archived.status !== 0) {
     return {
       ok: false,
+      code: 'archive_failed',
+      status: 'failed',
       write,
       check,
       actions,
@@ -70,28 +308,76 @@ export function finalizeChange({
   const archiveResult = rawArchiveResult?.archive || rawArchiveResult;
   const archiveRoot = rawArchiveResult?.root || null;
   const archiveWarnings = rawArchiveResult?.warnings || archiveResult?.warnings || [];
+  const archiveName = archiveResult?.archivedAs || predictedArchiveName;
+  let archiveTarget;
   try {
-    atomicWrite(check.requirementPath, nextRequirement);
+    archiveTarget = safeArchiveTarget(check.root, archiveName, { mustExist: true });
   } catch (error) {
-    return {
-      ok: false,
+    return partialFailure({
       write,
       check,
       actions,
       archiveResult,
       archiveRoot,
       archiveWarnings,
-      errors: [`变更已归档，但需求状态更新失败：${error.message}`],
-    };
+      archiveTarget: null,
+      rewrites: [],
+      failedStage: 'archive-target',
+      error: `变更已报告归档成功，但归档目标无法安全确认：${error.message}`,
+    });
+  }
+  const nextRequirement = rewriteRequirementForArchive(
+    originalRequirement,
+    check.changeName,
+    archiveName,
+  );
+  try {
+    services.atomicWrite(check.requirementPath, nextRequirement.content);
+  } catch (error) {
+    return partialFailure({
+      write,
+      check,
+      actions,
+      archiveResult,
+      archiveRoot,
+      archiveWarnings,
+      archiveTarget,
+      rewrites: nextRequirement.rewrites,
+      failedStage: 'requirement-write',
+      error: `变更已归档，但需求状态或证据引用更新失败：${error.message}`,
+    });
+  }
+  const audit = services.postArchiveAudit({
+    requirementPath: check.requirementPath,
+    changePath: archiveTarget,
+  });
+  if (!audit.ok) {
+    return partialFailure({
+      write,
+      check,
+      actions,
+      archiveResult,
+      archiveRoot,
+      archiveWarnings: [...archiveWarnings, ...audit.warnings],
+      archiveTarget,
+      rewrites: nextRequirement.rewrites,
+      failedStage: 'post-archive-audit',
+      error: `变更已归档，但归档后完整审计失败：${audit.errors.join('；')}`,
+    });
   }
   return {
     ok: true,
+    code: 'finalized',
+    status: 'passed',
     write,
     check,
     actions,
     archiveResult,
     archiveRoot,
     archiveWarnings,
+    archiveTarget,
+    rewrites: nextRequirement.rewrites,
+    postArchiveAudit: audit,
     requirementStatus: '已验收',
   };
 }

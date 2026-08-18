@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { validateVerificationEvidenceRecords } from './verification-evidence.mjs';
 
 const DECISION_HEADERS = ['ID', '决策项', '状态', '取值', '来源'];
 const EVIDENCE_HEADERS = ['验收ID', '验收点', '关联决策', '验证方式', '证据位置', '断言结果'];
@@ -506,35 +507,47 @@ function isGitTracked(root, relativePath) {
   return spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', pathspec], { encoding: 'utf8' }).status === 0;
 }
 
-function persistentEvidencePath(value) {
-  const candidate = String(value || '').trim().replace(/^`|`$/gu, '');
-  if (!candidate.includes('/') || /[\s：；，、]/u.test(candidate)) return null;
-  return candidate;
-}
-
-function validateVerificationEvidencePaths(requirementPath, verificationRecords, stage, errors) {
-  if (stage !== 'precomplete' || !verificationRecords) return { recorded: verificationRecords?.size || 0, verifiedFiles: 0 };
+function validateVerificationEvidencePaths(requirementPath, changePath, verificationRecords, stage, errors, warnings) {
+  if (!verificationRecords || !changePath) {
+    return {
+      recorded: verificationRecords?.size || 0,
+      verifiedFiles: 0,
+      required: false,
+      executed: false,
+      diagnostics: [],
+    };
+  }
   const root = findProjectRoot(requirementPath);
-  let verifiedFiles = 0;
   for (const [id, record] of verificationRecords) {
-    if (record.结果 === '通过' && !/^\d{4}-\d{2}-\d{2}$/u.test(record.执行日期)) {
+    if (DELIVERY_STAGES.has(stage) && record.结果 === '通过' && !/^\d{4}-\d{2}-\d{2}$/u.test(record.执行日期)) {
       errors.push(`验证记录 ${id} 的通过日期无效：${record.执行日期 || '空值'}`);
     }
-    const evidencePath = persistentEvidencePath(record.证据位置);
-    if (!evidencePath) continue;
-    const resolved = path.resolve(root, evidencePath);
-    const relative = path.relative(root, resolved);
-    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
-      errors.push(`验证记录 ${id} 的证据路径越出项目范围：${evidencePath}`);
-      continue;
-    }
-    if (!fs.existsSync(resolved)) {
-      errors.push(`验证记录 ${id} 的持久证据不存在：${evidencePath}`);
-      continue;
-    }
-    verifiedFiles += 1;
   }
-  return { recorded: verificationRecords.size, verifiedFiles };
+  const validation = validateVerificationEvidenceRecords({
+    root,
+    changePath,
+    requirementPath,
+    records: [...verificationRecords.values()],
+  });
+  for (const diagnostic of validation.diagnostics) {
+    if (diagnostic.status === 'failed') {
+      errors.push(`${diagnostic.code}：${diagnostic.message || diagnostic.target || '机器证据校验失败'}`);
+      continue;
+    }
+    if (diagnostic.status !== 'warning') continue;
+    if (stage === 'precomplete' && diagnostic.code === 'evidence_file_missing') {
+      errors.push(`${diagnostic.code}：${diagnostic.message || diagnostic.target}`);
+    } else {
+      warnings.push(`${diagnostic.code}：${diagnostic.message || diagnostic.target || '证据信任边界提醒'}`);
+    }
+  }
+  return {
+    recorded: verificationRecords.size,
+    verifiedFiles: validation.verifiedFiles,
+    required: validation.required,
+    executed: validation.executed,
+    diagnostics: validation.diagnostics,
+  };
 }
 
 function parseTestFileStrategy(content) {
@@ -632,7 +645,14 @@ export function validateRequirementDecisions(requirementPath, options = {}) {
     content, options.changePath, decisions, acceptanceIds, stage, errors, warnings,
   );
   const taskReferences = validateTaskReferences(options.changePath, decisions, acceptanceIds, selectedChangeScope, errors);
-  const evidenceFiles = validateVerificationEvidencePaths(resolvedRequirement, verificationRecords, stage, errors);
+  const evidenceFiles = validateVerificationEvidencePaths(
+    resolvedRequirement,
+    options.changePath,
+    verificationRecords,
+    stage,
+    errors,
+    warnings,
+  );
   const testFileStrategy = validateTestFileStrategy(resolvedRequirement, content, stage, errors, warnings);
   validateCompletionState(content, options.changePath, acceptanceIds, stage, errors);
   return {

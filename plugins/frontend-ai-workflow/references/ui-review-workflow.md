@@ -53,6 +53,8 @@ DOM、几何与图片比较都产生可追溯 `observations`。几何比较读�
 
 报告必须展示 `scope`。`structure` 通过只能写成结构与交互通过，不得声称视觉还原通过；`visual` 通过必须实际存在样式、几何或图片证据。文本存在、按钮可点击和弹窗 `visible` 都不是单独成立的视觉证据。
 
+首次验收与复验的 Markdown 报告必须从完成状态投影同一份上下文，并展示 `schemaVersion`、`runId`、`scenarioFingerprint`、实际 `capture`、可空 `baselineRunId`、`statePath`、证据路径及观察/问题摘要。缺少必需身份字段时拒绝生成报告；Markdown 不得自行猜测或覆盖状态 JSON。
+
 确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。
 
 Browser 或同类视觉能力只在结论为 `inconclusive`、配置已经声明 Browser 兜底且当前 AI 工具具备能力时使用。统一入口只返回 `fallbackRequired: true`，不会自行控制某个 AI 工具。兜底必须使用新运行 ID，不能在原运行或复验中静默切换采集器。

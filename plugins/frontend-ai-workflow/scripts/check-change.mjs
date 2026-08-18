@@ -245,6 +245,14 @@ export function checkChange({
         executed: false,
         persistentFilesVerified: requirementValidation.evidenceFiles?.verifiedFiles || 0,
       },
+      verificationEvidence: {
+        status: requirementValidation.evidenceFiles?.required
+          ? (requirementValidation.evidenceFiles?.diagnostics?.some((item) => item.status === 'failed') ? 'failed' : 'passed')
+          : 'legacy-compatible',
+        required: requirementValidation.evidenceFiles?.required === true,
+        executed: false,
+        diagnostics: requirementValidation.evidenceFiles?.diagnostics || [],
+      },
       openSpecStatus: { status: status.ok ? 'passed' : 'failed', executed: true },
       openSpecStrictValidation: { status: strictValidation.ok ? 'passed' : 'failed', executed: true },
       testPlan: {

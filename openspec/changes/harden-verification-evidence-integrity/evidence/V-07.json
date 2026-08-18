@@ -1,0 +1,44 @@
+{
+  "artifacts": [],
+  "change": "harden-verification-evidence-integrity",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=证据完成门禁与历史兼容",
+      "tests/verification-evidence-integrity.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-18T03:41:47.550Z",
+  "evidenceId": "V-07",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "14798939eeb6462abc1c851587ce5a9dcea315c3",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 证据完成门禁与历史兼容",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 256,
+      "path": "outputs/verification-evidence/harden-verification-evidence-integrity/V-07/stdout.log",
+      "sha256": "ad939a0a85e46dc1a5af68d7412518f27ad58116a533e0297c3cf86a097fe2cf",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/harden-verification-evidence-integrity/V-07/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-026-verification-evidence-integrity.md",
+  "schemaVersion": 1,
+  "startedAt": "2026-08-18T03:41:47.106Z",
+  "status": "passed",
+  "workspaceFingerprint": "02fc2b861443da0b73f73268b74448150be12fc877f6b5db626ab033efe9bac4"
+}

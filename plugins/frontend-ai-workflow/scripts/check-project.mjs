@@ -6,6 +6,7 @@ import { inspectProject } from './inspect-project.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
 import { collectProjectScope } from './collect-project-scope.mjs';
 import { runUpdate } from './update-project.mjs';
+import { auditProjectVerificationEvidence } from './verification-evidence.mjs';
 import {
   detectWorkflowLayout,
   LEGACY_FRONTEND_PATH,
@@ -397,6 +398,10 @@ export function checkProject(target = process.cwd()) {
   deepAnalysis.observations = analysisState.observations;
   const managedContentFreshness = checkManagedContentFreshness(inspection.root, layout, warnings);
   const activeChanges = checkActiveChanges(inspection.root, warnings);
+  const verificationEvidenceAudit = auditProjectVerificationEvidence(inspection.root);
+  for (const [code, count] of Object.entries(verificationEvidenceAudit.counts)) {
+    warnings.push(`${code}：检测到 ${count} 项，完整目标见 verificationEvidenceAudit.diagnostics`);
+  }
   return {
     ok: errors.length === 0,
     root: inspection.root,
@@ -411,6 +416,7 @@ export function checkProject(target = process.cwd()) {
     platformCommands: inspection.platformCommands,
     planningEngine,
     activeChanges,
+    verificationEvidenceAudit,
     managedContentFreshness,
     deepAnalysis,
     errors,

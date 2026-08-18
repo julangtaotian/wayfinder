@@ -77,6 +77,8 @@ blob-report/
 /outputs/frontend-test-runtime/
 /outputs/verify-runtime/
 /outputs/validator-runtime/
+/outputs/verification-evidence-integrity/
+/outputs/verification-evidence/
 
 # 运行日志与进程临时状态
 *.log

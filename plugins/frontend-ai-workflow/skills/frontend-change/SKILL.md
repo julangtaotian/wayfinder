@@ -80,8 +80,10 @@ Use when implementation is finished and the user asks to finalize the change.
 1. Confirm required tasks and acceptance scenarios are complete.
 2. Run relevant project tests and inspect implementation evidence; update the related `V-*` records only with actual results, check the acceptance boxes, and set the requirement status to `待验证`.
    When `test_plan: required` is declared, require the plan to be `已验证` and pass the `complete` validator before updating completion evidence.
+   When `verification_evidence: required` is declared, generate each automatic passing V-* manifest during the Verify stage and reference the same-ID JSON. Completion only reads schema, identity, locator and freshness; it must not rerun project tests, builds, browsers or external CI.
 3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isPlanningComplete=true` (with `isComplete` only as a legacy response fallback), and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
-4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags.
+4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags. It then rewrites active evidence references to the engine's actual archive name, atomically updates the requirement, and runs a read-only complete audit from the archived path.
+   If archive movement succeeds but requirement writing or the post-archive audit fails, report `archive_partial_failure`, its actual archive target and recovery arguments. A recovery run must not add another date, move the archive again or rerun project commands.
 5. Report verification results, synchronized capabilities, archive location, final requirement status, and any residual risk.
 
 ## State Rules

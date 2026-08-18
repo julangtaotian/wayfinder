@@ -349,7 +349,31 @@ export function renderReviewMarkdown(review) {
   return `${lines.join('\n')}\n`;
 }
 
-export function renderDeterministicAssessmentMarkdown({ scenario, assessment, runtime = '插件内置 Playwright' }) {
+export function createDeterministicReportContext(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail('确定性验收报告缺少运行上下文。');
+  const schemaVersion = requireFiniteNumber(value.schemaVersion, 'reportContext.schemaVersion', 1);
+  if (!Number.isInteger(schemaVersion)) fail('reportContext.schemaVersion 必须是整数。');
+  const baselineRunId = value.baselineRunId === null || value.baselineRunId === undefined
+    ? null
+    : requireString(value.baselineRunId, 'reportContext.baselineRunId');
+  const evidencePaths = requireStringArray(value.evidencePaths, 'reportContext.evidencePaths')
+    .map((item, index) => requireRepoRelativePath(item, `reportContext.evidencePaths[${index}]`));
+  return {
+    schemaVersion,
+    runId: requireString(value.runId, 'reportContext.runId'),
+    scenarioFingerprint: requireString(value.scenarioFingerprint, 'reportContext.scenarioFingerprint'),
+    capture: requireString(value.capture, 'reportContext.capture'),
+    baselineRunId,
+    statePath: requireRepoRelativePath(value.statePath, 'reportContext.statePath'),
+    evidencePaths,
+    status: requireString(value.status, 'reportContext.status'),
+    observationCount: requireFiniteNumber(value.observationCount, 'reportContext.observationCount'),
+    findingCount: requireFiniteNumber(value.findingCount, 'reportContext.findingCount'),
+  };
+}
+
+export function renderDeterministicAssessmentMarkdown({ context, scenario, assessment, runtime = '插件内置 Playwright' }) {
+  const reportContext = createDeterministicReportContext(context);
   if (!scenario || typeof scenario !== 'object') fail('确定性验收报告缺少场景信息。');
   if (!assessment || typeof assessment !== 'object') fail('确定性验收报告缺少比较结果。');
   const scope = scenario.comparison?.scope || assessment.scope || 'structure';
@@ -363,6 +387,12 @@ export function renderDeterministicAssessmentMarkdown({ scenario, assessment, ru
   const lines = [
     '# UI 确定性验收结果',
     '',
+    `- 状态 Schema：${escapeInlineCode(reportContext.schemaVersion)}`,
+    `- 运行 ID：${escapeInlineCode(reportContext.runId)}`,
+    `- 场景指纹：${escapeInlineCode(reportContext.scenarioFingerprint)}`,
+    `- 采集器：${escapeInlineCode(reportContext.capture)}`,
+    `- 基线运行 ID：${escapeInlineCode(reportContext.baselineRunId || '无')}`,
+    `- 状态文件：${escapeInlineCode(reportContext.statePath)}`,
     `- 场景：${escapeInlineCode(scenario.id || 'unknown')}`,
     `- 页面：${escapeInlineCode(scenario.url)}`,
     `- 运行时：${escapeInlineCode(runtime)}`,
@@ -371,6 +401,11 @@ export function renderDeterministicAssessmentMarkdown({ scenario, assessment, ru
     `- 结果：${conclusion}`,
     `- 观察数：${escapeInlineCode((assessment.observations || []).length)}`,
     `- 问题数：${escapeInlineCode((assessment.findings || []).length)}`,
+    '',
+    '## 运行证据',
+    '',
+    `- 状态摘要：${escapeInlineCode(`${reportContext.status}；观察 ${reportContext.observationCount}；问题 ${reportContext.findingCount}`)}`,
+    ...reportContext.evidencePaths.map((item) => `- ${escapeInlineCode(item)}`),
     '',
     '## 确定性观察',
     '',

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeProjectRoot } from './collect-project-scope.mjs';
 import { inspectTestContext } from './inspect-test-context.mjs';
+import { validateVerificationEvidenceRecords } from './verification-evidence.mjs';
 
 const STAGES = new Set(['plan', 'implement', 'complete']);
 const PLAN_STATUSES = new Set(['草稿', '就绪', '已实现', '已验证']);
@@ -114,7 +115,9 @@ function parseRequirement(content) {
   const verifications = new Map();
   for (const line of verificationSection.split(/\r?\n/u)) {
     const cells = line.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim());
-    if (/^V-\d{2,}$/u.test(cells[0] || '')) verifications.set(cells[0], { result: cells[4], evidence: cells[5] });
+    if (/^V-\d{2,}$/u.test(cells[0] || '')) {
+      verifications.set(cells[0], { id: cells[0], type: cells[1], result: cells[4], evidence: cells[5] });
+    }
   }
   const status = parseBulletFields(getSection(content, '基本信息')).get('状态') || null;
   return { decisions, acceptanceIds, revisions, verifications, status };
@@ -169,7 +172,7 @@ function validateRequiredFields(testCase, stage, errors) {
   }
 }
 
-function validateCase({ testCase, stage, root, requirement, scope, errors }) {
+function validateCase({ testCase, stage, root, requirement, scope, evidenceValidation, errors }) {
   validateRequiredFields(testCase, stage, errors);
   const value = (field) => stripCode(testCase.fields.get(field));
   if (!CASE_STATUSES.has(value('状态'))) errors.push(`${testCase.id} 的状态无效：${value('状态') || '空值'}`);
@@ -228,6 +231,18 @@ function validateCase({ testCase, stage, root, requirement, scope, errors }) {
     for (const id of verifications) {
       if (requirement.verifications.get(id)?.result !== '通过') errors.push(`${testCase.id} 的验证记录尚未通过：${id}`);
     }
+    if (type === '自动' && evidenceValidation.required) {
+      const matchingLocator = evidenceValidation.diagnostics.some((diagnostic) => (
+        diagnostic.status === 'passed'
+        && diagnostic.kind === 'local-command'
+        && verifications.includes(diagnostic.evidenceId)
+        && diagnostic.locator === value('测试定位')
+        && diagnostic.locatorMatches > 0
+      ));
+      if (!matchingLocator) {
+        errors.push(`${testCase.id} 缺少与测试定位完全一致的本地机器证据：${value('测试定位')}`);
+      }
+    }
     validateProjectRelativePath(root, value('证据'), `${testCase.id} 的证据`, errors, { mustExist: true });
   }
 }
@@ -272,6 +287,19 @@ export function validateTestPlan(plan, {
   }
 
   const requirementData = parseRequirement(requirementContent);
+  const evidenceValidation = validateVerificationEvidenceRecords({
+    root,
+    changePath,
+    requirementPath,
+    records: [...requirementData.verifications.values()],
+  });
+  for (const diagnostic of evidenceValidation.diagnostics) {
+    if (diagnostic.status === 'failed') {
+      errors.push(`${diagnostic.code}：${diagnostic.message || diagnostic.target || '机器证据校验失败'}`);
+    } else if (diagnostic.status === 'warning') {
+      warnings.push(`${diagnostic.code}：${diagnostic.message || diagnostic.target || '证据信任边界提醒'}`);
+    }
+  }
   const latestRevision = requirementData.revisions.at(-1)?.id || null;
   const revisionBaseline = stripCode(basic.get('需求修订基线'));
   const stale = Boolean(latestRevision && revisionBaseline !== latestRevision);
@@ -281,7 +309,9 @@ export function validateTestPlan(plan, {
   if (!scope.decisions.size || !scope.acceptances.size) errors.push(`需求没有所选变更的可执行范围：${changeName}`);
 
   const testCases = parseCaseBlocks(content, errors);
-  for (const testCase of testCases) validateCase({ testCase, stage, root, requirement: requirementData, scope, errors });
+  for (const testCase of testCases) {
+    validateCase({ testCase, stage, root, requirement: requirementData, scope, evidenceValidation, errors });
+  }
 
   let context = null;
   if (stage !== 'plan') {
@@ -318,6 +348,7 @@ export function validateTestPlan(plan, {
     visualCases,
     manualCases: testCases.length - automaticCases - visualCases,
     testContext: context,
+    evidenceValidation,
     errors,
     warnings,
   };

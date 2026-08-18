@@ -62,6 +62,7 @@ const PROJECT_PROFILE_ASSETS = [
 const TEST_WORKFLOW_ASSETS = [
   'scripts/inspect-test-context.mjs',
   'scripts/validate-test-plan.mjs',
+  'scripts/verification-evidence.mjs',
   'assets/templates/openspec/test-plan.md',
   'references/test-case-guidelines.md',
 ];

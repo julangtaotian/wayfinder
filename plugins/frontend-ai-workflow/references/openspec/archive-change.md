@@ -44,7 +44,8 @@ The wrapper performs:
 5. archive instructions, root boundary and date-preserving archive-target conflict precheck;
 6. bundled spec rebuild, validation and synchronization;
 7. archive movement;
-8. requirement status update to `已验收`.
+8. rewrite active evidence references to the engine's actual archive target and atomically update the requirement status to `已验收`;
+9. run requirement, test-plan and machine-evidence `complete` audits from the actual archived directory without rerunning project commands.
 
 ## Guardrails
 
@@ -56,4 +57,5 @@ The wrapper performs:
 - A capability whose last requirement is removed may be retired only when `.openspec.yaml` explicitly declares `retire_capabilities: true`; the bundled runtime must report the deleted main spec, and a missing marker remains blocking.
 - The wrapper always supplies the explicit non-interactive change name, `--json` and `--yes`; it never guesses a missing confirmation flag from a failed prompt.
 - If spec rebuild, validation or archive movement fails, do not mark the requirement accepted.
+- If archive movement succeeds but the requirement write or post-archive audit fails, return `archive_partial_failure` with the actual archive target, failed stage and repeatable recovery arguments; recovery must not archive again or rerun verification.
 - `complete` remains a read-only audit stage for historical already-accepted requirements; new changes use `precomplete` before archive.

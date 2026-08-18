@@ -4,7 +4,10 @@ import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { runPlaywrightAdapter } from './playwright-adapter-runner.mjs';
-import { renderDeterministicAssessmentMarkdown } from './ui-review-report.mjs';
+import {
+  createDeterministicReportContext,
+  renderDeterministicAssessmentMarkdown,
+} from './ui-review-report.mjs';
 import {
   DEFAULT_UI_REVIEW_CONFIG,
   completeReviewRun,
@@ -111,7 +114,20 @@ function materializeReport(projectRoot, plan, result, completedState) {
   fs.mkdirSync(path.dirname(annotated.absolutePath), { recursive: true });
   fs.copyFileSync(actual.absolutePath, annotated.absolutePath, fs.constants.COPYFILE_EXCL);
   const scenario = { id: plan.scenarioId, ...plan.scenario };
+  const context = createDeterministicReportContext({
+    schemaVersion: completedState.schemaVersion,
+    runId: completedState.runId,
+    scenarioFingerprint: completedState.scenarioFingerprint,
+    capture: completedState.capture,
+    baselineRunId: completedState.parentRunId || null,
+    statePath: plan.artifacts.state,
+    evidencePaths: [plan.artifacts.actualScreenshot, plan.artifacts.reviewInput, plan.artifacts.annotatedScreenshot],
+    status: completedState.status,
+    observationCount: (completedState.observations || []).length,
+    findingCount: (completedState.findings || []).length,
+  });
   writeTextAtomic(report.absolutePath, renderDeterministicAssessmentMarkdown({
+    context,
     scenario,
     assessment: { ...result, outcome: completedState.status === 'failed' ? 'needs-fix' : completedState.status, fallbackRequired: completedState.fallbackRequired },
     runtime: `${plan.projectPlaywright.runtime.platform}-${plan.projectPlaywright.runtime.arch} / Playwright ${plan.projectPlaywright.runtime.version}`,
