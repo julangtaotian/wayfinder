@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：已实现
+- 状态：已验证
 - 需求：`requirements/REQ-2026-026-verification-evidence-integrity.md`
-- 变更：harden-verification-evidence-integrity
+- 变更：2026-08-18-harden-verification-evidence-integrity
 - 需求修订基线：R-05
 - 默认聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern="受控执行与零测试证据保护" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-01.json`
 
 ### TC-02：证据 schema 路径和工作区新鲜度失败关闭
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test --test-name-pattern="证据安全与工作区新鲜度" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-01、V-02
 - 结果分类：通过
-- 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-02.json`
 
 ### TC-03：新合同门禁沿 TC V JSON 严格校验且不重跑
 
@@ -83,7 +83,7 @@
 - 聚焦命令：`node --test --test-name-pattern="证据完成门禁与历史兼容" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-07
 - 结果分类：通过
-- 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-07.json`
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-07.json`
 
 ### TC-04：归档预览迁移审计和部分失败可恢复
 
@@ -105,7 +105,7 @@
 - 聚焦命令：`node --test --test-name-pattern="归档引用迁移与恢复" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-03.json`
 
 ### TC-05：UI Review 报告与状态共享运行身份
 
@@ -127,11 +127,11 @@
 - 聚焦命令：`node --test --test-name-pattern="UI 报告运行身份一致性" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/harden-verification-evidence-integrity/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-04.json`
 
 ### TC-06：跨平台子进程、CI action 与三层证据保持边界
 
-- 状态：已实现
+- 状态：通过
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：集成
@@ -149,5 +149,5 @@
 - 聚焦命令：`node --test --test-name-pattern="跨平台证据执行与发布边界" tests/verification-evidence-integrity.test.mjs`
 - 配套回归：`tests/workflow.test.mjs` 校验工作流仅使用 `actions/upload-artifact@v7`，并保持五平台矩阵、统一验证入口与上传失败语义。
 - 关联验证：V-05、V-06
-- 结果分类：未执行
-- 证据：待执行
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity/evidence/V-05.json`

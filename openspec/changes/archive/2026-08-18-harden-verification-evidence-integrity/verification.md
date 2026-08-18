@@ -2,13 +2,13 @@
 
 ## 当前结论
 
-- R-05 本地实施与验证已完成：首次真实归档暴露的测试方案变更名、证据路径和重复恢复问题已有确定性回归保护，部分归档已安全撤回，活动变更恢复完整。
+- R-05 实施与三层验证已完成：首次真实归档暴露的测试方案变更名、证据路径和重复恢复问题已有确定性回归保护，部分归档已安全撤回，活动变更恢复完整。
 - 完成器现已同时迁移需求与归档测试方案，并在正常归档和重复恢复中共用同一改写逻辑；测试方案写入失败使用稳定 `failedStage: test-plan-write`，恢复不重跑项目命令。
-- TC-04 聚焦回归、验证证据测试 6/6、统一验证 8/8 和官方 validators 均通过；V-03、V-05 已刷新为当前工作区证据，只有修复提交对应的 V-06 五平台矩阵仍待执行，当前不得重新归档。
+- TC-04 聚焦回归、验证证据测试 6/6、统一验证 8/8 和官方 validators 均通过；V-03、V-05 已刷新为当前工作区证据。
 - R-04 已完成：`actions/upload-artifact` 升级到官方当前 v7，现有产物名称、路径和失败语义保持不变，Node.js 20 action 弃用警告已在 Validate #32 中消失；该运行只作为 R-04 历史证据，不证明 R-05 修复。
 - V-05 已通过：`npm run verify` 的 8 个阶段全部完成，包含 `npm test` 196/196、结构校验、当前严格 OpenSpec 28/28、归档严格 OpenSpec 37/37、运行时完整性与本机浏览器启动；9 个 Skill 和插件清单另由官方 validators 校验通过。
-- V-06 的 Validate #32 仅证明 R-04 提交 `444c67a51d66106e6f39d089e9cf70a859992cdf`；它不覆盖尚未提交的 R-05 归档恢复修复，当前 V-06 因此保持计划。
-- 当前任务进度 25/26；仅剩修复提交五平台 CI、证据更新与正式归档，在该层证据完成前不进入 precomplete。
+- V-06 已远程复查：Validate #33 精确对应修复提交 `7ec96ac786485e44b0e074ed90e7099280ce8c73`，五个平台任务和五份平台包全部成功，任务 annotations 均为空。
+- 当前任务进度 26/26；正式归档已完成，需求状态为“已验收”，归档后 requirement complete 与 test-plan complete 审计均通过。
 
 ## 已执行证据
 
@@ -19,8 +19,25 @@
 | V-03 | 通过 | `evidence/V-03.json` | 命令退出 0，精确命中 TC-04；归档改写、幂等、危险目标和恢复通过 |
 | V-04 | 通过 | `evidence/V-04.json` | 命令退出 0，精确命中 TC-05；UI 报告身份字段通过，UI 全量回归 30/30 |
 | V-05 | 通过 | `evidence/V-05.json` | `npm run verify` 退出 0，精确命中 TC-06 两次；统一验证 8 阶段全部完成 |
-| V-06 | R-04 历史通过；R-05 待执行 | `evidence/V-06.json` | Validate #32 只对应 `444c67a51d66106e6f39d089e9cf70a859992cdf`；修复提交尚无五平台结果，不作为当前完成证据 |
+| V-06 | 通过 | `evidence/V-06.json` | Validate #33 精确对应修复提交；五个平台任务和平台包全部成功，annotations 为空 |
 | V-07 | 通过 | `evidence/V-07.json` | 命令退出 0，精确命中 TC-03；严格/历史/外部边界与项目只读审计通过 |
+
+## 当前真实 CI 矩阵（R-05）
+
+- 运行：`https://github.com/julangtaotian/wayfinder/actions/runs/32112159467`
+- 提交：`7ec96ac786485e44b0e074ed90e7099280ce8c73`
+- 结果：`darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 全部通过。
+- 产物：五个平台分别生成未过期的 `plugin-package-report-<platform>`，与矩阵任务一一对应。
+- 警告复核：五个平台 check-run annotations 均为空；上传步骤使用仓库固定的 `actions/upload-artifact@v7` 并全部成功。
+
+## 正式归档结果
+
+- 归档目标：`openspec/changes/archive/2026-08-18-harden-verification-evidence-integrity`。
+- 规格同步：新增 `verification-evidence-integrity`，并同步更新 `verifiable-change-delivery` 与 `plugin-ui-review-automation`，OpenSpec 返回 9 条新增需求。
+- 引用迁移：需求中的测试方案、验证说明和 V-01～V-07 路径全部指向实际归档目录；归档测试方案使用完整归档变更名并迁移 6 条本地证据引用。
+- 归档后审计：requirement complete 与 test-plan complete 均通过，14 个持久证据文件有效，错误和警告均为空；完成阶段没有重跑项目测试、构建、浏览器或外部 CI。
+- 归档后统一验证：授权环境执行 `npm run verify`，196/196 测试与 8/8 阶段全部通过，当前严格 OpenSpec 28/28、归档 OpenSpec 38/38、运行时完整性和本机浏览器启动均成功，Vitest 运行时随后清理。
+- 环境差异说明：一次直接 `npm test` 因绕过 `prepare:test-runtime` 且沙箱禁止本地端口与 Chromium 启动而失败，不作为交付证据；同一工作区使用仓库规定的自包含统一入口后全部通过。
 
 ## 历史真实 CI 矩阵（R-04）
 
@@ -29,7 +46,7 @@
 - 结果：`darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 全部通过。
 - 产物：五个平台分别生成 `plugin-package-report-<platform>`，与矩阵任务一一对应。
 - 警告复核：运行摘要 Annotations 为空；五个平台任务页均未出现 `Node.js 20` 或 `actions/upload-artifact@v4`，原弃用警告已消失。
-- 当前边界：该矩阵早于 R-05 归档恢复修复，不更新当前 V-06；必须在修复提交上重新运行并远程复查五个平台任务。
+- 历史边界：该矩阵早于 R-05 归档恢复修复，仅保留为 action 升级的历史证据；当前 V-06 以 Validate #33 为准。
 
 ## 其他本地回归
 
