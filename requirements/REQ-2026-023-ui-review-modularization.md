@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.13.0
@@ -130,6 +130,7 @@
 | R-01 | 2026-08-12 | D-01～D-10 | A-01～A-06 | 根据用户确认和仓库盘点建立首批超长文件模块化需求；V-01～V-05 保持计划。 |
 | R-02 | 2026-08-12 | D-01～D-10 | A-01～A-06 | 建立并关联 `modularize-ui-review-workflow`；规格因无行为变化按 D-01 跳过，设计和 11 项实施任务已覆盖全部验收，V-01～V-05 保持计划。 |
 | R-03 | 2026-08-12 | D-01～D-10 | A-01～A-06 | 实施阶段需求校验和运行时 apply 指令通过，按既有专用测试基线开始等价模块化；V-01～V-05 保持计划。 |
+| R-04 | 2026-08-20 | D-01～D-10 | A-01～A-06 | 完成等价模块化复验：原门面 41 行、测试聚合入口 6 行、范围内最大测试单元 467 行，18 个公开导出与两个生产消费者路径保持不变；UI Review 30/30、全量 196/196、统一验证 8/8、官方 validators 和本地插件重装均通过。V-01～V-05 通过，关闭全部验收并进入完成门禁。 |
 
 ## 兼容性与风险
 
@@ -150,20 +151,20 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | 计划：运行 UI Review 聚焦测试并确认 30 个既有测试名称全部通过 | 2026-08-12 | 计划 | `tests/ui-review-automation.test.mjs` |
-| V-02 | 自动 | 计划：检查原入口 18 个公开导出、两个内部消费者和直接 CLI 合同 | 2026-08-12 | 计划 | `plugins/frontend-ai-workflow/scripts/ui-review-workflow.mjs` |
-| V-03 | 自动 | 计划：检查门面、领域模块、测试聚合入口和测试单元行数上限 | 2026-08-12 | 计划 | `plugins/frontend-ai-workflow/scripts/validate-structure.mjs` |
-| V-04 | 自动 | 计划：运行仓库完整验证、严格 OpenSpec 校验及官方 Plugin/Skill validators | 2026-08-12 | 计划 | `scripts/verify.mjs` |
-| V-05 | 自动 | 计划：更新 cachebuster、校验插件并从已确认的本地 marketplace 重装 | 2026-08-12 | 计划 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json` |
+| V-01 | 自动 | UI Review 聚焦测试 30/30 通过，既有测试名称、断言、版本 1/2 兼容与聚焦入口保持有效 | 2026-08-20 | 通过 | `tests/ui-review-automation.test.mjs` |
+| V-02 | 自动 | 原门面继续导出 18 个公共符号；`ui-review-runner.mjs` 与 `playwright-adapter-runner.mjs` 两个生产消费者保留原导入路径，直接 CLI 合同通过 | 2026-08-20 | 通过 | `plugins/frontend-ai-workflow/scripts/ui-review-workflow.mjs`、`plugins/frontend-ai-workflow/scripts/ui-review-runner.mjs`、`plugins/frontend-ai-workflow/scripts/playwright-adapter-runner.mjs` |
+| V-03 | 自动 | 原门面 41 行、测试聚合入口 6 行、范围内最大测试单元 467 行；结构校验确认领域模块依赖方向、唯一 helper 来源和规模门禁通过 | 2026-08-20 | 通过 | `plugins/frontend-ai-workflow/scripts/validate-structure.mjs`、`tests/ui-review-automation.test.mjs` |
+| V-04 | 自动 | `npm test` 196/196、`npm run validate`、`npm run verify` 8/8、当前严格 OpenSpec 29/29、归档严格 OpenSpec 38/38、9 个官方 Skill validator、Plugin validator 与 `git diff --check` 全部通过 | 2026-08-20 | 通过 | `scripts/verify.mjs` |
+| V-05 | 自动 | 官方 helper 将 cachebuster 更新为 `0.15.0+codex.20260820074239`，manifest 校验通过并从仓库本地 marketplace 重装；插件列表确认安装缓存版本一致且启用 | 2026-08-20 | 通过 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json` |
 
 ## 验收标准
 
-- [ ] [A-01] 原入口保留 18 个公开导出，两个现有消费者无需修改导入路径。
-- [ ] [A-02] 配置、采集计划、运行状态、状态存储和 CLI 职责被拆入依赖方向清晰的独立模块。
-- [ ] [A-03] 30 个既有 UI Review 测试名称、断言、聚焦入口和版本 1/2 兼容覆盖保持不变。
-- [ ] [A-04] 生产门面不超过 120 行、测试聚合入口不超过 80 行，所有新增领域文件不超过 500 行且结构校验可阻止回退。
-- [ ] [A-05] 聚焦测试、仓库完整验证、严格 OpenSpec 校验和官方 validators 全部通过。
-- [ ] [A-06] 插件 cachebuster 通过官方 helper 更新并从现有本地 marketplace 成功重装。
+- [x] [A-01] 原入口保留 18 个公开导出，两个现有消费者无需修改导入路径。
+- [x] [A-02] 配置、采集计划、运行状态、状态存储和 CLI 职责被拆入依赖方向清晰的独立模块。
+- [x] [A-03] 30 个既有 UI Review 测试名称、断言、聚焦入口和版本 1/2 兼容覆盖保持不变。
+- [x] [A-04] 生产门面不超过 120 行、测试聚合入口不超过 80 行，所有新增领域文件不超过 500 行且结构校验可阻止回退。
+- [x] [A-05] 聚焦测试、仓库完整验证、严格 OpenSpec 校验和官方 validators 全部通过。
+- [x] [A-06] 插件 cachebuster 通过官方 helper 更新并从现有本地 marketplace 成功重装。
 
 ## 验收—证据映射
 

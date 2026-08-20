@@ -259,6 +259,51 @@ test('[TC-03] 证据完成门禁与历史兼容', (context) => {
   assert.equal(legacy.required, false);
   assert.equal(legacy.diagnostics.some((item) => item.code === 'legacy_markdown_evidence'), true);
 
+  write(legacyFixture.root, 'plugins/example/plugin.json', '{"name":"example"}\n');
+  const legacyOrdinaryJson = validateVerificationEvidenceRecords({
+    root: legacyFixture.root,
+    changePath: legacyFixture.changePath,
+    records: [{ id: 'V-02', type: '自动', result: '通过', evidence: '`plugins/example/plugin.json`' }],
+  });
+  assert.equal(legacyOrdinaryJson.ok, true, JSON.stringify(legacyOrdinaryJson.diagnostics));
+  assert.equal(legacyOrdinaryJson.diagnostics.some((item) => item.target === 'plugins/example/plugin.json'), false);
+  assert.equal(legacyOrdinaryJson.diagnostics.some((item) => item.code === 'legacy_markdown_evidence'), true);
+
+  // 反斜杠样本确保 Windows 记录与 POSIX 路径使用同一分类语义。
+  const legacyWindowsOrdinaryJson = validateVerificationEvidenceRecords({
+    root: legacyFixture.root,
+    changePath: legacyFixture.changePath,
+    records: [{ id: 'V-02', type: '自动', result: '通过', evidence: '`plugins\\example\\plugin.json`' }],
+  });
+  assert.equal(legacyWindowsOrdinaryJson.ok, true, JSON.stringify(legacyWindowsOrdinaryJson.diagnostics));
+  assert.equal(legacyWindowsOrdinaryJson.diagnostics.some((item) => item.code !== 'legacy_markdown_evidence'), false);
+
+  write(legacyFixture.root, 'openspec/changes/evidence-change/evidence/V-03.json', '{ invalid json\n');
+  const legacyInvalidCandidate = validateVerificationEvidenceRecords({
+    root: legacyFixture.root,
+    changePath: legacyFixture.changePath,
+    records: [{
+      id: 'V-03',
+      type: '自动',
+      result: '通过',
+      evidence: '`openspec/changes/evidence-change/evidence/V-03.json`',
+    }],
+  });
+  const legacyInvalidDiagnostic = legacyInvalidCandidate.diagnostics.find((item) => item.code === 'invalid_evidence_json');
+  assert.equal(legacyInvalidCandidate.ok, true, JSON.stringify(legacyInvalidCandidate.diagnostics));
+  assert.equal(legacyInvalidDiagnostic?.status, 'warning');
+  assert.equal(legacyInvalidDiagnostic?.target, 'openspec/changes/evidence-change/evidence/V-03.json');
+
+  write(strictFixture.root, 'plugins/example/plugin.json', '{"name":"example"}\n');
+  const strictOrdinaryJson = validateVerificationEvidenceRecords({
+    root: strictFixture.root,
+    changePath: strictFixture.changePath,
+    records: [{ id: 'V-03', type: '自动', result: '通过', evidence: '`plugins/example/plugin.json`' }],
+  });
+  assert.equal(strictOrdinaryJson.ok, false);
+  assert.equal(strictOrdinaryJson.diagnostics.some((item) => item.code === 'machine_evidence_missing' && item.evidenceId === 'V-03'), true);
+  assert.equal(strictOrdinaryJson.diagnostics.some((item) => item.target === 'plugins/example/plugin.json'), false);
+
   const externalPath = write(strictFixture.root, 'openspec/changes/evidence-change/evidence/V-02.json', `${JSON.stringify({
     ...localManifest(strictFixture, {
       evidenceId: 'V-02',

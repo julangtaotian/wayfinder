@@ -1,0 +1,43 @@
+{
+  "artifacts": [],
+  "change": "fix-legacy-json-evidence-classification",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-20T08:00:32.599Z",
+  "evidenceId": "V-02",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "16d8b27b34996fa2bea3ae8849e2ed623486b92e",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-06]",
+  "locatorMatches": 4,
+  "logs": [
+    {
+      "bytes": 41571,
+      "path": "outputs/verification-evidence/fix-legacy-json-evidence-classification/V-02/stdout.log",
+      "sha256": "4b2de7a247c759fc2a939a82c2a9f5d75263dc20bb1b998b83e169d1b99219b2",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/fix-legacy-json-evidence-classification/V-02/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-027-legacy-json-evidence-classification.md",
+  "schemaVersion": 1,
+  "startedAt": "2026-08-20T07:59:47.952Z",
+  "status": "passed",
+  "workspaceFingerprint": "18937487ca90d87bef09d9ae80fd98c98ee258e2e155033a2bbb08982a82cc24"
+}

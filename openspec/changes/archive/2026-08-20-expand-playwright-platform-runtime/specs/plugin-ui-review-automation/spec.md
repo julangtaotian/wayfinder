@@ -27,6 +27,8 @@
 - **WHEN** 当前 `platform-arch` 不在索引中、平台资产混装、许可缺失或任一摘要变化
 - **THEN** 系统输出不可用原因和 `blocked` 结论，不读取其他平台资产作为回退，也不执行安装命令
 
+## ADDED Requirements
+
 ### Requirement: 平台成品必须安全暂存并满足带余量的体积预算
 系统 MUST 提供默认只预览、显式 `--write` 才执行的平台发布入口，并 MUST 只向位于允许暂存范围内的全新输出目录写入。成品 SHALL 完整保留插件共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时 MUST 排除其他四个平台的元数据、清单和浏览器资产。macOS ARM64、macOS x64、Linux x64、Linux ARM64 与 Windows x64 成品大小 MUST 分别不超过 260、260、330、420、340 MiB；任一条件不满足时 MUST 阻止发布并清理未完成暂存目录。（D-10、D-13、D-16，A-07、A-12、A-14）
 

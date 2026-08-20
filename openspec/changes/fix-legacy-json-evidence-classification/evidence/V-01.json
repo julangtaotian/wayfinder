@@ -1,0 +1,44 @@
+{
+  "artifacts": [],
+  "change": "fix-legacy-json-evidence-classification",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=证据完成门禁与历史兼容",
+      "tests/verification-evidence-integrity.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-20T07:59:37.006Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "16d8b27b34996fa2bea3ae8849e2ed623486b92e",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 证据完成门禁与历史兼容",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 259,
+      "path": "outputs/verification-evidence/fix-legacy-json-evidence-classification/V-01/stdout.log",
+      "sha256": "4210beeb17bc086a41e1b126c049e7e039ed70fce9809e8b1c7ecb8b7399c4be",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/fix-legacy-json-evidence-classification/V-01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-027-legacy-json-evidence-classification.md",
+  "schemaVersion": 1,
+  "startedAt": "2026-08-20T07:59:36.602Z",
+  "status": "passed",
+  "workspaceFingerprint": "18937487ca90d87bef09d9ae80fd98c98ee258e2e155033a2bbb08982a82cc24"
+}

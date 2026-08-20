@@ -624,6 +624,16 @@ function recordValue(record, english, chinese) {
   return record?.[english] ?? record?.[chinese] ?? null;
 }
 
+// 普通配置或报告 JSON 只作为持久资料，显式 V-* 或 evidence 目录才代表机器证据。
+function isMachineEvidenceCandidate(candidatePath) {
+  const normalized = candidatePath.replace(/\\/gu, '/');
+  if (!normalized.toLowerCase().endsWith('.json')) return false;
+  const segments = normalized.split('/').filter(Boolean);
+  const fileName = segments.at(-1) || '';
+  return /^V-\d+\.json$/iu.test(fileName)
+    || segments.slice(0, -1).some((segment) => segment.toLowerCase() === 'evidence');
+}
+
 export function validateVerificationEvidenceRecords({ root, changePath, requirementPath = null, records = [] } = {}) {
   const projectRoot = fs.realpathSync(path.resolve(root));
   const required = verificationEvidenceRequired(changePath);
@@ -648,7 +658,7 @@ export function validateVerificationEvidenceRecords({ root, changePath, requirem
       }
     }
     if (type !== '自动' && type !== '自动+人工') continue;
-    const jsonEvidence = existing.filter((item) => item.path.toLowerCase().endsWith('.json'));
+    const jsonEvidence = existing.filter((item) => isMachineEvidenceCandidate(item.path));
     let validMachineEvidence = false;
     for (const item of jsonEvidence) {
       const validation = validateEvidenceManifest({
@@ -660,7 +670,9 @@ export function validateVerificationEvidenceRecords({ root, changePath, requirem
       });
       diagnostics.push({
         code: validation.code,
-        status: validation.ok ? (validation.trust === 'external-unverified' ? 'warning' : 'passed') : 'failed',
+        status: validation.ok
+          ? (validation.trust === 'external-unverified' ? 'warning' : 'passed')
+          : (required ? 'failed' : 'warning'),
         target: validation.target,
         evidenceId: id,
         kind: validation.kind || null,

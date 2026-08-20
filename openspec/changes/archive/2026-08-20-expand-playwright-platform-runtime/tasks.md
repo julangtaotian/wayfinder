@@ -37,4 +37,4 @@
 - [x] 6.1 本机运行平台聚焦测试、`npm test`、`npm run validate`、`npm run verify`、严格 OpenSpec、全部官方 Skill validators、规范源 Plugin validator 和 `git diff --check`，确认历史五平台源资产与 UI Review 合同不回归。（D-08、D-10、D-13、D-16；A-07、A-10、A-12、A-14）
 - [x] 6.2 使用插件开发工具更新 manifest 单一 cachebuster，生成 `darwin-arm64` 成品并运行成品结构校验和官方 Plugin validator；通过 Codex CLI 注册脚本生成的本地 marketplace 并重装，复核安装缓存逻辑体积、完整性、单平台边界和真实 Chromium 截图。（D-10、D-13、D-16；A-07、A-12、A-14）
 - [x] 6.3 扩展五平台 GitHub Actions：每个原生 Runner 先验证规范源，再生成自身平台成品，断言确定性结构、体积预算、其他平台排除、匹配 `platformKey`、`skipped=false` 和有效截图；Linux ARM64 额外断言 `stripped=true` 与无调试段。Codex 官方 Plugin validator 保留在本地规范源与当前平台真实成品门禁，公共 Runner 不临时联网安装外部校验依赖。（D-10、D-13、D-16；A-10、A-12、A-14）
-- [ ] 6.4 获得提交与推送授权后收集五平台成品大小、预算余量、Linux ARM64 去符号和截图证据，写入 V-18，关闭 A-07、A-10、A-12、A-14，并把需求推进到待验证。（D-10、D-13、D-16；A-07、A-10、A-12、A-14）
+- [x] 6.4 获得提交与推送授权后收集五平台成品大小、预算余量、Linux ARM64 去符号和截图证据，写入 V-18，关闭 A-07、A-10、A-12、A-14，并把需求推进到待验证。（D-10、D-13、D-16；A-07、A-10、A-12、A-14）
