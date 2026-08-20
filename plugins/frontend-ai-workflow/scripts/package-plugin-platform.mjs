@@ -14,6 +14,8 @@ import {
 } from './playwright-runtime.mjs';
 
 const MEBIBYTE = 1024 * 1024;
+const RETRYABLE_STAGE_PUBLISH_CODES = new Set(['EACCES', 'EBUSY', 'ENOTEMPTY', 'EPERM']);
+export const PLATFORM_STAGE_RETRY_POLICY = Object.freeze({ maxRetries: 8, retryDelay: 250 });
 export const PLATFORM_PLUGIN_SIZE_BUDGETS = Object.freeze({
   'darwin-arm64': 260 * MEBIBYTE,
   'darwin-x64': 260 * MEBIBYTE,
@@ -37,6 +39,55 @@ function readJson(filePath) {
 function writeJson(filePath, value) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+function waitForMilliseconds(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export async function publishPlatformStage({
+  stageRoot,
+  finalRoot,
+  renamePath = fs.promises.rename,
+  waitForRetry = waitForMilliseconds,
+  retryPolicy = PLATFORM_STAGE_RETRY_POLICY,
+}) {
+  let retryCount = 0;
+  while (true) {
+    try {
+      await renamePath(stageRoot, finalRoot);
+      return;
+    } catch (error) {
+      if (!RETRYABLE_STAGE_PUBLISH_CODES.has(error?.code) || retryCount >= retryPolicy.maxRetries) throw error;
+      retryCount += 1;
+      // Windows 关闭 Chromium 后可能短暂保留目录句柄，线性退避后再发布暂存目录。
+      await waitForRetry(retryPolicy.retryDelay * retryCount);
+    }
+  }
+}
+
+function cleanupPlatformStage({ stageRoot, originalError, removePath }) {
+  try {
+    removePath(stageRoot, {
+      recursive: true,
+      force: true,
+      maxRetries: PLATFORM_STAGE_RETRY_POLICY.maxRetries,
+      retryDelay: PLATFORM_STAGE_RETRY_POLICY.retryDelay,
+    });
+  } catch (cleanupError) {
+    const wrapped = new Error(
+      `${errorMessage(originalError)}；暂存目录清理失败（${cleanupError?.code || 'UNKNOWN'}）：${errorMessage(cleanupError)}`,
+      { cause: originalError },
+    );
+    wrapped.code = 'platform_package_cleanup_failed';
+    wrapped.target = stageRoot;
+    wrapped.cleanupError = cleanupError;
+    throw wrapped;
+  }
 }
 
 function isInside(root, target) {
@@ -211,6 +262,9 @@ export async function packagePluginPlatform({
   execute = spawnSync,
   validatePackage = defaultValidatePackage,
   smokeTest = smokeTestBundledPlaywright,
+  renamePath = fs.promises.rename,
+  removePath = fs.rmSync,
+  waitForRetry = waitForMilliseconds,
 } = {}) {
   if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(platformKey)) fail(`不支持的插件平台：${platformKey}`);
   const sourceRepositoryRoot = fs.realpathSync(path.resolve(repositoryRoot));
@@ -305,7 +359,7 @@ export async function packagePluginPlatform({
       smoke,
     };
     writeJson(path.join(stageRoot, 'package-report.json'), report);
-    fs.renameSync(stageRoot, finalRoot);
+    await publishPlatformStage({ stageRoot, finalRoot, renamePath, waitForRetry });
     return {
       ...plan,
       ...report,
@@ -314,7 +368,7 @@ export async function packagePluginPlatform({
       reportPath: path.join(finalRoot, 'package-report.json'),
     };
   } catch (error) {
-    fs.rmSync(stageRoot, { recursive: true, force: true });
+    cleanupPlatformStage({ stageRoot, originalError: error, removePath });
     throw error;
   }
 }

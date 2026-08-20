@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-20T07:59:37.006Z",
+  "completedAt": "2026-08-20T09:49:51.991Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "16d8b27b34996fa2bea3ae8849e2ed623486b92e",
+    "commit": "8a3eebe7ec6b3e9dcb1d11033341b7f83bd8b26f",
     "dirty": true
   },
   "kind": "local-command",
@@ -26,7 +26,7 @@
     {
       "bytes": 259,
       "path": "outputs/verification-evidence/fix-legacy-json-evidence-classification/V-01/stdout.log",
-      "sha256": "4210beeb17bc086a41e1b126c049e7e039ed70fce9809e8b1c7ecb8b7399c4be",
+      "sha256": "0b65aa489681571d34797450e786fb22610439fab0ec60b9715c9c4e12685e77",
       "stream": "stdout"
     },
     {
@@ -38,7 +38,7 @@
   ],
   "requirement": "requirements/REQ-2026-027-legacy-json-evidence-classification.md",
   "schemaVersion": 1,
-  "startedAt": "2026-08-20T07:59:36.602Z",
+  "startedAt": "2026-08-20T09:49:51.626Z",
   "status": "passed",
-  "workspaceFingerprint": "18937487ca90d87bef09d9ae80fd98c98ee258e2e155033a2bbb08982a82cc24"
+  "workspaceFingerprint": "a0ff775559d87161015b3e9d25602cd2ad1b54e82378d997ad549c187b3de74a"
 }

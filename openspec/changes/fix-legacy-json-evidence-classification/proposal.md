@@ -8,6 +8,7 @@
 - 未启用新合同的历史变更中，无效机器证据候选降级为可定位警告。（D-02）
 - 显式启用合同的新变更继续严格失败关闭。（D-03）
 - 复用 TC-03 增加历史普通 JSON、无效 V-* 候选和新合同严格度回归，并按仓库约束完成本地与跨平台验证。（D-04、D-05）
+- 针对首次五平台矩阵暴露的 Windows 暂存目录句柄释放竞争，为发布改名与失败清理启用受控重试，并保留原始打包错误；补充确定性回归后重新取得矩阵证据。（D-04、D-05）
 
 ## Capabilities
 
@@ -23,5 +24,6 @@
 
 - 影响 `plugins/frontend-ai-workflow/scripts/verification-evidence.mjs` 的证据候选分类与诊断状态。
 - 影响 `tests/verification-evidence-integrity.test.mjs` 的历史兼容回归。
+- 影响 `plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs` 与 `tests/ui-review-platform-runtime.test.mjs` 的平台成品失败清理链。
 - 不改变证据 schema、CLI 参数、OpenSpec 生命周期、外部 CI 查询能力或生产依赖。
 - 跨平台高风险：命中路径规范化和机器可读诊断，影响 Linux x64/ARM64、Windows x64、macOS Intel/ARM64；需保留稳定 `code`、`target`、`status` 并运行真实矩阵证据复核。

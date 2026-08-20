@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：实施中
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.15.x
@@ -21,7 +21,7 @@
 | D-02 | 历史兼容严重级别 | 已确认 | 未声明 `verification_evidence: required` 时，无效机器证据候选返回稳定 warning，不升级为完成失败 | 既有历史只读兼容合同 |
 | D-03 | 新合同严格度 | 已确认 | 显式启用合同后，无效或缺失同 ID 机器证据仍返回 failed，普通 JSON 不得替代 V-* 证据 | 既有严格证据合同 |
 | D-04 | 实现与产物边界 | 已确认 | 生产实现仅使用 Node.js 标准库；持久证据随变更保存，日志与临时验证依赖只进入 `outputs/<验证主题>/` | 仓库实现规则 |
-| D-05 | 跨平台高风险 | 已确认 | 命中路径规范化和机器可读诊断；稳定比较 `/` 与 `\`，覆盖 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 | 跨平台 CI 防回归规则 |
+| D-05 | 跨平台高风险 | 已确认 | 命中路径规范化、临时目录和机器可读诊断；稳定比较 `/` 与 `\`，平台暂存发布与清理覆盖 Windows 瞬时目录占用，清理保留原始失败，覆盖 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 | 跨平台 CI 防回归规则与运行 `32353726866` 的 Windows 失败复盘 |
 
 ## 范围
 
@@ -30,6 +30,7 @@
 - 调整机器证据候选的路径分类。
 - 调整历史模式下无效候选的诊断严重级别。
 - 复用 TC-03 覆盖历史普通 JSON、历史无效候选和新合同严格度。
+- 修复 Windows 平台成品暂存目录发布与清理时的瞬时占用，并确保清理异常不覆盖原始打包错误。
 - 运行聚焦、仓库统一、官方 validators 与真实矩阵证据复核。
 
 ### 不包含
@@ -108,20 +109,22 @@
 | R-01 | 2026-08-20 | D-01～D-05 | A-01～A-04 | 首次建立需求，复用 TC-03，V-01 保持计划并进入受管变更。 |
 | R-02 | 2026-08-20 | D-01～D-05 | A-01～A-03 | 完成失败先行回归与兼容修复：普通 JSON 不再进入机器清单解析，历史无效候选降级为 warning，新合同继续失败关闭；真实遗留变更完成预览不再被 `plugin.json` 误阻断。 |
 | R-03 | 2026-08-20 | D-04、D-05 | A-04 | 本地发布级验证、官方 validators、cachebuster 更新与插件重装完成；V-01、V-02 记录当前工作区证据。由于实现命中跨平台路径与机器输出风险，V-03 保持计划，等待当前修复形成提交后取得五平台原生 CI 证据。 |
+| R-04 | 2026-08-20 | D-04、D-05 | A-04 | 提交 `8a3eebe` 的 V-03 首次矩阵中，仅 Windows x64 在平台成品暂存清理时报 `ENOTEMPTY`；完整日志确认清理异常遮蔽了首个打包错误。预算检查仍有约 38 MiB 余量，且同一任务的发布级验证已通过，结合清理失败目录为刚关闭的 Chromium，首个错误最可能来自发布改名时 Windows 句柄尚未释放。现有测试只在当前系统断言清理结果，未覆盖发布/清理瞬时占用和首错保留。该技术修订不改变 D-01～D-03 的可观察语义；新增确定性回归和有界重试任务，并以 V-04 重新取得同一提交上的五平台证据。 |
+| R-05 | 2026-08-20 | D-04、D-05 | A-04 | 平台暂存发布已对 `EACCES`、`EBUSY`、`ENOTEMPTY`、`EPERM` 增加 8 次线性退避，失败清理使用同一有界策略；清理重试耗尽时以 `platform_package_cleanup_failed` 保留原始异常、清理异常和暂存目录。确定性回归、198/198 全量测试、8/8 发布级验证、9 个 Skill 与 1 个 Plugin 官方校验、cachebuster `0.15.0+codex.20260820094902` 重装均通过，V-01/V-02 已刷新；V-04 继续等待该修复提交的真实五平台矩阵。 |
 
 ## 兼容性与风险
 
 - 受影响页面、公共组件、路由、权限或接口：仅影响本地需求完成门禁的证据分类与诊断，不影响业务页面。
 - 历史数据与兼容策略：不改写历史资料；普通 JSON 继续接受存在性和路径安全检查，显式机器候选保持可见。
 - 上线与回滚注意事项：随插件 cachebuster 更新发布；回滚分类和回归即可，不删除持久证据。
-- 跨平台高风险：是；命中路径与机器可读诊断，受影响平台为 Linux x64/ARM64、Windows x64、macOS Intel/ARM64。
+- 跨平台高风险：是；命中路径、临时目录与机器可读诊断，受影响平台为 Linux x64/ARM64、Windows x64、macOS Intel/ARM64。发布成功、发布瞬时失败后重试、清理成功和清理自身失败必须分别可验证，且清理失败不得覆盖原始失败。
 
 ## 测试与验证
 
-- 测试文件策略：复用；目标路径：`tests/verification-evidence-integrity.test.mjs`；基线证据：Git 可用且该手写专用测试文件已受版本控制，TC-03 已覆盖证据完成门禁与历史兼容；选择理由：本修复属于同一兼容合同，扩展现有 TC-03 可直接防止回归。
+- 测试文件策略：复用；目标路径：`tests/verification-evidence-integrity.test.mjs`、`tests/ui-review-platform-runtime.test.mjs`；基线证据：Git 可用且两个手写专用测试文件均已受版本控制，TC-03 已覆盖证据完成门禁与历史兼容，平台运行时测试已覆盖成品失败清理；选择理由：分别在同一功能的既有专用文件中补足分类和 Windows 暂存清理回归，不把场景追加到无关或生成测试。
 - 独立测试方案：不需要；触发条件：单一既有回归扩展且不新增复杂交互；活动变更与目标：不适用；需求修订基线：R-01。
 - 验证范围：聚焦 + 全量；执行命令：TC-03 聚焦命令、`npm test`、`npm run validate`、`npm run verify` 与官方 validators；选择理由：同时证明分类修复、仓库集成和插件可安装性。
-- 自动测试：普通 JSON 不误判、无效显式候选历史告警、新合同缺失机器证据失败、既有安全边界不回退。
+- 自动测试：普通 JSON 不误判、无效显式候选历史告警、新合同缺失机器证据失败、既有安全边界不回退；Windows 发布改名的 `EPERM`/`EBUSY` 与清理的 `ENOTEMPTY` 启用受控重试，清理重试耗尽时保留原始打包失败并单独暴露清理失败。
 - 人工检查：复核真实遗留变更完成预览不再出现普通 `plugin.json` 机器解析失败。
 - 构建与静态检查：结构、manifest、Skill、OpenSpec strict、根目录清洁和 AI 标记禁入。
 
@@ -130,8 +133,9 @@
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 自动 | `[TC-03] 证据完成门禁与历史兼容` 聚焦回归通过；覆盖普通 JSON、历史无效机器候选和新合同普通 JSON-only 三组边界，并复核真实遗留变更预览不再出现 `plugin.json` 机器解析失败 | 2026-08-20 | 通过 | `openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json`、`tests/verification-evidence-integrity.test.mjs` |
-| V-02 | 自动 | `npm run verify` 发布级统一验证 8/8 阶段通过；包含全量测试、结构、严格 OpenSpec、归档审计、两套运行时完整性与本机真实 Chromium 冒烟 | 2026-08-20 | 通过 | `openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、`scripts/verify.mjs` |
-| V-03 | 自动 | 计划：在包含本次修复的提交上运行 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 原生 CI，核对稳定结构化诊断与五个平台成品冒烟 | 待执行 | 计划 | `.github/workflows/validate.yml`、`openspec/changes/fix-legacy-json-evidence-classification/verification.md` |
+| V-02 | 自动 | `npm run verify` 发布级统一验证 8/8 阶段通过；包含 198/198 全量测试、结构、严格 OpenSpec、归档审计、两套运行时完整性与本机真实 Chromium 冒烟 | 2026-08-20 | 通过 | `openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、`scripts/verify.mjs` |
+| V-03 | 自动 | GitHub Actions 运行 `32353726866`，精确提交 `8a3eebe7ec6b3e9dcb1d11033341b7f83bd8b26f`；Linux x64/ARM64、macOS Intel/ARM64 均产出平台报告，Windows x64 在 `Build and verify platform plugin package` 清理暂存 Chromium 目录时报 `ENOTEMPTY`，且清理异常遮蔽了原始打包失败 | 2026-08-20 | 失败 | `https://github.com/julangtaotian/wayfinder/actions/runs/32353726866`、`openspec/changes/fix-legacy-json-evidence-classification/verification.md` |
+| V-04 | 自动 | 计划：在包含 Windows 暂存清理修复与确定性回归的同一提交上重新运行 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 原生 CI，要求五个平台成品冒烟全部成功 | 待执行 | 计划 | `.github/workflows/validate.yml`、`openspec/changes/fix-legacy-json-evidence-classification/verification.md` |
 
 ## 验收标准
 
@@ -147,7 +151,7 @@
 | A-01 | 普通 JSON 保持持久资料语义 | D-01、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON 不产生机器清单失败，路径安全规则继续执行 | V-01 |
 | A-02 | 历史无效候选降级告警 | D-02、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 无效显式候选返回稳定 code、target 和 warning | V-01 |
 | A-03 | 新合同保持严格 | D-03 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON-only 返回 machine_evidence_missing，无效显式候选仍 failed | V-01 |
-| A-04 | 交付验证完整 | D-04、D-05 | 自动 | `openspec/changes/fix-legacy-json-evidence-classification/verification.md`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、GitHub Actions 运行链接 | 本地发布级验证、官方 validators 与插件重装已完成；当前修复的五平台矩阵待执行 | V-02、V-03 |
+| A-04 | 交付验证完整 | D-04、D-05 | 自动 | `openspec/changes/fix-legacy-json-evidence-classification/verification.md`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、GitHub Actions 运行链接 | 本地发布级验证、官方 validators 与插件重装已完成；首次矩阵的 Windows 失败已保留，修复后的五平台矩阵仍待执行 | V-02、V-03、V-04 |
 
 ## 待确认问题
 

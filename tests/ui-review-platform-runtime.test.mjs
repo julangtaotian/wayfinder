@@ -19,6 +19,7 @@ import {
 import { buildPlaywrightPlatform } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
 import {
   PLATFORM_PLUGIN_SIZE_BUDGETS,
+  PLATFORM_STAGE_RETRY_POLICY,
   packagePluginPlatform,
 } from '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs';
 
@@ -375,6 +376,70 @@ test('平台插件成品超预算或校验失败时清理半成品', async (cont
     }),
     /结构校验失败/u,
   );
+  assert.equal(fs.existsSync(options.outputRoot), false);
+});
+
+test('平台插件发布遇到 Windows 瞬时目录占用后按线性退避重试', async (context) => {
+  const options = packagingOptions(context);
+  const retryDelays = [];
+  let renameAttempts = 0;
+  const renamePath = async (source, target) => {
+    renameAttempts += 1;
+    if (renameAttempts <= 2) {
+      const error = new Error('Windows 目录句柄尚未释放');
+      error.code = renameAttempts === 1 ? 'EPERM' : 'EBUSY';
+      throw error;
+    }
+    fs.renameSync(source, target);
+  };
+
+  const result = await packagePluginPlatform({
+    ...options,
+    write: true,
+    renamePath,
+    waitForRetry: async (milliseconds) => retryDelays.push(milliseconds),
+  });
+
+  assert.equal(result.write, true);
+  assert.equal(renameAttempts, 3);
+  assert.deepEqual(retryDelays, [250, 500]);
+  assert.equal(fs.existsSync(options.outputRoot), true);
+});
+
+test('平台插件清理重试耗尽时保留原始打包错误和清理定位', async (context) => {
+  const options = packagingOptions(context);
+  const cleanupError = new Error('directory not empty');
+  cleanupError.code = 'ENOTEMPTY';
+  let cleanupTarget;
+  let cleanupOptions;
+
+  await assert.rejects(
+    () => packagePluginPlatform({
+      ...options,
+      write: true,
+      validatePackage: async () => ({ ok: false, reason: 'fixture invalid' }),
+      removePath: (target, receivedOptions) => {
+        cleanupTarget = target;
+        cleanupOptions = receivedOptions;
+        throw cleanupError;
+      },
+    }),
+    (error) => {
+      assert.equal(error.code, 'platform_package_cleanup_failed');
+      assert.match(error.message, /平台成品结构校验失败：fixture invalid；暂存目录清理失败（ENOTEMPTY）/u);
+      assert.equal(error.cause?.message, '平台成品结构校验失败：fixture invalid');
+      assert.equal(error.cleanupError, cleanupError);
+      assert.equal(error.target, cleanupTarget);
+      assert.match(path.basename(error.target), /\.stage-\d+-\d+$/u);
+      return true;
+    },
+  );
+  assert.deepEqual(cleanupOptions, {
+    recursive: true,
+    force: true,
+    maxRetries: PLATFORM_STAGE_RETRY_POLICY.maxRetries,
+    retryDelay: PLATFORM_STAGE_RETRY_POLICY.retryDelay,
+  });
   assert.equal(fs.existsSync(options.outputRoot), false);
 });
 
