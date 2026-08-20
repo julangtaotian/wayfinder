@@ -1,0 +1,53 @@
+{
+  "change": "fix-legacy-json-evidence-classification",
+  "evidenceId": "V-04",
+  "external": {
+    "artifacts": [
+      "plugin-package-report-darwin-arm64",
+      "plugin-package-report-darwin-x64",
+      "plugin-package-report-linux-arm64",
+      "plugin-package-report-linux-x64",
+      "plugin-package-report-win32-x64"
+    ],
+    "commit": "e5bc64fca10d7f498aaab8573750f27884ab4d28",
+    "durationSeconds": 176,
+    "jobs": [
+      {
+        "name": "darwin-arm64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014/job/96386793623"
+      },
+      {
+        "name": "darwin-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014/job/96386793650"
+      },
+      {
+        "name": "linux-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014/job/96386793588"
+      },
+      {
+        "name": "linux-arm64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014/job/96386793576"
+      },
+      {
+        "name": "win32-x64",
+        "status": "passed",
+        "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014/job/96386793422"
+      }
+    ],
+    "remotelyVerified": true,
+    "runNumber": 36,
+    "trigger": "push",
+    "url": "https://github.com/julangtaotian/wayfinder/actions/runs/32356527014",
+    "verifiedAt": "2026-08-20T10:01:42Z",
+    "warnings": [],
+    "workflow": "Validate"
+  },
+  "kind": "external-ci",
+  "requirement": "requirements/REQ-2026-027-legacy-json-evidence-classification.md",
+  "schemaVersion": 1,
+  "status": "passed"
+}

@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.15.x
@@ -111,6 +111,7 @@
 | R-03 | 2026-08-20 | D-04、D-05 | A-04 | 本地发布级验证、官方 validators、cachebuster 更新与插件重装完成；V-01、V-02 记录当前工作区证据。由于实现命中跨平台路径与机器输出风险，V-03 保持计划，等待当前修复形成提交后取得五平台原生 CI 证据。 |
 | R-04 | 2026-08-20 | D-04、D-05 | A-04 | 提交 `8a3eebe` 的 V-03 首次矩阵中，仅 Windows x64 在平台成品暂存清理时报 `ENOTEMPTY`；完整日志确认清理异常遮蔽了首个打包错误。预算检查仍有约 38 MiB 余量，且同一任务的发布级验证已通过，结合清理失败目录为刚关闭的 Chromium，首个错误最可能来自发布改名时 Windows 句柄尚未释放。现有测试只在当前系统断言清理结果，未覆盖发布/清理瞬时占用和首错保留。该技术修订不改变 D-01～D-03 的可观察语义；新增确定性回归和有界重试任务，并以 V-04 重新取得同一提交上的五平台证据。 |
 | R-05 | 2026-08-20 | D-04、D-05 | A-04 | 平台暂存发布已对 `EACCES`、`EBUSY`、`ENOTEMPTY`、`EPERM` 增加 8 次线性退避，失败清理使用同一有界策略；清理重试耗尽时以 `platform_package_cleanup_failed` 保留原始异常、清理异常和暂存目录。确定性回归、198/198 全量测试、8/8 发布级验证、9 个 Skill 与 1 个 Plugin 官方校验、cachebuster `0.15.0+codex.20260820094902` 重装均通过，V-01/V-02 已刷新；V-04 继续等待该修复提交的真实五平台矩阵。 |
+| R-06 | 2026-08-20 | D-04、D-05 | A-04 | 修复提交 `e5bc64fca10d7f498aaab8573750f27884ab4d28` 的 GitHub Actions 运行 `32356527014` 已成功完成；Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五个平台任务全部通过并各自产出平台报告，总耗时 2 分 56 秒。V-04 记录远程复核后的精确提交、五个原生任务与产物，跨平台交付门禁关闭。 |
 
 ## 兼容性与风险
 
@@ -121,7 +122,7 @@
 
 ## 测试与验证
 
-- 测试文件策略：复用；目标路径：`tests/verification-evidence-integrity.test.mjs`、`tests/ui-review-platform-runtime.test.mjs`；基线证据：Git 可用且两个手写专用测试文件均已受版本控制，TC-03 已覆盖证据完成门禁与历史兼容，平台运行时测试已覆盖成品失败清理；选择理由：分别在同一功能的既有专用文件中补足分类和 Windows 暂存清理回归，不把场景追加到无关或生成测试。
+- 测试文件策略：复用；目标路径：`tests/verification-evidence-integrity.test.mjs`；基线证据：Git 可用且证据门禁与平台运行时两个手写专用测试文件均已受版本控制；选择理由：主修复扩展 TC-03，Windows 暂存发布与清理回归扩展既有 `tests/ui-review-platform-runtime.test.mjs`，两者均留在对应功能的专用测试中，不追加到无关或生成测试。
 - 独立测试方案：不需要；触发条件：单一既有回归扩展且不新增复杂交互；活动变更与目标：不适用；需求修订基线：R-01。
 - 验证范围：聚焦 + 全量；执行命令：TC-03 聚焦命令、`npm test`、`npm run validate`、`npm run verify` 与官方 validators；选择理由：同时证明分类修复、仓库集成和插件可安装性。
 - 自动测试：普通 JSON 不误判、无效显式候选历史告警、新合同缺失机器证据失败、既有安全边界不回退；Windows 发布改名的 `EPERM`/`EBUSY` 与清理的 `ENOTEMPTY` 启用受控重试，清理重试耗尽时保留原始打包失败并单独暴露清理失败。
@@ -132,26 +133,26 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | `[TC-03] 证据完成门禁与历史兼容` 聚焦回归通过；覆盖普通 JSON、历史无效机器候选和新合同普通 JSON-only 三组边界，并复核真实遗留变更预览不再出现 `plugin.json` 机器解析失败 | 2026-08-20 | 通过 | `openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json`、`tests/verification-evidence-integrity.test.mjs` |
-| V-02 | 自动 | `npm run verify` 发布级统一验证 8/8 阶段通过；包含 198/198 全量测试、结构、严格 OpenSpec、归档审计、两套运行时完整性与本机真实 Chromium 冒烟 | 2026-08-20 | 通过 | `openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、`scripts/verify.mjs` |
-| V-03 | 自动 | GitHub Actions 运行 `32353726866`，精确提交 `8a3eebe7ec6b3e9dcb1d11033341b7f83bd8b26f`；Linux x64/ARM64、macOS Intel/ARM64 均产出平台报告，Windows x64 在 `Build and verify platform plugin package` 清理暂存 Chromium 目录时报 `ENOTEMPTY`，且清理异常遮蔽了原始打包失败 | 2026-08-20 | 失败 | `https://github.com/julangtaotian/wayfinder/actions/runs/32353726866`、`openspec/changes/fix-legacy-json-evidence-classification/verification.md` |
-| V-04 | 自动 | 计划：在包含 Windows 暂存清理修复与确定性回归的同一提交上重新运行 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 原生 CI，要求五个平台成品冒烟全部成功 | 待执行 | 计划 | `.github/workflows/validate.yml`、`openspec/changes/fix-legacy-json-evidence-classification/verification.md` |
+| V-01 | 自动 | `[TC-03] 证据完成门禁与历史兼容` 聚焦回归通过；覆盖普通 JSON、历史无效机器候选和新合同普通 JSON-only 三组边界，并复核真实遗留变更预览不再出现 `plugin.json` 机器解析失败 | 2026-08-20 | 通过 | `openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-01.json`、`tests/verification-evidence-integrity.test.mjs` |
+| V-02 | 自动 | `npm run verify` 发布级统一验证 8/8 阶段通过；包含 198/198 全量测试、结构、严格 OpenSpec、归档审计、两套运行时完整性与本机真实 Chromium 冒烟 | 2026-08-20 | 通过 | `openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-02.json`、`scripts/verify.mjs` |
+| V-03 | 自动 | GitHub Actions 运行 `32353726866`，精确提交 `8a3eebe7ec6b3e9dcb1d11033341b7f83bd8b26f`；Linux x64/ARM64、macOS Intel/ARM64 均产出平台报告，Windows x64 在 `Build and verify platform plugin package` 清理暂存 Chromium 目录时报 `ENOTEMPTY`，且清理异常遮蔽了原始打包失败 | 2026-08-20 | 失败 | `https://github.com/julangtaotian/wayfinder/actions/runs/32353726866`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/verification.md` |
+| V-04 | 自动 | GitHub Actions 运行 `32356527014`，精确提交 `e5bc64fca10d7f498aaab8573750f27884ab4d28`；Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五个平台任务全部通过并各自产出平台报告，总耗时 2 分 56 秒 | 2026-08-20 | 通过 | `openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-04.json`、`https://github.com/julangtaotian/wayfinder/actions/runs/32356527014` |
 
 ## 验收标准
 
 - [x] [A-01] 历史自动记录引用普通 JSON 时不进入机器清单解析，持久路径安全检查保持有效。
 - [x] [A-02] 历史无效显式机器候选返回稳定 warning，不阻断历史只读完成流程。
 - [x] [A-03] 新合同缺失或引用无效机器证据时继续 failed，普通 JSON 不能替代同 ID 证据。
-- [ ] [A-04] 聚焦、仓库统一、官方 validators、插件重装和跨平台证据复核按范围完成。
+- [x] [A-04] 聚焦、仓库统一、官方 validators、插件重装和跨平台证据复核按范围完成。
 
 ## 验收—证据映射
 
 | 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| A-01 | 普通 JSON 保持持久资料语义 | D-01、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON 不产生机器清单失败，路径安全规则继续执行 | V-01 |
-| A-02 | 历史无效候选降级告警 | D-02、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 无效显式候选返回稳定 code、target 和 warning | V-01 |
-| A-03 | 新合同保持严格 | D-03 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON-only 返回 machine_evidence_missing，无效显式候选仍 failed | V-01 |
-| A-04 | 交付验证完整 | D-04、D-05 | 自动 | `openspec/changes/fix-legacy-json-evidence-classification/verification.md`、`openspec/changes/fix-legacy-json-evidence-classification/evidence/V-02.json`、GitHub Actions 运行链接 | 本地发布级验证、官方 validators 与插件重装已完成；首次矩阵的 Windows 失败已保留，修复后的五平台矩阵仍待执行 | V-02、V-03、V-04 |
+| A-01 | 普通 JSON 保持持久资料语义 | D-01、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON 不产生机器清单失败，路径安全规则继续执行 | V-01 |
+| A-02 | 历史无效候选降级告警 | D-02、D-05 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-01.json` | 无效显式候选返回稳定 code、target 和 warning | V-01 |
+| A-03 | 新合同保持严格 | D-03 | 自动 | `tests/verification-evidence-integrity.test.mjs`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-01.json` | 普通 JSON-only 返回 machine_evidence_missing，无效显式候选仍 failed | V-01 |
+| A-04 | 交付验证完整 | D-04、D-05 | 自动 | `openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/verification.md`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-02.json`、`openspec/changes/archive/2026-08-20-fix-legacy-json-evidence-classification/evidence/V-04.json` | 本地发布级验证、官方 validators、插件重装及修复提交的五平台原生 CI 全部完成；首次 Windows 失败与修复后成功均保留为可追溯事实 | V-02、V-04 |
 
 ## 待确认问题
 
