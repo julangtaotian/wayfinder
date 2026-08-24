@@ -1,8 +1,15 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
+import {
+  atomicWriteProjectFile,
+  ensureSafeProjectDirectory,
+  openProjectFileExclusive,
+  removeProjectFile,
+} from './project-path-safety.mjs';
 import { inspectBundledPlaywright, loadBundledPlaywright } from './playwright-runtime.mjs';
 import { executeStructuredInteractions, waitForVisualStability } from './ui-review-interactions.mjs';
 import { compareUiEvidence } from './ui-review-comparator.mjs';
@@ -50,15 +57,37 @@ function projectName(projectRoot) {
   }
 }
 
-function writeJsonAtomic(filePath, value) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  const temporaryPath = `${filePath}.${process.pid}.tmp`;
-  try {
-    fs.writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
-    fs.renameSync(temporaryPath, filePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
+function writeJsonAtomic(projectRoot, filePath, value) {
+  atomicWriteProjectFile(projectRoot, filePath, `${JSON.stringify(value, null, 2)}\n`, {
+    label: '结构化采集结果',
+  });
+}
+
+function reserveCaptureFile(projectRoot, targetPath, label) {
+  const extension = path.extname(targetPath);
+  const fileName = path.basename(targetPath, extension);
+  // Playwright 会根据路径扩展名推断截图格式，安全暂存名必须保留原扩展名。
+  const temporaryPath = path.join(
+    path.dirname(targetPath),
+    `${fileName}.capture-${process.pid}-${crypto.randomBytes(5).toString('hex')}${extension}`,
+  );
+  const opened = openProjectFileExclusive(projectRoot, temporaryPath, `${label}临时文件`);
+  fs.closeSync(opened.descriptor);
+  return opened.absolutePath;
+}
+
+function cleanupCaptureFiles(projectRoot, files, originalError = null) {
+  let cleanupError = null;
+  for (const [filePath, label] of files) {
+    if (!fs.existsSync(filePath)) continue;
+    try {
+      removeProjectFile(projectRoot, filePath, { label });
+    } catch (error) {
+      cleanupError ||= error;
+    }
   }
+  if (cleanupError && originalError) originalError.cleanupError = cleanupError;
+  else if (cleanupError) throw cleanupError;
 }
 
 function validateCaptureState(state, plan, runId) {
@@ -138,8 +167,8 @@ export async function runPlaywrightAdapter({
     '设计依据',
     { mustExist: true, allowDirectory: false },
   );
-  fs.mkdirSync(path.dirname(actualScreenshot.absolutePath), { recursive: true });
-  fs.mkdirSync(path.dirname(resultPath.absolutePath), { recursive: true });
+  ensureSafeProjectDirectory(projectRoot, path.dirname(actualScreenshot.absolutePath), '实际截图目录');
+  ensureSafeProjectDirectory(projectRoot, path.dirname(resultPath.absolutePath), '结构化采集结果目录');
 
   // 版本 2 只把项目文件当作模板摘要凭据，实际代码始终从插件受信目录加载。
   const executableAdapter = config.schemaVersion === 2 ? BUNDLED_UI_REVIEW_ADAPTER : adapter.absolutePath;
@@ -147,34 +176,62 @@ export async function runPlaywrightAdapter({
   if (typeof adapterModule.default !== 'function') fail('Playwright 适配器必须默认导出异步函数');
   const playwright = await loadBundledPlaywright();
   const runtime = inspectBundledPlaywright();
-  const adapterResult = await adapterModule.default({
-    playwright,
-    runtime: deepFreeze({
-      platformKey: runtime.platformKey,
-      browserExecutable: runtime.browserExecutable,
-      ffmpegExecutable: runtime.ffmpegExecutable,
-    }),
-    executeInteractions: async ({ page, interactions = plan.scenario.interactions } = {}) => executeStructuredInteractions({
-      page,
-      interactions,
-      captureRoot: interactionScreenshots.absolutePath,
-    }),
-    stabilizePage: async ({ page, timeout = 5000 } = {}) => waitForVisualStability(page, { timeout }),
-    project: deepFreeze({ root: projectRoot, name: projectName(projectRoot) }),
-    runId: normalizedRunId,
-    scenario: deepFreeze(structuredClone(plan.scenario)),
-    artifacts: deepFreeze({
-      actualScreenshot: actualScreenshot.absolutePath,
-      interactionScreenshots: interactionScreenshots.absolutePath,
-      result: resultPath.absolutePath,
-      design: designPath.absolutePath,
-    }),
-  });
+  const captureFiles = [
+    [reserveCaptureFile(projectRoot, actualScreenshot.absolutePath, '实际截图'), '实际截图临时文件'],
+    [reserveCaptureFile(projectRoot, resultPath.absolutePath, '结构化采集结果'), '结构化采集结果临时文件'],
+  ];
+  const [temporaryScreenshot, temporaryResult] = captureFiles.map(([filePath]) => filePath);
+  let adapterResult;
+  try {
+    adapterResult = await adapterModule.default({
+      playwright,
+      runtime: deepFreeze({
+        platformKey: runtime.platformKey,
+        browserExecutable: runtime.browserExecutable,
+        ffmpegExecutable: runtime.ffmpegExecutable,
+      }),
+      executeInteractions: async ({ page, interactions = plan.scenario.interactions } = {}) => executeStructuredInteractions({
+        page,
+        interactions,
+        captureRoot: interactionScreenshots.absolutePath,
+        projectRoot,
+      }),
+      stabilizePage: async ({ page, timeout = 5000 } = {}) => waitForVisualStability(page, { timeout }),
+      project: deepFreeze({ root: projectRoot, name: projectName(projectRoot) }),
+      runId: normalizedRunId,
+      scenario: deepFreeze(structuredClone(plan.scenario)),
+      artifacts: deepFreeze({
+        actualScreenshot: temporaryScreenshot,
+        interactionScreenshots: interactionScreenshots.absolutePath,
+        result: temporaryResult,
+        design: designPath.absolutePath,
+      }),
+    });
+    resolveSafeProjectPath(projectRoot, temporaryScreenshot, '实际截图临时文件', {
+      mustExist: true,
+      allowDirectory: false,
+      allowAbsolute: true,
+    });
+    atomicWriteProjectFile(projectRoot, actualScreenshot.absolutePath, fs.readFileSync(temporaryScreenshot), {
+      label: '实际截图',
+      encoding: undefined,
+    });
+    if (adapterResult === undefined) {
+      atomicWriteProjectFile(projectRoot, resultPath.absolutePath, fs.readFileSync(temporaryResult), {
+        label: '结构化采集结果',
+        encoding: undefined,
+      });
+    }
+    cleanupCaptureFiles(projectRoot, captureFiles);
+  } catch (error) {
+    cleanupCaptureFiles(projectRoot, captureFiles, error);
+    throw error;
+  }
   if (adapterResult !== undefined) {
     if (!adapterResult || typeof adapterResult !== 'object' || Array.isArray(adapterResult)) {
       fail('Playwright 适配器返回值必须是结构化结果对象或 undefined');
     }
-    writeJsonAtomic(resultPath.absolutePath, adapterResult);
+    writeJsonAtomic(projectRoot, resultPath.absolutePath, adapterResult);
   }
 
   const dimensions = parsePngDimensions(actualScreenshot.absolutePath);
@@ -192,6 +249,7 @@ export async function runPlaywrightAdapter({
   }
   if (plan.scenario.comparison) {
     const assessment = compareUiEvidence({
+      projectRoot,
       scenario: plan.scenario,
       actualScreenshot: actualScreenshot.absolutePath,
       expectedScreenshot: designPath.absolutePath,
@@ -199,11 +257,11 @@ export async function runPlaywrightAdapter({
       diffPath: diffScreenshot.absolutePath,
     });
     Object.assign(result, assessment, { comparison: plan.scenario.comparison });
-    writeJsonAtomic(resultPath.absolutePath, result);
+    writeJsonAtomic(projectRoot, resultPath.absolutePath, result);
   } else if (!Array.isArray(result.findings) && result.analysisPending !== true) {
     // 没有视觉结论时显式保持待分析，防止空数组缺失被误当成通过。
     result.analysisPending = true;
-    writeJsonAtomic(resultPath.absolutePath, result);
+    writeJsonAtomic(projectRoot, resultPath.absolutePath, result);
   }
 
   return {

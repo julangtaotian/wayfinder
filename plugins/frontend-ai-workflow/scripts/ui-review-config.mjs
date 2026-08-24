@@ -1,6 +1,5 @@
 import fs from 'node:fs';
-import path from 'node:path';
-import { inspectBundledPlaywright } from './playwright-runtime.mjs';
+import { resolveSafeProjectPath } from './project-path-safety.mjs';
 import {
   UI_REVIEW_CONFIG_VERSION,
   DEFAULT_UI_REVIEW_CONFIG,
@@ -23,45 +22,8 @@ import {
   stableJson,
 } from './ui-review-contract.mjs';
 
-// 配置层负责安全路径、版本兼容和场景规范化，不承载运行状态迁移。
-export function isInside(root, candidate) {
-  const relative = path.relative(root, candidate);
-  return relative !== '' && relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
-}
-
-// 未存在的产物路径也要检查最近的真实父目录，避免通过符号链接越出项目。
-export function resolveSafeProjectPath(projectRoot, value, label, { mustExist = false, allowDirectory = true } = {}) {
-  const canonicalRoot = fs.realpathSync(projectRoot);
-  const raw = requireString(value, label);
-  if (raw.includes('\\') || path.posix.isAbsolute(raw) || path.win32.isAbsolute(raw)) {
-    fail(`${label}必须是使用正斜杠的项目相对路径`);
-  }
-  const segments = raw.split('/');
-  if (segments.some((segment) => !segment || segment === '.' || segment === '..')) {
-    fail(`${label}不能包含空路径段、. 或 ..`);
-  }
-
-  const absolutePath = path.resolve(canonicalRoot, ...segments);
-  if (!isInside(canonicalRoot, absolutePath)) fail(`${label}不能指向项目根目录或项目外部`);
-
-  let existingAncestor = absolutePath;
-  while (!fs.existsSync(existingAncestor)) {
-    const parent = path.dirname(existingAncestor);
-    if (parent === existingAncestor) break;
-    existingAncestor = parent;
-  }
-  const realAncestor = fs.realpathSync(existingAncestor);
-  if (realAncestor !== canonicalRoot && !isInside(canonicalRoot, realAncestor)) fail(`${label}通过符号链接越出了项目`);
-
-  if (mustExist && !fs.existsSync(absolutePath)) fail(`${label}不存在：${raw}`);
-  if (fs.existsSync(absolutePath)) {
-    const realPath = fs.realpathSync(absolutePath);
-    if (!isInside(canonicalRoot, realPath)) fail(`${label}通过符号链接越出了项目`);
-    if (!allowDirectory && !fs.statSync(realPath).isFile()) fail(`${label}必须是文件：${raw}`);
-  }
-
-  return { absolutePath, projectPath: segments.join('/') };
-}
+// 配置层继续导出原公共函数，但路径判定统一由共享安全模块完成。
+export { resolveSafeProjectPath };
 
 export function normalizeViewport(value, label) {
   const viewport = requireObject(value, label);

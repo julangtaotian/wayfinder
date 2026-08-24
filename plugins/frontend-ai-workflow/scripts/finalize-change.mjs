@@ -4,6 +4,12 @@ import { pathToFileURL } from 'node:url';
 import { checkChange, validateDeclaredTestPlan } from './check-change.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
+import {
+  ProjectPathError,
+  atomicWriteProjectFile,
+  projectPathFailure,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
 import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
 
 function parseEngineJson(output) {
@@ -100,24 +106,17 @@ function prepareTestPlanRewrite(changePath, changeName, archiveName) {
   };
 }
 
-function atomicWrite(file, content) {
-  const temporary = path.join(path.dirname(file), `.${path.basename(file)}.finalize-${process.pid}-${Date.now()}`);
-  try {
-    fs.writeFileSync(temporary, content, 'utf8');
-    fs.renameSync(temporary, file);
-  } finally {
-    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
-  }
-}
-
 function archivedChangeCandidates(root, changeName) {
-  const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
-  if (!fs.existsSync(archiveRoot)) return [];
-  return fs.readdirSync(archiveRoot, { withFileTypes: true })
+  const archive = resolveSafeProjectPath(root, 'openspec/changes/archive', '归档根目录');
+  if (!archive.exists) return [];
+  return fs.readdirSync(archive.absolutePath, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && (
       entry.name === changeName || entry.name.endsWith(`-${changeName}`)
     ))
-    .map((entry) => path.join(archiveRoot, entry.name))
+    .map((entry) => resolveSafeProjectPath(root, path.join(archive.absolutePath, entry.name), '归档恢复目标', {
+      mustExist: true,
+      allowAbsolute: true,
+    }).absolutePath)
     .sort();
 }
 
@@ -136,21 +135,23 @@ function safeArchiveTarget(root, archiveName, { mustExist = false } = {}) {
   if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error(`归档目标越出安全范围：${target}`);
   }
-  if (mustExist && (!fs.existsSync(target) || !fs.statSync(target).isDirectory())) {
+  const safe = resolveSafeProjectPath(root, target, '归档目标', {
+    mustExist,
+    allowAbsolute: true,
+  });
+  if (mustExist && safe.kind !== 'directory') {
     throw new Error(`规划引擎报告成功但实际归档目录不存在：${target}`);
   }
-  return target;
+  return safe.absolutePath;
 }
 
 function resolveRecoveryContext({ target, requirement, change }) {
   const root = resolveProjectRoot(target);
   assertSafeProjectRoot(root);
-  const requirementPath = path.resolve(root, requirement || '');
-  const relative = path.relative(root, requirementPath);
-  if (!requirement || !relative || relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`需求路径越出项目范围：${requirement || '空值'}`);
-  }
-  if (!fs.existsSync(requirementPath)) throw new Error(`需求文件不存在：${requirementPath}`);
+  const requirementPath = resolveSafeProjectPath(root, requirement || '', '需求文件', {
+    mustExist: true,
+    allowDirectory: false,
+  }).absolutePath;
   const candidates = archivedChangeCandidates(root, change);
   if (candidates.length !== 1) return null;
   return {
@@ -160,6 +161,59 @@ function resolveRecoveryContext({ target, requirement, change }) {
     changePath: candidates[0],
     archiveName: path.basename(candidates[0]),
   };
+}
+
+function plannedSpecPaths(check) {
+  const deltaRoot = path.join(check.changePath, 'specs');
+  const declared = check.planningStatus?.artifactPaths?.specs?.existingOutputPaths;
+  if (!Array.isArray(declared)) return [];
+  return declared.map((deltaPath) => {
+    const resolvedDeltaPath = path.isAbsolute(deltaPath)
+      ? path.resolve(deltaPath)
+      : path.resolve(check.changePath, deltaPath);
+    const relative = path.relative(deltaRoot, resolvedDeltaPath);
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new ProjectPathError('unsafe_project_path', `Delta spec 越出变更规格目录：${deltaPath}`, deltaPath);
+    }
+    return {
+      deltaPath: resolvedDeltaPath,
+      mainPath: path.join(check.root, 'openspec', 'specs', relative),
+    };
+  });
+}
+
+function preflightFinalizeSurface(check, { archiveTarget = null, phase = 'before' } = {}) {
+  const candidates = [
+    [check.requirementPath, '需求文件', true, false],
+    [path.join(check.root, 'openspec', 'changes', 'archive'), '归档根目录', false, true],
+    [path.join(check.root, 'openspec', 'specs'), '主规格根目录', false, true],
+    ...(phase === 'before' ? [
+      [check.changePath, '活动变更目录', true, true],
+      [path.join(check.changePath, 'specs'), 'Delta spec 根目录', false, true],
+      [path.join(check.changePath, '.openspec.yaml'), '变更元数据', false, false],
+      [path.join(check.changePath, 'test-plan.md'), '测试方案', false, false],
+      [check.archive?.targetPath, '归档目标', false, true],
+    ] : [
+      [archiveTarget, '实际归档目标', true, true],
+      [archiveTarget && path.join(archiveTarget, '.openspec.yaml'), '归档变更元数据', false, false],
+      [archiveTarget && path.join(archiveTarget, 'test-plan.md'), '归档测试方案', false, false],
+    ]),
+  ];
+  for (const pair of plannedSpecPaths(check)) {
+    if (phase === 'before') candidates.push([pair.deltaPath, 'Delta spec', true, false]);
+    candidates.push([pair.mainPath, '主规格目标', false, false]);
+  }
+  for (const [candidate, label, mustExist, expectedDirectory] of candidates) {
+    if (!candidate) continue;
+    const safe = resolveSafeProjectPath(check.root, candidate, label, {
+      mustExist,
+      allowDirectory: expectedDirectory,
+      allowAbsolute: true,
+    });
+    if (safe.exists && expectedDirectory && safe.kind !== 'directory') {
+      throw new ProjectPathError('project_path_not_directory', `${label}必须是普通目录：${safe.projectPath}`, safe.projectPath);
+    }
+  }
 }
 
 function postArchiveAudit({ requirementPath, changePath }) {
@@ -225,6 +279,18 @@ function partialFailure({
 function recoverArchivedChange({ target, requirement, change, write }, services) {
   const recovery = resolveRecoveryContext({ target, requirement, change });
   if (!recovery) return null;
+  resolveSafeProjectPath(recovery.root, path.join(recovery.changePath, '.openspec.yaml'), '归档变更元数据', {
+    allowAbsolute: true,
+  });
+  resolveSafeProjectPath(recovery.root, path.join(recovery.changePath, 'test-plan.md'), '归档测试方案', {
+    allowAbsolute: true,
+  });
+  const writeFile = services.atomicWrite || ((file, content) => atomicWriteProjectFile(
+    recovery.root,
+    file,
+    content,
+    { label: '归档恢复文件' },
+  ));
   const original = fs.readFileSync(recovery.requirementPath, 'utf8');
   const next = rewriteRequirementForArchive(original, recovery.changeName, recovery.archiveName, { allowAccepted: true });
   let testPlan;
@@ -270,7 +336,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
   }
   if (testPlan.exists) {
     try {
-      services.atomicWrite(testPlan.testPlanPath, testPlan.content);
+      writeFile(testPlan.testPlanPath, testPlan.content);
     } catch (error) {
       return partialFailure({
         write,
@@ -289,7 +355,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     }
   }
   try {
-    services.atomicWrite(recovery.requirementPath, next.content);
+    writeFile(recovery.requirementPath, next.content);
   } catch (error) {
     return partialFailure({
       write,
@@ -352,7 +418,7 @@ export function finalizeChange({
   const services = {
     checkChange,
     runOpenSpecSync,
-    atomicWrite,
+    atomicWrite: null,
     postArchiveAudit,
     ...injected,
   };
@@ -361,11 +427,29 @@ export function finalizeChange({
     check = services.checkChange({ target, requirement, change, stage: 'precomplete' });
   } catch (error) {
     if (!/变更目录不存在/u.test(error.message)) throw error;
-    const recovered = recoverArchivedChange({ target, requirement, change, write }, services);
+    let recovered;
+    try {
+      recovered = recoverArchivedChange({ target, requirement, change, write }, services);
+    } catch (recoveryError) {
+      if (!(recoveryError instanceof ProjectPathError)) throw recoveryError;
+      return projectPathFailure(recoveryError, { write, actions: [] });
+    }
     if (recovered) return recovered;
     throw error;
   }
   if (!check.ok) return { ok: false, write, check, actions: [] };
+  try {
+    preflightFinalizeSurface(check);
+  } catch (error) {
+    if (!(error instanceof ProjectPathError)) throw error;
+    return { ...projectPathFailure(error, { write, actions: [] }), check };
+  }
+  const writeFile = services.atomicWrite || ((file, content) => atomicWriteProjectFile(
+    check.root,
+    file,
+    content,
+    { label: '完成流程文件' },
+  ));
   const predictedArchiveName = path.basename(check.archive?.targetPath || '');
   const originalRequirement = fs.readFileSync(check.requirementPath, 'utf8');
   const predictedRequirement = rewriteRequirementForArchive(
@@ -439,6 +523,7 @@ export function finalizeChange({
   let archiveTarget;
   try {
     archiveTarget = safeArchiveTarget(check.root, archiveName, { mustExist: true });
+    preflightFinalizeSurface(check, { archiveTarget, phase: 'after' });
   } catch (error) {
     return partialFailure({
       write,
@@ -477,7 +562,7 @@ export function finalizeChange({
   }
   if (nextTestPlan.exists) {
     try {
-      services.atomicWrite(nextTestPlan.testPlanPath, nextTestPlan.content);
+      writeFile(nextTestPlan.testPlanPath, nextTestPlan.content);
     } catch (error) {
       return partialFailure({
         write,
@@ -496,7 +581,7 @@ export function finalizeChange({
     }
   }
   try {
-    services.atomicWrite(check.requirementPath, nextRequirement.content);
+    writeFile(check.requirementPath, nextRequirement.content);
   } catch (error) {
     return partialFailure({
       write,

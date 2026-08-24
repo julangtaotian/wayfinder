@@ -53,6 +53,7 @@ const REQUIREMENT_MIGRATION_ASSETS = [
 const DELIVERY_GUARD_ASSETS = [
   'scripts/check-change.mjs',
   'scripts/finalize-change.mjs',
+  'scripts/project-path-safety.mjs',
   'references/cross-platform-ci-checklist.md',
 ];
 const PROJECT_PROFILE_ASSETS = [
@@ -63,6 +64,7 @@ const TEST_WORKFLOW_ASSETS = [
   'scripts/inspect-test-context.mjs',
   'scripts/validate-test-plan.mjs',
   'scripts/verification-evidence.mjs',
+  'scripts/verification-semantics.mjs',
   'assets/templates/openspec/test-plan.md',
   'references/test-case-guidelines.md',
 ];

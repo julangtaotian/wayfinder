@@ -3,6 +3,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
+import {
+  ProjectPathError,
+  atomicWriteProjectFile,
+  copyProjectFile,
+} from './project-path-safety.mjs';
 import { runPlaywrightAdapter } from './playwright-adapter-runner.mjs';
 import {
   createDeterministicReportContext,
@@ -30,17 +35,6 @@ function fail(message) {
 function requireString(value, label) {
   if (typeof value !== 'string' || !value.trim()) fail(`${label}不能为空`);
   return value.trim();
-}
-
-function writeTextAtomic(filePath, content) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  const temporaryPath = `${filePath}.${process.pid}.tmp`;
-  try {
-    fs.writeFileSync(temporaryPath, content, 'utf8');
-    fs.renameSync(temporaryPath, filePath);
-  } finally {
-    if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
-  }
 }
 
 function createPreview({ mode, projectRoot, config, plan, baseline }) {
@@ -111,8 +105,7 @@ function materializeReport(projectRoot, plan, result, completedState) {
   const actual = resolveSafeProjectPath(projectRoot, plan.artifacts.actualScreenshot, '实际截图', { mustExist: true, allowDirectory: false });
   const annotated = resolveSafeProjectPath(projectRoot, plan.artifacts.annotatedScreenshot, '验收标注截图');
   const report = resolveSafeProjectPath(projectRoot, plan.artifacts.report, '验收报告');
-  fs.mkdirSync(path.dirname(annotated.absolutePath), { recursive: true });
-  fs.copyFileSync(actual.absolutePath, annotated.absolutePath, fs.constants.COPYFILE_EXCL);
+  copyProjectFile(projectRoot, actual.absolutePath, annotated.absolutePath, { label: '验收标注截图' });
   const scenario = { id: plan.scenarioId, ...plan.scenario };
   const context = createDeterministicReportContext({
     schemaVersion: completedState.schemaVersion,
@@ -126,23 +119,26 @@ function materializeReport(projectRoot, plan, result, completedState) {
     observationCount: (completedState.observations || []).length,
     findingCount: (completedState.findings || []).length,
   });
-  writeTextAtomic(report.absolutePath, renderDeterministicAssessmentMarkdown({
+  atomicWriteProjectFile(projectRoot, report.absolutePath, renderDeterministicAssessmentMarkdown({
     context,
     scenario,
     assessment: { ...result, outcome: completedState.status === 'failed' ? 'needs-fix' : completedState.status, fallbackRequired: completedState.fallbackRequired },
     runtime: `${plan.projectPlaywright.runtime.platform}-${plan.projectPlaywright.runtime.arch} / Playwright ${plan.projectPlaywright.runtime.version}`,
-  }));
+  }), { label: '验收报告' });
 }
 
 function blockedResult({ mode, write, error, phase = 'orchestration', state = null }) {
+  const pathFailure = error instanceof ProjectPathError;
   return {
     ok: false,
+    code: pathFailure ? error.code : 'ui_review_blocked',
     write,
     readyToWrite: false,
     mode,
-    status: 'blocked',
+    status: pathFailure ? error.status : 'blocked',
+    target: pathFailure ? error.target : null,
     exitCode: EXIT_CODES.blocked,
-    error: { code: 'UI_REVIEW_BLOCKED', phase, message: error.message },
+    error: { code: pathFailure ? error.code : 'UI_REVIEW_BLOCKED', phase, message: error.message },
     fallbackRequired: false,
     state,
   };

@@ -1,0 +1,68 @@
+{
+  "artifacts": [],
+  "change": "harden-workflow-trust-boundary",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=受管写入符号链接边界与兼容性",
+      "tests/workflow-trust-boundary.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-24T02:07:56.287Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "9021c58f7ac04faf2b98b71cb150ec12c51db560",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 受管写入符号链接边界与兼容性",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 1028,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824020756024-27216-9665ad08/stdout.log",
+      "sha256": "158b4cdfbb88fb05615e6f2ab5a6e127cf14449e9f832cf621c3b4693a2ad160",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824020756024-27216-9665ad08/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-028-workflow-trust-boundary.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-09",
+      "D-10",
+      "D-11"
+    ],
+    "revision": "R-02",
+    "sha256": "cacf4aaa9dffc0f611845f794ff672678df1d4a571151628f71f39923770e434",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 1
+  },
+  "startedAt": "2026-08-24T02:07:56.026Z",
+  "status": "passed",
+  "workspaceFingerprint": "e4e1c354e859d5238427f547ba502ec4779c00da1b6b265a031eb0f7933dc8f9"
+}

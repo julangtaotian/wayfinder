@@ -1,6 +1,9 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  atomicWriteProjectFile,
+  ensureSafeProjectDirectory,
+} from './project-path-safety.mjs';
 import {
   fail,
   requireObject,
@@ -45,11 +48,11 @@ export function writeRunState(projectRoot, state, { allowExistingState = false }
       if (previous.runId !== current.runId || previous.scenarioId !== current.scenarioId) fail('既有运行状态不属于同一次运行');
     }
   } else {
-    fs.mkdirSync(runDirectory.absolutePath, { recursive: true });
+    ensureSafeProjectDirectory(projectRoot, runDirectory.absolutePath, '运行目录');
   }
 
-  const temporaryPath = `${statePath.absolutePath}.tmp-${process.pid}-${crypto.randomBytes(4).toString('hex')}`;
-  fs.writeFileSync(temporaryPath, `${JSON.stringify(current, null, 2)}\n`, { flag: 'wx' });
-  fs.renameSync(temporaryPath, statePath.absolutePath);
+  atomicWriteProjectFile(projectRoot, statePath.absolutePath, `${JSON.stringify(current, null, 2)}\n`, {
+    label: '运行状态',
+  });
   return statePath.absolutePath;
 }

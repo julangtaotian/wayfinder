@@ -1,5 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  ensureSafeProjectDirectory,
+  publishProjectDirectory,
+  removeProjectDirectory,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
 
 const ACTIONS = new Set([
   'click',
@@ -126,13 +132,16 @@ export async function waitForVisualStability(page, { timeout = 5000 } = {}) {
 }
 
 // 交互产物先写入临时目录，只有全部步骤成功才一次性提交，避免失败运行留下半成品证据。
-export async function executeStructuredInteractions({ page, interactions, captureRoot }) {
+export async function executeStructuredInteractions({ page, interactions, captureRoot, projectRoot = null }) {
   if (!page || typeof page.locator !== 'function') fail('结构化交互需要有效的 Playwright 页面');
   if (!Array.isArray(interactions)) fail('结构化交互必须是数组');
-  const resolvedRoot = path.resolve(captureRoot);
+  const resolvedRoot = projectRoot
+    ? resolveSafeProjectPath(projectRoot, path.resolve(captureRoot), '交互截图目录', { allowAbsolute: true }).absolutePath
+    : path.resolve(captureRoot);
   const temporaryRoot = `${resolvedRoot}.tmp-${process.pid}-${Date.now()}`;
   if (fs.existsSync(resolvedRoot)) fail(`交互截图目录已存在，拒绝覆盖：${resolvedRoot}`);
-  fs.mkdirSync(temporaryRoot, { recursive: true });
+  if (projectRoot) ensureSafeProjectDirectory(projectRoot, temporaryRoot, '交互截图临时目录');
+  else fs.mkdirSync(temporaryRoot, { recursive: true });
   const steps = [];
   try {
     for (const [index, interaction] of interactions.entries()) {
@@ -160,15 +169,34 @@ export async function executeStructuredInteractions({ page, interactions, captur
         ...evidence,
       });
     }
-    fs.mkdirSync(path.dirname(resolvedRoot), { recursive: true });
-    fs.renameSync(temporaryRoot, resolvedRoot);
+    if (projectRoot) {
+      ensureSafeProjectDirectory(projectRoot, path.dirname(resolvedRoot), '交互截图父目录');
+      resolveSafeProjectPath(projectRoot, temporaryRoot, '交互截图临时目录', {
+        mustExist: true,
+        allowAbsolute: true,
+      });
+      resolveSafeProjectPath(projectRoot, resolvedRoot, '交互截图目录', { allowAbsolute: true });
+    } else {
+      fs.mkdirSync(path.dirname(resolvedRoot), { recursive: true });
+    }
+    if (projectRoot) publishProjectDirectory(projectRoot, temporaryRoot, resolvedRoot, { label: '交互截图目录' });
+    else fs.renameSync(temporaryRoot, resolvedRoot);
     return {
       completed: true,
       steps,
       captures: steps.filter((step) => step.capture).map((step) => step.capture),
     };
   } catch (error) {
-    fs.rmSync(temporaryRoot, { recursive: true, force: true });
+    try {
+      if (projectRoot && fs.existsSync(temporaryRoot)) {
+        removeProjectDirectory(projectRoot, temporaryRoot, { label: '交互截图临时目录' });
+      } else {
+        fs.rmSync(temporaryRoot, { recursive: true, force: true });
+      }
+    } catch (cleanupError) {
+      // 清理失败不能覆盖真实交互错误，调用方仍可读取 cleanupError 定位残留目录。
+      error.cleanupError = cleanupError;
+    }
     throw error;
   }
 }

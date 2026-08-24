@@ -6,6 +6,12 @@ import { runBootstrap, WORKFLOW_VERSION } from './bootstrap-project.mjs';
 import { assertSafeProjectRoot } from './collect-project-scope.mjs';
 import { inspectProject } from './inspect-project.mjs';
 import {
+  ProjectPathError,
+  projectPathFailure,
+  removeProjectFile,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
+import {
   detectWorkflowLayout,
   findManagedRange,
   isOnlyManagedLegacyMetadata,
@@ -58,19 +64,19 @@ function convertLegacyFrontend(content, settings, inspection) {
 }
 
 function requirementTemplateAction(root) {
-  const file = path.join(root, LEGACY_REQUIREMENT_TEMPLATE_PATH);
-  if (!fs.existsSync(file)) return { file: LEGACY_REQUIREMENT_TEMPLATE_PATH, action: 'skip', reason: '旧需求模板不存在' };
-  const current = fs.readFileSync(file, 'utf8');
+  const safe = resolveSafeProjectPath(root, LEGACY_REQUIREMENT_TEMPLATE_PATH, '旧需求模板');
+  if (!safe.exists) return { file: LEGACY_REQUIREMENT_TEMPLATE_PATH, action: 'skip', reason: '旧需求模板不存在' };
+  const current = fs.readFileSync(safe.absolutePath, 'utf8');
   const builtin = fs.readFileSync(path.join(templateRoot, 'requirements', '_template.md'), 'utf8');
   if (current === builtin) return { file: LEGACY_REQUIREMENT_TEMPLATE_PATH, action: 'delete', reason: '内容与插件内置模板一致' };
   return { file: LEGACY_REQUIREMENT_TEMPLATE_PATH, action: 'keep', reason: '检测到项目自定义模板，保留供需求编写继续使用' };
 }
 
 function legacyMetadataAction(root) {
-  const file = path.join(root, LEGACY_WORKFLOW_PATH);
-  if (!fs.existsSync(file)) return { file: LEGACY_WORKFLOW_PATH, action: 'skip', reason: '旧工作流元数据不存在' };
+  const safe = resolveSafeProjectPath(root, LEGACY_WORKFLOW_PATH, '旧工作流元数据');
+  if (!safe.exists) return { file: LEGACY_WORKFLOW_PATH, action: 'skip', reason: '旧工作流元数据不存在' };
   try {
-    const content = fs.readFileSync(file, 'utf8');
+    const content = fs.readFileSync(safe.absolutePath, 'utf8');
     if (isOnlyManagedLegacyMetadata(content)) return { file: LEGACY_WORKFLOW_PATH, action: 'delete', reason: '元数据已完整迁入 Wayfinder' };
     return { file: LEGACY_WORKFLOW_PATH, action: 'keep', reason: '包含项目自定义元数据，保留供人工处理' };
   } catch (error) {
@@ -81,13 +87,28 @@ function legacyMetadataAction(root) {
 function removePlannedFiles(root, actions) {
   for (const action of actions) {
     if (action.action !== 'delete') continue;
-    fs.unlinkSync(path.join(root, action.file));
+    removeProjectFile(root, action.file, { label: '迁移清理目标' });
   }
 }
 
 export function runWayfinderMigration({ target = process.cwd(), write = false } = {}) {
   const inspection = inspectProject(target);
   assertSafeProjectRoot(inspection.root);
+  try {
+    for (const candidate of [
+      LEGACY_FRONTEND_PATH,
+      LEGACY_WORKFLOW_PATH,
+      LEGACY_REQUIREMENT_TEMPLATE_PATH,
+      WAYFINDER_PATH,
+      'AGENTS.md',
+      'openspec/config.yaml',
+    ]) {
+      resolveSafeProjectPath(inspection.root, candidate, '迁移目标');
+    }
+  } catch (error) {
+    if (!(error instanceof ProjectPathError)) throw error;
+    return { ...projectPathFailure(error, { write }), layout: null };
+  }
   const layout = detectWorkflowLayout(inspection.root);
   if (layout !== 'legacy') {
     return {
@@ -98,8 +119,8 @@ export function runWayfinderMigration({ target = process.cwd(), write = false } 
     };
   }
 
-  const legacyFrontendPath = path.join(inspection.root, LEGACY_FRONTEND_PATH);
-  if (!fs.existsSync(legacyFrontendPath)) {
+  const legacyFrontend = resolveSafeProjectPath(inspection.root, LEGACY_FRONTEND_PATH, '旧前端上下文');
+  if (!legacyFrontend.exists) {
     return { ok: false, write, layout, actions: [{ file: LEGACY_FRONTEND_PATH, action: 'conflict', reason: '缺少可迁移的旧前端上下文' }] };
   }
 
@@ -107,7 +128,7 @@ export function runWayfinderMigration({ target = process.cwd(), write = false } 
   let settings;
   try {
     settings = readLegacyWorkflowSettings(inspection.root) || {};
-    wayfinderContent = convertLegacyFrontend(fs.readFileSync(legacyFrontendPath, 'utf8'), settings, inspection);
+    wayfinderContent = convertLegacyFrontend(fs.readFileSync(legacyFrontend.absolutePath, 'utf8'), settings, inspection);
   } catch (error) {
     return { ok: false, write, layout, actions: [{ file: LEGACY_FRONTEND_PATH, action: 'conflict', reason: error.message }] };
   }
@@ -141,7 +162,12 @@ export function runWayfinderMigration({ target = process.cwd(), write = false } 
     });
     if (!applied.ok) return { ok: false, write, layout, actions: [...applied.actions, ...cleanup] };
     // 新文档与 AGENTS 已落盘后才删除经过安全判定的旧文件，失败时只会保留重复副本。
-    removePlannedFiles(inspection.root, cleanup);
+    try {
+      removePlannedFiles(inspection.root, cleanup);
+    } catch (error) {
+      if (!(error instanceof ProjectPathError)) throw error;
+      return { ...projectPathFailure(error, { write, actions }), layout };
+    }
   }
 
   return { ok: true, write, layout: 'wayfinder', migratedFrom: 'legacy', actions };

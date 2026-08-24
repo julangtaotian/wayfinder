@@ -2,6 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  atomicWriteProjectFile,
+  ensureSafeProjectDirectory,
+  publishProjectDirectory,
+  removeProjectDirectory,
+  removeProjectFile,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
 
 const toolRoot = path.dirname(fileURLToPath(import.meta.url));
 const specRoot = path.resolve(toolRoot, '..');
@@ -472,13 +480,20 @@ function escapeFilterPath(filePath) {
   return filePath.replaceAll('\\', '\\\\').replaceAll(':', '\\:').replaceAll("'", "\\'");
 }
 
-function buildDrawFilters(review, stageRoot, fontPath) {
+function buildDrawFilters(review, stageRoot, fontPath, projectRoot = null) {
   const dpr = review.viewport.dpr;
   const filters = [];
   const texts = [];
   const addText = (text, name, options) => {
     const textPath = path.join(stageRoot, `.${name}.txt`);
-    fs.writeFileSync(textPath, text, 'utf8');
+    if (projectRoot) {
+      atomicWriteProjectFile(projectRoot, textPath, text, {
+        label: '标注截图文本',
+        mustNotExist: true,
+      });
+    } else {
+      fs.writeFileSync(textPath, text, 'utf8');
+    }
     texts.push(textPath);
     filters.push(
       `drawtext=fontfile='${escapeFilterPath(fontPath)}':textfile='${escapeFilterPath(textPath)}':expansion=none:fontcolor=${options.color}:fontsize=${options.size}:x=${options.x}:y=${options.y}`,
@@ -517,35 +532,47 @@ function buildDrawFilters(review, stageRoot, fontPath) {
 }
 
 function assertSafeOutputDirectory(outputDir, allowedRoot) {
-  const resolvedRoot = path.resolve(allowedRoot);
-  const resolvedOutput = path.resolve(outputDir);
-  const relative = path.relative(resolvedRoot, resolvedOutput);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
-    fail('输出目录必须是 AI UI 验收根目录下的独立项目目录。');
+  const requestedRoot = path.resolve(allowedRoot);
+  let existingAncestor = requestedRoot;
+  while (!fs.existsSync(existingAncestor)) {
+    const parent = path.dirname(existingAncestor);
+    if (parent === existingAncestor) fail('无法定位 AI UI 验收输出根目录。');
+    existingAncestor = parent;
   }
-  if (fs.existsSync(resolvedOutput) && fs.lstatSync(resolvedOutput).isSymbolicLink()) {
-    fail('输出目录不能是符号链接。');
-  }
-  if (fs.existsSync(resolvedOutput)) {
-    const unexpected = fs.readdirSync(resolvedOutput).filter((name) => !deliverableNames.has(name));
+  const ancestorRoot = fs.realpathSync(existingAncestor);
+  const rootSuffix = path.relative(path.resolve(existingAncestor), requestedRoot);
+  const canonicalRequestedRoot = path.resolve(ancestorRoot, rootSuffix);
+  ensureSafeProjectDirectory(ancestorRoot, canonicalRequestedRoot, 'AI UI 验收输出根目录');
+  const resolvedRoot = fs.realpathSync(canonicalRequestedRoot);
+  const outputRelative = path.relative(requestedRoot, path.resolve(outputDir));
+  const safeOutput = resolveSafeProjectPath(resolvedRoot, outputRelative, 'AI UI 验收输出目录');
+  if (safeOutput.exists) {
+    if (safeOutput.kind !== 'directory') fail('输出目录必须是普通目录。');
+    const unexpected = fs.readdirSync(safeOutput.absolutePath).filter((name) => !deliverableNames.has(name));
     if (unexpected.length > 0) fail(`输出目录包含未知文件，已停止以避免覆盖：${unexpected.join('、')}`);
   }
-  return resolvedOutput;
+  return { root: resolvedRoot, outputDir: safeOutput.absolutePath };
 }
 
-function swapOutputDirectory(stageRoot, outputDir) {
+function swapOutputDirectory(projectRoot, stageRoot, outputDir) {
   const backup = `${outputDir}.backup-${process.pid}-${Date.now()}`;
   let movedExisting = false;
   try {
     if (fs.existsSync(outputDir)) {
-      fs.renameSync(outputDir, backup);
+      publishProjectDirectory(projectRoot, outputDir, backup, { label: '既有 UI 验收输出备份' });
       movedExisting = true;
     }
-    fs.renameSync(stageRoot, outputDir);
-    if (movedExisting) fs.rmSync(backup, { recursive: true, force: true });
+    publishProjectDirectory(projectRoot, stageRoot, outputDir, { label: 'UI 验收输出目录' });
+    if (movedExisting) removeProjectDirectory(projectRoot, backup, { label: '既有 UI 验收输出备份' });
   } catch (error) {
-    if (fs.existsSync(outputDir)) fs.rmSync(outputDir, { recursive: true, force: true });
-    if (movedExisting && fs.existsSync(backup)) fs.renameSync(backup, outputDir);
+    try {
+      if (fs.existsSync(outputDir)) removeProjectDirectory(projectRoot, outputDir, { label: '失败的 UI 验收输出' });
+      if (movedExisting && fs.existsSync(backup)) {
+        publishProjectDirectory(projectRoot, backup, outputDir, { label: 'UI 验收输出恢复' });
+      }
+    } catch (cleanupError) {
+      error.cleanupError = cleanupError;
+    }
     throw error;
   }
 }
@@ -561,27 +588,40 @@ export function generateUiReview({
 }) {
   const dimensions = parsePngDimensions(screenshotPath);
   const review = normalizeReviewInput(input, dimensions);
-  const safeOutputDir = assertSafeOutputDirectory(outputDir, allowedOutputRoot);
+  const safeOutput = assertSafeOutputDirectory(outputDir, allowedOutputRoot);
+  const safeOutputDir = safeOutput.outputDir;
   const outputParent = path.dirname(safeOutputDir);
-  fs.mkdirSync(outputParent, { recursive: true });
+  ensureSafeProjectDirectory(safeOutput.root, outputParent, 'UI 验收输出父目录');
   const stageRoot = fs.mkdtempSync(path.join(outputParent, `.${path.basename(safeOutputDir)}-staging-`));
+  resolveSafeProjectPath(safeOutput.root, stageRoot, 'UI 验收暂存目录', {
+    mustExist: true,
+    allowAbsolute: true,
+  });
   try {
     const executable = resolveExecutable(ffmpegPath, ffmpegArgs, ['/opt/homebrew/bin/ffmpeg', 'ffmpeg']);
     const font = resolveFont(fontPath);
     const pngPath = path.join(stageRoot, 'ui-review.png');
     const markdownPath = path.join(stageRoot, 'ui-review.md');
-    const drawing = buildDrawFilters(review, stageRoot, font);
+    const drawing = buildDrawFilters(review, stageRoot, font, safeOutput.root);
     const result = spawnSync(
       executable.command,
       [...executable.args, '-hide_banner', '-loglevel', 'error', '-y', '-i', screenshotPath, '-vf', drawing.filter, '-frames:v', '1', pngPath],
       { encoding: 'utf8' },
     );
-    for (const textPath of drawing.texts) fs.rmSync(textPath, { force: true });
+    for (const textPath of drawing.texts) removeProjectFile(safeOutput.root, textPath, { label: '标注截图文本' });
     if (result.status !== 0 || !fs.existsSync(pngPath)) {
       fail(`标注截图生成失败：${(result.stderr || result.stdout || '未知错误').trim()}`);
     }
-    fs.writeFileSync(markdownPath, renderReviewMarkdown(review), 'utf8');
-    swapOutputDirectory(stageRoot, safeOutputDir);
+    resolveSafeProjectPath(safeOutput.root, pngPath, '标注截图', {
+      mustExist: true,
+      allowDirectory: false,
+      allowAbsolute: true,
+    });
+    atomicWriteProjectFile(safeOutput.root, markdownPath, renderReviewMarkdown(review), {
+      label: 'UI 验收 Markdown',
+      mustNotExist: true,
+    });
+    swapOutputDirectory(safeOutput.root, stageRoot, safeOutputDir);
     return {
       outputDir: safeOutputDir,
       pngPath: path.join(safeOutputDir, 'ui-review.png'),
@@ -591,7 +631,11 @@ export function generateUiReview({
       mergedCount: review.mergedCount,
     };
   } catch (error) {
-    if (fs.existsSync(stageRoot)) fs.rmSync(stageRoot, { recursive: true, force: true });
+    try {
+      if (fs.existsSync(stageRoot)) removeProjectDirectory(safeOutput.root, stageRoot, { label: 'UI 验收暂存目录' });
+    } catch (cleanupError) {
+      error.cleanupError = cleanupError;
+    }
     throw error;
   }
 }

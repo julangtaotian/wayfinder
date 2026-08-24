@@ -2,7 +2,15 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { runBootstrap } from './bootstrap-project.mjs';
+import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
 import {
+  ProjectPathError,
+  projectPathFailure,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
+import {
+  LEGACY_WORKFLOW_PATH,
+  WAYFINDER_PATH,
   readLegacyWorkflowSettings,
   readWayfinderSettings,
 } from './workflow-layout.mjs';
@@ -15,15 +23,24 @@ function preservedScopeSettings(target, requestedDeep) {
 }
 
 export function runUpdate({ target = process.cwd(), write = false, deep = false } = {}) {
-  const preservedSettings = preservedScopeSettings(target, deep);
-  return runBootstrap({
-    target,
-    write,
-    updateManaged: true,
-    onlyManaged: true,
-    deep,
-    preservedScopeSettings: preservedSettings,
-  });
+  const root = resolveProjectRoot(target);
+  assertSafeProjectRoot(root);
+  try {
+    resolveSafeProjectPath(root, WAYFINDER_PATH, 'Wayfinder 元数据');
+    resolveSafeProjectPath(root, LEGACY_WORKFLOW_PATH, '旧工作流元数据');
+    const preservedSettings = preservedScopeSettings(root, deep);
+    return runBootstrap({
+      target: root,
+      write,
+      updateManaged: true,
+      onlyManaged: true,
+      deep,
+      preservedScopeSettings: preservedSettings,
+    });
+  } catch (error) {
+    if (!(error instanceof ProjectPathError)) throw error;
+    return projectPathFailure(error, { write });
+  }
 }
 
 function parseArgs(argv) {

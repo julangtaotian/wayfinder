@@ -209,7 +209,6 @@ function initializeGitBaseline(root, relativePath = 'tests/existing.spec.js') {
 function renderDeliveryRequirement({
   status = '已验收',
   acceptanceChecked = true,
-  taskChecked = true,
   testStrategy = '复用',
   testPath = 'tests/existing.spec.js',
   verificationResult = '通过',
@@ -218,7 +217,6 @@ function renderDeliveryRequirement({
   decisionValue = '使用验证记录',
 } = {}) {
   const check = acceptanceChecked ? 'x' : ' ';
-  const task = taskChecked ? 'x' : ' ';
   const manualRecord = includeManual
     ? `| V-02 | 人工 | 视口：1440px；检查项：卡片不重叠 | 2026-07-24 | 通过 | ${manualEvidence} |\n`
     : '';
@@ -867,7 +865,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.15.0');
+  assert.equal(result.version, '0.16.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);

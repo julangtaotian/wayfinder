@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 import {
   EVIDENCE_SCHEMA_VERSION,
   auditProjectVerificationEvidence,
+  computeVerificationSemanticBinding,
   computeWorkspaceFingerprint,
+  createEvidenceFileDescriptor,
   extractEvidenceReferences,
   normalizeEvidenceCommand,
   runVerificationEvidence,
@@ -42,29 +44,107 @@ function createFixture(context, { evidenceRequired = true } = {}) {
   write(root, 'package.json', '{"name":"evidence-fixture","private":true,"scripts":{"test":"node --test tests/*.test.mjs"}}\n');
   write(root, 'src/settlement.mjs', 'export const total = (values) => values.reduce((sum, value) => sum + value, 0);\n');
   write(root, 'tests/settlement.test.mjs', "// [TC-01] 复杂订单结算\nexport const covered = true;\n");
-  write(root, 'requirements/REQ-2026-001-evidence.md', '# fixture\n');
+  write(root, 'requirements/REQ-2026-001-evidence.md', `# fixture
+
+## 决策台账
+
+| ID | 决策项 | 状态 | 取值 | 来源 |
+| --- | --- | --- | --- | --- |
+| D-01 | 证据合同 | 已确认 | 受控执行与可信聚合 | fixture |
+
+## 修订记录
+
+| 修订 | 日期 | 影响决策 | 影响验收 | 验证与任务处理 |
+| --- | --- | --- | --- | --- |
+| R-01 | 2026-08-18 | D-01 | A-01 | 建立 fixture。 |
+
+## 验证记录
+
+| 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
+| --- | --- | --- | --- | --- | --- |
+| V-01 | 自动 | 本地聚焦测试 | 待执行 | 计划 | 待执行 |
+| V-02 | 自动 | 外部 CI 引用 | 待执行 | 计划 | 待执行 |
+
+## 验收标准
+
+- [ ] [A-01] 机器证据必须对应当前测试语义。
+
+## 验收—证据映射
+
+| 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-01 | 证据完整性 | D-01 | 自动 | 待执行 | 证据可复算 | V-01、V-02 |
+`);
   write(root, 'openspec/changes/evidence-change/.openspec.yaml', [
     'schema: spec-driven',
     'test_plan: required',
     evidenceRequired ? 'verification_evidence: required' : '',
     '',
   ].filter((line, index, values) => line || index === values.length - 1).join('\n'));
-  write(root, 'openspec/changes/evidence-change/test-plan.md', '# fixture plan\n\n- 变更：evidence-change\n');
+  write(root, 'openspec/changes/evidence-change/test-plan.md', `# fixture plan
+
+- 变更：evidence-change
+
+## 测试用例
+
+### TC-01：复杂订单结算
+
+- 关联决策：D-01
+- 关联验收：A-01
+- 关联规格：fixture
+- 状态矩阵：用户操作、错误态
+- 前置条件：fixture 已建立
+- 测试数据：订单数据
+- 测试替身：无
+- 操作：运行聚焦测试
+- 可观察断言：定位命中且退出码为零
+- 目标测试：\`tests/settlement.test.mjs\`
+- 测试定位：\`[TC-01] 复杂订单结算\`
+- 聚焦命令：\`node --test tests/settlement.test.mjs\`
+- 关联验证：V-01
+
+### TC-02：外部 CI 引用
+
+- 关联决策：D-01
+- 关联验收：A-01
+- 关联规格：fixture
+- 状态矩阵：用户操作、错误态
+- 前置条件：fixture 已建立
+- 测试数据：外部 URL
+- 测试替身：无网络读取
+- 操作：记录外部引用
+- 可观察断言：外部引用不提升为可信通过
+- 目标测试：\`tests/settlement.test.mjs\`
+- 测试定位：\`[TC-02] 外部 CI 引用\`
+- 聚焦命令：\`node --test tests/settlement.test.mjs\`
+- 关联验证：V-02
+`);
+  write(root, 'outputs/evidence-fixture/stdout.log', '[TC-01] 复杂订单结算\n');
+  const changePath = path.join(root, 'openspec', 'changes', 'evidence-change');
+  const requirementPath = path.join(root, 'requirements', 'REQ-2026-001-evidence.md');
   return {
     root,
-    changePath: path.join(root, 'openspec', 'changes', 'evidence-change'),
-    requirementPath: path.join(root, 'requirements', 'REQ-2026-001-evidence.md'),
+    changePath,
+    requirementPath,
+    logDescriptor: createEvidenceFileDescriptor(root, 'outputs/evidence-fixture/stdout.log', 'fixture 日志'),
+    semanticBindings: Object.fromEntries(['V-01', 'V-02'].map((evidenceId) => [evidenceId, computeVerificationSemanticBinding({
+      requirementPath,
+      changePath,
+      evidenceId,
+    })])),
   };
 }
 
 function localManifest(fixture, overrides = {}) {
+  const evidenceId = overrides.evidenceId || 'V-01';
   return {
     schemaVersion: EVIDENCE_SCHEMA_VERSION,
-    evidenceId: 'V-01',
+    evidenceId,
     kind: 'local-command',
     status: 'passed',
     requirement: 'requirements/REQ-2026-001-evidence.md',
     change: 'evidence-change',
+    semanticBinding: fixture.semanticBindings[evidenceId] || fixture.semanticBindings['V-01'],
     command: {
       executable: process.execPath,
       args: ['--test', 'tests/settlement.test.mjs'],
@@ -78,7 +158,7 @@ function localManifest(fixture, overrides = {}) {
     startedAt: '2026-08-18T01:00:00.000Z',
     completedAt: '2026-08-18T01:00:01.000Z',
     exitCode: 0,
-    logs: [],
+    logs: [{ stream: 'stdout', ...fixture.logDescriptor }],
     artifacts: [],
     ...overrides,
   };
@@ -117,7 +197,7 @@ test('[TC-01] 受控执行与零测试证据保护', async (context) => {
   assert.equal(passed.status, 'passed');
   assert.equal(passed.locatorMatches, 1);
   assert.equal(fs.existsSync(evidencePath), true);
-  assert.equal(fs.existsSync(path.join(logRoot, 'stdout.log')), true);
+  assert.equal(fs.existsSync(path.join(fixture.root, passed.logs.find((item) => item.stream === 'stdout').path)), true);
   const persisted = fs.readFileSync(evidencePath, 'utf8');
 
   const zero = await runVerificationEvidence({
@@ -323,7 +403,8 @@ test('[TC-03] 证据完成门禁与历史兼容', (context) => {
     expectedId: 'V-02',
   });
   assert.equal(external.ok, true);
-  assert.equal(external.trust, 'external-unverified');
+  assert.equal(external.status, 'recorded');
+  assert.equal(external.trust, 'external-recorded');
 
   const historyFixture = createFixture(context, { evidenceRequired: false });
   fs.rmSync(historyFixture.changePath, { recursive: true, force: true });

@@ -1,0 +1,66 @@
+{
+  "artifacts": [],
+  "change": "harden-workflow-trust-boundary",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-24T02:08:57.491Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "9021c58f7ac04faf2b98b71cb150ec12c51db560",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 跨平台诊断与仓库统一验证合同",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 43307,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824020808412-27424-3abdbded/stdout.log",
+      "sha256": "ddd2293c6b4e437ee27b71fa981949be41b68eb4739e6d3ca888a4e7b47e897a",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824020808412-27424-3abdbded/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-028-workflow-trust-boundary.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02",
+      "A-06",
+      "A-07"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-03",
+      "D-04",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-02",
+    "sha256": "c9c77dbdec8b31980ccb746fd2018ce1b0e793887323e836065b215d22415c46",
+    "testCaseIds": [
+      "TC-03"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-24T02:08:08.414Z",
+  "status": "passed",
+  "workspaceFingerprint": "e4e1c354e859d5238427f547ba502ec4779c00da1b6b265a031eb0f7933dc8f9"
+}

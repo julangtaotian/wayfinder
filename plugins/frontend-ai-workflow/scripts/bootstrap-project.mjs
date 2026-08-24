@@ -6,13 +6,19 @@ import { inspectProject } from './inspect-project.mjs';
 import { BUNDLED_OPENSPEC_VERSION } from './openspec-cli.mjs';
 import { assertSafeProjectRoot, collectProjectScope } from './collect-project-scope.mjs';
 import {
+  ProjectPathError,
+  atomicWriteProjectFile,
+  projectPathFailure,
+  resolveSafeProjectPath,
+} from './project-path-safety.mjs';
+import {
   detectWorkflowLayout,
   findManagedRange,
   LEGACY_WORKFLOW_PATH,
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.15.0';
+export const WORKFLOW_VERSION = '0.16.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
@@ -249,7 +255,7 @@ function replaceManagedBlocks(existing, rendered, descriptor) {
 
 function planFile(root, descriptor, variables, options) {
   const templatePath = path.join(templateRoot, descriptor.source);
-  const targetPath = path.join(root, descriptor.target);
+  const targetPath = resolveSafeProjectPath(root, descriptor.target, '受管目标').absolutePath;
   const rendered = options.contentOverrides[descriptor.target]
     || renderTemplate(fs.readFileSync(templatePath, 'utf8'), variables);
 
@@ -273,6 +279,7 @@ function planFile(root, descriptor, variables, options) {
     }
     return { file: descriptor.target, action: 'update', content };
   } catch (error) {
+    if (error instanceof ProjectPathError) throw error;
     return { file: descriptor.target, action: 'conflict', reason: error.message };
   }
 }
@@ -289,38 +296,54 @@ export function runBootstrap({
 } = {}) {
   const inspection = inspectProject(target);
   assertSafeProjectRoot(inspection.root);
-  // 旧布局只能由显式迁移调用接管，普通初始化和升级不得隐式产生两套上下文。
-  const layout = detectWorkflowLayout(inspection.root);
-  if (layout === 'legacy' && !allowLegacy) {
+  let layout = null;
+  let scope = null;
+  let planned = [];
+  try {
+    // 预览与写入共享相同预检，避免规划阶段先跟随项目内链接读取现有内容。
+    for (const descriptor of FILES) {
+      resolveSafeProjectPath(inspection.root, descriptor.target, '受管目标');
+    }
+    resolveSafeProjectPath(inspection.root, LEGACY_WORKFLOW_PATH, '旧工作流元数据');
+    // 旧布局只能由显式迁移调用接管，普通初始化和升级不得隐式产生两套上下文。
+    layout = detectWorkflowLayout(inspection.root);
+    if (layout === 'legacy' && !allowLegacy) {
+      return {
+        ok: true,
+        write,
+        version: WORKFLOW_VERSION,
+        layout,
+        migrationRequired: true,
+        inspection,
+        scope: null,
+        actions: [{ file: LEGACY_WORKFLOW_PATH, action: 'skip', reason: '检测到旧工作流布局，请先执行 Wayfinder 迁移预览' }],
+      };
+    }
+    scope = deep ? collectProjectScope(inspection.root) : null;
+    const variables = templateVariables(inspection, scope, preservedScopeSettings);
+    planned = FILES.map((descriptor) =>
+      planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides }),
+    );
+
+    if (planned.some((item) => item.action === 'conflict')) {
+      return { ok: false, write, version: WORKFLOW_VERSION, layout, inspection, scope, actions: publicActions(planned) };
+    }
+
+    if (write) {
+      for (const item of planned) {
+        if (!['create', 'update'].includes(item.action)) continue;
+        atomicWriteProjectFile(inspection.root, item.file, item.content, { label: '受管目标' });
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof ProjectPathError)) throw error;
     return {
-      ok: true,
-      write,
+      ...projectPathFailure(error, { write, actions: publicActions(planned) }),
       version: WORKFLOW_VERSION,
       layout,
-      migrationRequired: true,
       inspection,
-      scope: null,
-      actions: [{ file: LEGACY_WORKFLOW_PATH, action: 'skip', reason: '检测到旧工作流布局，请先执行 Wayfinder 迁移预览' }],
+      scope,
     };
-  }
-  const scope = deep ? collectProjectScope(inspection.root) : null;
-  const variables = templateVariables(inspection, scope, preservedScopeSettings);
-  const descriptors = FILES;
-  const planned = descriptors.map((descriptor) =>
-    planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides }),
-  );
-
-  if (planned.some((item) => item.action === 'conflict')) {
-    return { ok: false, write, version: WORKFLOW_VERSION, layout, inspection, scope, actions: publicActions(planned) };
-  }
-
-  if (write) {
-    for (const item of planned) {
-      if (!['create', 'update'].includes(item.action)) continue;
-      const targetPath = path.join(inspection.root, item.file);
-      fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-      fs.writeFileSync(targetPath, item.content, 'utf8');
-    }
   }
 
   return { ok: true, write, version: WORKFLOW_VERSION, layout: 'wayfinder', inspection, scope, actions: publicActions(planned) };

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { atomicWriteProjectFile } from './project-path-safety.mjs';
 import pixelmatch from '../runtime/playwright/node_modules/pixelmatch/index.js';
 
 const require = createRequire(import.meta.url);
@@ -141,7 +142,7 @@ function compareDom(assertions, actualObservations) {
   return { observations, findings, inconclusive };
 }
 
-function compareImage(imageConfig, actualPath, expectedPath, diffPath) {
+function compareImage(imageConfig, actualPath, expectedPath, diffPath, projectRoot = null) {
   const actual = readPng(actualPath, '实际截图');
   const expected = readPng(expectedPath, '设计截图');
   const diff = new PNG({ width: actual.width, height: actual.height });
@@ -254,8 +255,15 @@ function compareImage(imageConfig, actualPath, expectedPath, diffPath) {
       });
     }
   }
-  fs.mkdirSync(path.dirname(diffPath), { recursive: true });
-  fs.writeFileSync(diffPath, PNG.sync.write(diff));
+  if (projectRoot) {
+    atomicWriteProjectFile(projectRoot, diffPath, PNG.sync.write(diff), {
+      label: '像素差异图',
+      encoding: undefined,
+    });
+  } else {
+    fs.mkdirSync(path.dirname(diffPath), { recursive: true });
+    fs.writeFileSync(diffPath, PNG.sync.write(diff));
+  }
   return {
     observations,
     findings,
@@ -268,7 +276,7 @@ function compareImage(imageConfig, actualPath, expectedPath, diffPath) {
   };
 }
 
-export function compareUiEvidence({ scenario, actualScreenshot, expectedScreenshot, domObservations = [], diffPath }) {
+export function compareUiEvidence({ projectRoot = null, scenario, actualScreenshot, expectedScreenshot, domObservations = [], diffPath }) {
   const runtime = inspectComparisonRuntime();
   if (!runtime.ok) fail(runtime.reason);
   const comparison = scenario?.comparison;
@@ -282,7 +290,7 @@ export function compareUiEvidence({ scenario, actualScreenshot, expectedScreensh
     ? compareDom(comparison.dom, domObservations)
     : { observations: [], findings: [], inconclusive: false };
   const image = ['image', 'hybrid'].includes(comparison.mode)
-    ? compareImage(comparison.image, actualScreenshot, expectedScreenshot, diffPath)
+    ? compareImage(comparison.image, actualScreenshot, expectedScreenshot, diffPath, projectRoot)
     : { observations: [], findings: [], inconclusive: false, metrics: null };
   const observations = [...dom.observations, ...image.observations];
   if (visualEvidenceMissing) {

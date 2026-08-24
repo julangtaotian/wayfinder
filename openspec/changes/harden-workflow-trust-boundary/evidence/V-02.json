@@ -1,0 +1,69 @@
+{
+  "artifacts": [],
+  "change": "harden-workflow-trust-boundary",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=机器证据语义完整性与信任聚合",
+      "tests/workflow-trust-boundary.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-24T02:07:57.333Z",
+  "evidenceId": "V-02",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "9021c58f7ac04faf2b98b71cb150ec12c51db560",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 机器证据语义完整性与信任聚合",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 277,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824020757092-27323-ab7e4ac1/stdout.log",
+      "sha256": "27227b8ee69284c07b759d0e4cf0996b04f6403ee27fddd301daefd906c4c377",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824020757092-27323-ab7e4ac1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-028-workflow-trust-boundary.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-04",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10"
+    ],
+    "revision": "R-02",
+    "sha256": "eda8f21e8452ddebf0a52367ff673df8a49868ccddc73816ac7e3f00a2eaead6",
+    "testCaseIds": [
+      "TC-02"
+    ],
+    "verificationId": "V-02",
+    "version": 1
+  },
+  "startedAt": "2026-08-24T02:07:57.094Z",
+  "status": "passed",
+  "workspaceFingerprint": "e4e1c354e859d5238427f547ba502ec4779c00da1b6b265a031eb0f7933dc8f9"
+}

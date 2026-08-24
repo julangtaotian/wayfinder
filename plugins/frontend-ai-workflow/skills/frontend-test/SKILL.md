@@ -59,7 +59,7 @@ The inspector and validators are read-only. The evidence command defaults to a z
 3. Classify the actual outcome as one of: `通过`, `产品实现缺陷`, `测试设计错误`, `测试代码错误`, `需求歧义`, `环境阻塞`, or `历史无关失败`. Keep focused, related, full, visual, and manual evidence distinct.
 4. Update a case and its `V-*` record to pass only after a real successful execution generated `openspec/changes/<change>/evidence/<V-ID>.json`; reference that JSON alongside any human-readable summary. Failed or unexecuted work remains explicit.
 5. For visual cases, delegate browser capture and comparison to `$frontend-ui-review` and reference its page, viewport, scenario, run, and persisted artifacts. For other manual cases, record device or environment, operations, observable checks, and evidence paths.
-6. Run the complete validator only after all applicable cases and verification records have valid passing evidence. The validator recalculates freshness and never reruns the recorded command.
+6. Run the complete validator only after all applicable cases and verification records have valid passing evidence. The validator recalculates the selected requirement/test-plan semantic binding, workspace freshness, and every persisted log or artifact descriptor; it never reruns the recorded command.
 
 ## Guardrails
 
@@ -68,4 +68,4 @@ The inspector and validators are read-only. The evidence command defaults to a z
 - Never modify business source, install dependencies, silently overwrite project tests, edit generated baselines by default, or claim an unexecuted command passed.
 - Vue 3 + Vite + Vitest is the certified first-version fixture. Other runners receive evidence-based limited support and must not be described as fully certified.
 - Only `test_plan: required` opts a change into the new completion gate; historical changes without that declaration keep their prior behavior.
-- Only `verification_evidence: required` opts a change into strict V-* machine-evidence enforcement. Historical Markdown-only records remain readable with warnings; an `external-ci` manifest stays explicitly external unless remote verification is recorded.
+- Only `verification_evidence: required` opts a change into strict V-* machine-evidence enforcement. Historical Markdown-only and schema v1 records remain read-only warnings outside a strict active change. An `external-ci` manifest is always `external-recorded` until a future trusted remote reader supplies an independent receipt; a local `remotelyVerified` field cannot promote trust.
