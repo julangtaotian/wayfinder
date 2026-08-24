@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：已实现
+- 状态：已验证
 - 需求：`requirements/REQ-2026-029-dynamic-dependency-context.md`
 - 变更：add-dynamic-dependency-context
 - 需求修订基线：R-01
@@ -109,7 +109,7 @@
 
 ### TC-05：人工复核最终实现提交真实五平台矩阵
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：人工
@@ -126,5 +126,5 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
+- 结果分类：通过
 - 证据：`openspec/changes/add-dynamic-dependency-context/verification.md`

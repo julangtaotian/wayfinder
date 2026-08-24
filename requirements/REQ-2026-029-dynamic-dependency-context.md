@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：待验证
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.17.0
@@ -167,7 +167,7 @@
 | V-02 | 自动 | `node --test tests/dynamic-dependency-context.test.mjs`，覆盖检查、初始化、升级、画像兼容和自定义内容保留 | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md`；`openspec/changes/add-dynamic-dependency-context/evidence/V-02.json` |
 | V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md`；`openspec/changes/add-dynamic-dependency-context/evidence/V-03.json` |
 | V-04 | 人工 | 复核动态依赖事实、有限兼容信号、AI 推断和未覆盖边界在需求、模板与说明中表达一致 | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md` |
-| V-05 | 人工 | 复核项：最终提交 SHA 与 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 CI 矩阵任务及状态 | 待执行 | 计划 | `openspec/changes/add-dynamic-dependency-context/verification.md` |
+| V-05 | 人工 | 复核实现提交 `74182f45164fccc66c9632808f79c0fd2edcea9f` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 CI 矩阵任务及状态 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32699924656`；`openspec/changes/add-dynamic-dependency-context/verification.md` |
 
 ## 验收标准
 
@@ -176,7 +176,7 @@
 - [x] [A-03] AGENTS、Wayfinder、OpenSpec 与分析规则要求 AI 基于完整动态事实、配置和源码总结职责，并明确事实、推断和待确认项。
 - [x] [A-04] 现有 preset、终端与平台画像保持向后兼容且被准确标注为有限兼容信号，不再被当成完整框架或能力结论。
 - [x] [A-05] 默认预览、显式受管升级、自定义内容保护和无联网/安装/执行依赖边界保持不变。
-- [ ] [A-06] 聚焦、本地统一、官方 validators 和最终提交五平台 CI 按分层证据完成，结论不扩张到传递依赖、运行时能力、漏洞或完整兼容性。
+- [x] [A-06] 聚焦、本地统一、官方 validators 和最终提交五平台 CI 按分层证据完成，结论不扩张到传递依赖、运行时能力、漏洞或完整兼容性。
 
 ## 验收—证据映射
 

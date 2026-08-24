@@ -5,7 +5,7 @@
 - 动态画像只证明根 `package.json` 的合法直接依赖声明、分组、版本说明、稳定顺序和摘要计数，不证明依赖已安装、已使用、兼容、安全、无漏洞或适合升级。
 - preset、终端画像和平台画像继续提供有限兼容信号；未知框架、私有包和未预置第三方依赖仍完整进入 `dependencyProfile.packages`，不能因兼容画像未命中而写成不存在。
 - Monorepo/workspaces 子应用、传递依赖、registry、漏洞、许可证、远程设计同步和远程 CI/PR 读写仍不在本阶段范围内。
-- V-01～V-03 已由受控取证入口生成 schema v2 清单，命令、TC 定位命中、语义绑定、工作区指纹和日志摘要均已持久化；V-04 已人工通过；V-05 必须等待最终 WebStorm 提交对应的五平台 GitHub Actions 全部成功。
+- V-01～V-03 已由受控取证入口生成 schema v2 清单，命令、TC 定位命中、语义绑定、工作区指纹和日志摘要均已持久化；V-04 已人工通过；V-05 已人工复核实现提交 `74182f45164fccc66c9632808f79c0fd2edcea9f` 的首次五平台 GitHub Actions，全部成功且没有失败、取消或重跑任务。
 
 ## V-01：动态直接依赖事实合同
 
@@ -51,7 +51,9 @@
 
 ## V-05：真实五平台矩阵
 
-- 状态：待执行。
-- 前置：使用 WebStorm 提交并推送最终实现，取得精确提交 SHA 和 GitHub Actions 运行 URL。
-- 必须通过：Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五个任务均为成功；任一失败、取消或缺失都保持未完成。
-- 失败处理：先记录失败平台、步骤、稳定错误字段、根因和新增回归定位，再修复并对新的精确提交重新核对全部五个平台。
+- 日期：2026-08-24。
+- 精确提交：`74182f45164fccc66c9632808f79c0fd2edcea9f`，提交说明 `feat: add dynamic dependency context`，由 WebStorm 提交并推送至 `origin/codex/dynamic-dependency-context`。
+- 运行：[GitHub Actions #32699924656](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656)，`run_attempt=1`，总状态 `completed/success`。
+- 结果：Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五个任务全部 `completed/success`；没有失败步骤、取消任务或重跑记录。
+- 任务：[Linux x64](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656/job/97349215288)、[Linux ARM64](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656/job/97349215417)、[Windows x64](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656/job/97349215194)、[macOS Intel](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656/job/97349215294)、[macOS ARM64](https://github.com/julangtaotian/wayfinder/actions/runs/32699924656/job/97349215339)。
+- 边界：这是对公开 GitHub Actions 状态的人工复核，不表示插件已支持远程 CI/PR 状态读取或回写；矩阵只证明该提交在仓库声明的五个平台发布链通过，不证明任意目标项目、依赖运行时、漏洞或完整兼容性。
