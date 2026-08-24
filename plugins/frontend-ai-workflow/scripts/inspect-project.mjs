@@ -3,6 +3,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import {
+  collectDependencyProfile,
+  DEPENDENCY_SUMMARY_LIMIT,
+  formatDependencyPackage,
+} from './dependency-profile.mjs';
+import {
   collectPlatformProjectEvidence,
   detectTargetProfile,
 } from './project-target-profile.mjs';
@@ -45,36 +50,6 @@ const NATIVE_MINI_PROGRAM_PATH_CANDIDATES = {
   router: ['app.json'],
   store: ['app.js'],
 };
-
-const TECH_PACKAGES = [
-  ['vue', 'Vue'],
-  ['react', 'React'],
-  ['vite', 'Vite'],
-  ['webpack', 'Webpack'],
-  ['vue-router', 'Vue Router'],
-  ['react-router-dom', 'React Router'],
-  ['vuex', 'Vuex'],
-  ['pinia', 'Pinia'],
-  ['redux', 'Redux'],
-  ['element-plus', 'Element Plus'],
-  ['element-ui', 'Element UI'],
-  ['antd', 'Ant Design'],
-  ['@mui/material', 'MUI'],
-  ['vant', 'Vant'],
-  ['@vant/weapp', 'Vant Weapp'],
-  ['antd-mobile', 'Ant Design Mobile'],
-  ['@nutui/nutui', 'NutUI'],
-  ['@dcloudio/uni-app', 'uni-app'],
-  ['@dcloudio/vite-plugin-uni', 'uni-app Vite Plugin'],
-  ['@tarojs/taro', 'Taro'],
-  ['@tarojs/cli', 'Taro CLI'],
-  ['@tarojs/vite-runner', 'Taro Vite Runner'],
-  ['@tarojs/webpack5-runner', 'Taro Webpack Runner'],
-  ['remax', 'Remax'],
-  ['vitest', 'Vitest'],
-  ['jest', 'Jest'],
-  ['typescript', 'TypeScript'],
-];
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -278,14 +253,16 @@ function detectProjectPaths(root, platformProfile) {
   }));
 }
 
-function techStack(packageJson, platformProfile) {
-  const deps = dependencyMap(packageJson);
+function techStack(dependencyProfile, platformProfile) {
   const stack = [];
   if (platformProfile.frameworks.includes('wechat-native')) stack.push('微信原生小程序');
-  stack.push(...TECH_PACKAGES
-    .filter(([packageName]) => deps[packageName])
-    .map(([packageName, label]) => `${label} ${deps[packageName]}`));
-  return stack.length ? stack : ['未识别'];
+  stack.push(...dependencyProfile.packages
+    .slice(0, DEPENDENCY_SUMMARY_LIMIT)
+    .map(formatDependencyPackage));
+  if (dependencyProfile.summary.omittedPackages) {
+    stack.push(`另 ${dependencyProfile.summary.omittedPackages} 项见 dependencyProfile.packages`);
+  }
+  return stack.length ? stack : ['未声明合法直接依赖'];
 }
 
 export function inspectProject(target = process.cwd()) {
@@ -296,6 +273,7 @@ export function inspectProject(target = process.cwd()) {
   }
 
   const packageJson = readJson(packagePath);
+  const dependencyProfile = collectDependencyProfile(packageJson);
   const packageManager = detectPackageManager(root);
   const scripts = packageJson.scripts || {};
   const targetProfile = detectTargetProfile(
@@ -333,7 +311,8 @@ export function inspectProject(target = process.cwd()) {
     name: packageJson.name || path.basename(root),
     preset: detectPreset(packageJson, targetProfile.platform),
     packageManager,
-    techStack: techStack(packageJson, targetProfile.platform),
+    techStack: techStack(dependencyProfile, targetProfile.platform),
+    dependencyProfile,
     targetProfile,
     scriptNames,
     commands,

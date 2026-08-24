@@ -18,7 +18,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.16.0';
+export const WORKFLOW_VERSION = '0.17.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
@@ -133,6 +133,13 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
     PROJECT_NAME: inspection.name,
     PRESET: inspection.preset,
     TECH_STACK: inspection.techStack.join('、'),
+    DEPENDENCY_PROFILE_SCHEMA: inspection.dependencyProfile.schemaVersion,
+    DEPENDENCY_PROFILE_SOURCE: inspection.dependencyProfile.source,
+    DEPENDENCY_PACKAGE_COUNT: inspection.dependencyProfile.totalPackages,
+    DEPENDENCY_SUMMARY_STATUS: inspection.dependencyProfile.summary.status,
+    DEPENDENCY_SUMMARY_DISPLAYED: inspection.dependencyProfile.summary.displayedPackages,
+    DEPENDENCY_SUMMARY_OMITTED: inspection.dependencyProfile.summary.omittedPackages,
+    DEPENDENCY_SUMMARY: inspection.dependencyProfile.summary.text,
     TARGET_FORM_FACTOR: inspection.targetProfile.formFactor,
     TARGET_PROFILE_SOURCE: inspection.targetProfile.source,
     TARGET_PROFILE_EVIDENCE: targetEvidence,

@@ -16,7 +16,7 @@ Perform a read-only audit of the target repository.
    node <plugin-root>/scripts/check-project.mjs --target <repository-root>
    ```
 
-3. Parse the report into errors, warnings, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, historical verification-evidence audit, static observations, completed-but-active changes, and planning-engine status.
+3. Parse the report into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, historical verification-evidence audit, static observations, completed-but-active changes, and planning-engine status.
 4. When the user selects a requirement and active change, also run:
 
    ```bash
@@ -30,6 +30,7 @@ Perform a read-only audit of the target repository.
 ## Interpretation
 
 - Missing required workflow files are errors.
+- `dependencyProfile.packages` is the complete root direct-dependency declaration for this audit; its human summary may be truncated. Report declaration facts separately from usage, installation, compatibility, safety and execution evidence. It does not cover workspaces, transitive packages, registry metadata, vulnerabilities or licenses.
 - Missing optional lint or typecheck scripts are warnings, not invented commands.
 - `commandSemantics` separates the default build from the delivery-build candidate and marks known failing test placeholders as `placeholder`. `commandEvidence.status: detected` only proves the script was found; `placeholder` is unavailable, and a command is passed only when `executed: true` comes from an actual successful run.
 - `platformCommands.status: detected` only proves matching non-empty script names exist. Report their target, all development/build candidates, and evidence with `executed=false`; never describe a candidate as passed unless that exact command was run successfully. When an identified platform framework has no candidate, report the non-blocking warning and the need for a manual developer tool or external CI environment; for native WeChat mini programs, name WeChat DevTools explicitly.
@@ -44,6 +45,7 @@ Perform a read-only audit of the target repository.
 - `verificationEvidenceAudit.executed` is always false. Use `counts` for the summary and `diagnostics` for exact targets; report `legacy_markdown_evidence`, `stale_active_evidence_path`, and `external_evidence_unverified` as migration or trust-boundary warnings. Do not rewrite historical requirements or claim that external CI was remotely checked.
 - `legacy` 布局是迁移提醒，不等同于工作流损坏；说明需要 Wayfinder 迁移，且不要把检查命令当作迁移命令。
 - Existing business-code changes are context, not workflow failures.
+- Preset, target and platform profiles are finite compatibility signals. Unknown or private dependencies that are absent from those profiles still remain visible in the dynamic dependency profile.
 
 ## Guardrails
 

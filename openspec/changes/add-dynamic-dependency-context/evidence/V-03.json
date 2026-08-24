@@ -1,0 +1,68 @@
+{
+  "artifacts": [],
+  "change": "add-dynamic-dependency-context",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-24T06:56:04.690Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "531031cd49a8e2bd3de65cabf9d5e10611f74732",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 动态依赖上下文统一验证合同",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 43775,
+      "path": "outputs/verification-evidence/add-dynamic-dependency-context/V-03/20260824065518807-83815-5fa4e8a8/stdout.log",
+      "sha256": "908f99370754dfca81d31684447602709cdc197f902fa154139c7cc92c95169d",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/add-dynamic-dependency-context/V-03/20260824065518807-83815-5fa4e8a8/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-029-dynamic-dependency-context.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-04",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-04",
+      "D-06",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-01",
+    "sha256": "958080610962d38991bf0488feb10a4a4319ea5c18a7e76bb92a70512c2c271e",
+    "testCaseIds": [
+      "TC-03"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-24T06:55:18.808Z",
+  "status": "passed",
+  "workspaceFingerprint": "ef2226de704c83a2759d3f0792de427eb466ea9744c367152662e15b6f20d3d7"
+}

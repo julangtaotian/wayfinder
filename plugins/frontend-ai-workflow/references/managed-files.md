@@ -34,7 +34,7 @@ YAML 使用：
 Wayfinder 的项目导航使用三组独立 Markdown 标记：
 
 ```text
-<!-- frontend-ai-workflow:meta:start version=0.16.0 -->
+<!-- frontend-ai-workflow:meta:start version=0.17.0 -->
 <!-- frontend-ai-workflow:meta:end -->
 <!-- frontend-ai-workflow:scope:start version=0.4.0 -->
 <!-- frontend-ai-workflow:scope:end -->
@@ -44,7 +44,9 @@ Wayfinder 的项目导航使用三组独立 Markdown 标记：
 
 脚本刷新元数据与范围时只替换 `meta`、`scope` 区块；AI 在用户确认后写入 `analysis` 区块。三组标记必须各自恰好成对存在。没有这些标记的 Wayfinder 一律保留，不自动插入标记或覆盖。
 
-`meta` 区块中的 `scopeFingerprint`、`scopeScannedAt`、`scopeGitCommit` 和 `scopeGitDirty` 属于分析基线。`analysisStatus`、`analysisCoveredFiles` 和 `analysisUpdatedAt` 属于项目地图完成合同：`deepAnalysis: true` 只表示已经取得范围快照，不等于项目地图已完成。旧项目缺少这些字段时只报告刷新提醒，不因升级自动伪造。
+`meta` 区块中的 `dependencyProfileSchema`、`dependencyProfileSource`、`dependencyPackageCount` 和 `dependencySummaryStatus` 描述根 `package.json` 的动态直接依赖画像；摘要可能截断，AI 需要完整事实时必须回到检查结果的 `dependencyProfile.packages` 或根 `package.json`。`scopeFingerprint`、`scopeScannedAt`、`scopeGitCommit` 和 `scopeGitDirty` 属于分析基线。`analysisStatus`、`analysisCoveredFiles` 和 `analysisUpdatedAt` 属于项目地图完成合同：`deepAnalysis: true` 只表示已经取得范围快照，不等于项目地图已完成。旧项目缺少这些字段时只报告刷新提醒，不因升级自动伪造。
+
+普通初始化和升级可以刷新受管区块中的动态依赖摘要与元数据，但不得修改项目 `package.json`、安装依赖或把摘要推断成用途、兼容性和安全性结论。Monorepo 子应用、workspaces 和传递依赖仍在当前受管画像之外。
 
 深度扫描写入范围快照时将项目地图重置为 `pending`、覆盖数重置为 0；历史地图正文可以保留供参考，但在后续分析完成前不得作为完整事实源。普通升级必须保留已有的项目地图状态和覆盖统计。
 

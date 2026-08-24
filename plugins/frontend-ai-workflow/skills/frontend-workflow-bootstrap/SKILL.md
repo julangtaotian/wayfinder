@@ -28,7 +28,7 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
    node <plugin-root>/scripts/bootstrap-project.mjs --target <repository-root>
    ```
 
-5. Show the detected preset, real project commands, default and delivery build candidates, test and lint semantic status, files to create, files to skip, and warnings. Do not describe a `placeholder` test script as an available test entry or an `unverified` lint script as an available static check. For a native WeChat mini program without platform scripts, state that WeChat DevTools or an external CI environment must be recorded for preview, upload and device verification.
+5. Show the full root dependency count, dynamic dependency summary and truncation status, then the detected preset, real project commands, default and delivery build candidates, test and lint semantic status, files to create, files to skip, and warnings. Treat preset, target and platform profiles as limited compatibility signals, not as the complete technology stack. When the summary is truncated, use `dependencyProfile.packages` for complete analysis. Do not describe a `placeholder` test script as an available test entry or an `unverified` lint script as an available static check. For a native WeChat mini program without platform scripts, state that WeChat DevTools or an external CI environment must be recorded for preview, upload and device verification.
 6. When initialization is within the user's request, apply the previewed plan:
 
    ```bash
@@ -47,7 +47,7 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
    - Before claiming a complete analysis, read every file listed under `includedFiles` in batches. Record every file as read and classified, or retain its concrete unprocessed reason from the scope result.
    - Treat `validationEvidence` as the capability boundary: file enumeration, text reading and hashing do not prove syntax parsing, platform compilation, Lint or tests. Never claim one of those checks passed unless that exact tool or command was actually executed successfully.
    - Treat `observations` as non-blocking static hints. Report their paths and lines as risks or unresolved validation work; never upgrade a heuristic observation to a syntax or platform compilation error without the corresponding tool evidence.
-   - Build a project map, then deep-read and cross-check routes with pages, services with the request/config layers, permissions with route guards, build settings with routing settings, and test scripts with test assets.
+   - Build a project map, then deep-read and cross-check routes with pages, services with the request/config layers, permissions with route guards, build settings with routing settings, test scripts with test assets, and relevant direct dependencies with their configuration, imports and call sites. A declared dependency without usage evidence remains `declared, usage unresolved`; it is not proof of installation, compatibility, safety or successful execution.
    - Separate source-backed facts, multi-file inferences and unresolved questions. Every fact names a source file; every cross-file chain names its endpoints. Dynamic behavior and repository-external contracts remain unresolved questions.
    - After the user confirms writing, refresh the existing workflow files and create `frontend.md` only when it is absent. This refresh sets `analysisStatus` to `pending` and `analysisCoveredFiles` to 0; it does not claim that a previous project map still matches the new scope:
 
@@ -79,3 +79,4 @@ After the user confirms its create, preserve and delete plan, repeat with `--wri
 - Preserve all pre-existing user changes.
 - Stop when the target resolves to a filesystem root or user home directory.
 - A file inventory is not an architecture conclusion. Do not infer project behavior from names, directories or dependencies without reading evidence.
+- The dynamic profile covers root direct declarations only. Do not imply workspace, transitive dependency, registry, vulnerability, license or upgrade analysis unless separately performed.

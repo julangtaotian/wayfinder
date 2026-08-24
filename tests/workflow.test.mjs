@@ -876,7 +876,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.16.0');
+  assert.equal(result.version, '0.17.0');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);

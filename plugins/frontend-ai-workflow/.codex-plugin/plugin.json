@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.16.0+codex.20260824023425",
-  "description": "Reusable frontend delivery with traceable test-case planning, project-native test verification, and project-local deterministic UI review.",
+  "version": "0.17.0+codex.20260824064656",
+  "description": "Reusable frontend delivery with dynamic dependency context, traceable test-case planning, project-native test verification, and deterministic UI review.",
   "author": {
     "name": "lvshuai"
   },
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Frontend AI Workflow",
     "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect frontend repositories, create governed requirements, drive an OpenSpec 1.9 change lifecycle, form traceable TC test plans, implement project-native tests only when requested, gate completion on real evidence, and run portable deterministic UI review without a separate management platform.",
+    "longDescription": "Inspect frontend repositories with dynamic root dependency context, create governed requirements, drive an OpenSpec 1.9 change lifecycle, form traceable TC test plans, implement project-native tests only when requested, gate completion on real evidence, and run portable deterministic UI review without a separate management platform.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [

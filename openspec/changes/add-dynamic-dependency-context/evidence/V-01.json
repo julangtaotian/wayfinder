@@ -1,0 +1,71 @@
+{
+  "artifacts": [],
+  "change": "add-dynamic-dependency-context",
+  "command": {
+    "args": [
+      "--test",
+      "tests/dynamic-dependency-context.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-24T06:55:04.387Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "531031cd49a8e2bd3de65cabf9d5e10611f74732",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 动态直接依赖事实合同",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 547,
+      "path": "outputs/verification-evidence/add-dynamic-dependency-context/V-01/20260824065503403-83682-d4bf2218/stdout.log",
+      "sha256": "0c85525c8718d5e109053dff8415c050c5c4d4c30fc93d0fc87afff61de7965e",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/add-dynamic-dependency-context/V-01/20260824065503403-83682-d4bf2218/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-029-dynamic-dependency-context.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-01",
+    "sha256": "aa4ce2a9aeba6916b835f567672fa3166d321246caf3f11af9412698a771fba6",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 1
+  },
+  "startedAt": "2026-08-24T06:55:03.405Z",
+  "status": "passed",
+  "workspaceFingerprint": "ef2226de704c83a2759d3f0792de427eb466ea9744c367152662e15b6f20d3d7"
+}

@@ -19,7 +19,7 @@ Do not replace this validation with an informal self-check. Resolve every report
 
 ## Workflow
 
-1. Read the repository's `AGENTS.md`, `wayfinder/frontend.md` when present (otherwise the legacy frontend context), existing requirement template, related routes, pages, services, components, and tests.
+1. Read the repository's `AGENTS.md`, `wayfinder/frontend.md` when present (otherwise the legacy frontend context), the full dynamic dependency profile when available, existing requirement template, related routes, pages, services, components, and tests. Use the profile to discover declared packages, but use configuration, imports, call sites and tests to establish their actual role.
 2. Read `../../references/requirement-guidelines.md` relative to this skill.
 3. Use `requirements/_template.md` when present; otherwise use `../../assets/templates/requirements/_template.md`.
 4. Select the next unused `REQ-YYYY-NNN` identifier unless the user supplied one.
@@ -55,3 +55,5 @@ Do not replace this validation with an informal self-check. Resolve every report
 - For a manual visual acceptance, record its viewport or device, observable checks, and screenshot or recording destination in a `V-*` record; do not mark the acceptance complete until that evidence exists.
 - Do not place a `暂定` or `待确认` decision in a specification, design, task, acceptance criterion, or implementation instruction. Ask for confirmation or keep it in the requirement's open questions instead.
 - Do not invent a business decision in a later document. Use the requirement's `D-*` ID and revise the ledger first when new information arrives.
+- Treat preset, target and platform profiles as limited compatibility signals, not a complete framework or third-party inventory. A root dependency declaration is not proof that the package is installed, used, compatible, secure or validated; keep unsupported conclusions unresolved.
+- When the requirement affects workspaces, sub-applications, transitive packages, vulnerabilities, licenses or registry metadata, state that scope explicitly and obtain separate evidence because the dynamic profile covers only root direct declarations.

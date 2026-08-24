@@ -9,6 +9,12 @@ layout: "wayfinder"
 project: "{{PROJECT_NAME}}"
 preset: "{{PRESET}}"
 packageManager: "{{PACKAGE_MANAGER}}"
+dependencyProfileSchema: "{{DEPENDENCY_PROFILE_SCHEMA}}"
+dependencyProfileSource: "{{DEPENDENCY_PROFILE_SOURCE}}"
+dependencyPackageCount: {{DEPENDENCY_PACKAGE_COUNT}}
+dependencySummaryStatus: "{{DEPENDENCY_SUMMARY_STATUS}}"
+dependencySummaryDisplayed: {{DEPENDENCY_SUMMARY_DISPLAYED}}
+dependencySummaryOmitted: {{DEPENDENCY_SUMMARY_OMITTED}}
 targetFormFactor: "{{TARGET_FORM_FACTOR}}"
 targetProfileSource: "{{TARGET_PROFILE_SOURCE}}"
 targetProfileEvidence: "{{TARGET_PROFILE_EVIDENCE}}"
@@ -37,7 +43,9 @@ scopeGitDirty: "{{SCOPE_GIT_DIRTY}}"
 <!-- frontend-ai-workflow:facts:start version={{WORKFLOW_VERSION}} -->
 ## 项目概览
 
-- 技术栈：{{TECH_STACK}}。
+- 技术栈：{{DEPENDENCY_SUMMARY}}
+- 依赖事实边界：完整机器事实位于 `dependencyProfile.packages`，当前摘要展示 {{DEPENDENCY_SUMMARY_DISPLAYED}} / {{DEPENDENCY_PACKAGE_COUNT}} 项并遗漏 {{DEPENDENCY_SUMMARY_OMITTED}} 项。依赖声明不证明已安装、已使用、安全或兼容，语义结论必须结合配置和源码。
+- 有限兼容信号：项目预设 `{{PRESET}}`、终端画像 `{{TARGET_FORM_FACTOR}}`、平台画像 `{{TARGET_PLATFORM_KIND}}` 只表达插件已验证的兼容或安全证据；未命中不表示框架不存在。
 - 开发：`{{DEV_COMMAND}}`。
 - 构建：`{{BUILD_COMMAND}}`。
 - 测试：`{{TEST_COMMAND}}`（状态：`{{TEST_STATUS}}`）。
@@ -89,7 +97,7 @@ scopeGitDirty: "{{SCOPE_GIT_DIRTY}}"
 
 ### 项目运行与交付边界
 
-- 入口、构建、环境、部署路径与平台发布边界；每项附配置或源码证据。
+- 读取完整 `dependencyProfile.packages` 或根 `package.json`，再结合入口、构建配置和源码总结框架与高影响依赖；同时记录环境、部署路径与平台发布边界，每项附配置或源码证据。
 
 ### 功能与依赖链路
 
@@ -122,4 +130,4 @@ scopeGitDirty: "{{SCOPE_GIT_DIRTY}}"
 
 ## 文档维护
 
-技术栈、脚本、目录职责、请求协议、权限链路或部署方式发生稳定变化时更新本文。
+直接依赖、技术栈结论、脚本、目录职责、请求协议、权限链路或部署方式发生稳定变化时更新本文。依赖摘要截断或兼容画像为 `unknown` 时，先回到完整依赖事实和源码，不得将其写成不存在。

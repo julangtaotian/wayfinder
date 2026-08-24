@@ -244,7 +244,7 @@ test('原生微信小程序生成准确的预设、路径、测试与人工验�
   const inspection = inspectProject(root);
   assert.equal(inspection.preset, 'wechat-native');
   assert.equal(inspection.packageManager, 'yarn');
-  assert.deepEqual(inspection.techStack, ['微信原生小程序', 'Vant Weapp ^1.11.7']);
+  assert.deepEqual(inspection.techStack, ['微信原生小程序', '@vant/weapp [dependencies="^1.11.7"]']);
   assert.deepEqual({
     formFactor: inspection.targetProfile.formFactor,
     source: inspection.targetProfile.source,
@@ -281,7 +281,7 @@ test('原生微信小程序生成准确的预设、路径、测试与人工验�
   assert.match(agents, /微信开发者工具或外部 CI/u);
   assert.match(wayfinder, /testCommandStatus: "placeholder"/u);
   assert.match(wayfinder, /frontend-ai-workflow:facts:start/u);
-  assert.match(wayfinder, /技术栈：微信原生小程序、Vant Weapp \^1\.11\.7/u);
+  assert.match(wayfinder, /技术栈：根 package 共 1 项直接依赖，展示 1 项，遗漏 0 项：@vant\/weapp \[dependencies="\^1\.11\.7"\]/u);
   assert.match(wayfinder, /路由与页面注册：`app\.json`/u);
   assert.match(wayfinder, /深度分析状态：未启用（普通初始化仅生成可追溯的识别基线）/u);
   assert.match(openspec, /测试命令：不可用（yarn test 为失败占位脚本）（状态：placeholder）/u);
@@ -361,7 +361,7 @@ test('初始化、升级和检查共享平台画像并保留项目自定义内�
   assert.match(fs.readFileSync(wayfinderPath, 'utf8'), /platformCommandStatus: "detected"/u);
   assert.match(fs.readFileSync(wayfinderPath, 'utf8'), /platformCommandTargets: "wechat-mini-program"/u);
   assert.match(fs.readFileSync(wayfinderPath, 'utf8'), /platformCommandEvidence: "script:build:weapp、script:dev:weapp"/u);
-  assert.match(fs.readFileSync(openspecPath, 'utf8'), /平台框架画像：cross-platform（框架：taro；来源：package-dependencies；证据：package:@tarojs\/taro）/u);
+  assert.match(fs.readFileSync(openspecPath, 'utf8'), /平台框架画像：cross-platform（框架：taro；来源：package-dependencies；证据：package:@tarojs\/taro；有限安全信号，不证明目标已构建或发布）/u);
   assert.match(fs.readFileSync(openspecPath, 'utf8'), /平台命令证据：wechat-mini-program（开发候选：npm run dev:weapp；构建候选：npm run build:weapp）（状态：detected；证据：script:build:weapp、script:dev:weapp；发现不代表已执行）/u);
   assert.doesNotMatch([
     fs.readFileSync(agentsPath, 'utf8'),
@@ -395,7 +395,7 @@ test('初始化、升级和检查共享平台画像并保留项目自定义内�
   assert.match(nextWayfinder, /targetPlatformFrameworks: "remax"/u);
   assert.match(nextWayfinder, /platformCommandTargets: "h5"/u);
   assert.match(nextWayfinder, /platformCommandEvidence: "script:build:h5"/u);
-  assert.match(nextOpenSpec, /平台框架画像：cross-platform（框架：remax；来源：package-dependencies；证据：package:remax）/u);
+  assert.match(nextOpenSpec, /平台框架画像：cross-platform（框架：remax；来源：package-dependencies；证据：package:remax；有限安全信号，不证明目标已构建或发布）/u);
   assert.match(nextOpenSpec, /平台命令证据：h5（开发候选：未识别；构建候选：npm run build:h5）（状态：detected；证据：script:build:h5；发现不代表已执行）/u);
   assert.match(nextAgents, /项目自定义 AGENTS 内容/u);
   assert.match(nextWayfinder, /项目自定义 Wayfinder 内容/u);

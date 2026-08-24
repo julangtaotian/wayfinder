@@ -12,10 +12,11 @@
 
 ## 项目事实
 
-- 项目预设：`{{PRESET}}`。
-- 技术栈：{{TECH_STACK}}。
-- 终端画像：`{{TARGET_FORM_FACTOR}}`（来源：`{{TARGET_PROFILE_SOURCE}}`；证据：{{TARGET_PROFILE_EVIDENCE}}）。
-- 平台框架画像：`{{TARGET_PLATFORM_KIND}}`（框架：{{TARGET_PLATFORM_FRAMEWORKS}}；来源：`{{TARGET_PLATFORM_SOURCE}}`；证据：{{TARGET_PLATFORM_EVIDENCE}}）。
+- 项目预设：`{{PRESET}}`（有限兼容信号，不是完整框架结论）。
+- 技术栈：{{DEPENDENCY_SUMMARY}}
+- 依赖事实边界：schema `{{DEPENDENCY_PROFILE_SCHEMA}}`，来源 `{{DEPENDENCY_PROFILE_SOURCE}}`；摘要展示 {{DEPENDENCY_SUMMARY_DISPLAYED}} / {{DEPENDENCY_PACKAGE_COUNT}} 项，遗漏 {{DEPENDENCY_SUMMARY_OMITTED}} 项。依赖声明不证明已安装、已使用、安全或兼容；AI 必须读取完整 `dependencyProfile.packages` 或根 `package.json`，再结合配置、入口、导入和调用证据总结职责。
+- 终端画像：`{{TARGET_FORM_FACTOR}}`（来源：`{{TARGET_PROFILE_SOURCE}}`；证据：{{TARGET_PROFILE_EVIDENCE}}）——有限兼容信号，`unknown` 不表示框架不存在。
+- 平台框架画像：`{{TARGET_PLATFORM_KIND}}`（框架：{{TARGET_PLATFORM_FRAMEWORKS}}；来源：`{{TARGET_PLATFORM_SOURCE}}`；证据：{{TARGET_PLATFORM_EVIDENCE}}）——有限安全信号，不证明目标已构建或发布。
 - 平台命令证据：{{PLATFORM_COMMAND_SUMMARY}}（状态：`{{PLATFORM_COMMAND_STATUS}}`；证据：{{PLATFORM_COMMAND_EVIDENCE}}；发现不代表已执行）。
 - 平台验证边界：{{PLATFORM_VERIFICATION_GUIDANCE}}
 - 包管理器：`{{PACKAGE_MANAGER}}`。

@@ -3,8 +3,8 @@
 ## 识别顺序
 
 1. 读取目标根目录的 `package.json`。
-2. 合并 dependencies、devDependencies 和 peerDependencies。
-3. 根据平台框架证据、框架包和构建工具选择最接近的 preset；无 Vue/React 的原生微信小程序优先使用 `wechat-native`。
+2. 动态收集根 `package.json` 的 dependencies、devDependencies、peerDependencies 和 optionalDependencies，生成完整 `dependencyProfile`；不得用内置白名单筛掉未知、私有或未来新增的包。
+3. 将 dependencies、devDependencies 和 peerDependencies 作为有限兼容信号，根据平台框架证据、框架包和构建工具选择最接近的 preset；无 Vue/React 的原生微信小程序优先使用 `wechat-native`。
 4. 根据 lockfile 判断包管理器。
 5. 从非空 `package.json.scripts` 选择真实存在的开发、构建、测试、lint 和类型检查命令；npm 初始化生成的失败 test 占位脚本标记为 `placeholder`，不得作为可用测试入口。
 6. 单独报告默认构建与交付构建：`build` 是默认构建，`build:prod`、`build:production` 或 `build:release` 是显式交付构建；缺少显式交付构建时才回退默认构建。
@@ -54,3 +54,12 @@
 - 已识别平台框架但平台命令为 `missing` 时，检查只给非阻断警告；原生微信小程序应记录微信开发者工具或外部 CI 环境，其他平台记录实际人工开发工具或外部 CI 环境。普通 Web 项目缺失时保持安静空态。
 
 识别结果只用于生成初始上下文，不得据此改变业务代码或安装依赖。
+
+## 动态直接依赖画像
+
+- `dependencyProfile` 只描述根 `package.json` 中合法、非空的直接依赖声明，保留依赖组和原始版本说明，并以稳定顺序输出完整 `packages`。
+- 人类可读摘要最多展示 20 个包；`summary.status=truncated` 时必须同时给出总数、已展示数、遗漏数，并引导 AI 读取完整 `dependencyProfile.packages` 或根 `package.json`，不得把摘要截断误写成“只有这些依赖”。
+- AI 判断依赖用途、框架角色、兼容性或影响链时，必须把完整依赖画像与真实配置、入口、导入和调用证据交叉核对。依赖已声明不等于已安装、已使用、兼容、安全、测试通过或发布可用。
+- preset、终端画像和平台框架画像是有限的兼容与安全信号，不是全部技术栈目录，也不能替代动态依赖画像。
+- 当前画像不递归 workspaces 或子应用，不读取 `node_modules` 和传递依赖，不联网查询注册表，也不分析漏洞、许可证或最新版本；这些能力必须单独验证并明确范围。
+- 非法依赖组、包名或版本说明只产生稳定诊断并被忽略，不中断其他合法依赖的收集；诊断结论不得扩展为业务源码错误。
