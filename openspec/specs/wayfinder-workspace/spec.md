@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: 普通初始化明确标示识别基线边界
 
 普通初始化生成的 Wayfinder SHALL 保留未来深度刷新所需的受管区块，并 SHALL 用人类可读文案明确当前只生成可追溯识别基线、深度项目地图尚未启用，不得用裸 `false` 和零值让维护者误以为扫描失败或分析已经完成。
@@ -46,15 +48,20 @@ TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpos
 - **THEN** 系统 SHALL 以插件内置模板生成 `requirements/REQ-*.md`，且不得先创建孤立的模板文件。
 
 ### Requirement: 三个工作流文件必须同步受管项目事实
-系统 SHALL 在显式升级中使用当前项目识别结果刷新 AGENTS、Wayfinder 受管事实和 OpenSpec 配置。深度初始化 SHALL 同步已有三个受管文件，且所有写入仍 SHALL 要求显式确认。（D-03、D-07；A-01）
+系统 SHALL 在显式升级中使用当前项目识别结果刷新 AGENTS、Wayfinder 受管事实和 OpenSpec 配置。三份上下文 SHALL 同步同一次动态直接依赖画像的总数、可读摘要、截断状态和完整事实边界，并 SHALL 将 preset、终端画像和平台画像描述为有限兼容或安全信号。深度初始化 SHALL 同步已有三个受管文件，且所有写入仍 SHALL 要求显式确认。（D-03、D-04、D-06、D-08、D-11；A-02～A-05）
 
 #### Scenario: 深度刷新已有项目
-- **WHEN** 已初始化项目的受管文件仍包含旧预设、技术栈、命令状态或目录职责，且用户执行深度刷新预览
+- **WHEN** 已初始化项目的受管文件仍包含旧预设、技术栈、依赖摘要、命令状态或目录职责，且用户执行深度刷新预览
 - **THEN** 预览 SHALL 将三个文件列为准确的 update 或 unchanged 动作，并 SHALL NOT 修改目标项目
 
 #### Scenario: 确认刷新并重复执行
 - **WHEN** 用户显式写入深度刷新并在相同项目快照上再次执行
 - **THEN** 三个文件 SHALL 使用一致项目事实，重复深度刷新 MAY 更新扫描时间和范围元数据但 SHALL NOT 重复 facts，普通升级在事实不变时 SHALL 返回 unchanged，未受管同名文件仍 SHALL 保持 conflict
+
+#### Scenario: 动态依赖超过摘要上限
+- **WHEN** 完整直接依赖数量超过受管上下文展示上限
+- **THEN** 三份受管上下文 SHALL 显示一致的总数、展示数和遗漏数，并 SHALL 指示 AI 读取完整机器画像或根 package 后再总结
+- **AND** 受管上下文 SHALL NOT 将截断摘要描述为完整技术栈
 
 ### Requirement: 项目检查必须报告受管内容漂移
 系统 SHALL 只读比较当前项目识别结果与可升级受管内容，返回稳定的受管内容新鲜度结果；存在差异时 SHALL 列出具体文件并给出非阻断刷新警告，不得把预览差异描述为已修复。（D-04、D-07；A-02）

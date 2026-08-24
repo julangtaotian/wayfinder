@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-24T02:34:38.824Z",
+  "completedAt": "2026-08-24T07:28:44.060Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2a690b16b42cab0259222a70e1bdb058fc12ec36",
+    "commit": "6103330176fe2177db6e775f9069634456f15d5b",
     "dirty": true
   },
   "kind": "local-command",
@@ -25,13 +25,13 @@
   "logs": [
     {
       "bytes": 277,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824023438587-50024-9a8bfeb1/stdout.log",
-      "sha256": "cecaeb022a851d9e0ca79835340fe4b46407b4030514226ed21ac2f8ec739cfa",
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824072843784-91432-97f6c03e/stdout.log",
+      "sha256": "3104927ea42395ce6c85b2b9679c41b9b55ad734596750e0754e7a81be0cc7df",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824023438587-50024-9a8bfeb1/stderr.log",
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-02/20260824072843784-91432-97f6c03e/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -63,7 +63,7 @@
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-24T02:34:38.589Z",
+  "startedAt": "2026-08-24T07:28:43.786Z",
   "status": "passed",
-  "workspaceFingerprint": "2940d1f3365f0f94302326877cc447b0f0d62ba585e8e9073043fbf1d394138e"
+  "workspaceFingerprint": "ef2226de704c83a2759d3f0792de427eb466ea9744c367152662e15b6f20d3d7"
 }

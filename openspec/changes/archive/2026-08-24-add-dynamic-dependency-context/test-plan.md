@@ -4,7 +4,7 @@
 
 - 状态：已验证
 - 需求：`requirements/REQ-2026-029-dynamic-dependency-context.md`
-- 变更：add-dynamic-dependency-context
+- 变更：2026-08-24-add-dynamic-dependency-context
 - 需求修订基线：R-01
 - 默认聚焦命令：`node --test tests/dynamic-dependency-context.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern="动态直接依赖事实合同" tests/dynamic-dependency-context.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/add-dynamic-dependency-context/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-01.json`
 
 ### TC-02：共享上下文动态消费且有限兼容信号不越界
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test --test-name-pattern="共享上下文与有限兼容信号" tests/dynamic-dependency-context.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/add-dynamic-dependency-context/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-02.json`
 
 ### TC-03：动态依赖上下文统一验证合同保持发布链稳定
 
@@ -83,7 +83,7 @@
 - 聚焦命令：`npm run verify`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/add-dynamic-dependency-context/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-03.json`
 
 ### TC-04：人工复核依赖事实、兼容信号和 AI 结论边界
 
@@ -105,7 +105,7 @@
 - 聚焦命令：不适用
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/add-dynamic-dependency-context/verification.md`
+- 证据：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`
 
 ### TC-05：人工复核最终实现提交真实五平台矩阵
 
@@ -127,4 +127,4 @@
 - 聚焦命令：不适用
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：`openspec/changes/add-dynamic-dependency-context/verification.md`
+- 证据：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`

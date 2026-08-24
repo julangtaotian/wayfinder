@@ -2,7 +2,7 @@
 
 ## 当前结论
 
-- V-01、V-02、V-03 已由插件受控取证入口生成 schema v2 清单，聚焦与统一命令真实执行成功，语义绑定、工作区指纹和日志描述符已写入同 ID 证据。
+- V-01、V-02、V-03 已在 0.17.0 当前工作区由插件受控取证入口重新生成 schema v2 清单，聚焦与统一命令真实执行成功，语义绑定、工作区指纹和日志描述符已写入同 ID 证据。
 - V-04 已人工复核：预览、阻断、历史兼容、外部记录和支持范围文案均保留原状态，没有把 `warning`、`external-recorded`、`inconclusive` 或 `blocked` 描述为可信通过。
 - V-05 已人工复核：实现提交 `2a690b16b42cab0259222a70e1bdb058fc12ec36` 的五平台 GitHub Actions 矩阵首次运行全部成功，没有失败、取消或重跑任务。
 
@@ -10,7 +10,7 @@
 
 - 日期：2026-08-24
 - 命令：`node --test --test-name-pattern="受管写入符号链接边界与兼容性" tests/workflow-trust-boundary.test.mjs`
-- 结果：通过；目标用例及 4 个子用例通过。
+- 结果：通过；目标用例及 4 个子用例通过，5/5 测试通过，目标定位命中 2 次。
 - 证据：`evidence/V-01.json`；持久日志路径、大小和 SHA-256 由清单记录。
 - 覆盖：正常根与根别名、dry-run/写入/重复执行、内部链接阻断、升级/迁移/取证/UI/完成入口、原子失败保护和项目外哨兵不变。
 
@@ -18,7 +18,7 @@
 
 - 日期：2026-08-24
 - 命令：`node --test --test-name-pattern="机器证据语义完整性与信任聚合" tests/workflow-trust-boundary.test.mjs`
-- 结果：通过。
+- 结果：通过；1/1 测试通过，目标定位命中 2 次。
 - 证据：`evidence/V-02.json`；持久日志路径、大小和 SHA-256 由清单记录。
 - 覆盖：D/A/V/TC 语义变化、完成字段与无关变化、日志篡改、UI 状态身份/结果/关键产物、external-recorded 聚合及 schema v1 严格/非严格兼容。
 
@@ -27,10 +27,10 @@
 - 日期：2026-08-24
 - 受控命令：`npm run verify`。
 - 结果：通过；统一入口的自动测试、插件与技能结构、OpenSpec 全量 strict、归档任务、OpenSpec 版本/完整性、Playwright 完整性和真实 Chromium smoke 共 8 个阶段全部完成。
-- 独立全量：`npm test` 205/205 通过；包含 Vue 3 + Vite + Vitest 真实发现与重复执行、初始化/升级/检查矩阵及真实浏览器回归。
+- 当前全量：`npm test` 208/208 通过；包含 Vue 3 + Vite + Vitest 真实发现与重复执行、初始化/升级/检查矩阵、动态依赖上下文及真实浏览器回归。
 - 独立结构：`npm run validate` 通过。
 - 官方 validators：9/9 个 Skill 及 Plugin manifest 全部通过。
-- 证据：`evidence/V-03.json`；受控 stdout 43,286 字节，路径、大小和 SHA-256 由清单记录。
+- 证据：`evidence/V-03.json`；受控 stdout 43,761 字节、stderr 208 字节，目标定位命中 2 次，路径、大小和 SHA-256 由清单记录。
 
 ## 兼容与结构校验
 

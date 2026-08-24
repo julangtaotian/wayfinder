@@ -11,13 +11,13 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-24T02:34:37.839Z",
+  "completedAt": "2026-08-24T07:28:44.025Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2a690b16b42cab0259222a70e1bdb058fc12ec36",
-    "dirty": true
+    "commit": "6103330176fe2177db6e775f9069634456f15d5b",
+    "dirty": false
   },
   "kind": "local-command",
   "locator": "[TC-01] 受管写入符号链接边界与兼容性",
@@ -25,13 +25,13 @@
   "logs": [
     {
       "bytes": 1028,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824023437592-49915-3036d788/stdout.log",
-      "sha256": "4c6ab83a42b2a4ddd2da333aa538ec272c2e6d480befbe9363b8b4319210cfea",
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824072843780-91431-9ffd1def/stdout.log",
+      "sha256": "ab2d56f854d9d836a339690a1fa6ccb6ffb99c535c75f18e9720966e4d82dbca",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824023437592-49915-3036d788/stderr.log",
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-01/20260824072843780-91431-9ffd1def/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -62,7 +62,7 @@
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-24T02:34:37.594Z",
+  "startedAt": "2026-08-24T07:28:43.782Z",
   "status": "passed",
-  "workspaceFingerprint": "2940d1f3365f0f94302326877cc447b0f0d62ba585e8e9073043fbf1d394138e"
+  "workspaceFingerprint": "ef2226de704c83a2759d3f0792de427eb466ea9744c367152662e15b6f20d3d7"
 }

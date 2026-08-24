@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.17.0
@@ -153,7 +153,7 @@
 
 - 测试文件策略：新建；目标路径：`tests/dynamic-dependency-context.test.mjs`；基线证据：Git 可用且该目标当前未受版本控制，既有项目识别场景位于受 Git 跟踪的通用 `tests/workflow.test.mjs` 和画像专用测试中；选择理由：新能力跨动态收集、摘要、模板消费和结论边界，使用独立手写测试避免继续膨胀通用工作流测试。
 - 配套兼容测试：仅在既有断言因 `techStack` 输出合同变更而必须更新时，最小修改已跟踪的 `tests/workflow.test.mjs`、`tests/project-target-profile.test.mjs` 或 `tests/project-platform-profile.test.mjs`；不得把新增动态场景分散追加到这些文件。
-- 独立测试方案：需要；触发条件：需要跨 D/A/V 追踪未知框架、分组去重、非法输入、摘要截断、模板消费和跨平台稳定性；活动变更与目标：`openspec/changes/add-dynamic-dependency-context/test-plan.md`；需求修订基线：R-01。
+- 独立测试方案：需要；触发条件：需要跨 D/A/V 追踪未知框架、分组去重、非法输入、摘要截断、模板消费和跨平台稳定性；活动变更与目标：`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/test-plan.md`；需求修订基线：R-01。
 - 验证范围：聚焦 + 全量；执行命令：`node --test tests/dynamic-dependency-context.test.mjs`、`npm test`、`npm run validate`、`npm run verify` 和官方 Skill/Plugin validators；选择理由：`inspectProject` 和初始化模板属于检查、升级、需求规划及发布共享链，聚焦回归后需要仓库级统一验证。
 - 自动测试：未知框架与私有包、四分组收集、跨分组不同版本、空依赖、非法分组/版本、稳定排序、摘要截断、无网络/安装副作用、检查/初始化/升级复用及既有画像兼容。
 - 人工检查：复核文档和输出没有把依赖声明、兼容画像或摘要截断写成完整运行时、安全和兼容性结论。
@@ -163,11 +163,11 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | `node --test tests/dynamic-dependency-context.test.mjs`，覆盖动态事实合同、异常和摘要稳定性 | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md`；`openspec/changes/add-dynamic-dependency-context/evidence/V-01.json` |
-| V-02 | 自动 | `node --test tests/dynamic-dependency-context.test.mjs`，覆盖检查、初始化、升级、画像兼容和自定义内容保留 | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md`；`openspec/changes/add-dynamic-dependency-context/evidence/V-02.json` |
-| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md`；`openspec/changes/add-dynamic-dependency-context/evidence/V-03.json` |
-| V-04 | 人工 | 复核动态依赖事实、有限兼容信号、AI 推断和未覆盖边界在需求、模板与说明中表达一致 | 2026-08-24 | 通过 | `openspec/changes/add-dynamic-dependency-context/verification.md` |
-| V-05 | 人工 | 复核实现提交 `74182f45164fccc66c9632808f79c0fd2edcea9f` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 CI 矩阵任务及状态 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32699924656`；`openspec/changes/add-dynamic-dependency-context/verification.md` |
+| V-01 | 自动 | `node --test tests/dynamic-dependency-context.test.mjs`，覆盖动态事实合同、异常和摘要稳定性 | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`；`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-01.json` |
+| V-02 | 自动 | `node --test tests/dynamic-dependency-context.test.mjs`，覆盖检查、初始化、升级、画像兼容和自定义内容保留 | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`；`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-02.json` |
+| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`；`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-03.json` |
+| V-04 | 人工 | 复核动态依赖事实、有限兼容信号、AI 推断和未覆盖边界在需求、模板与说明中表达一致 | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md` |
+| V-05 | 人工 | 复核实现提交 `74182f45164fccc66c9632808f79c0fd2edcea9f` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 CI 矩阵任务及状态 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32699924656`；`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md` |
 
 ## 验收标准
 
@@ -182,12 +182,12 @@
 
 | 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| A-01 | 动态依赖事实完整且稳定 | D-01、D-02、D-03、D-07 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/add-dynamic-dependency-context/evidence/V-01.json` | 所有合法直接依赖及分组版本可追溯，空值和非法项产生真实零值或稳定诊断 | V-01 |
-| A-02 | 共享入口消费动态摘要 | D-03、D-04、D-10、D-11 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/add-dynamic-dependency-context/evidence/V-02.json` | 检查、初始化、升级结果一致，摘要总数和截断数准确且与平台无关 | V-01、V-02 |
-| A-03 | AI 负责有证据的语义总结 | D-01、D-05、D-12 | 自动+人工 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/add-dynamic-dependency-context/verification.md` | 模板与规则要求读取完整事实并区分事实、推断、待确认，不按固定列表下结论 | V-02、V-04 |
-| A-04 | 有限兼容信号不冒充完整识别 | D-04、D-06、D-12 | 自动+人工 | `tests/dynamic-dependency-context.test.mjs`、既有画像测试、`openspec/changes/add-dynamic-dependency-context/verification.md` | 旧字段保持兼容，未知命中不否定依赖存在，文案明确有限证据边界 | V-02、V-04 |
-| A-05 | 安全写入与无副作用兼容 | D-02、D-08、D-09、D-11 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/add-dynamic-dependency-context/evidence/V-02.json` | 普通识别只读，预览零写入，显式升级只更新受管内容且不联网、不安装、不执行依赖 | V-02 |
-| A-06 | 分层验证且结论不越界 | D-10、D-12 | 自动+人工 | `openspec/changes/add-dynamic-dependency-context/evidence/V-03.json`、`openspec/changes/add-dynamic-dependency-context/verification.md`、GitHub Actions 运行 URL | 聚焦、统一、官方校验和五平台结果分别记录；剩余边界持续可见 | V-03、V-04、V-05 |
+| A-01 | 动态依赖事实完整且稳定 | D-01、D-02、D-03、D-07 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-01.json` | 所有合法直接依赖及分组版本可追溯，空值和非法项产生真实零值或稳定诊断 | V-01 |
+| A-02 | 共享入口消费动态摘要 | D-03、D-04、D-10、D-11 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-02.json` | 检查、初始化、升级结果一致，摘要总数和截断数准确且与平台无关 | V-01、V-02 |
+| A-03 | AI 负责有证据的语义总结 | D-01、D-05、D-12 | 自动+人工 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md` | 模板与规则要求读取完整事实并区分事实、推断、待确认，不按固定列表下结论 | V-02、V-04 |
+| A-04 | 有限兼容信号不冒充完整识别 | D-04、D-06、D-12 | 自动+人工 | `tests/dynamic-dependency-context.test.mjs`、既有画像测试、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md` | 旧字段保持兼容，未知命中不否定依赖存在，文案明确有限证据边界 | V-02、V-04 |
+| A-05 | 安全写入与无副作用兼容 | D-02、D-08、D-09、D-11 | 自动 | `tests/dynamic-dependency-context.test.mjs`、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-02.json` | 普通识别只读，预览零写入，显式升级只更新受管内容且不联网、不安装、不执行依赖 | V-02 |
+| A-06 | 分层验证且结论不越界 | D-10、D-12 | 自动+人工 | `openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/evidence/V-03.json`、`openspec/changes/archive/2026-08-24-add-dynamic-dependency-context/verification.md`、GitHub Actions 运行 URL | 聚焦、统一、官方校验和五平台结果分别记录；剩余边界持续可见 | V-03、V-04、V-05 |
 
 ## 待确认问题
 

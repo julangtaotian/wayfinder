@@ -4,7 +4,7 @@
 
 - 状态：已验证
 - 需求：`requirements/REQ-2026-028-workflow-trust-boundary.md`
-- 变更：harden-workflow-trust-boundary
+- 变更：2026-08-24-harden-workflow-trust-boundary
 - 需求修订基线：R-02
 - 默认聚焦命令：`node --test tests/workflow-trust-boundary.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern="受管写入符号链接边界与兼容性" tests/workflow-trust-boundary.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/harden-workflow-trust-boundary/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-01.json`
 
 ### TC-02：schema v2 绑定当前语义并复核全部证据与信任等级
 
@@ -62,7 +62,7 @@
 - 配套兼容回归：`tests/verification-evidence-integrity.test.mjs` 只更新既有 schema 版本和 external-ci 信任预期，不追加本变更的新测试标题。
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-02.json`
 
 ### TC-03：统一验证保持跨平台合同和既有插件结构
 
@@ -84,7 +84,7 @@
 - 聚焦命令：`npm run verify`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/harden-workflow-trust-boundary/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-03.json`
 
 ### TC-04：人工复核交付文案不夸大安全与证据信任
 
@@ -106,7 +106,7 @@
 - 聚焦命令：不适用
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/harden-workflow-trust-boundary/verification.md`
+- 证据：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`
 
 ### TC-05：人工复核最终实现提交真实五平台矩阵
 
@@ -128,4 +128,4 @@
 - 聚焦命令：不适用
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：`openspec/changes/harden-workflow-trust-boundary/verification.md`
+- 证据：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`

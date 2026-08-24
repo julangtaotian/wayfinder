@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.16.0
@@ -165,7 +165,7 @@
 
 - 测试文件策略：新建；目标路径：`tests/workflow-trust-boundary.test.mjs`；基线证据：Git 可用且该目标当前未受版本控制，既有安全与证据测试分散在多个文件；选择理由：新建专用手写测试集中覆盖跨入口写入边界与证据可信度，不把新场景追加到生成测试或单一旧缺陷文件。
 - 配套兼容测试：允许最小更新已受 Git 跟踪的 `tests/verification-evidence-integrity.test.mjs` 中既有 schema 版本和 external-ci 信任预期；不得向该文件追加本变更的新场景，全部新增断言仍位于专用目标测试。
-- 独立测试方案：需要；触发条件：本变更包含跨安全写入、本地证据、UI 证据和外部信任的多条可追踪回归；活动变更与目标：`openspec/changes/harden-workflow-trust-boundary/test-plan.md`；需求修订基线：R-02。
+- 独立测试方案：需要；触发条件：本变更包含跨安全写入、本地证据、UI 证据和外部信任的多条可追踪回归；活动变更与目标：`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/test-plan.md`；需求修订基线：R-02。
 - 验证范围：聚焦 + 全量；执行命令：`node --test tests/workflow-trust-boundary.test.mjs`、`npm test`、`npm run validate`、`npm run verify` 和官方 Skill/Plugin validators；选择理由：安全路径与证据逻辑属于初始化、升级、完成归档和发布共享链，聚焦回归后必须执行仓库级统一验证。
 - 自动测试：安全普通路径、目标符号链接、祖先符号链接、项目根符号链接入口、重复执行、证据语义变化、日志/附件缺失与篡改、UI 状态身份与结果、外部自声明信任、v1 历史兼容和稳定机器诊断。
 - 人工检查：复核预览动作、错误说明和支持边界没有把 recorded、warning、inconclusive 或 blocked 描述成 passed。
@@ -175,11 +175,11 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | `node --test --test-name-pattern="受管写入符号链接边界与兼容性" tests/workflow-trust-boundary.test.mjs`，覆盖安全写入与符号链接边界 | 2026-08-24 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-01.json` |
-| V-02 | 自动 | `node --test --test-name-pattern="机器证据语义完整性与信任聚合" tests/workflow-trust-boundary.test.mjs`，覆盖需求/TC 语义绑定、日志附件摘要、UI 状态和外部信任等级 | 2026-08-24 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json` |
-| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-03.json` |
-| V-04 | 人工 | 复核预览、失败诊断和顶层汇总没有越界结论 | 2026-08-21 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md` |
-| V-05 | 人工 | 实现提交 `2a690b16b42cab0259222a70e1bdb058fc12ec36` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 GitHub Actions 矩阵人工复核 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32682933594`、`openspec/changes/harden-workflow-trust-boundary/verification.md` |
+| V-01 | 自动 | `node --test --test-name-pattern="受管写入符号链接边界与兼容性" tests/workflow-trust-boundary.test.mjs`，覆盖安全写入与符号链接边界 | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-01.json` |
+| V-02 | 自动 | `node --test --test-name-pattern="机器证据语义完整性与信任聚合" tests/workflow-trust-boundary.test.mjs`，覆盖需求/TC 语义绑定、日志附件摘要、UI 状态和外部信任等级 | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-02.json` |
+| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-03.json` |
+| V-04 | 人工 | 复核预览、失败诊断和顶层汇总没有越界结论 | 2026-08-21 | 通过 | `openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md` |
+| V-05 | 人工 | 实现提交 `2a690b16b42cab0259222a70e1bdb058fc12ec36` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 GitHub Actions 矩阵人工复核 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32682933594`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md` |
 
 ## 验收标准
 
@@ -195,13 +195,13 @@
 
 | 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
 | --- | --- | --- | --- | --- | --- | --- |
-| A-01 | 目标项目写入不能经符号链接逃逸 | D-02、D-03、D-11 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-01.json` | 所有公开写入入口返回稳定安全诊断，链接外哨兵文件不变 | V-01 |
-| A-02 | 正常与失败写入保持兼容 | D-03、D-11 | 自动+人工 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/verification.md` | dry-run 零写入、受管写入幂等、冲突和原始失败不覆盖 | V-01、V-04 |
-| A-03 | 本地证据绑定当前验收语义与持久产物 | D-04、D-05、D-06 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json` | 相关 D/A/V/TC 或日志附件变化返回具体过期/完整性失败 | V-02 |
-| A-04 | UI Review 证据验证真实状态 | D-04、D-07 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json` | 非 passed、身份不一致、产物变化和任意 JSON 均不能通过 | V-02 |
-| A-05 | 外部证据信任不越界 | D-08、D-09 | 自动+人工 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/verification.md` | 自声明外部记录只能是 external-recorded，顶层不得显示 passed | V-02、V-04 |
-| A-06 | 历史兼容与稳定诊断 | D-04、D-09、D-10 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json` | 历史 v1 提示迁移，严格 v1 阻断，code/status/target/trust 稳定 | V-02 |
-| A-07 | 交付验证按风险分层完成 | D-10、D-11、D-12 | 自动+人工 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-03.json`、GitHub Actions 运行 URL | 聚焦、本地统一、官方校验与最终提交五平台结果分别记录且全部通过后才完成 | V-03、V-05 |
+| A-01 | 目标项目写入不能经符号链接逃逸 | D-02、D-03、D-11 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-01.json` | 所有公开写入入口返回稳定安全诊断，链接外哨兵文件不变 | V-01 |
+| A-02 | 正常与失败写入保持兼容 | D-03、D-11 | 自动+人工 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md` | dry-run 零写入、受管写入幂等、冲突和原始失败不覆盖 | V-01、V-04 |
+| A-03 | 本地证据绑定当前验收语义与持久产物 | D-04、D-05、D-06 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-02.json` | 相关 D/A/V/TC 或日志附件变化返回具体过期/完整性失败 | V-02 |
+| A-04 | UI Review 证据验证真实状态 | D-04、D-07 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-02.json` | 非 passed、身份不一致、产物变化和任意 JSON 均不能通过 | V-02 |
+| A-05 | 外部证据信任不越界 | D-08、D-09 | 自动+人工 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md` | 自声明外部记录只能是 external-recorded，顶层不得显示 passed | V-02、V-04 |
+| A-06 | 历史兼容与稳定诊断 | D-04、D-09、D-10 | 自动 | `tests/workflow-trust-boundary.test.mjs`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-02.json` | 历史 v1 提示迁移，严格 v1 阻断，code/status/target/trust 稳定 | V-02 |
+| A-07 | 交付验证按风险分层完成 | D-10、D-11、D-12 | 自动+人工 | `openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/verification.md`、`openspec/changes/archive/2026-08-24-harden-workflow-trust-boundary/evidence/V-03.json`、GitHub Actions 运行 URL | 聚焦、本地统一、官方校验与最终提交五平台结果分别记录且全部通过后才完成 | V-03、V-05 |
 
 ## 待确认问题
 
