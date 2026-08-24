@@ -32,4 +32,4 @@
 - [x] 5.2 完成 `[TC-02]` 后运行聚焦命令并生成 V-02，覆盖语义变化、v1/v2、日志附件、UI 状态与产物、external-recorded 和非通过聚合（D-04、D-05、D-06、D-07、D-08、D-09；A-03、A-04、A-05、A-06）
 - [x] 5.3 完成 `[TC-03]` 后运行 `npm test`、`npm run validate`、`npm run verify`、官方 Skill/Plugin validators 和 Vue 3 + Vite 初始化/重复执行/升级/检查，并生成 V-03 持久证据（D-03、D-09、D-10、D-11、D-12；A-02、A-06、A-07）
 - [x] 5.4 完成 V-04 人工复核，确认预览、阻断、恢复、历史兼容与支持范围文案没有把 warning、recorded、inconclusive、blocked 或有限威胁模型描述为 passed/无漏洞（D-01、D-08、D-09、D-12；A-02、A-05、A-06、A-07）
-- [ ] 5.5 更新 requirement、test-plan 与 verification.md 的真实结果，在 WebStorm 提交最终改动并推送；人工复核精确提交的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 矩阵，全部成功后才完成 V-05（D-10、D-12；A-07）
+- [x] 5.5 更新 requirement、test-plan 与 verification.md 的真实结果，在 WebStorm 提交最终改动并推送；人工复核精确提交的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 矩阵，全部成功后才完成 V-05（D-10、D-12；A-07）

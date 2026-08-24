@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-24T02:08:57.491Z",
+  "completedAt": "2026-08-24T02:35:44.129Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "9021c58f7ac04faf2b98b71cb150ec12c51db560",
+    "commit": "2a690b16b42cab0259222a70e1bdb058fc12ec36",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 43307,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824020808412-27424-3abdbded/stdout.log",
-      "sha256": "ddd2293c6b4e437ee27b71fa981949be41b68eb4739e6d3ca888a4e7b47e897a",
+      "bytes": 43286,
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824023450845-50121-85f0d85b/stdout.log",
+      "sha256": "f8bbf886095229a02c7a0fe2a0091916b261276d231ee4e5435dbb2d5751d2f5",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824020808412-27424-3abdbded/stderr.log",
+      "path": "outputs/verification-evidence/harden-workflow-trust-boundary/V-03/20260824023450845-50121-85f0d85b/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
@@ -60,7 +60,7 @@
     "verificationId": "V-03",
     "version": 1
   },
-  "startedAt": "2026-08-24T02:08:08.414Z",
+  "startedAt": "2026-08-24T02:34:50.848Z",
   "status": "passed",
-  "workspaceFingerprint": "e4e1c354e859d5238427f547ba502ec4779c00da1b6b265a031eb0f7933dc8f9"
+  "workspaceFingerprint": "2940d1f3365f0f94302326877cc447b0f0d62ba585e8e9073043fbf1d394138e"
 }

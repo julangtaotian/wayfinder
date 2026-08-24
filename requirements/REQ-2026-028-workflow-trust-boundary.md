@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：待验证
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.16.0
@@ -179,7 +179,7 @@
 | V-02 | 自动 | `node --test --test-name-pattern="机器证据语义完整性与信任聚合" tests/workflow-trust-boundary.test.mjs`，覆盖需求/TC 语义绑定、日志附件摘要、UI 状态和外部信任等级 | 2026-08-24 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-02.json` |
 | V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-24 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md`、`openspec/changes/harden-workflow-trust-boundary/evidence/V-03.json` |
 | V-04 | 人工 | 复核预览、失败诊断和顶层汇总没有越界结论 | 2026-08-21 | 通过 | `openspec/changes/harden-workflow-trust-boundary/verification.md` |
-| V-05 | 人工 | 最终提交的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 GitHub Actions 矩阵人工复核 | 待执行 | 计划 | `https://github.com/julangtaotian/wayfinder/actions`、`openspec/changes/harden-workflow-trust-boundary/verification.md` |
+| V-05 | 人工 | 实现提交 `2a690b16b42cab0259222a70e1bdb058fc12ec36` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 GitHub Actions 矩阵人工复核 | 2026-08-24 | 通过 | `https://github.com/julangtaotian/wayfinder/actions/runs/32682933594`、`openspec/changes/harden-workflow-trust-boundary/verification.md` |
 
 ## 验收标准
 
@@ -189,7 +189,7 @@
 - [x] [A-04] v2 UI Review 证据只有在状态身份、场景、采集器、passed 结果和关键产物全部一致时有效。
 - [x] [A-05] 没有可信远程回执的 external-ci 保持 external-recorded，不能满足严格自动通过或被顶层汇总为 passed。
 - [x] [A-06] 历史 v1 证据保持只读可解释，新严格合同失败关闭，并为所有失败返回稳定可定位诊断。
-- [ ] [A-07] 聚焦、本地统一、官方 validators、插件结构和最终提交真实五平台验证按分层证据完成。
+- [x] [A-07] 聚焦、本地统一、官方 validators、插件结构和最终提交真实五平台验证按分层证据完成。
 
 ## 验收—证据映射
 

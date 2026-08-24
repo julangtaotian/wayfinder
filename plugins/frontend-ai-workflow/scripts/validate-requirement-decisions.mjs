@@ -275,6 +275,16 @@ function hasVisualEvidence(record) {
     && /\.(?:png|jpe?g|webp|gif|mp4|webm)(?:$|\s|\))/iu.test(media);
 }
 
+function hasReviewableManualEvidence(record) {
+  const environment = record.执行内容或环境 || '';
+  const evidence = record.证据位置 || '';
+  const visualIntent = /(视口|设备|浏览器|视觉|截图|录屏)/u.test(`${environment} ${evidence}`);
+  if (visualIntent) return hasVisualEvidence(record);
+  // 非视觉人工复核仍需说明核对动作并保留可追溯证据，不能用一句“已人工确认”直接通过。
+  return /(复核|核对|检查)/u.test(environment)
+    && !isPlaceholder(evidence);
+}
+
 function parseEvidenceMapping(content, decisions, acceptanceIds, verificationRecords, stage, errors) {
   const { rows, enhanced } = parseEvidenceTable(getSection(content, '验收—证据映射'), errors);
   const evidenceIds = new Set();
@@ -314,8 +324,14 @@ function parseEvidenceMapping(content, decisions, acceptanceIds, verificationRec
       } else {
         const records = recordIds.map((recordId) => verificationRecords.get(recordId)).filter(Boolean);
         if (records.some((record) => record.结果 !== '通过')) errors.push(`验收映射 ${id} 存在未通过的验证记录`);
-        if (row.验证方式.includes('人工') && !records.some((record) => record.验证类型.includes('人工') && hasVisualEvidence(record))) {
-          errors.push(`验收映射 ${id} 缺少视口或设备、检查项和截图或录屏证据`);
+        const manualRecords = records.filter((record) => record.验证类型.includes('人工'));
+        if (row.验证方式.includes('人工') && !manualRecords.some(hasReviewableManualEvidence)) {
+          const hasVisualIntent = manualRecords.some((record) => (
+            /(视口|设备|浏览器|视觉|截图|录屏)/u.test(`${record.执行内容或环境 || ''} ${record.证据位置 || ''}`)
+          ));
+          errors.push(hasVisualIntent
+            ? `验收映射 ${id} 缺少视口或设备、检查项和截图或录屏证据`
+            : `验收映射 ${id} 缺少复核或核对动作及可追溯人工证据`);
         }
       }
     }

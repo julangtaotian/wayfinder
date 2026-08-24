@@ -213,12 +213,13 @@ function renderDeliveryRequirement({
   testPath = 'tests/existing.spec.js',
   verificationResult = '通过',
   includeManual = false,
+  manualEnvironment = '视口：1440px；检查项：卡片不重叠',
   manualEvidence = 'artifacts/dashboard-1440.png',
   decisionValue = '使用验证记录',
 } = {}) {
   const check = acceptanceChecked ? 'x' : ' ';
   const manualRecord = includeManual
-    ? `| V-02 | 人工 | 视口：1440px；检查项：卡片不重叠 | 2026-07-24 | 通过 | ${manualEvidence} |\n`
+    ? `| V-02 | 人工 | ${manualEnvironment} | 2026-07-24 | 通过 | ${manualEvidence} |\n`
     : '';
   const verificationMethod = includeManual ? '自动+人工' : '自动';
   const recordIds = includeManual ? 'V-01、V-02' : 'V-01';
@@ -447,6 +448,16 @@ test('完成阶段校验交付证据、人工视觉和测试 Git 基线', (t) =>
   const missingVisual = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
   assert.equal(missingVisual.ok, false);
   assert.match(missingVisual.errors.join('\n'), /缺少视口或设备、检查项和截图或录屏证据/);
+
+  // CI、文案和结论边界等非视觉人工复核不应被强制伪造截图，但必须保留具体复核动作与持久证据。
+  writeFixtureFile(root, 'artifacts/review.md', '# 人工复核记录\n');
+  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
+    includeManual: true,
+    manualEnvironment: '复核项：核对五平台任务名称、提交 SHA 与最终状态',
+    manualEvidence: 'artifacts/review.md',
+  }));
+  const nonVisualManual = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
+  assert.equal(nonVisualManual.ok, true, nonVisualManual.errors.join('\n'));
 
   writeFixtureFile(root, 'tests/new.spec.js', "export default 'new';\n");
   writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
