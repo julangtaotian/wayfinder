@@ -165,7 +165,7 @@
 | V-05 | 自动+人工 | P5/P6 缺测试链、P4 混合工具链、P5 根 package 边界与结论措辞 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-05.json`；`openspec/changes/validate-real-project-matrix/verification.md`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
 | V-06 | 自动 | 插件聚焦、本地统一验证及官方 validators | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-06.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
 | V-07 | 人工 | 最终矩阵、缺陷清单、支持结论和未覆盖范围复核 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/verification.md`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json` |
-| V-08 | 人工 | 若插件代码发生变化，复核精确提交五平台 CI；无代码变化则记录不适用依据 | 待执行 | 计划 | `openspec/changes/validate-real-project-matrix/verification.md` |
+| V-08 | 人工 | 复核修复提交 `94bbd015041e41778afaec8562686ffcde41bb28` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 CI | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/verification.md`；[GitHub Actions Validate #44](https://github.com/julangtaotian/wayfinder/actions/runs/32802503292) |
 
 ## 验收标准
 

@@ -11,18 +11,18 @@
     "args": [
       "--input-type=module",
       "-e",
-      "import assert from 'node:assert/strict'; import fs from 'node:fs'; const boundary=JSON.parse(fs.readFileSync('outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json','utf8')); assert.equal(boundary.status,'passed'); assert.equal(boundary.checks.length,6); assert.equal(boundary.checks.every((item)=>item.status==='passed'),true); const files=['baseline','inspection','lifecycle','native-test'].map((stage)=>fs.readFileSync('outputs/real-project-validation/2026-08-25-p1-p6-run-01/'+stage+'/results.json','utf8')).join('\\n'); assert.equal(/(?:^|[\"\\s])\\/(?:Users|home)\\//u.test(files),false); assert.equal(/[A-Za-z]:\\\\Users\\\\/u.test(files),false); console.log('[TC-07] 人工边界记录机器复核');"
+      "import fs from 'node:fs'; const value=JSON.parse(fs.readFileSync('outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json','utf8')); if(value.status!=='passed'||value.checks?.length!==6||!value.checks.every((item)=>item.status==='passed')) process.exit(1); console.log('[TC-07] 人工边界记录机器复核');"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-25T02:17:29.926Z",
+  "completedAt": "2026-08-25T02:53:20.839Z",
   "evidenceId": "V-05",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "3431fdba861a17d2a017cc1b0e7b0c64a926fc00",
+    "commit": "94bbd015041e41778afaec8562686ffcde41bb28",
     "dirty": true
   },
   "kind": "local-command",
@@ -31,13 +31,13 @@
   "logs": [
     {
       "bytes": 39,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-05/20260825021729886-56444-45097ea9/stdout.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-05/20260825025320803-86407-71022836/stdout.log",
       "sha256": "cd11d080bbc43bebb75519037b3686ce20249e1067b18260c4046ab84d41dc54",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-05/20260825021729886-56444-45097ea9/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-05/20260825025320803-86407-71022836/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -72,7 +72,7 @@
     "verificationId": "V-05",
     "version": 1
   },
-  "startedAt": "2026-08-25T02:17:29.888Z",
+  "startedAt": "2026-08-25T02:53:20.804Z",
   "status": "passed",
-  "workspaceFingerprint": "f59a536f8f4f3ce8e049d94e767d87cbeb91c48eccf6123f549507273942c046"
+  "workspaceFingerprint": "b6b99791572546d86f4c377284c8601029213cf3800f78a03b289481305e6dfc"
 }

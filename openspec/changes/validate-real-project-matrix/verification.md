@@ -18,6 +18,7 @@
 | V-05 边界人工复核 | 通过 | 混合工具链、嵌套 package、原生微信开发工具、外部能力、敏感信息和未覆盖组合均按证据保持边界 | `evidence/V-05.json`、`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
 | V-06 插件统一验证 | 通过 | `npm test` 214 项零失败、`npm run validate` 通过、`npm run verify` 8/8 通过；官方 plugin validator 与 9 个 skill validator 全部通过 | `evidence/V-06.json`、`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
 | V-07 最终边界复核 | 通过 | 矩阵、缺陷、支持等级、未覆盖项和四层证据边界均已复核；结论保持活动状态，不关闭 DEF-01 | `outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json` |
+| V-08 五平台 CI | 通过 | 修复提交 `94bbd015041e41778afaec8562686ffcde41bb28` 的 Validate #44 在 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五个平台全部成功 | [GitHub Actions Validate #44](https://github.com/julangtaotian/wayfinder/actions/runs/32802503292) |
 
 ## 独立影响链决策
 
@@ -50,3 +51,5 @@ P3 的缺陷只影响测试文件事实与支持措辞，不影响六项目 Git 
 提交 `a3307e58242f7287c639eb6e1db2450e0fcc4c83` 触发的 Validate #43 在 Windows x64 的 `npm run verify` 阶段失败；稳定失败为 `[TC-02] 隔离生命周期与有界清理` 对独立 Git 根目录执行字符串严格比较时，Git 返回 `D:/...`，Node.js `path.join` 生成 `D:\...`。同一轮 macOS Intel/ARM64、Linux x64/ARM64 四个平台均通过，失败与真实业务项目、插件写入逻辑和原生测试执行无关。
 
 根因是测试只验证了单个反斜杠样例的规范化函数，却没有在独立 Git 根目录断言中同时规范化实际值和期望值；本地 macOS 的两侧都使用 `/`，因此未暴露 Windows 分隔符差异。回归定位为 `tests/real-project-validation.test.mjs` 的 `[TC-02]`：比较前对 Git 输出与工作区路径都调用 `normalizeMachinePath`，继续保留真实 `git rev-parse --show-toplevel` 证据，不放宽为包含判断或平台特判。修正后必须重新运行本地统一验证与五平台 CI，新的精确提交全部成功前，V-08 和任务 5.3 继续保持未通过。
+
+修正后聚焦 `[TC-02]` 通过，本地 `npm run verify` 再次取得 214 项测试中 211 通过、3 项按设计跳过、0 失败及统一验证 8/8 通过。提交 `94bbd015041e41778afaec8562686ffcde41bb28` 触发的 Validate #44 随后在 Windows x64、Linux x64/ARM64、macOS Intel/ARM64 五个平台全部成功，Windows 已真实覆盖原失败断言；V-08 和任务 5.3 据此通过。该结论只关闭验证代码的跨平台回归，不关闭 P3 的 DEF-01，也不把六项目本机业务执行外推为全平台业务项目认证。
