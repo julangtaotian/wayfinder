@@ -44,3 +44,9 @@ P3 的缺陷只影响测试文件事实与支持措辞，不影响六项目 Git 
 根因不是断言或产品逻辑回归，而是验证前置和执行权限不符合仓库合同；本地漏检原因是首次没有遵循 `AGENTS.md` 的运行时准备顺序。修正后先把锁定的 Vitest 3.2.4 安装到 `outputs/frontend-test-runtime/`，再在允许本地端口与内置 Chromium 的环境执行同一命令，214 项测试为 211 通过、3 个真实项目用例按设计跳过、0 失败。随后 `npm run verify` 8/8 通过并自动清理临时运行时。回归定位为 `tests/frontend-test-workflow.test.mjs` 的 Vitest fixture、UI Review 本地监听/Chromium 用例以及统一验证入口本身。
 
 官方校验器首次也因系统 Python 缺少 PyYAML 未能启动；随后仅在忽略目录 `outputs/validator-runtime/` 临时安装 PyYAML 6.0.2，官方 plugin validator 与 9 个 skill validator 全部通过，临时依赖已清理。该启动失败没有被记为插件校验失败，也没有被省略。
+
+## Windows CI 失败与回归定位
+
+提交 `a3307e58242f7287c639eb6e1db2450e0fcc4c83` 触发的 Validate #43 在 Windows x64 的 `npm run verify` 阶段失败；稳定失败为 `[TC-02] 隔离生命周期与有界清理` 对独立 Git 根目录执行字符串严格比较时，Git 返回 `D:/...`，Node.js `path.join` 生成 `D:\...`。同一轮 macOS Intel/ARM64、Linux x64/ARM64 四个平台均通过，失败与真实业务项目、插件写入逻辑和原生测试执行无关。
+
+根因是测试只验证了单个反斜杠样例的规范化函数，却没有在独立 Git 根目录断言中同时规范化实际值和期望值；本地 macOS 的两侧都使用 `/`，因此未暴露 Windows 分隔符差异。回归定位为 `tests/real-project-validation.test.mjs` 的 `[TC-02]`：比较前对 Git 输出与工作区路径都调用 `normalizeMachinePath`，继续保留真实 `git rev-parse --show-toplevel` 证据，不放宽为包含判断或平台特判。修正后必须重新运行本地统一验证与五平台 CI，新的精确提交全部成功前，V-08 和任务 5.3 继续保持未通过。

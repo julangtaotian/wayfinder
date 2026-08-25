@@ -179,7 +179,10 @@ test('[TC-02] 隔离生命周期与有界清理', (context) => {
   const sourceStatus = runGit(fixture.projectRoot, ['status', '--porcelain=v1']);
   const prepared = prepareWorkspace({ project: fixture.project, runRoot: fixture.runRoot });
   assert.equal(prepared.status, 'passed');
-  assert.equal(runGit(prepared.workspace, ['rev-parse', '--show-toplevel']), prepared.workspace);
+  assert.equal(
+    normalizeMachinePath(runGit(prepared.workspace, ['rev-parse', '--show-toplevel'])),
+    normalizeMachinePath(prepared.workspace),
+  );
   assert.equal(runGit(fixture.projectRoot, ['status', '--porcelain=v1']), sourceStatus);
 
   const failedCleanup = cleanupWorkspace({
