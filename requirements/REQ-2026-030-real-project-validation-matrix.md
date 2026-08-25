@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：实施中
+- 状态：已验收
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.18.0
@@ -166,8 +166,8 @@
 
 ## 测试与验证
 
-- 测试文件策略：继续复用同功能手写测试。P3 启动器识别回归写入已跟踪的 `tests/frontend-test-workflow.test.mjs`，因为它直接覆盖 `inspect-test-context.mjs`；Windows 路径规则合同扩展已跟踪的 `tests/workflow.test.mjs`；六项目端到端复验继续使用 `tests/real-project-validation.test.mjs`。Git 基线可用，当前修订基线提交 `1e242f362da11889013d2601a1ef7e40f9fdc5b7`；不得修改六个业务项目测试，也不得把新场景追加到生成基线。
-- 独立测试方案：需要；触发条件：需要跨六项目、D/A/V、生命周期和不同测试链追踪；活动变更与目标：`openspec/changes/validate-real-project-matrix/test-plan.md`；需求修订基线：R-01。
+- 测试文件策略：复用；目标路径：`tests/real-project-validation.test.mjs`；基线证据：Git 可用且该手写专用测试在修订基线提交 `1e242f362da11889013d2601a1ef7e40f9fdc5b7` 已受版本控制；选择理由：六项目矩阵继续由同功能专用测试承载，P3 启动器回归和 Windows 路径规则合同分别复用已跟踪的 `tests/frontend-test-workflow.test.mjs` 与 `tests/workflow.test.mjs`，不修改六个业务项目测试，也不把新场景追加到生成基线。
+- 独立测试方案：需要；触发条件：需要跨六项目、D/A/V、生命周期和不同测试链追踪；活动变更与目标：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/test-plan.md`；需求修订基线：R-01。
 - 验证范围：聚焦 + 相称全量；执行命令：先运行现有专用测试与六项目最窄真实命令，最后运行 `npm test`、`npm run validate` 和官方 validators；选择理由：真实项目矩阵覆盖共享识别、初始化、升级与测试边界，但不把每个历史项目的全量 coverage 当默认目标。
 - 自动测试：工作区快照与前后状态、只读识别字段、初始化预览/写入/幂等/升级、子进程分类、隔离清理和插件既有回归。
 - 人工检查：逐项目核对依赖/配置/测试事实，复核 mixed/limited/blocked 措辞、敏感信息边界和最终未覆盖项。
@@ -177,16 +177,19 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动+人工 | 六项目 Git 基线、项目角色和事实清单复核 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-01.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/baseline/results.json` |
-| V-02 | 自动 | 六项目只读 inspect、dependency profile 与 test context | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-02.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/inspection/results.json` |
-| V-03 | 自动 | 六个隔离副本的预览、写入、幂等、升级、检查和清理 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-03.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/lifecycle/results.json` |
-| V-04 | 自动 | P1～P4 最窄可用原生测试链与退出分类 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-04.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/native-test/results.json` |
-| V-05 | 自动+人工 | P5/P6 缺测试链、P4 混合工具链、P5 根 package 边界与结论措辞 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-05.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
-| V-06 | 自动 | 插件聚焦、本地统一验证及官方 validators | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-06.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
+| V-01 | 自动+人工 | 六项目 Git 基线、项目角色和事实清单复核 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-01.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/baseline/results.json` |
+| V-02 | 自动+人工 | 逐字段核对并复核六项目只读 inspect、dependency profile 与 test context | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-02.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/inspection/results.json` |
+| V-03 | 自动 | 六个隔离副本的预览、写入、幂等、升级、检查和清理 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-03.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/lifecycle/results.json` |
+| V-04 | 自动 | P1～P4 最窄可用原生测试链与退出分类 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-04.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/native-test/results.json` |
+| V-05 | 自动+人工 | 人工复核 P5/P6 缺测试链、P4 混合工具链、P5 根 package 边界与结论措辞 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-05.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
+| V-06 | 自动 | 插件聚焦、本地统一验证及官方 validators | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-06.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
 | V-07 | 人工 | 最终矩阵、缺陷清单、支持结论和未覆盖范围复核 | 2026-08-25 | 通过 | `outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json`；本地结论已收口，五平台状态仍由 V-08 独立等待 |
 | V-08 | 人工 | 复核插件代码提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 CI | 2026-08-25 | 通过 | [GitHub Actions Validate #46](https://github.com/julangtaotian/wayfinder/actions/runs/32815890046)；5 个任务同一 SHA、首次执行全部成功 |
-| V-09 | 自动 | P3 启动器与真实测试文件的确定性识别回归 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-09.json` |
-| V-10 | 自动 | Windows 多来源路径双侧规范化与规则合同回归 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-10.json` |
+| V-09 | 自动 | P3 启动器与真实测试文件的确定性识别回归 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-09.json` |
+| V-10 | 自动 | Windows 多来源路径双侧规范化与规则合同回归 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-10.json` |
+| V-11 | 自动 | TC-01 固定基线、漂移阻断与原工作区保护聚焦回归 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-11.json` |
+| V-12 | 自动 | TC-02 隔离生命周期、异常分支与有界清理聚焦回归 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-12.json` |
+| V-13 | 自动 | TC-03 结果分类、证据安全与跨平台诊断聚焦回归 | 2026-08-25 | 通过 | `openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-13.json` |
 
 ## 验收标准
 

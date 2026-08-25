@@ -1,0 +1,75 @@
+{
+  "artifacts": [],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=结果分类与证据安全边界",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T08:09:26.696Z",
+  "evidenceId": "V-13",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "09b3406dc9e46be3b7b328e94e0c8f1013b766bf",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 结果分类与证据安全边界",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 258,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-13/20260825080926529-34868-1652e3c4/stdout.log",
+      "sha256": "91441ef899c9bcad462e283b3ca7d60de4e73cf7dcbd4bd67229d5cbe01aad00",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-13/20260825080926529-34868-1652e3c4/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02",
+      "A-04",
+      "A-06",
+      "A-09",
+      "A-10"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12",
+      "D-13",
+      "D-14"
+    ],
+    "revision": "R-03",
+    "sha256": "edc64b48fcf3cc5e6858ff1ee9993ffb65ff28bb6ba353e9cc855d1ae653f5ff",
+    "testCaseIds": [
+      "TC-03"
+    ],
+    "verificationId": "V-13",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T08:09:26.531Z",
+  "status": "passed",
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
+}

@@ -1,0 +1,71 @@
+{
+  "artifacts": [],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=隔离生命周期与有界清理",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T08:09:25.859Z",
+  "evidenceId": "V-12",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "09b3406dc9e46be3b7b328e94e0c8f1013b766bf",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 隔离生命周期与有界清理",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 261,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-12/20260825080923692-34438-2ce5075f/stdout.log",
+      "sha256": "a12cc6dfe56bc38fee72780281d38dc4e4d67c7a9d7ab6f8260652adc4881e59",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-12/20260825080923692-34438-2ce5075f/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-04",
+      "A-08",
+      "A-09"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-10",
+      "D-11",
+      "D-13"
+    ],
+    "revision": "R-03",
+    "sha256": "d613cad47357d8328842aa7a7fa4bc8c58305575e88d1db96f1e5e4db7d708af",
+    "testCaseIds": [
+      "TC-02"
+    ],
+    "verificationId": "V-12",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T08:09:23.693Z",
+  "status": "passed",
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
+}

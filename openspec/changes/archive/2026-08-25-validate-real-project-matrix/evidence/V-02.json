@@ -17,12 +17,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-25T06:04:18.615Z",
+  "completedAt": "2026-08-25T08:09:28.814Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "1e242f362da11889013d2601a1ef7e40f9fdc5b7",
+    "commit": "09b3406dc9e46be3b7b328e94e0c8f1013b766bf",
     "dirty": true
   },
   "kind": "local-command",
@@ -31,13 +31,13 @@
   "logs": [
     {
       "bytes": 255,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-02/20260825060417212-12731-f767a81d/stdout.log",
-      "sha256": "b054142f2b8ef271b224d6fe8e927b3d0d2b1fb1d82e3cfd16ed36d3d5a8e0b6",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-02/20260825080927365-34973-46b8af22/stdout.log",
+      "sha256": "3dd0e7bf27a6ae9877cbb3415b6b744e364da308772b0a0cb5c10412be4ee4e3",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-02/20260825060417212-12731-f767a81d/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-02/20260825080927365-34973-46b8af22/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -66,14 +66,14 @@
       "D-15"
     ],
     "revision": "R-03",
-    "sha256": "ed9d40e98094c3c0ebc4dea93a194291f4d37e7c61b93d7ca0572819661091f9",
+    "sha256": "e530af1048b2cfcc5ed0419af0ec40e4d7280f01f408a08e4bc2b9526e7d43e0",
     "testCaseIds": [
       "TC-04"
     ],
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-25T06:04:17.213Z",
+  "startedAt": "2026-08-25T08:09:27.366Z",
   "status": "passed",
   "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
 }

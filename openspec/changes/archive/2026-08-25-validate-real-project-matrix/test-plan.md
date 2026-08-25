@@ -4,7 +4,7 @@
 
 - 状态：已验证
 - 需求：`requirements/REQ-2026-030-real-project-validation-matrix.md`
-- 变更：validate-real-project-matrix
+- 变更：2026-08-25-validate-real-project-matrix
 - 需求修订基线：R-03
 - 默认聚焦命令：`node --test tests/real-project-validation.test.mjs`
 
@@ -37,9 +37,9 @@
 - 目标测试：`tests/real-project-validation.test.mjs`
 - 测试定位：`[TC-01] 固定基线与漂移失败关闭`
 - 聚焦命令：`node --test --test-name-pattern="固定基线与漂移失败关闭" tests/real-project-validation.test.mjs`
-- 关联验证：V-06
+- 关联验证：V-06、V-11
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-06.json`；聚焦回归、`npm test` 与 `npm run verify` 均命中并通过该定位
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-11.json`
 
 ### TC-02：隔离副本覆盖写入、依赖阻断和全部清理分支
 
@@ -59,9 +59,9 @@
 - 目标测试：`tests/real-project-validation.test.mjs`
 - 测试定位：`[TC-02] 隔离生命周期与有界清理`
 - 聚焦命令：`node --test --test-name-pattern="隔离生命周期与有界清理" tests/real-project-validation.test.mjs`
-- 关联验证：V-06
+- 关联验证：V-06、V-12
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-06.json`；成功、异常依赖、越界链接、失败清理和原工作区保护分支均通过
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-12.json`
 
 ### TC-03：状态分类、敏感信息和跨平台机器证据保持稳定
 
@@ -81,9 +81,9 @@
 - 目标测试：`tests/real-project-validation.test.mjs`
 - 测试定位：`[TC-03] 结果分类与证据安全边界`
 - 聚焦命令：`node --test --test-name-pattern="结果分类与证据安全边界" tests/real-project-validation.test.mjs`
-- 关联验证：V-06
+- 关联验证：V-06、V-13
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-06.json`；四类状态、零测试、非零退出、敏感输出、路径脱敏、附件边界和 Windows/POSIX 样本均通过
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-13.json`
 
 ### TC-04：六项目基线与只读识别逐字段符合真实文件
 
@@ -105,7 +105,7 @@
 - 聚焦命令：`node --test --test-name-pattern="六项目基线与只读识别" tests/real-project-validation.test.mjs`
 - 关联验证：V-01、V-02
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-01.json`、`openspec/changes/validate-real-project-matrix/evidence/V-02.json`；R-02 的失败资料保留在 `defects/DEF-01-p3-test-launcher-false-positive.md`，R-03 已对同一 P3 提交复验为 `inspection_facts_matched`
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-02.json`
 
 ### TC-05：六项目隔离生命周期不改变原工作区
 
@@ -127,7 +127,7 @@
 - 聚焦命令：`node --test --test-name-pattern="六项目隔离生命周期" tests/real-project-validation.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-03.json`；六项目均为 `lifecycle_completed`，预览零写入、重复执行幂等、自定义内容保留、冲突保护、检查和清理全部通过，原工作区复核通过
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-03.json`
 
 ### TC-06：P1～P4 原生测试与 P5/P6 阻断保持真实分类
 
@@ -149,7 +149,7 @@
 - 聚焦命令：`node --test --test-name-pattern="多运行器真实执行与缺链阻断" tests/real-project-validation.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-04.json`；P1 发现并通过 4 个 Vitest 用例，P2 发现并通过 3 个 Jest 用例，P3 明确零测试阻断，P4 因本机已有依赖缺少 `@esbuild/darwin-arm64` 有限失败，P5/P6 缺测试设施阻断
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-04.json`
 
 ### TC-07：人工复核混合工具链、根 package 与外部能力边界
 
@@ -171,7 +171,7 @@
 - 聚焦命令：不适用
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：人工逐项核对 `outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json`、inspection/native-test 机器结果和脱敏日志；确认 P4 为混合工具链、P5 的 8 个嵌套 package 不构成 workspace 认证、P6 未取得开发者工具证据，且本轮未覆盖后端、远程设计、pnpm、React + Vite、真实 Monorepo/多应用与其他平台真实项目运行
+- 证据：`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json`
 
 ### TC-08：人工复核最终矩阵、缺陷转交与证据层级
 
@@ -193,7 +193,7 @@
 - 聚焦命令：不适用
 - 关联验证：V-07、V-08
 - 结果分类：通过
-- 证据：P3 同一提交复验、四层证据和未覆盖边界已复核；插件代码提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 [GitHub Actions Validate #46](https://github.com/julangtaotian/wayfinder/actions/runs/32815890046) 在 Windows x64、Linux x64/ARM64、macOS Intel/ARM64 五个平台首次执行全部成功
+- 证据：`outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json`
 
 ### TC-09：测试启动脚本不计入测试文件
 
@@ -215,7 +215,7 @@
 - 聚焦命令：`node --test --test-name-pattern="测试启动脚本不计入测试文件" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-09
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-09.json`；确定性 fixture 保留三类合法测试文件并排除普通目录的 `scripts/test.js`、`scripts/spec.js` 与根 `test.js`
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-09.json`
 
 ### TC-10：Windows 多来源路径使用同一规范化规则
 
@@ -237,4 +237,4 @@
 - 聚焦命令：`node --test --test-name-pattern="跨平台高风险变更规则合同" tests/workflow.test.mjs`
 - 关联验证：V-10
 - 结果分类：通过
-- 证据：`openspec/changes/validate-real-project-matrix/evidence/V-10.json`；三份规则合同与 `path.win32`/`path.posix`、`D:/...`/`D:\\...` 双侧规范化样本通过
+- 证据：`openspec/changes/archive/2026-08-25-validate-real-project-matrix/evidence/V-10.json`

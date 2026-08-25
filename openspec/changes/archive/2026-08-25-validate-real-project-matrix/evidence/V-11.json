@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=固定基线与漂移失败关闭",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T08:09:22.896Z",
+  "evidenceId": "V-11",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "09b3406dc9e46be3b7b328e94e0c8f1013b766bf",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 固定基线与漂移失败关闭",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 256,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-11/20260825080922515-34081-07cdcceb/stdout.log",
+      "sha256": "886f02091bd99fe1da645c29fa0f5cd4ce9516c5d9599e72f5e41311b7ca5173",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-11/20260825080922515-34081-07cdcceb/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-08"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-03",
+      "D-05",
+      "D-06",
+      "D-13"
+    ],
+    "revision": "R-03",
+    "sha256": "858db4fd0df2b53858c81bcf148c2936cbd632809332b186e567391146990523",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-11",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T08:09:22.517Z",
+  "status": "passed",
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
+}

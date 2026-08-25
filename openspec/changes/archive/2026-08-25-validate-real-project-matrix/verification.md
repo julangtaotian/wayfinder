@@ -5,7 +5,7 @@
 - 执行日期：2026-08-25
 - 本机环境：macOS ARM64，Node.js v22.12.0
 - 运行 ID：`2026-08-25-p1-p6-run-01`
-- 总体状态：P3 误报已关闭，本地验证与插件代码精确提交五平台 CI 全部通过；变更保持活动，等待用户决定是否进入最终归档。
+- 总体状态：已完成；P3 误报已关闭，本地验证、精确定位机器证据与插件代码精确提交五平台 CI 全部通过，严格完成门禁、规格同步、归档和归档后审计均已通过。
 
 ## 已执行证据
 
@@ -21,6 +21,9 @@
 | V-08 五平台 CI | 通过 | WebStorm 提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 Validate #46 在 Windows x64、Linux x64/ARM64、macOS Intel/ARM64 五个平台首次执行全部成功；任务无缺失、取消或重跑 | [GitHub Actions Validate #46](https://github.com/julangtaotian/wayfinder/actions/runs/32815890046) |
 | V-09 启动器识别回归 | 通过 | 普通脚本目录和根目录中的通用 `test.*` 启动器被排除，真实测试目录、`*.test.*` 与 `*.spec.*` 文件继续识别 | `evidence/V-09.json` |
 | V-10 Windows 路径规则合同 | 通过 | 仓库规则、插件模板和共享清单都要求多来源路径双侧同函数规范化，并覆盖 `path.win32`/`path.posix` 与 `D:/...`/`D:\\...` | `evidence/V-10.json` |
+| V-11 TC-01 精确证据 | 通过 | 固定基线、提交/工作区漂移阻断与原工作区保护聚焦回归命中 2 次，退出码 0 | `evidence/V-11.json` |
+| V-12 TC-02 精确证据 | 通过 | 隔离生命周期、异常分支与有界清理聚焦回归命中 2 次，退出码 0 | `evidence/V-12.json` |
+| V-13 TC-03 精确证据 | 通过 | 结果分类、敏感信息边界和 Windows/POSIX 诊断聚焦回归命中 2 次，退出码 0 | `evidence/V-13.json` |
 
 ## 独立影响链决策
 
@@ -47,6 +50,8 @@ R-02 时，P3 缺陷只影响测试文件事实与支持措辞，不影响六项
 根因不是断言或产品逻辑回归，而是验证前置和执行权限不符合仓库合同；本地漏检原因是首次没有遵循 `AGENTS.md` 的运行时准备顺序。修正后先把锁定的 Vitest 3.2.4 安装到 `outputs/frontend-test-runtime/`，再在允许本地端口与内置 Chromium 的环境执行同一命令。R-03 最终为 215 项测试中 212 通过、3 个真实项目用例按设计跳过、0 失败；`npm run verify` 8/8 通过并自动清理临时运行时。回归定位为 `tests/frontend-test-workflow.test.mjs` 的 Vitest fixture 与新增 TC-09、UI Review 本地监听/Chromium 用例以及统一验证入口本身。
 
 R-03 第一次在受限网络环境启动 `npm run verify` 时，临时 Vitest 运行时因 `registry.npmmirror.com` DNS 不可用而未能准备；入口随后自动清理。这属于验证环境启动失败，没有进入产品测试阶段。允许依赖下载后重跑同一命令取得上述 215 项与 8/8 结果，未通过修改镜像、跳过测试或放宽断言取得绿灯。
+
+最终收尾为重新绑定 V-06 语义而执行同一统一验证时，受限网络再次稳定复现上述 DNS 启动失败，旧通过清单未被覆盖。允许联网后使用同一证据命令重跑，`npm run verify` 成功、TC-09 定位命中 2 次并生成新的 schema v2 V-06；没有省略失败尝试，也没有把启动失败记作产品测试失败。
 
 官方校验器首次也因系统 Python 缺少 PyYAML 未能启动；随后仅在忽略目录 `outputs/validator-runtime/` 临时安装 PyYAML 6.0.2，官方 plugin validator 与 9 个 skill validator 全部通过，临时依赖已清理。该启动失败没有被记为插件校验失败，也没有被省略。
 
