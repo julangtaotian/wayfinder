@@ -16,12 +16,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-25T06:07:29.945Z",
+  "completedAt": "2026-08-25T06:20:09.674Z",
   "evidenceId": "V-06",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "1e242f362da11889013d2601a1ef7e40f9fdc5b7",
+    "commit": "eaadc6b50935d1d4e75508077b37c19f84a4125f",
     "dirty": true
   },
   "kind": "local-command",
@@ -29,14 +29,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 45162,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825060639426-17759-e43a342e/stdout.log",
-      "sha256": "8aa5178b013beebd2048e34b2f2c73fd02ea3ba8e38df676a771c5345e6954aa",
+      "bytes": 45187,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825061918748-25311-7cdd8706/stdout.log",
+      "sha256": "fd115c2be53942c1e99e284acda5e3b64de1a07f2d5689bcaf951f9f3dccb1df",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825060639426-17759-e43a342e/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825061918748-25311-7cdd8706/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
@@ -73,7 +73,7 @@
       "D-14"
     ],
     "revision": "R-03",
-    "sha256": "fe93782b6bd4a8587222c6f9c6adc65638b8e5a166fcc5ca2cba385bc53fe775",
+    "sha256": "cc8d3913e61bbab350f318c6667e78e721387a9be290d84dd41cd31059425822",
     "testCaseIds": [
       "TC-01",
       "TC-02",
@@ -82,7 +82,7 @@
     "verificationId": "V-06",
     "version": 1
   },
-  "startedAt": "2026-08-25T06:06:39.428Z",
+  "startedAt": "2026-08-25T06:19:18.750Z",
   "status": "passed",
   "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
 }

@@ -28,4 +28,4 @@ P3 的根测试命令为 `node scripts/test.js`。`scripts/test.js` 负责设置
 - 修复边界：普通脚本目录中的通用 `test.*` 文件不再自动计为测试用例；`*.test.*`、`*.spec.*` 和已识别测试目录中的合法 `test.*` 继续保留。
 - 确定性回归：`[TC-09] 测试启动脚本不计入测试文件` 通过，且确认检查过程没有读取源码正文。
 - 同输入复验：P3 仍固定提交 `54914eafd85a22d3f63054b81dd56271c11f9bbf`，测试命令 `yarn test` 与 Jest 运行器保持识别，`testFiles`、`handwrittenTests`、`trackedTests` 均为 0，结果为 `inspection_facts_matched`。
-- 处理结果：DEF-01 本地关闭；P3 原生命令实际发现 0 个测试仍按 `blocked` 记录，修复不会把“无测试用例”改写为“测试通过”。外部平台兼容性由 V-08 独立等待最终提交 CI。
+- 处理结果：DEF-01 已关闭；P3 原生命令实际发现 0 个测试仍按 `blocked` 记录，修复不会把“无测试用例”改写为“测试通过”。插件代码提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 Validate #46 已由 V-08 复核为五平台全部成功。

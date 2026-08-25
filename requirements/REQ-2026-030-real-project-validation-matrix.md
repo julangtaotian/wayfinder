@@ -184,7 +184,7 @@
 | V-05 | 自动+人工 | P5/P6 缺测试链、P4 混合工具链、P5 根 package 边界与结论措辞 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-05.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
 | V-06 | 自动 | 插件聚焦、本地统一验证及官方 validators | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-06.json`；`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
 | V-07 | 人工 | 最终矩阵、缺陷清单、支持结论和未覆盖范围复核 | 2026-08-25 | 通过 | `outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json`；本地结论已收口，五平台状态仍由 V-08 独立等待 |
-| V-08 | 人工 | 复核本次最终精确提交的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 CI | 待执行 | 计划 | 等待本次最终提交和真实 CI |
+| V-08 | 人工 | 复核插件代码提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 五平台 CI | 2026-08-25 | 通过 | [GitHub Actions Validate #46](https://github.com/julangtaotian/wayfinder/actions/runs/32815890046)；5 个任务同一 SHA、首次执行全部成功 |
 | V-09 | 自动 | P3 启动器与真实测试文件的确定性识别回归 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-09.json` |
 | V-10 | 自动 | Windows 多来源路径双侧规范化与规则合同回归 | 2026-08-25 | 通过 | `openspec/changes/validate-real-project-matrix/evidence/V-10.json` |
 
@@ -201,7 +201,7 @@
 - [x] [A-09] 所有日志、隔离副本和证据都位于本轮有界目录；敏感信息不入库；成功和失败清理均有记录。
 - [x] [A-10] 最终报告逐项列出已通过、有限、阻断、缺陷和未覆盖范围，不将本机或单项目证据外推为完整兼容或无漏洞结论。
 - [x] [A-11] P3 的 `scripts/test.js` 只作为测试命令启动器，不进入测试文件清单；合法 `*.test.*`、`*.spec.*` 和测试目录中的 `test.*` 不被误删。
-- [ ] [A-12] Git、子进程和 Node 路径的机器判断对实际值与期望值执行同一规范化；规则合同覆盖 Windows/POSIX 样本，且本次最终精确提交五平台 CI 全部成功。
+- [x] [A-12] Git、子进程和 Node 路径的机器判断对实际值与期望值执行同一规范化；规则合同覆盖 Windows/POSIX 样本，且本次最终精确提交五平台 CI 全部成功。
 
 ## 验收—证据映射
 
@@ -218,7 +218,7 @@
 | A-09 | 产物、敏感信息和清理受控 | D-04、D-10、D-13 | 自动+人工 | 产物清单、哈希与清理结果 | 通过 | V-03、V-06、V-07 |
 | A-10 | 最终支持结论不外推 | D-07、D-09、D-11、D-12、D-13、D-14 | 自动+人工 | 最终矩阵与剩余风险报告 | 通过 | V-05、V-07、V-08 |
 | A-11 | 测试启动器不冒充测试用例 | D-06、D-11、D-15 | 自动+人工 | P3 固定输入、确定性 fixture 与 inspection 结果 | 通过 | V-02、V-09 |
-| A-12 | Windows 多来源路径比较稳定 | D-13 | 自动+人工 | 规则合同、路径样本、统一验证与真实五平台 CI | 待执行 | V-06、V-08、V-10 |
+| A-12 | Windows 多来源路径比较稳定 | D-13 | 自动+人工 | 规则合同、路径样本、统一验证与真实五平台 CI | 通过 | V-06、V-08、V-10 |
 
 ## 待确认问题
 

@@ -5,7 +5,7 @@
 - 执行日期：2026-08-25
 - 本机环境：macOS ARM64，Node.js v22.12.0
 - 运行 ID：`2026-08-25-p1-p6-run-01`
-- 总体状态：本地验证通过，P3 误报已关闭；等待本次最终精确提交的五平台 CI，变更继续保持活动。
+- 总体状态：P3 误报已关闭，本地验证与插件代码精确提交五平台 CI 全部通过；变更保持活动，等待用户决定是否进入最终归档。
 
 ## 已执行证据
 
@@ -18,7 +18,7 @@
 | V-05 边界人工复核 | 通过 | 混合工具链、嵌套 package、原生微信开发工具、外部能力、敏感信息和未覆盖组合均按证据保持边界 | `evidence/V-05.json`、`outputs/real-project-validation/2026-08-25-p1-p6-run-01/boundaries/results.json` |
 | V-06 插件统一验证 | 通过 | `npm test` 215 项零失败，其中 212 通过、3 项按设计跳过；`npm run validate` 与 `npm run verify` 8/8 通过；官方 plugin validator 与 9 个 skill validator 全部通过 | `evidence/V-06.json`、`outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json` |
 | V-07 最终边界复核 | 通过 | P3 修复后重新复核矩阵、缺陷、支持等级和未覆盖项；DEF-01 本地关闭，但 P3 零测试仍正确阻断，不外推非 Vitest 或全平台认证 | `outputs/real-project-validation/2026-08-25-p1-p6-run-01/report/summary.json` |
-| V-08 五平台 CI | 待执行 | 本轮修改插件识别代码与跨平台规则，必须等待 WebStorm 提交后同一精确提交的五个平台任务全部成功；历史 Validate #44 不替代本轮证据 | 待提交后复核 |
+| V-08 五平台 CI | 通过 | WebStorm 提交 `eaadc6b50935d1d4e75508077b37c19f84a4125f` 的 Validate #46 在 Windows x64、Linux x64/ARM64、macOS Intel/ARM64 五个平台首次执行全部成功；任务无缺失、取消或重跑 | [GitHub Actions Validate #46](https://github.com/julangtaotian/wayfinder/actions/runs/32815890046) |
 | V-09 启动器识别回归 | 通过 | 普通脚本目录和根目录中的通用 `test.*` 启动器被排除，真实测试目录、`*.test.*` 与 `*.spec.*` 文件继续识别 | `evidence/V-09.json` |
 | V-10 Windows 路径规则合同 | 通过 | 仓库规则、插件模板和共享清单都要求多来源路径双侧同函数规范化，并覆盖 `path.win32`/`path.posix` 与 `D:/...`/`D:\\...` | `evidence/V-10.json` |
 
@@ -58,4 +58,4 @@ R-03 第一次在受限网络环境启动 `npm run verify` 时，临时 Vitest �
 
 修正后聚焦 `[TC-02]` 通过，本地 `npm run verify` 再次取得当时 214 项测试中 211 通过、3 项按设计跳过、0 失败及统一验证 8/8 通过。提交 `94bbd015041e41778afaec8562686ffcde41bb28` 触发的 Validate #44 随后在 Windows x64、Linux x64/ARM64、macOS Intel/ARM64 五个平台全部成功，关闭了 R-02 的验证代码回归。
 
-R-03 进一步把这类问题固化为硬规则：只要路径来自 Git、子进程、`cwd`、`realpath`、`path.join` 等不同来源，参与相等、集合、前缀或去重判断前，实际值和期望值必须调用同一规范化函数；禁止根据当前 `process.platform` 猜测外部工具分隔符；在非目标平台验证样本时必须显式使用 `path.win32` 或 `path.posix`，并同时覆盖 `D:/...` 与 `D:\\...`。TC-10 已验证规则合同和确定性样本，本轮 V-08 仍必须等待新的精确提交五平台 CI，不能复用 Validate #44。
+R-03 进一步把这类问题固化为硬规则：只要路径来自 Git、子进程、`cwd`、`realpath`、`path.join` 等不同来源，参与相等、集合、前缀或去重判断前，实际值和期望值必须调用同一规范化函数；禁止根据当前 `process.platform` 猜测外部工具分隔符；在非目标平台验证样本时必须显式使用 `path.win32` 或 `path.posix`，并同时覆盖 `D:/...` 与 `D:\\...`。TC-10 已验证规则合同和确定性样本，Validate #46 又以插件代码的同一精确提交在五个平台真实通过；该结论只认证插件仓库，不外推为六项目在五个平台的业务执行认证。
