@@ -79,6 +79,11 @@ blob-report/
 /outputs/validator-runtime/
 /outputs/verification-evidence-integrity/
 /outputs/verification-evidence/
+/outputs/real-project-validation/local-matrix.json
+/outputs/real-project-validation/test-fixtures/
+/outputs/real-project-validation/*/workspaces/
+/outputs/real-project-validation/*/cache/
+/outputs/real-project-validation/*/tmp/
 
 # 运行日志与进程临时状态
 *.log

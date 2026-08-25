@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-25-p1-p6-run-01",
+  "stage": "manual-boundary-review",
+  "status": "passed",
+  "reviewedAt": "2026-08-25",
+  "platform": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v22.12.0"
+  },
+  "checks": [
+    {
+      "id": "P4-mixed-toolchain",
+      "status": "passed",
+      "conclusion": "P4 同时存在 Vite 与 Webpack 直接依赖，不描述为纯单一工具链。"
+    },
+    {
+      "id": "P5-nested-packages",
+      "status": "passed",
+      "conclusion": "P5 发现 8 个嵌套 package.json，但根 package 未声明 workspace，不构成 Monorepo 或多应用认证。"
+    },
+    {
+      "id": "P6-wechat-boundary",
+      "status": "passed",
+      "conclusion": "P6 未提供通用测试设施或微信开发者工具运行证据，测试与发布链保持阻断或未覆盖。"
+    },
+    {
+      "id": "native-test-classification",
+      "status": "passed",
+      "conclusion": "P1 真通过；P2 有限通过；P3 零测试阻断；P4 依赖环境有限失败；P5/P6 缺设施阻断。"
+    },
+    {
+      "id": "evidence-redaction",
+      "status": "passed",
+      "conclusion": "持久矩阵结果与测试日志未包含六项目或用户目录绝对路径，命令参数使用相对目标或入口文件名。"
+    },
+    {
+      "id": "uncovered-capabilities",
+      "status": "passed",
+      "conclusion": "后端、远程设计同步、pnpm、React + Vite、真实 workspace/Monorepo/多应用、开发者工具发布链和其他平台真实项目运行保持未覆盖。"
+    }
+  ]
+}

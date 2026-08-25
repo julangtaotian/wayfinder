@@ -1,0 +1,328 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-25-p1-p6-run-01",
+  "stage": "native-test",
+  "platform": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v22.12.0"
+  },
+  "status": "passed",
+  "results": [
+    {
+      "projectId": "P1",
+      "stage": "native-test",
+      "root": "project:P1",
+      "runner": {
+        "name": "Vitest",
+        "source": "script",
+        "certification": "verified-vue3-vite-vitest"
+      },
+      "inspectionIssues": [],
+      "dependencies": {
+        "status": "passed",
+        "code": "project_dependencies_copied",
+        "bytes": 378018482,
+        "entries": 42359,
+        "availableBytes": 305709625344
+      },
+      "command": {
+        "executable": "node",
+        "args": [
+          "npm-cli.js",
+          "run",
+          "test",
+          "--",
+          "--run",
+          "src/__tests__/views/aggregatedLargeScreen/useCallQueue.spec.ts"
+        ],
+        "source": "javascript-cli"
+      },
+      "status": "passed",
+      "code": "certified_test_run_passed",
+      "exitCode": 0,
+      "signal": null,
+      "discoveryCount": 4,
+      "startedAt": "2026-08-25T02:19:40.133Z",
+      "completedAt": "2026-08-25T02:19:42.253Z",
+      "output": {
+        "status": "passed",
+        "code": "output_safe",
+        "originalBytes": 1136,
+        "truncated": false
+      },
+      "log": {
+        "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p1.log",
+        "size": 1136,
+        "sha256": "942aa1f1f4bfd8fb170eed44667bf3c2d04eb56f667f9f2b11b1e3b9a235b10f",
+        "label": "P1 测试日志"
+      },
+      "cleanup": {
+        "status": "passed",
+        "code": "workspace_cleaned",
+        "target": "workspaces/p1-native-test"
+      },
+      "sourceAfter": {
+        "projectId": "P1",
+        "root": "project:P1",
+        "branch": "develop-1.21.1",
+        "commit": "6ed06f5aba53c1fb85b53cb359d7ed732abc9002",
+        "dirty": false,
+        "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "passed",
+        "code": "project_baseline_matched"
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P2",
+      "stage": "native-test",
+      "root": "project:P2",
+      "runner": {
+        "name": "Jest",
+        "source": "script",
+        "certification": "project-evidence-only"
+      },
+      "inspectionIssues": [],
+      "dependencies": {
+        "status": "passed",
+        "code": "project_dependencies_copied",
+        "bytes": 275245932,
+        "entries": 49085,
+        "availableBytes": 304265314304
+      },
+      "command": {
+        "executable": "node",
+        "args": [
+          "npm-cli.js",
+          "run",
+          "test",
+          "--",
+          "--runInBand",
+          "tests/unit/components/paginationPage.spec.js"
+        ],
+        "source": "javascript-cli"
+      },
+      "status": "limited",
+      "code": "project_evidence_test_run_passed",
+      "exitCode": 0,
+      "signal": null,
+      "discoveryCount": 3,
+      "startedAt": "2026-08-25T02:19:58.952Z",
+      "completedAt": "2026-08-25T02:20:08.969Z",
+      "output": {
+        "status": "passed",
+        "code": "output_safe",
+        "originalBytes": 746,
+        "truncated": false
+      },
+      "log": {
+        "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p2.log",
+        "size": 746,
+        "sha256": "6ed7b729457385ce53556ef72abcaa5029766463c711334e49417535de69d3e6",
+        "label": "P2 测试日志"
+      },
+      "cleanup": {
+        "status": "passed",
+        "code": "workspace_cleaned",
+        "target": "workspaces/p2-native-test"
+      },
+      "sourceAfter": {
+        "projectId": "P2",
+        "root": "project:P2",
+        "branch": "develop-1.23.7-yitiji",
+        "commit": "6295d97a080c3eda11848f0f45ff801b21ee8a0d",
+        "dirty": false,
+        "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "passed",
+        "code": "project_baseline_matched"
+      },
+      "expected": [
+        "limited"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P3",
+      "stage": "native-test",
+      "root": "project:P3",
+      "runner": {
+        "name": "Jest",
+        "source": "dependency",
+        "certification": "project-evidence-only"
+      },
+      "inspectionIssues": [
+        {
+          "field": "testFileCount",
+          "expected": 0,
+          "actual": 1
+        },
+        {
+          "field": "excludedTestFiles",
+          "expected": [],
+          "actual": [
+            "scripts/test.js"
+          ]
+        }
+      ],
+      "dependencies": {
+        "status": "passed",
+        "code": "project_dependencies_copied",
+        "bytes": 335319186,
+        "entries": 49340,
+        "availableBytes": 305582080000
+      },
+      "command": {
+        "executable": "yarn",
+        "args": [
+          "run",
+          "test",
+          "--no-watch"
+        ],
+        "source": "posix-path"
+      },
+      "status": "blocked",
+      "code": "test_zero_discovery",
+      "exitCode": 1,
+      "signal": null,
+      "discoveryCount": 0,
+      "startedAt": "2026-08-25T02:20:27.231Z",
+      "completedAt": "2026-08-25T02:20:28.601Z",
+      "output": {
+        "status": "passed",
+        "code": "output_safe",
+        "originalBytes": 582,
+        "truncated": false
+      },
+      "log": {
+        "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p3.log",
+        "size": 582,
+        "sha256": "0d8246f7b89cb5e80d1b33a769eba911b169b8a88246bc3c94cead78d947f736",
+        "label": "P3 测试日志"
+      },
+      "cleanup": {
+        "status": "passed",
+        "code": "workspace_cleaned",
+        "target": "workspaces/p3-native-test"
+      },
+      "sourceAfter": {
+        "projectId": "P3",
+        "root": "project:P3",
+        "branch": "master",
+        "commit": "54914eafd85a22d3f63054b81dd56271c11f9bbf",
+        "dirty": false,
+        "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "passed",
+        "code": "project_baseline_matched"
+      },
+      "expected": [
+        "blocked",
+        "limited"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P4",
+      "stage": "native-test",
+      "root": "project:P4",
+      "runner": {
+        "name": "Vitest",
+        "source": "script",
+        "certification": "project-evidence-only"
+      },
+      "inspectionIssues": [],
+      "dependencies": {
+        "status": "passed",
+        "code": "project_dependencies_copied",
+        "bytes": 401467595,
+        "entries": 57677,
+        "availableBytes": 305546657792
+      },
+      "command": {
+        "executable": "node",
+        "args": [
+          "npm-cli.js",
+          "run",
+          "test",
+          "--",
+          "--run",
+          "src/__tests__/common.spec.js"
+        ],
+        "source": "javascript-cli"
+      },
+      "status": "limited",
+      "code": "project_test_nonzero_exit",
+      "exitCode": 1,
+      "signal": null,
+      "discoveryCount": 0,
+      "startedAt": "2026-08-25T02:20:49.235Z",
+      "completedAt": "2026-08-25T02:20:49.843Z",
+      "output": {
+        "status": "passed",
+        "code": "output_safe",
+        "originalBytes": 1659,
+        "truncated": false
+      },
+      "log": {
+        "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p4.log",
+        "size": 1659,
+        "sha256": "82b32623f8b21b49bfb9a22913298df27b6c2e090e91d5bcdcce2b66a1986053",
+        "label": "P4 测试日志"
+      },
+      "cleanup": {
+        "status": "passed",
+        "code": "workspace_cleaned",
+        "target": "workspaces/p4-native-test"
+      },
+      "sourceAfter": {
+        "projectId": "P4",
+        "root": "project:P4",
+        "branch": "master",
+        "commit": "01936228f8d892a7ac09f1b0ad2af66b82fe1929",
+        "dirty": false,
+        "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "passed",
+        "code": "project_baseline_matched"
+      },
+      "expected": [
+        "limited"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P5",
+      "stage": "native-test",
+      "status": "blocked",
+      "code": "test_facility_missing",
+      "commandDetected": false,
+      "runner": {
+        "name": "Jest",
+        "source": "dependency",
+        "certification": "project-evidence-only"
+      },
+      "expected": [
+        "blocked"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P6",
+      "stage": "native-test",
+      "status": "blocked",
+      "code": "test_facility_missing",
+      "commandDetected": false,
+      "runner": {
+        "name": "未识别",
+        "source": "unknown",
+        "certification": "project-evidence-only"
+      },
+      "expected": [
+        "blocked"
+      ],
+      "matchesExpected": true
+    }
+  ]
+}

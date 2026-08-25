@@ -1,0 +1,87 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1269,
+      "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json",
+      "sha256": "b411a05e5c87148fbfca0ca8f6bfab16874d65a8cbbe620de81b2ef143a6bed3"
+    }
+  ],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-25T02:18:42.961Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "3431fdba861a17d2a017cc1b0e7b0c64a926fc00",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 固定基线与漂移失败关闭",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 45030,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825021752037-56493-0be44a1f/stdout.log",
+      "sha256": "f4d5e85c8d52ae17b13fe5389e17e8cf37e9fe10ff89246ea9e2c30efab9b1d8",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825021752037-56493-0be44a1f/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-03",
+      "A-04",
+      "A-06",
+      "A-08",
+      "A-09",
+      "A-10"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12",
+      "D-13",
+      "D-14"
+    ],
+    "revision": "R-02",
+    "sha256": "2dd422ccaca3a1e5e60c9422894bfe03065c881f045e7a54b60b07a9a5b8e415",
+    "testCaseIds": [
+      "TC-01",
+      "TC-02",
+      "TC-03"
+    ],
+    "verificationId": "V-06",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T02:17:52.038Z",
+  "status": "passed",
+  "workspaceFingerprint": "f59a536f8f4f3ce8e049d94e767d87cbeb91c48eccf6123f549507273942c046"
+}

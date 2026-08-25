@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-25-p1-p6-run-01",
+  "stage": "baseline",
+  "platform": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v22.12.0"
+  },
+  "status": "passed",
+  "results": [
+    {
+      "projectId": "P1",
+      "root": "project:P1",
+      "branch": "develop-1.21.1",
+      "commit": "6ed06f5aba53c1fb85b53cb359d7ed732abc9002",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 378018482,
+        "entries": 42359,
+        "unsafeLinks": 0,
+        "availableBytes": 306026455040,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P2",
+      "root": "project:P2",
+      "branch": "develop-1.23.7-yitiji",
+      "commit": "6295d97a080c3eda11848f0f45ff801b21ee8a0d",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 275245932,
+        "entries": 49085,
+        "unsafeLinks": 0,
+        "availableBytes": 306027569152,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P3",
+      "root": "project:P3",
+      "branch": "master",
+      "commit": "54914eafd85a22d3f63054b81dd56271c11f9bbf",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 335319186,
+        "entries": 49340,
+        "unsafeLinks": 0,
+        "availableBytes": 306032861184,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P4",
+      "root": "project:P4",
+      "branch": "master",
+      "commit": "01936228f8d892a7ac09f1b0ad2af66b82fe1929",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 401467595,
+        "entries": 57677,
+        "unsafeLinks": 0,
+        "availableBytes": 306033430528,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P5",
+      "root": "project:P5",
+      "branch": "master",
+      "commit": "b2a2fae160a7c3b11a3ec1e11f27f92b216c1d62",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 373701326,
+        "entries": 58264,
+        "unsafeLinks": 0,
+        "availableBytes": 306038124544,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    },
+    {
+      "projectId": "P6",
+      "root": "project:P6",
+      "branch": "develop-调整图形验证码",
+      "commit": "04977d3063b65a84a6367fe89d45f14e71a081d0",
+      "dirty": false,
+      "statusDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "passed",
+      "code": "project_baseline_matched",
+      "resourceBudget": {
+        "status": "passed",
+        "code": "dependency_budget_recorded",
+        "bytes": 897782,
+        "entries": 1095,
+        "unsafeLinks": 0,
+        "availableBytes": 306040971264,
+        "reserveBytes": 536870912
+      },
+      "expected": [
+        "passed"
+      ],
+      "matchesExpected": true
+    }
+  ]
+}

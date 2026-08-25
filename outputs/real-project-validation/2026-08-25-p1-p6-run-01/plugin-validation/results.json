@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "runId": "2026-08-25-p1-p6-run-01",
+  "stage": "plugin-validation",
+  "status": "passed",
+  "executedAt": "2026-08-25",
+  "results": [
+    {
+      "command": "npm test",
+      "status": "passed",
+      "tests": 214,
+      "passed": 211,
+      "failed": 0,
+      "skipped": 3,
+      "note": "按仓库合同准备 Vitest 临时运行时，并在允许本地监听与 Chromium 的环境重跑。"
+    },
+    {
+      "command": "npm run validate",
+      "status": "passed"
+    },
+    {
+      "command": "npm run verify",
+      "status": "passed",
+      "completedStages": 8,
+      "failedStage": null
+    },
+    {
+      "command": "official-plugin-validator",
+      "status": "passed",
+      "validatedPlugins": 1
+    },
+    {
+      "command": "official-skill-validator",
+      "status": "passed",
+      "validatedSkills": 9
+    }
+  ],
+  "failedAttempts": [
+    {
+      "command": "npm test",
+      "classification": "environment-and-precondition",
+      "failures": 8,
+      "resolvedBy": "prepare-locked-vitest-runtime-and-run-with-local-browser-permission"
+    },
+    {
+      "command": "official-validators",
+      "classification": "validator-runtime-missing",
+      "resolvedBy": "temporary-pyyaml-in-outputs-validator-runtime"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "artifacts": [
+    {
+      "bytes": 22585,
+      "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/lifecycle/results.json",
+      "sha256": "8310ec9b25f715a8e9a11b369a03c49c2266d89ec86e6eb4b79366d8f68b868b"
+    }
+  ],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=六项目隔离生命周期",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T02:19:09.970Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "3431fdba861a17d2a017cc1b0e7b0c64a926fc00",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-05] 六项目隔离生命周期",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 251,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825021858314-63182-84b12fd3/stdout.log",
+      "sha256": "eda341d224832ed5b9222b25ded104e672f44ad2e43dcc31dbacaaef12d80287",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825021858314-63182-84b12fd3/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-03",
+      "A-04",
+      "A-08",
+      "A-09"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-10",
+      "D-11",
+      "D-13"
+    ],
+    "revision": "R-02",
+    "sha256": "efb02d0decd1316156cd67eec55fc68f0a4b1f1dd45bf7feadb68042097259dc",
+    "testCaseIds": [
+      "TC-05"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T02:18:58.316Z",
+  "status": "passed",
+  "workspaceFingerprint": "f59a536f8f4f3ce8e049d94e767d87cbeb91c48eccf6123f549507273942c046"
+}

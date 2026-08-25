@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.17.0+codex.20260824064656",
+  "version": "0.17.0+codex.20260825021504",
   "description": "Reusable frontend delivery with dynamic dependency context, traceable test-case planning, project-native test verification, and deterministic UI review.",
   "author": {
     "name": "lvshuai"

@@ -1,0 +1,78 @@
+{
+  "artifacts": [
+    {
+      "bytes": 8990,
+      "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/native-test/results.json",
+      "sha256": "a0b41a785e82b9dbe460207a99b23e28097db2cad6613a3329742747a1028f4d"
+    }
+  ],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=多运行器真实执行与缺链阻断",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T02:20:53.943Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "3431fdba861a17d2a017cc1b0e7b0c64a926fc00",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-06] 多运行器真实执行与缺链阻断",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 275,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-04/20260825021927572-64764-7792d6d1/stdout.log",
+      "sha256": "25d24480be735fa2619cf6a49c95da507e63143eb0ef2768af94e23a382299b6",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-04/20260825021927572-64764-7792d6d1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05",
+      "A-06",
+      "A-09",
+      "A-10"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-05",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12",
+      "D-13",
+      "D-14"
+    ],
+    "revision": "R-02",
+    "sha256": "467f86ce8cf9414ef3bd2dd9696e698492bac499309762f8b5feb6f64e236da1",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-04",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T02:19:27.574Z",
+  "status": "passed",
+  "workspaceFingerprint": "f59a536f8f4f3ce8e049d94e767d87cbeb91c48eccf6123f549507273942c046"
+}
