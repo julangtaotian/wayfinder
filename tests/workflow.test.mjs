@@ -30,6 +30,7 @@ import {
   buildVerificationSteps,
   runVerification,
 } from '../scripts/verify.mjs';
+import { normalizeMachinePath } from '../plugins/frontend-ai-workflow/scripts/real-project-validation.mjs';
 
 const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 const expectedPublicSkills = [
@@ -1205,7 +1206,7 @@ test('变更验证规则优先选择当前需求影响面的测试', () => {
   assert.match(skill, /full project test command only/);
 });
 
-test('[TC-09] 跨平台高风险变更规则合同', () => {
+test('[TC-10] 跨平台高风险变更规则合同', () => {
   const repositoryRules = fs.readFileSync('AGENTS.md', 'utf8');
   const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
   const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
@@ -1216,6 +1217,12 @@ test('[TC-09] 跨平台高风险变更规则合同', () => {
     assert.match(rules, /跨平台高风险/);
     assert.match(rules, /CI.*路径.*临时目录.*子进程.*包管理器入口.*环境变量.*机器可读诊断/su);
     assert.match(rules, /code.*target.*status/su);
+    assert.match(rules, /Git.*子进程.*cwd.*realpath.*path\.join/su);
+    assert.match(rules, /实际值和期望值.*同一规范化函数/su);
+    assert.match(rules, /禁止直接比较原始字符串/u);
+    assert.match(rules, /process\.platform/u);
+    assert.match(rules, /path\.win32.*path\.posix/su);
+    assert.match(rules, /D:\/\.\.\..*D:\\\\.\.\./su);
   }
 
   assert.match(changeSkill, /cross-platform-ci-checklist\.md/u);
@@ -1224,10 +1231,20 @@ test('[TC-09] 跨平台高风险变更规则合同', () => {
   assert.match(checklist, /GIT_CEILING_DIRECTORIES/u);
   assert.match(checklist, /npm\.cmd/u);
   assert.match(checklist, /POSIX.*Windows/su);
+  assert.match(checklist, /实际值和期望值.*同一个规范化函数/su);
+  assert.match(checklist, /一侧规范化、一侧保留原值/u);
+  assert.match(checklist, /path\.win32.*path\.posix/su);
+  assert.match(checklist, /D:\/workspace.*D:\\\\workspace/su);
   assert.match(checklist, /code.*target.*status/su);
   assert.match(checklist, /本地.*真实 CI 矩阵/su);
   assert.match(checklist, /精确提交 SHA/u);
   assert.match(structureValidator, /references\/cross-platform-ci-checklist\.md/u);
+
+  const gitWindowsPath = 'D:/workspace/project';
+  const nodeWindowsPath = path.win32.join('D:\\', 'workspace', 'project');
+  assert.equal(normalizeMachinePath(gitWindowsPath), normalizeMachinePath(nodeWindowsPath));
+  assert.equal(path.win32.normalize('D:/workspace/project'), path.win32.normalize(nodeWindowsPath));
+  assert.equal(path.posix.normalize('/workspace/./project'), '/workspace/project');
 });
 
 test('新功能测试策略保护生成基线并要求专用测试决策', () => {

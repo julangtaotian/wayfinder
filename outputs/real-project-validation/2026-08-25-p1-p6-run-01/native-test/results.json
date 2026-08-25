@@ -24,7 +24,7 @@
         "code": "project_dependencies_copied",
         "bytes": 378018482,
         "entries": 42359,
-        "availableBytes": 305516138496
+        "availableBytes": 305363107840
       },
       "command": {
         "executable": "node",
@@ -43,8 +43,8 @@
       "exitCode": 0,
       "signal": null,
       "discoveryCount": 4,
-      "startedAt": "2026-08-25T02:51:54.227Z",
-      "completedAt": "2026-08-25T02:51:56.047Z",
+      "startedAt": "2026-08-25T06:04:49.774Z",
+      "completedAt": "2026-08-25T06:04:51.429Z",
       "output": {
         "status": "passed",
         "code": "output_safe",
@@ -54,7 +54,7 @@
       "log": {
         "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p1.log",
         "size": 1135,
-        "sha256": "7d36cfb3f98b42d4e522d97af7b56d0770543cdd0794ab35f3eb9289bbf0edca",
+        "sha256": "c1de978a026634275fa8ad1fb916afeca46965ef8ae01ed86c5a9f878ed18a36",
         "label": "P1 测试日志"
       },
       "cleanup": {
@@ -92,7 +92,7 @@
         "code": "project_dependencies_copied",
         "bytes": 275245932,
         "entries": 49085,
-        "availableBytes": 304112455680
+        "availableBytes": 303958032384
       },
       "command": {
         "executable": "node",
@@ -111,18 +111,18 @@
       "exitCode": 0,
       "signal": null,
       "discoveryCount": 3,
-      "startedAt": "2026-08-25T02:52:12.236Z",
-      "completedAt": "2026-08-25T02:52:21.442Z",
+      "startedAt": "2026-08-25T06:05:07.419Z",
+      "completedAt": "2026-08-25T06:05:09.005Z",
       "output": {
         "status": "passed",
         "code": "output_safe",
-        "originalBytes": 746,
+        "originalBytes": 759,
         "truncated": false
       },
       "log": {
         "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/test-runs/p2.log",
-        "size": 746,
-        "sha256": "6237d9e50df3497d2d706aa90631c4be67e5cac1c01d4ba7817c43f2e6011b24",
+        "size": 759,
+        "sha256": "3e8cde3faa45d2a34dc95278f77df897c5353fd1d53e4395de7f51df2d3ec48a",
         "label": "P2 测试日志"
       },
       "cleanup": {
@@ -154,26 +154,13 @@
         "source": "dependency",
         "certification": "project-evidence-only"
       },
-      "inspectionIssues": [
-        {
-          "field": "testFileCount",
-          "expected": 0,
-          "actual": 1
-        },
-        {
-          "field": "excludedTestFiles",
-          "expected": [],
-          "actual": [
-            "scripts/test.js"
-          ]
-        }
-      ],
+      "inspectionIssues": [],
       "dependencies": {
         "status": "passed",
         "code": "project_dependencies_copied",
         "bytes": 335319186,
         "entries": 49340,
-        "availableBytes": 305487855616
+        "availableBytes": 305332375552
       },
       "command": {
         "executable": "yarn",
@@ -189,8 +176,8 @@
       "exitCode": 1,
       "signal": null,
       "discoveryCount": 0,
-      "startedAt": "2026-08-25T02:52:37.138Z",
-      "completedAt": "2026-08-25T02:52:38.443Z",
+      "startedAt": "2026-08-25T06:05:25.173Z",
+      "completedAt": "2026-08-25T06:05:26.855Z",
       "output": {
         "status": "passed",
         "code": "output_safe",
@@ -239,7 +226,7 @@
         "code": "project_dependencies_copied",
         "bytes": 401467595,
         "entries": 57677,
-        "availableBytes": 305509498880
+        "availableBytes": 305348411392
       },
       "command": {
         "executable": "node",
@@ -258,8 +245,8 @@
       "exitCode": 1,
       "signal": null,
       "discoveryCount": 0,
-      "startedAt": "2026-08-25T02:52:56.226Z",
-      "completedAt": "2026-08-25T02:52:56.694Z",
+      "startedAt": "2026-08-25T06:05:45.979Z",
+      "completedAt": "2026-08-25T06:05:46.375Z",
       "output": {
         "status": "passed",
         "code": "output_safe",

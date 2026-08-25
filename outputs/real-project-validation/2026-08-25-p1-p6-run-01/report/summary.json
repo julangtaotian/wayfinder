@@ -1,28 +1,30 @@
 {
   "schemaVersion": 1,
   "runId": "2026-08-25-p1-p6-run-01",
-  "status": "active-with-defect",
+  "status": "ready-for-five-platform-ci",
   "evidenceLayers": {
     "deterministicFixtures": "passed",
-    "realProjectsMacosArm64": "completed-with-defect",
+    "realProjectsMacosArm64": "passed-with-declared-boundaries",
     "localRepositoryVerification": "passed",
     "fivePlatformCi": "pending"
   },
   "projects": [
     { "projectId": "P1", "inspection": "passed", "lifecycle": "passed", "nativeTest": "passed" },
     { "projectId": "P2", "inspection": "passed", "lifecycle": "passed", "nativeTest": "limited" },
-    { "projectId": "P3", "inspection": "defect", "lifecycle": "passed", "nativeTest": "blocked" },
+    { "projectId": "P3", "inspection": "passed", "lifecycle": "passed", "nativeTest": "blocked" },
     { "projectId": "P4", "inspection": "passed", "lifecycle": "passed", "nativeTest": "limited" },
     { "projectId": "P5", "inspection": "passed", "lifecycle": "passed", "nativeTest": "blocked" },
     { "projectId": "P6", "inspection": "passed", "lifecycle": "passed", "nativeTest": "blocked" }
   ],
-  "defects": [
+  "defects": [],
+  "resolvedDefects": [
     {
       "id": "DEF-01",
       "projectId": "P3",
       "code": "inspection_expectation_mismatch",
-      "candidateChange": "fix-test-launcher-false-positive"
+      "resolution": "generic-test-launcher-excluded-without-source-reading",
+      "reverifiedCommit": "54914eafd85a22d3f63054b81dd56271c11f9bbf"
     }
   ],
-  "conclusion": "六项目生命周期闭环通过；测试链按真实证据分层；P3 测试文件误识别缺陷未关闭，因此当前变更不得归档或宣称识别完整闭合。"
+  "conclusion": "六项目生命周期闭环通过，测试链继续按真实证据分层；P3 启动器误报已在同一提交关闭，但其真实零测试仍正确阻断。插件本地验证通过，完整跨平台结论等待本次最终精确提交五平台 CI。"
 }

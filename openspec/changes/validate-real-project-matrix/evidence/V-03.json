@@ -17,12 +17,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-25T02:51:36.503Z",
+  "completedAt": "2026-08-25T06:04:29.435Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "94bbd015041e41778afaec8562686ffcde41bb28",
+    "commit": "1e242f362da11889013d2601a1ef7e40f9fdc5b7",
     "dirty": true
   },
   "kind": "local-command",
@@ -30,14 +30,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 251,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825025124903-82753-d783df88/stdout.log",
-      "sha256": "f9f1a26146e94e2d0c2a1d0857aa11c26df8b4644bdfdf7ba275f010c71a7b50",
+      "bytes": 249,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825060420755-11475-5152f77e/stdout.log",
+      "sha256": "fbab773baf1db27bd7f420b47bbac5d0e6f528c3b532903c9e01533725ff5587",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825025124903-82753-d783df88/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-03/20260825060420755-11475-5152f77e/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -64,15 +64,15 @@
       "D-11",
       "D-13"
     ],
-    "revision": "R-02",
-    "sha256": "efb02d0decd1316156cd67eec55fc68f0a4b1f1dd45bf7feadb68042097259dc",
+    "revision": "R-03",
+    "sha256": "e9bc956c2282a390226ff9b14f6d293592209e118f24199456cd87b798aec655",
     "testCaseIds": [
       "TC-05"
     ],
     "verificationId": "V-03",
     "version": 1
   },
-  "startedAt": "2026-08-25T02:51:24.904Z",
+  "startedAt": "2026-08-25T06:04:20.757Z",
   "status": "passed",
-  "workspaceFingerprint": "b6b99791572546d86f4c377284c8601029213cf3800f78a03b289481305e6dfc"
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
 }

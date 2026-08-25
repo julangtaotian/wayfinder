@@ -173,6 +173,41 @@ test('测试命令优先于仅用于开发验证的 runner 依赖', (t) => {
   assert.equal(context.runner.certification, 'project-evidence-only');
 });
 
+test('[TC-09] 测试启动脚本不计入测试文件', (t) => {
+  const outputsRoot = path.resolve('outputs');
+  fs.mkdirSync(outputsRoot, { recursive: true });
+  const root = fs.mkdtempSync(path.join(outputsRoot, 'frontend-test-launcher-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  writeFile(root, 'package.json', `${JSON.stringify({
+    name: 'test-launcher-fixture',
+    scripts: { test: 'node scripts/test.js' },
+    devDependencies: { jest: '^29.0.0' },
+  }, null, 2)}\n`);
+  writeFile(root, 'yarn.lock', '# fixture\n');
+  writeFile(root, 'scripts/test.js', "process.stdout.write('launcher');\n");
+  writeFile(root, 'scripts/spec.js', "process.stdout.write('launcher');\n");
+  writeFile(root, 'test.js', "process.stdout.write('root launcher');\n");
+  writeFile(root, 'tests/test.js', "export default 'directory test';\n");
+  writeFile(root, 'src/component.test.tsx', "export default 'suffix test';\n");
+  writeFile(root, 'specs/component.spec.mjs', "export default 'suffix spec';\n");
+  assert.equal(spawnSync('git', ['init', '-q', root], { encoding: 'utf8' }).status, 0);
+  assert.equal(spawnSync('git', ['-C', root, 'add', '.'], { encoding: 'utf8' }).status, 0);
+
+  const context = inspectTestContext(root);
+  assert.equal(context.testCommand.status, 'detected');
+  assert.equal(context.testCommand.executed, false);
+  assert.equal(context.runner.name, 'Jest');
+  assert.equal(context.runner.source, 'dependency');
+  assert.deepEqual(context.testFiles, [
+    'specs/component.spec.mjs',
+    'src/component.test.tsx',
+    'tests/test.js',
+  ]);
+  assert.deepEqual(context.handwrittenTests, context.testFiles);
+  assert.deepEqual(context.git.trackedTests, context.testFiles);
+  assert.equal(context.scan.sourceContentRead, false);
+});
+
 test('[TC-02] 三阶段测试方案校验接受完整 TC，并拒绝非法规划输入', async (t) => {
   await t.test('完整方案通过', () => {
     const fixture = createFixture(t);

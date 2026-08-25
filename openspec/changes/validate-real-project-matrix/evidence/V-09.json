@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "validate-real-project-matrix",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=测试启动脚本不计入测试文件",
+      "tests/frontend-test-workflow.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-25T06:06:02.338Z",
+  "evidenceId": "V-09",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "1e242f362da11889013d2601a1ef7e40f9fdc5b7",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-09] 测试启动脚本不计入测试文件",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 269,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-09/20260825060602152-17556-201ad0ca/stdout.log",
+      "sha256": "d4bff77b8a4b1697bf62b4d5a716de1b589c1186cf7b4827b4771d96c76ca3f1",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-09/20260825060602152-17556-201ad0ca/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02",
+      "A-11"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-06",
+      "D-10",
+      "D-11",
+      "D-15"
+    ],
+    "revision": "R-03",
+    "sha256": "7648aee00624edf4ebb4d4ea60fd469d7a82b407be0c205f7bb4f0d2c62e0240",
+    "testCaseIds": [
+      "TC-09"
+    ],
+    "verificationId": "V-09",
+    "version": 1
+  },
+  "startedAt": "2026-08-25T06:06:02.154Z",
+  "status": "passed",
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
+}

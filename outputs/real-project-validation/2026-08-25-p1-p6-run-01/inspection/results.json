@@ -7,7 +7,7 @@
     "arch": "arm64",
     "node": "v22.12.0"
   },
-  "status": "defect",
+  "status": "passed",
   "results": [
     {
       "projectId": "P1",
@@ -309,8 +309,6 @@
         "certification": "project-evidence-only"
       },
       "testFiles": [
-        "src/api/test.js",
-        "src/store/modules/menu/test.js",
         "tests/unit/components/HeartHealthAdvice.spec.js",
         "tests/unit/components/InstituteSelect.spec.js",
         "tests/unit/components/addItem.spec.js",
@@ -591,9 +589,7 @@
         "source": "dependency",
         "certification": "project-evidence-only"
       },
-      "testFiles": [
-        "scripts/test.js"
-      ],
+      "testFiles": [],
       "nestedPackages": {
         "paths": [],
         "bounded": true,
@@ -607,26 +603,13 @@
         "platformStatus": "missing"
       },
       "warnings": [],
-      "status": "defect",
-      "code": "inspection_expectation_mismatch",
-      "issues": [
-        {
-          "field": "testFileCount",
-          "expected": 0,
-          "actual": 1
-        },
-        {
-          "field": "excludedTestFiles",
-          "expected": [],
-          "actual": [
-            "scripts/test.js"
-          ]
-        }
-      ],
+      "status": "passed",
+      "code": "inspection_facts_matched",
+      "issues": [],
       "expected": [
         "passed"
       ],
-      "matchesExpected": false
+      "matchesExpected": true
     },
     {
       "projectId": "P4",

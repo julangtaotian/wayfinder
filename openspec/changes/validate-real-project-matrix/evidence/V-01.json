@@ -1,24 +1,24 @@
 {
   "artifacts": [
     {
-      "bytes": 8729,
-      "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/native-test/results.json",
-      "sha256": "9f8a391715d48e66301c0f7d808e96c636a0b40f9b36f09ceb38fdbb32c949f2"
+      "bytes": 4286,
+      "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/baseline/results.json",
+      "sha256": "c3cf0c11ffe8a2201345bf45b2d7f76d47f94efb2213a49b58218f2612f357c6"
     }
   ],
   "change": "validate-real-project-matrix",
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=多运行器真实执行与缺链阻断",
+      "--test-name-pattern=六项目基线与只读识别",
       "tests/real-project-validation.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-25T06:05:50.417Z",
-  "evidenceId": "V-04",
+  "completedAt": "2026-08-25T06:04:15.142Z",
+  "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
@@ -26,18 +26,18 @@
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-06] 多运行器真实执行与缺链阻断",
+  "locator": "[TC-04] 六项目基线与只读识别",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 275,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-04/20260825060438146-15527-48941200/stdout.log",
-      "sha256": "f73e1afdd8015adee9e51c6098a6d3ded3fca3842fc5de50a558c960eed2f949",
+      "bytes": 254,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-01/20260825060413537-11476-ebf4ce01/stdout.log",
+      "sha256": "c9957abffb379ecf44833e4eed8a209083b0cf0f7f4d20d40fe450b6d2b03950",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-04/20260825060438146-15527-48941200/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-01/20260825060413537-11476-ebf4ce01/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -46,33 +46,31 @@
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
-      "A-05",
-      "A-06",
-      "A-09",
-      "A-10"
+      "A-01",
+      "A-02",
+      "A-07",
+      "A-08"
     ],
     "algorithm": "sha256",
     "decisionIds": [
-      "D-04",
+      "D-01",
+      "D-02",
+      "D-03",
       "D-05",
-      "D-07",
-      "D-08",
+      "D-06",
       "D-09",
       "D-10",
-      "D-11",
-      "D-12",
-      "D-13",
-      "D-14"
+      "D-12"
     ],
     "revision": "R-03",
-    "sha256": "bbff013457c12eaf1433ac309ade20212f5f410d713e7838dba027ed9155cd3b",
+    "sha256": "79b4a672f7de7c6995e410eec72c84cb2cf78fdcc0e47e1baac7553c2dd38356",
     "testCaseIds": [
-      "TC-06"
+      "TC-04"
     ],
-    "verificationId": "V-04",
+    "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-25T06:04:38.148Z",
+  "startedAt": "2026-08-25T06:04:13.540Z",
   "status": "passed",
   "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
 }

@@ -8,8 +8,8 @@
     {
       "command": "npm test",
       "status": "passed",
-      "tests": 214,
-      "passed": 211,
+      "tests": 215,
+      "passed": 212,
       "failed": 0,
       "skipped": 3,
       "note": "按仓库合同准备 Vitest 临时运行时，并在允许本地监听与 Chromium 的环境重跑。"
@@ -46,6 +46,11 @@
       "command": "official-validators",
       "classification": "validator-runtime-missing",
       "resolvedBy": "temporary-pyyaml-in-outputs-validator-runtime"
+    },
+    {
+      "command": "npm run verify",
+      "classification": "environment-network-startup",
+      "resolvedBy": "allow-locked-vitest-runtime-download-and-rerun-same-command"
     }
   ]
 }

@@ -1,9 +1,9 @@
 {
   "artifacts": [
     {
-      "bytes": 1269,
+      "bytes": 1454,
       "path": "outputs/real-project-validation/2026-08-25-p1-p6-run-01/plugin-validation/results.json",
-      "sha256": "b411a05e5c87148fbfca0ca8f6bfab16874d65a8cbbe620de81b2ef143a6bed3"
+      "sha256": "09f55ce849ef26e90a3ae8d12d0757db03c4b3655126e4110cfdb8ec41361dac"
     }
   ],
   "change": "validate-real-project-matrix",
@@ -16,27 +16,27 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-25T02:54:25.783Z",
+  "completedAt": "2026-08-25T06:07:29.945Z",
   "evidenceId": "V-06",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "94bbd015041e41778afaec8562686ffcde41bb28",
+    "commit": "1e242f362da11889013d2601a1ef7e40f9fdc5b7",
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-01] 固定基线与漂移失败关闭",
+  "locator": "[TC-09] 测试启动脚本不计入测试文件",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 45012,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825025337138-86448-d1f0b15a/stdout.log",
-      "sha256": "3452daa583e4c1eb56b44cfe322f1f5e332277ba64c0e50c26ec72ea35dcbf45",
+      "bytes": 45162,
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825060639426-17759-e43a342e/stdout.log",
+      "sha256": "8aa5178b013beebd2048e34b2f2c73fd02ea3ba8e38df676a771c5345e6954aa",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825025337138-86448-d1f0b15a/stderr.log",
+      "path": "outputs/verification-evidence/validate-real-project-matrix/V-06/20260825060639426-17759-e43a342e/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
@@ -52,7 +52,8 @@
       "A-06",
       "A-08",
       "A-09",
-      "A-10"
+      "A-10",
+      "A-12"
     ],
     "algorithm": "sha256",
     "decisionIds": [
@@ -71,8 +72,8 @@
       "D-13",
       "D-14"
     ],
-    "revision": "R-02",
-    "sha256": "2dd422ccaca3a1e5e60c9422894bfe03065c881f045e7a54b60b07a9a5b8e415",
+    "revision": "R-03",
+    "sha256": "fe93782b6bd4a8587222c6f9c6adc65638b8e5a166fcc5ca2cba385bc53fe775",
     "testCaseIds": [
       "TC-01",
       "TC-02",
@@ -81,7 +82,7 @@
     "verificationId": "V-06",
     "version": 1
   },
-  "startedAt": "2026-08-25T02:53:37.140Z",
+  "startedAt": "2026-08-25T06:06:39.428Z",
   "status": "passed",
-  "workspaceFingerprint": "b6b99791572546d86f4c377284c8601029213cf3800f78a03b289481305e6dfc"
+  "workspaceFingerprint": "1abe9d85b600c5292eb9e391331a48a6983db86f19d97aef077297e88697489c"
 }

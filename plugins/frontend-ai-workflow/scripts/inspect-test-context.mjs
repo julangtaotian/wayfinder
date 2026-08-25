@@ -10,7 +10,8 @@ const EXCLUDED_DIRECTORIES = new Set([
   '.git', '.next', '.nuxt', '.turbo', '.yarn', 'build', 'coverage', 'dist',
   'node_modules', 'out', 'platform-assets', 'storybook-static', 'temp', 'tmp',
 ]);
-const TEST_FILE_PATTERN = /(?:^|\/)(?:[^/]+\.)?(?:spec|test)\.[cm]?[jt]sx?$/iu;
+const SUFFIX_TEST_FILE_PATTERN = /(?:^|\/)[^/]+\.(?:spec|test)\.[cm]?[jt]sx?$/iu;
+const GENERIC_TEST_FILE_PATTERN = /^(?:spec|test)\.[cm]?[jt]sx?$/iu;
 const GENERATED_TEST_PATTERN = /\.generated\.(?:spec|test)\.[cm]?[jt]sx?$/iu;
 const TEST_CONFIG_PATTERN = /^(?:vitest|jest|playwright|cypress)\.config\.[cm]?[jt]s$/iu;
 const TEST_DIRECTORIES = new Set(['test', 'tests', '__tests__', 'e2e', 'cypress']);
@@ -18,6 +19,15 @@ const MAX_DISCOVERED_FILES = 10_000;
 
 function projectPath(root, absolutePath) {
   return path.relative(root, absolutePath).split(path.sep).join('/');
+}
+
+function isTestFile(projectRelativePath) {
+  if (SUFFIX_TEST_FILE_PATTERN.test(projectRelativePath)) return true;
+  const segments = projectRelativePath.split('/');
+  const fileName = segments.pop() || '';
+  if (!GENERIC_TEST_FILE_PATTERN.test(fileName)) return false;
+  // 通用 test.* 只有位于真实测试目录时才算用例，避免把 scripts/test.js 启动器误报为测试文件。
+  return segments.some((segment) => TEST_DIRECTORIES.has(segment.toLowerCase()));
 }
 
 function walkProject(root, directory, files, testDirectories) {
@@ -101,7 +111,7 @@ export function inspectTestContext(target = process.cwd()) {
   const discoveredDirectories = new Set();
   walkProject(root, root, discoveredFiles, discoveredDirectories);
 
-  const testFiles = discoveredFiles.filter((file) => TEST_FILE_PATTERN.test(file)).sort();
+  const testFiles = discoveredFiles.filter(isTestFile).sort();
   const generatedBaselines = testFiles.filter((file) => GENERATED_TEST_PATTERN.test(file));
   const handwrittenTests = testFiles.filter((file) => !GENERATED_TEST_PATTERN.test(file));
   const configFiles = discoveredFiles

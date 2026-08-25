@@ -24,7 +24,7 @@
         "bytes": 378018482,
         "entries": 42359,
         "unsafeLinks": 0,
-        "availableBytes": 306026455040,
+        "availableBytes": 305421795328,
         "reserveBytes": 536870912
       },
       "expected": [
@@ -47,7 +47,7 @@
         "bytes": 275245932,
         "entries": 49085,
         "unsafeLinks": 0,
-        "availableBytes": 306027569152,
+        "availableBytes": 305421438976,
         "reserveBytes": 536870912
       },
       "expected": [
@@ -70,7 +70,7 @@
         "bytes": 335319186,
         "entries": 49340,
         "unsafeLinks": 0,
-        "availableBytes": 306032861184,
+        "availableBytes": 305434980352,
         "reserveBytes": 536870912
       },
       "expected": [
@@ -93,7 +93,7 @@
         "bytes": 401467595,
         "entries": 57677,
         "unsafeLinks": 0,
-        "availableBytes": 306033430528,
+        "availableBytes": 305438146560,
         "reserveBytes": 536870912
       },
       "expected": [
@@ -116,7 +116,7 @@
         "bytes": 373701326,
         "entries": 58264,
         "unsafeLinks": 0,
-        "availableBytes": 306038124544,
+        "availableBytes": 305438179328,
         "reserveBytes": 536870912
       },
       "expected": [
@@ -139,7 +139,7 @@
         "bytes": 897782,
         "entries": 1095,
         "unsafeLinks": 0,
-        "availableBytes": 306040971264,
+        "availableBytes": 305439014912,
         "reserveBytes": 536870912
       },
       "expected": [
