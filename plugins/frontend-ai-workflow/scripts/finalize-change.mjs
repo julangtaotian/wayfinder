@@ -11,6 +11,9 @@ import {
   resolveSafeProjectPath,
 } from './project-path-safety.mjs';
 import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
+import { archiveRequirement as archiveAcceptedRequirement } from './requirement-archive.mjs';
+
+const REQUIREMENT_STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
 
 function parseEngineJson(output) {
   const start = String(output || '').indexOf('{');
@@ -292,7 +295,10 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     { label: '归档恢复文件' },
   ));
   const original = fs.readFileSync(recovery.requirementPath, 'utf8');
-  const next = rewriteRequirementForArchive(original, recovery.changeName, recovery.archiveName, { allowAccepted: true });
+  const requirementAlreadyArchived = original.includes(REQUIREMENT_STUB_MARKER);
+  const next = requirementAlreadyArchived
+    ? { content: original, rewrites: [] }
+    : rewriteRequirementForArchive(original, recovery.changeName, recovery.archiveName, { allowAccepted: true });
   let testPlan;
   try {
     testPlan = prepareTestPlanRewrite(recovery.changePath, recovery.changeName, recovery.archiveName);
@@ -317,7 +323,8 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       rewrites: testPlan.rewrites,
       changeRenamed: testPlan.changeRenamed,
     }] : []),
-    { action: 'recover-references', target: recovery.requirementPath, rewrites: next.rewrites },
+    ...(!requirementAlreadyArchived ? [{ action: 'recover-references', target: recovery.requirementPath, rewrites: next.rewrites }] : []),
+    { action: 'archive-requirement', target: recovery.requirementPath },
     { action: 'post-archive-audit', target: recovery.changePath },
   ];
   if (!write) {
@@ -355,7 +362,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     }
   }
   try {
-    writeFile(recovery.requirementPath, next.content);
+    if (!requirementAlreadyArchived) writeFile(recovery.requirementPath, next.content);
   } catch (error) {
     return partialFailure({
       write,
@@ -372,8 +379,31 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       error: `归档恢复写入失败：${error.message}`,
     });
   }
+  let requirementArchive;
+  try {
+    requirementArchive = services.archiveRequirement({
+      root: recovery.root,
+      requirementPath: recovery.requirementPath,
+      write: true,
+    });
+  } catch (error) {
+    return partialFailure({
+      write,
+      check: { changeName: recovery.changeName },
+      actions,
+      archiveResult: { archivedAs: recovery.archiveName },
+      archiveRoot: null,
+      archiveWarnings: [],
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      testPlanRewrites: testPlan.rewrites,
+      testPlanChangeRenamed: testPlan.changeRenamed,
+      failedStage: 'requirement-archive',
+      error: `归档恢复无法分层需求正文：${error.message}`,
+    });
+  }
   const audit = services.postArchiveAudit({
-    requirementPath: recovery.requirementPath,
+    requirementPath: requirementArchive.archivePath,
     changePath: recovery.changePath,
   });
   if (!audit.ok) {
@@ -405,6 +435,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     actions,
     postArchiveAudit: audit,
     requirementStatus: '已验收',
+    requirementArchive,
   };
 }
 
@@ -420,6 +451,7 @@ export function finalizeChange({
     runOpenSpecSync,
     atomicWrite: null,
     postArchiveAudit,
+    archiveRequirement: archiveAcceptedRequirement,
     ...injected,
   };
   let check;
@@ -482,6 +514,7 @@ export function finalizeChange({
     }] : []),
     { action: 'rewrite-evidence-references', target: check.requirementPath, rewrites: predictedRequirement.rewrites },
     { action: 'mark-requirement-accepted', target: check.requirementPath },
+    { action: 'archive-requirement', target: check.requirementPath },
     { action: 'post-archive-audit', target: check.archive?.targetPath || null },
   ];
   if (!write) {
@@ -598,8 +631,31 @@ export function finalizeChange({
       error: `变更已归档，但需求状态或证据引用更新失败：${error.message}`,
     });
   }
+  let requirementArchive;
+  try {
+    requirementArchive = services.archiveRequirement({
+      root: check.root,
+      requirementPath: check.requirementPath,
+      write: true,
+    });
+  } catch (error) {
+    return partialFailure({
+      write,
+      check,
+      actions,
+      archiveResult,
+      archiveRoot,
+      archiveWarnings,
+      archiveTarget,
+      rewrites: nextRequirement.rewrites,
+      testPlanRewrites: nextTestPlan.rewrites,
+      testPlanChangeRenamed: nextTestPlan.changeRenamed,
+      failedStage: 'requirement-archive',
+      error: `变更已归档，但需求正文分层归档失败：${error.message}`,
+    });
+  }
   const audit = services.postArchiveAudit({
-    requirementPath: check.requirementPath,
+    requirementPath: requirementArchive.archivePath,
     changePath: archiveTarget,
   });
   if (!audit.ok) {
@@ -634,6 +690,7 @@ export function finalizeChange({
     testPlanChangeRenamed: nextTestPlan.changeRenamed,
     postArchiveAudit: audit,
     requirementStatus: '已验收',
+    requirementArchive,
   };
 }
 

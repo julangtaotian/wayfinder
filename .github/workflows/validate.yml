@@ -30,7 +30,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          lfs: true
+          lfs: false
+      - name: Pull target Playwright platform assets
+        run: git lfs pull --include="plugins/frontend-ai-workflow/runtime/playwright/platform-assets/${{ matrix.platform }}/**" --exclude=""
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0

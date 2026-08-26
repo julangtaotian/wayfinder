@@ -12,6 +12,9 @@ import {
   SUPPORTED_PLAYWRIGHT_PLATFORMS,
   buildPlaywrightIntegrityManifest,
   inspectBundledPlaywright,
+  inspectPlaywrightAsset,
+  normalizePlaywrightPlatformPath,
+  playwrightLfsInclude,
   smokeTestBundledPlaywright,
   verifyPlaywrightIntegrity,
   writePlaywrightIntegrity,
@@ -289,6 +292,76 @@ test('平台选择拒绝缺包、混装、摘要变化和未支持平台', (cont
   const unsupported = inspectBundledPlaywright({ platform: 'win32', arch: 'arm64', useCache: false });
   assert.equal(unsupported.available, false);
   assert.match(unsupported.reason, /未携带 win32-arm64/u);
+});
+
+test('[V-04] 平台资产与 CI 按需拉取合同：LFS 诊断失败关闭', (context) => {
+  const runtimeRoot = createRuntimeFixture(context);
+  const metadata = platformMetadata('darwin', 'arm64');
+  const executable = path.join(runtimeRoot, metadata.browser.executable);
+  assert.equal(
+    playwrightLfsInclude('darwin-arm64'),
+    'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/darwin-arm64/**',
+  );
+  assert.equal(
+    normalizePlaywrightPlatformPath('platform-assets\\win32-x64\\browser.exe'),
+    'platform-assets/win32-x64/browser.exe',
+  );
+  assert.equal(inspectPlaywrightAsset(executable, { runtimeRoot }).code, 'playwright_platform_asset_ready');
+
+  fs.writeFileSync(executable, 'version https://git-lfs.github.com/spec/v1\noid sha256:fixture\nsize 123\n');
+  const pointer = inspectPlaywrightAsset(executable, { runtimeRoot });
+  assert.deepEqual(
+    { code: pointer.code, status: pointer.status, target: pointer.target },
+    {
+      code: 'playwright_lfs_pointer',
+      status: 'failed',
+      target: metadata.browser.executable,
+    },
+  );
+  const pointerRuntime = inspectBundledPlaywright({
+    runtimeRoot,
+    integrityPath: path.join(runtimeRoot, 'integrity'),
+    platform: 'darwin',
+    arch: 'arm64',
+    verifyIntegrity: false,
+    useCache: false,
+  });
+  assert.equal(pointerRuntime.code, 'playwright_lfs_pointer');
+
+  fs.unlinkSync(executable);
+  assert.equal(
+    inspectPlaywrightAsset(executable, { runtimeRoot }).code,
+    'playwright_platform_asset_missing',
+  );
+
+  fs.writeFileSync(path.join(runtimeRoot, 'distribution.json'), `${JSON.stringify({
+    schemaVersion: 1,
+    kind: 'platform',
+    platformKey: 'darwin-arm64',
+    excludedPlatforms: EXPECTED_PLATFORMS.filter((key) => key !== 'darwin-arm64'),
+    budgetBytes: 1024,
+    stripped: false,
+  }, null, 2)}\n`);
+  const mismatch = inspectBundledPlaywright({
+    runtimeRoot,
+    platform: 'linux',
+    arch: 'x64',
+    verifyIntegrity: false,
+    useCache: false,
+  });
+  assert.equal(mismatch.code, 'playwright_platform_mismatch');
+  assert.equal(mismatch.target, 'linux-x64');
+});
+
+test('[V-04] 平台资产与 CI 按需拉取合同：矩阵只拉取目标平台', () => {
+  const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
+  assert.match(workflow, /lfs:\s*false/u);
+  assert.doesNotMatch(workflow, /lfs:\s*true/u);
+  assert.match(
+    workflow,
+    /git lfs pull --include="plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\$\{\{ matrix\.platform \}\}\/\*\*" --exclude=""/u,
+  );
+  for (const platform of EXPECTED_PLATFORMS) assert.match(workflow, new RegExp(`platform: ${platform}`, 'u'));
 });
 
 test('平台插件成品预览保持零写入并公开带余量预算', async (context) => {

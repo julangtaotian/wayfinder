@@ -643,7 +643,7 @@ test('[TC-03] 跨平台诊断与仓库统一验证合同', () => {
   assert.equal(traversal.status, 'blocked');
 
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  assert.equal(packageJson.scripts.test, 'node --test tests/*.test.mjs');
+  assert.equal(packageJson.scripts.test, 'node scripts/test-groups.mjs all');
   assert.equal(packageJson.scripts.validate, 'node plugins/frontend-ai-workflow/scripts/validate-structure.mjs');
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
 });

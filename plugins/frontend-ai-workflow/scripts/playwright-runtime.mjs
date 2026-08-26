@@ -55,6 +55,42 @@ function platformKey(platform, arch) {
   return `${platform}-${arch}`;
 }
 
+export function normalizePlaywrightPlatformPath(value) {
+  return String(value || '').replaceAll('\\', '/').replace(/^\.\//u, '');
+}
+
+export function playwrightLfsInclude(key) {
+  const normalizedKey = normalizePlaywrightPlatformPath(key);
+  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(normalizedKey)) {
+    throw new Error(`不支持的 Playwright 平台：${normalizedKey || '空值'}`);
+  }
+  return `plugins/frontend-ai-workflow/runtime/playwright/platform-assets/${normalizedKey}/**`;
+}
+
+export function inspectPlaywrightAsset(filePath, { runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT } = {}) {
+  const absolutePath = path.resolve(filePath);
+  const target = normalizePlaywrightPlatformPath(path.relative(path.resolve(runtimeRoot), absolutePath));
+  if (!fs.existsSync(absolutePath)) {
+    return { ok: false, code: 'playwright_platform_asset_missing', status: 'failed', target };
+  }
+  if (!fs.statSync(absolutePath).isFile()) {
+    return { ok: false, code: 'playwright_platform_asset_not_file', status: 'failed', target };
+  }
+  const descriptor = fs.openSync(absolutePath, 'r');
+  const prefix = Buffer.alloc(200);
+  let bytesRead;
+  try {
+    bytesRead = fs.readSync(descriptor, prefix, 0, prefix.length, 0);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+  const header = prefix.subarray(0, bytesRead).toString('utf8');
+  if (header.startsWith('version https://git-lfs.github.com/spec/v1\n')) {
+    return { ok: false, code: 'playwright_lfs_pointer', status: 'failed', target };
+  }
+  return { ok: true, code: 'playwright_platform_asset_ready', status: 'passed', target };
+}
+
 export function readPlaywrightDistribution(runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT) {
   const distributionPath = path.join(path.resolve(runtimeRoot), 'distribution.json');
   if (!fs.existsSync(distributionPath)) {
@@ -353,6 +389,8 @@ function unavailable(reason, details = {}) {
     valid: false,
     available: false,
     compatible: false,
+    status: 'failed',
+    code: 'playwright_runtime_unavailable',
     source: 'bundled',
     version: BUNDLED_PLAYWRIGHT_VERSION,
     reason,
@@ -382,13 +420,19 @@ export function inspectBundledPlaywright({
   } catch (error) {
     return unavailable(`无法检查 Playwright 平台成品：${error.message}`, { platform, arch });
   }
-  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) return unavailable(`插件未携带 ${key} 的 Playwright 运行包`, { platform, arch, distribution });
+  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) return unavailable(`插件未携带 ${key} 的 Playwright 运行包`, {
+    code: 'playwright_platform_unsupported', platform, arch, distribution, target: key,
+  });
   if (distribution.kind === 'platform' && distribution.platformKey !== key) {
-    return unavailable(`当前插件成品只携带 ${distribution.platformKey}，不支持 ${key}`, { platform, arch, distribution });
+    return unavailable(`当前插件成品只携带 ${distribution.platformKey}，不支持 ${key}`, {
+      code: 'playwright_platform_mismatch', platform, arch, distribution, target: key,
+    });
   }
   const requiredFiles = ['package.json', 'package-lock.json', 'node_modules/playwright/package.json', 'node_modules/playwright/index.mjs'];
   const missing = requiredFiles.filter((relativePath) => !fs.existsSync(path.join(root, relativePath)));
-  if (missing.length) return unavailable(`插件内置 Playwright 共享运行时文件不完整：${missing.join('、')}`);
+  if (missing.length) return unavailable(`插件内置 Playwright 共享运行时文件不完整：${missing.join('、')}`, {
+    code: 'playwright_shared_asset_missing', target: missing[0],
+  });
 
   try {
     const descriptor = sharedDescriptor(root);
@@ -424,7 +468,12 @@ export function inspectBundledPlaywright({
       ['FFmpeg', ffmpegExecutable],
       ['FFmpeg 许可', ffmpegLicense],
     ]) {
-      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return unavailable(`插件内置 ${key} ${label} 不完整：${filePath}`);
+      const asset = inspectPlaywrightAsset(filePath, { runtimeRoot: root });
+      if (!asset.ok) return unavailable(`插件内置 ${key} ${label} 不完整：${filePath}`, {
+        code: asset.code,
+        status: asset.status,
+        target: asset.target,
+      });
     }
     const integrity = verifyIntegrity
       ? verifyPlaywrightIntegrity({ runtimeRoot: root, integrityPath, platform, arch })

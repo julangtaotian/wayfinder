@@ -67,13 +67,12 @@ test('根项目规则禁止生成 AI 行数统计注释', () => {
   assert.match(rules, /不得写入上述计数注释/u);
 });
 
-test('旧验证材料不再要求生成 AI 行数统计注释', () => {
+test('已退役验证材料不再留在日常仓库入口', () => {
   const legacyDocuments = [
     'outputs/lanhu-design-spec/validation-evidence/isolation-prompt.md',
     'outputs/lanhu-design-spec/validation-evidence/isolation-run.md',
   ];
   for (const relativePath of legacyDocuments) {
-    const content = fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');
-    assert.equal(content.includes(markerName), false, `${relativePath} 仍包含过期标记要求`);
+    assert.equal(fs.existsSync(path.join(projectRoot, relativePath)), false, `${relativePath} 不应继续保留`);
   }
 });

@@ -129,9 +129,9 @@ test('[TC-04] Skill、仓库读取路由与版本保持一致', async () => {
   assert.match(agents, /runtime\/\*\*\/node_modules/u);
   assert.match(agents, /outputs/u);
 
-  assert.equal(JSON.parse(rootPackage).version, '0.17.1');
-  assert.match(JSON.parse(manifest).version, /^0\.17\.1\+codex\.\d{14}$/u);
-  assert.match(managedFiles, /0\.17\.1/u);
-  assert.match(bootstrap, /WORKFLOW_VERSION\s*=\s*'0\.17\.1'/u);
-  assert.match(readme, /0\.17\.1/u);
+  assert.equal(JSON.parse(rootPackage).version, '0.18.0');
+  assert.match(JSON.parse(manifest).version, /^0\.18\.0\+codex\.\d{14}$/u);
+  assert.match(managedFiles, /0\.18\.0/u);
+  assert.match(bootstrap, /WORKFLOW_VERSION\s*=\s*'0\.18\.0'/u);
+  assert.match(readme, /0\.18\.0/u);
 });

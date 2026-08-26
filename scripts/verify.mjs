@@ -30,6 +30,11 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
   const pluginScripts = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
   return [
     {
+      id: 'footprint',
+      label: '仓库体积与生命周期预算',
+      args: [path.join(pluginScripts, 'repository-footprint.mjs'), '--target', repositoryRoot],
+    },
+    {
       id: 'tests',
       label: '自动测试',
       args: ['--test', ...discoverTests(repositoryRoot)],

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
+import { listRequirementEntries } from './requirement-archive.mjs';
 
 const REQUIREMENT_FILE_PATTERN = /^REQ-[^.]+\.md$/u;
 const REQUIREMENT_STATUSES = new Set(['草稿', '已确认', '实施中', '待验证', '已验收']);
@@ -21,8 +22,8 @@ function readRequirementStatus(content) {
 }
 
 // 预览只检查稳定结构，不尝试理解或补全历史需求中的业务事实。
-function inspectRequirement(root, fileName) {
-  const absolutePath = path.join(root, 'requirements', fileName);
+function inspectRequirementPath(root, projectPath) {
+  const absolutePath = path.join(root, projectPath);
   const content = fs.readFileSync(absolutePath, 'utf8');
   const statusInfo = readRequirementStatus(content);
   const missing = STRUCTURE_CHECKS
@@ -30,7 +31,7 @@ function inspectRequirement(root, fileName) {
     .map(({ field }) => field);
   if (statusInfo.statusKind !== 'known') missing.push('requirementStatus');
   return {
-    path: path.posix.join('requirements', fileName),
+    path: projectPath,
     status: statusInfo.status,
     statusKind: statusInfo.statusKind,
     active: statusInfo.active,
@@ -46,14 +47,17 @@ function listRequirementFiles(requirementsRoot) {
     .sort((left, right) => left.localeCompare(right));
 }
 
-export function previewRequirementUpgrade(target = process.cwd()) {
+export function previewRequirementUpgrade(target = process.cwd(), { includeArchive = false } = {}) {
   const root = resolveProjectRoot(target);
   assertSafeProjectRoot(root);
   const requirementsRoot = path.join(root, 'requirements');
   const warnings = [];
   if (!fs.existsSync(requirementsRoot)) warnings.push('未检测到标准需求目录：requirements');
 
-  const requirements = listRequirementFiles(requirementsRoot).map((fileName) => inspectRequirement(root, fileName));
+  const requirementPaths = includeArchive
+    ? listRequirementEntries(root, { includeArchive: true }).map((entry) => entry.path)
+    : listRequirementFiles(requirementsRoot).map((fileName) => path.posix.join('requirements', fileName));
+  const requirements = requirementPaths.map((projectPath) => inspectRequirementPath(root, projectPath));
   const activeRequirements = requirements.filter((requirement) => requirement.active);
   const issues = activeRequirements
     .filter((requirement) => requirement.missing.length)
@@ -72,7 +76,8 @@ export function previewRequirementUpgrade(target = process.cwd()) {
     ok: true,
     write: false,
     root,
-    scannedDirectory: 'requirements',
+    scannedDirectory: includeArchive ? 'requirements/archive' : 'requirements',
+    includeArchive,
     requirements,
     activeRequirements,
     issues,
@@ -81,7 +86,7 @@ export function previewRequirementUpgrade(target = process.cwd()) {
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), json: false };
+  const args = { target: process.cwd(), json: false, includeArchive: false };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--target') {
@@ -90,6 +95,8 @@ function parseArgs(argv) {
       index += 1;
     } else if (value === '--json') {
       args.json = true;
+    } else if (value === '--history') {
+      args.includeArchive = true;
     } else if (value === '--write') {
       throw new Error('旧需求升级预览仅支持只读模式，不支持 --write');
     } else {
@@ -106,7 +113,7 @@ function isEntryPoint() {
 if (isEntryPoint()) {
   try {
     const args = parseArgs(process.argv.slice(2));
-    const result = previewRequirementUpgrade(args.target);
+    const result = previewRequirementUpgrade(args.target, { includeArchive: args.includeArchive });
     if (args.json) {
       console.log(JSON.stringify(result, null, 2));
     } else {

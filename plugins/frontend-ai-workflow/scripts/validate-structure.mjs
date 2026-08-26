@@ -48,6 +48,7 @@ const REQUIREMENT_DECISION_ASSETS = [
 // 旧需求预览与矩阵校验共同构成 P2 的安全迁移能力，发布时必须齐备。
 const REQUIREMENT_MIGRATION_ASSETS = [
   'scripts/preview-requirement-upgrade.mjs',
+  'scripts/requirement-archive.mjs',
   'references/requirement-guidelines.md',
 ];
 const DELIVERY_GUARD_ASSETS = [
@@ -55,6 +56,7 @@ const DELIVERY_GUARD_ASSETS = [
   'scripts/check-project-output.mjs',
   'scripts/finalize-change.mjs',
   'scripts/project-path-safety.mjs',
+  'scripts/repository-footprint.mjs',
   'references/cross-platform-ci-checklist.md',
 ];
 const PROJECT_PROFILE_ASSETS = [
@@ -65,9 +67,14 @@ const TEST_WORKFLOW_ASSETS = [
   'scripts/inspect-test-context.mjs',
   'scripts/validate-test-plan.mjs',
   'scripts/verification-evidence.mjs',
+  'scripts/verification-evidence-foundation.mjs',
   'scripts/verification-semantics.mjs',
   'assets/templates/openspec/test-plan.md',
   'references/test-case-guidelines.md',
+];
+const CORE_MODULAR_ASSETS = [
+  'scripts/real-project-validation.mjs',
+  'scripts/real-project-validation-foundation.mjs',
 ];
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
@@ -270,6 +277,12 @@ function validateTestWorkflowAssets(errors) {
   }
 }
 
+function validateCoreModularAssets(errors) {
+  for (const file of CORE_MODULAR_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少核心模块化资产：${file}`);
+  }
+}
+
 function validateRuntimeIntegrityAssets(errors) {
   for (const file of RUNTIME_INTEGRITY_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
@@ -366,6 +379,7 @@ try {
   validateDeliveryGuardAssets(errors);
   validateProjectProfileAssets(errors);
   validateTestWorkflowAssets(errors);
+  validateCoreModularAssets(errors);
   validateRuntimeIntegrityAssets(errors);
   validateUiReviewAssets(errors);
   await validateUiReviewStructure(errors, distribution);

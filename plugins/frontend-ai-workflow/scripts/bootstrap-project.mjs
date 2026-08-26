@@ -18,7 +18,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.17.1';
+export const WORKFLOW_VERSION = '0.18.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
@@ -185,13 +185,13 @@ function templateVariables(inspection, scope = null, preservedSettings = null) {
 }
 
 function renderTemplate(source, variables) {
-  const rendered = source.replace(/\{\{([A-Z_]+)\}\}/g, (match, key) => {
+  const rendered = source.replace(/\{\{([A-Z_]+)}}/g, (match, key) => {
     if (!Object.prototype.hasOwnProperty.call(variables, key)) {
       throw new Error(`模板变量缺失：${key}`);
     }
     return String(variables[key]);
   });
-  if (/\{\{[A-Z_]+\}\}/.test(rendered)) {
+  if (/\{\{[A-Z_]+}}/.test(rendered)) {
     throw new Error('模板仍包含未替换变量');
   }
   return rendered.endsWith('\n') ? rendered : `${rendered}\n`;

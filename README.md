@@ -28,11 +28,11 @@
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 - 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
-0.17.1 保留 0.17.0 的动态根依赖画像，并为项目健康检查增加精简结果和按诊断 code 查询，AI 默认不再展开全部历史证据诊断。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
+0.18.0 在动态根依赖画像和精简健康检查之上增加持续仓库治理：已验收需求正文按年度归档，根目录只保留轻量入口；统一验证固定执行体积预算门禁；综合测试和核心脚本按职责拆分；蓝湖交付收敛为单一轻量 AI 规范；五平台 CI 只拉取当前矩阵平台的 Git LFS 资产。AI 默认不展开历史需求正文、无关平台二进制或历史验收资产。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
 
 ## 安装
 
-前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.17.1 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
+前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.18.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
 
 ```bash
 codex plugin marketplace add /absolute/path/to/frontend-ai-workflow
@@ -280,7 +280,7 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 确认升级
 ```
 
-它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.17.1 / OpenSpec 1.9.0，并刷新根项目直接依赖摘要；不会修改 `package.json`、安装依赖，也不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格、测试方案或测试代码，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复、发生冲突或受管目标经过项目内符号链接时，会停止升级并说明原因。
+它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.18.0 / OpenSpec 1.9.0，并刷新根项目直接依赖摘要；不会修改 `package.json`、安装依赖，也不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格、测试方案或测试代码，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复、发生冲突或受管目标经过项目内符号链接时，会停止升级并说明原因。
 
 升级预览还会只读检查 `requirements/REQ-*.md`，列出活跃或状态未知需求缺少的决策台账、验收映射和统一状态；它不会改写任何历史需求，迁移必须逐份确认业务事实后再进行。
 
@@ -331,7 +331,7 @@ openspec/config.yaml
 wayfinder/frontend.md
 ```
 
-业务需求在首次创建时写入 `requirements/REQ-*.md`，OpenSpec 变更保留在 `openspec/changes/`。公共能力更新不覆盖这些业务内容。
+业务需求在首次创建时写入 `requirements/REQ-*.md`，OpenSpec 变更保留在 `openspec/changes/`。需求验收和变更归档成功后，完整需求正文自动迁入 `requirements/archive/<year>/`，根文件成为轻量入口，`requirements/index.json` 提供稳定定位；普通检查只读取根入口，只有显式历史审计才展开归档正文。公共能力更新不覆盖这些业务内容。
 
 旧项目如仍包含 `.ai-workflow.yaml` 和 `docs/ai-context/frontend.md`，先运行 Wayfinder 迁移预览；确认创建、保留和删除计划后再显式写入。普通升级不会自动移动或删除旧文件。
 
@@ -343,9 +343,9 @@ npm run verify
 npm run cleanup:test-runtime
 ```
 
-`prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，并会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。日志、截图、临时 fixture、下载内容和其他验证产物也统一写入各自的 `outputs/<验证主题>/`，不要使用项目根目录或系统临时目录。定位单项问题时仍可分别运行 `npm test`、`npm run validate` 和 `npm run openspec:version`。
+`prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
 
-仓库使用 Git LFS 保存 Playwright 浏览器二进制；克隆或 CI 检出时必须启用 LFS。验证工作流通过 `actions/checkout` 的 `lfs: true` 获取真实文件，并配置为分别在 macOS ARM64、macOS x64、Linux x64、Linux ARM64 和 Windows x64 原生启动内置 Chromium；受支持平台不允许以跳过冒烟代替成功。
+仓库使用 Git LFS 保存 Playwright 浏览器二进制。普通源码开发可用 `GIT_LFS_SKIP_SMUDGE=1 git clone <repo>` 轻量克隆，再按当前平台执行 `git lfs pull --include="plugins/frontend-ai-workflow/runtime/playwright/platform-assets/<platform>/**" --exclude=""`；`<platform>` 为 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 或 `win32-x64`。CI 普通检出后只拉取 `matrix.platform` 对应目录，LFS 指针、缺失资产或错误平台都会稳定失败，不能用跳过冒烟代替成功。只有用户明确决定回收当前克隆的无引用缓存时才执行 `git lfs prune`；自动化不得删除用户缓存、远端对象或重写 Git 历史。
 
 ### 升级内置 Playwright
 
