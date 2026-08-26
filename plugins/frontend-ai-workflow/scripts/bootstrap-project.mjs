@@ -18,7 +18,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.17.0';
+export const WORKFLOW_VERSION = '0.17.1';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');

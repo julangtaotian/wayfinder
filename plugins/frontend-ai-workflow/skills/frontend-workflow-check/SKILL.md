@@ -13,19 +13,27 @@ Perform a read-only audit of the target repository.
 2. Run:
 
    ```bash
-   node <plugin-root>/scripts/check-project.mjs --target <repository-root>
+   node <plugin-root>/scripts/check-project.mjs --target <repository-root> --summary
    ```
 
-3. Parse the report into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, historical verification-evidence audit, static observations, completed-but-active changes, and planning-engine status.
-4. When the user selects a requirement and active change, also run:
+3. Parse the summary into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, historical verification-evidence counts, sampled static observations, completed-but-active changes, and planning-engine status.
+4. Only when a non-zero historical count and the user's question require exact targets, query that code without loading unrelated diagnostics:
+
+   ```bash
+   node <plugin-root>/scripts/check-project.mjs --target <repository-root> --diagnostic-code <code>
+   ```
+
+   Diagnostic queries return at most 20 items. When `nextOffset` is non-null and more targets are necessary, request the next page with `--diagnostic-offset <nextOffset>`; use `--diagnostic-limit` only to lower or raise the page size within 1-100.
+5. Run the original command without `--summary` only when the summary and paged diagnostic queries do not contain a fact required by the user's audit. Do not use the full report by default.
+6. When the user selects a requirement and active change, also run:
 
    ```bash
    node <plugin-root>/scripts/check-change.mjs --target <repository-root> --requirement <requirement-path> --change <change-name> --stage implement
    ```
 
-5. For a delivery-readiness question, use `--stage precomplete` instead. This remains read-only and checks requirement state, acceptance/task completion, persistent evidence, strict OpenSpec validity, and archive-target availability.
-6. Inspect reported files directly when an error is ambiguous.
-7. Report the smallest corrective action for each error. Do not apply fixes unless the user asks.
+7. For a delivery-readiness question, use `--stage precomplete` instead. This remains read-only and checks requirement state, acceptance/task completion, persistent evidence, strict OpenSpec validity, and archive-target availability.
+8. Inspect reported files directly when an error is ambiguous.
+9. Report the smallest corrective action for each error. Do not apply fixes unless the user asks.
 
 ## Interpretation
 
@@ -40,9 +48,9 @@ Perform a read-only audit of the target repository.
 - A stale Wayfinder fingerprint is a refresh warning, not permission to overwrite the project map.
 - `deepAnalysis.analysis.status` separates a scope snapshot from a usable project map: `pending` means the map has not been produced, `partial` is not a complete context, and only `complete` with full coverage and all required map dimensions can be used as a complete project context. A deep refresh intentionally resets the status to `pending` until the analysis is rewritten.
 - `deepAnalysis.validationEvidence` distinguishes performed file reading and hashing from syntax parsing, platform compilation, Lint and tests that were not run. Never turn `not-run` into a passing result.
-- `deepAnalysis.observations` contains non-blocking static hints. Report `wxml-attribute-spacing` with its path and line as a location to verify, not as a confirmed WXML syntax or platform compilation failure.
+- Summary mode reports `deepAnalysis.totalObservations`, `observationCounts`, at most five sampled `observations`, and `omittedObservations`. Report each `wxml-attribute-spacing` sample with path and line as a location to verify, not as a confirmed WXML syntax or platform compilation failure. Use the full report only when the audit explicitly requires every observation.
 - Completed changes that remain active are workflow hygiene warnings; do not archive them without their selected requirement and delivery gate.
-- `verificationEvidenceAudit.executed` is always false. Use `counts` for the summary and `diagnostics` for exact targets; report `legacy_markdown_evidence`, `stale_active_evidence_path`, and `external_evidence_unverified` as migration or trust-boundary warnings. Do not rewrite historical requirements or claim that external CI was remotely checked.
+- `verificationEvidenceAudit.executed` is always false. Summary mode intentionally omits the diagnostics array; use `counts` first and query a specific non-zero code for exact targets. Report `legacy_markdown_evidence`, `stale_active_evidence_path`, and `external_evidence_unverified` as migration or trust-boundary warnings. Do not rewrite historical requirements or claim that external CI was remotely checked.
 - `legacy` 布局是迁移提醒，不等同于工作流损坏；说明需要 Wayfinder 迁移，且不要把检查命令当作迁移命令。
 - Existing business-code changes are context, not workflow failures.
 - Preset, target and platform profiles are finite compatibility signals. Unknown or private dependencies that are absent from those profiles still remain visible in the dynamic dependency profile.

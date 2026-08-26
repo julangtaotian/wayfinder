@@ -8,6 +8,11 @@ import { collectProjectScope } from './collect-project-scope.mjs';
 import { runUpdate } from './update-project.mjs';
 import { auditProjectVerificationEvidence } from './verification-evidence.mjs';
 import {
+  CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE,
+  CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE,
+  formatProjectCheckOutput,
+} from './check-project-output.mjs';
+import {
   detectWorkflowLayout,
   LEGACY_FRONTEND_PATH,
   LEGACY_REQUIREMENT_TEMPLATE_PATH,
@@ -426,12 +431,43 @@ export function checkProject(target = process.cwd()) {
 }
 
 function parseArgs(argv) {
-  return parseCliArgs(argv, {
-    defaults: { target: process.cwd() },
+  const args = parseCliArgs(argv, {
+    defaults: {
+      target: process.cwd(),
+      summary: false,
+      diagnosticCode: null,
+      diagnosticOffset: null,
+      diagnosticLimit: null,
+    },
     valueOptions: {
       '--target': 'target',
+      '--diagnostic-code': 'diagnosticCode',
+      '--diagnostic-offset': 'diagnosticOffset',
+      '--diagnostic-limit': 'diagnosticLimit',
+    },
+    booleanOptions: {
+      '--summary': 'summary',
     },
   });
+  if (args.summary && args.diagnosticCode) {
+    throw new Error('参数 --summary 与 --diagnostic-code 不能同时使用');
+  }
+  if (!args.diagnosticCode && (args.diagnosticOffset !== null || args.diagnosticLimit !== null)) {
+    throw new Error('参数 --diagnostic-offset 和 --diagnostic-limit 必须与 --diagnostic-code 一起使用');
+  }
+  if (args.diagnosticCode) {
+    const offset = args.diagnosticOffset === null ? 0 : Number(args.diagnosticOffset);
+    const limit = args.diagnosticLimit === null ? CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE : Number(args.diagnosticLimit);
+    if (!Number.isSafeInteger(offset) || offset < 0) {
+      throw new Error('参数 --diagnostic-offset 必须是非负整数');
+    }
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE) {
+      throw new Error(`参数 --diagnostic-limit 必须是 1-${CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE} 的整数`);
+    }
+    args.diagnosticOffset = offset;
+    args.diagnosticLimit = limit;
+  }
+  return args;
 }
 
 function isEntryPoint() {
@@ -440,8 +476,9 @@ function isEntryPoint() {
 
 if (isEntryPoint()) {
   try {
-    const result = checkProject(parseArgs(process.argv.slice(2)).target);
-    console.log(JSON.stringify(result, null, 2));
+    const args = parseArgs(process.argv.slice(2));
+    const result = checkProject(args.target);
+    console.log(JSON.stringify(formatProjectCheckOutput(result, args), null, 2));
     if (!result.ok) process.exitCode = 1;
   } catch (error) {
     console.error(error.message);

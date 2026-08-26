@@ -10,14 +10,16 @@
 
 ## 结构职责
 
-- `.agents/plugins/marketplace.json`：团队 marketplace 入口。
-- `plugins/frontend-ai-workflow/.codex-plugin/plugin.json`：插件 manifest。
-- `plugins/frontend-ai-workflow/skills`：Codex 可复用工作流。
-- `plugins/frontend-ai-workflow/scripts`：确定性的识别、初始化、检查和升级逻辑。
-- `plugins/frontend-ai-workflow/runtime`：随插件发布的固定版本 OpenSpec 运行时。
-- `plugins/frontend-ai-workflow/assets/templates`：写入目标仓库的模板。
-- `plugins/frontend-ai-workflow/references`：技能按需读取的规则说明。
-- `tests`：Node.js 端到端测试。
+- marketplace 与 manifest：`.agents/plugins/marketplace.json`、`plugins/frontend-ai-workflow/.codex-plugin/plugin.json`。
+- 日常源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates`、`references` 和 `tests`。
+- 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取。
+- 历史与验收资产：`requirements`、`openspec`、`outputs`、`.frontend-ui-review`；按当前需求、变更或验收目标读取。
+
+## AI 读取路由
+
+- 普通功能、修复和检查先在日常源码范围内定位；优先使用精确文件名和限定目录搜索。
+- 除非任务明确涉及运行时、平台打包、视觉证据或历史规划，不递归枚举 `runtime/**/node_modules`、`runtime/playwright/platform-assets`、`outputs`、`.frontend-ui-review/runs` 和 `openspec/changes/archive`。
+- 项目健康检查先使用精简模式；只有计数和用户问题需要具体目标时才按诊断 code 查询，完整结果作为必要事实缺失时的兜底。
 
 ## 实现约束
 
@@ -32,14 +34,10 @@
 
 ## 跨平台 CI 防回归
 
-- 修改 `.github/workflows/`、文件路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断时，必须在需求、设计或任务中标记“跨平台高风险”，并写明命中的风险项和受影响平台。
-- 跨平台高风险变更先阅读 `plugins/frontend-ai-workflow/references/cross-platform-ci-checklist.md`，只选择与本次影响链对应的检查，但不得省略路径、子进程、临时目录或结构化输出中已经命中的风险。
-- 机器可读输出优先断言稳定的 `code`、`target`、`status` 等字段；完整中文文案和平台路径只能作为辅助诊断。
-- Git、子进程、`cwd`、`realpath`、`path.join` 等不同来源的路径参与相等、集合、前缀或去重判断前，实际值和期望值必须通过同一规范化函数；禁止直接比较原始字符串，也禁止根据 `process.platform` 推断外部工具一定使用 `/` 或 `\`。
-- 在当前平台验证外平台路径时必须显式使用 `path.win32` 或 `path.posix`；Windows 回归至少覆盖 Git 风格 `D:/...` 与 Node 风格 `D:\\...` 的双侧规范化，不得只测试单个反斜杠替换样本。
-- Windows 不直接启动 `.cmd` 包装器；优先使用当前 Node 执行可追溯的 JavaScript CLI 入口。仓库内临时 fixture 必须隔离父 Git 向上发现，并覆盖成功与失败清理。
-- 本地聚焦测试、统一验证和真实 CI 矩阵是三类独立证据。仓库声明的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 没有全部成功前，不得把跨平台发布证据标为通过。
-- Actions 失败后必须把根因、失败平台、稳定复现条件和新增回归定位写入当前变更的验证记录；同类问题再次出现时先检查既有回归是否覆盖了真实差异，不只修改表面错误文案。
+- 修改 CI、路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断时，标记“跨平台高风险”，先阅读 `plugins/frontend-ai-workflow/references/cross-platform-ci-checklist.md`，并在需求、设计或任务中记录命中项、影响平台和回归定位。
+- 机器断言优先使用稳定 `code`、`target`、`status` 和计数；跨来源路径比较必须双侧统一规范化，Windows 外平台样本显式使用 `path.win32`。
+- Windows 不直接启动 `.cmd` 包装器；仓库内临时 fixture 隔离父 Git 并覆盖成功与失败清理。
+- 聚焦测试、本地统一验证和真实五平台 CI 是独立证据；矩阵未全部成功前不得标记跨平台发布通过。
 
 ## 验证
 

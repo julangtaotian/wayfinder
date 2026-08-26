@@ -877,7 +877,7 @@ test('健康检查使用插件内置规划运行时', (t) => {
 
   const result = checkProject(root);
   assert.equal(result.ok, true);
-  assert.equal(result.version, '0.17.0');
+  assert.equal(result.version, '0.17.1');
   assert.equal(result.layout, 'wayfinder');
   assert.equal(result.errors.length, 0);
   assert.equal(result.planningEngine.available, true);
@@ -1213,7 +1213,13 @@ test('[TC-10] 跨平台高风险变更规则合同', () => {
   const checklist = fs.readFileSync(path.join(pluginRoot, 'references', 'cross-platform-ci-checklist.md'), 'utf8');
   const structureValidator = fs.readFileSync(path.join(pluginRoot, 'scripts', 'validate-structure.mjs'), 'utf8');
 
-  for (const rules of [repositoryRules, agentsTemplate]) {
+  assert.match(repositoryRules, /跨平台高风险/u);
+  assert.match(repositoryRules, /cross-platform-ci-checklist\.md/u);
+  assert.match(repositoryRules, /CI.*路径.*临时目录.*子进程.*包管理器入口.*环境变量.*机器可读诊断/su);
+  assert.match(repositoryRules, /code.*target.*status/su);
+  assert.match(repositoryRules, /聚焦测试.*本地统一验证.*真实五平台 CI/su);
+
+  for (const rules of [agentsTemplate]) {
     assert.match(rules, /跨平台高风险/);
     assert.match(rules, /CI.*路径.*临时目录.*子进程.*包管理器入口.*环境变量.*机器可读诊断/su);
     assert.match(rules, /code.*target.*status/su);

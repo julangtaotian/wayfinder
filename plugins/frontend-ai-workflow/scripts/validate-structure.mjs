@@ -52,6 +52,7 @@ const REQUIREMENT_MIGRATION_ASSETS = [
 ];
 const DELIVERY_GUARD_ASSETS = [
   'scripts/check-change.mjs',
+  'scripts/check-project-output.mjs',
   'scripts/finalize-change.mjs',
   'scripts/project-path-safety.mjs',
   'references/cross-platform-ci-checklist.md',
