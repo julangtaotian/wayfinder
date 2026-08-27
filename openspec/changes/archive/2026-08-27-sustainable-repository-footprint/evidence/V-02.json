@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-27T02:43:43.277Z",
+  "completedAt": "2026-08-27T03:03:24.587Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "7251a9db996a544777cf208129c10c4daa787073",
+    "commit": "1e3d566f9e344e30c4bdb19cfe380dc3a126140d",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,18 +24,18 @@
   "logs": [
     {
       "bytes": 993,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-02/20260827024343149-46222-ce7f1882/stdout.log",
-      "sha256": "e7bd7166b2d3a495dab8fee3d831fac248631a9ff8ff17686ffbb5a8a338e03d",
+      "path": "outputs/verification-evidence/2026-08-27-sustainable-repository-footprint/V-02/20260827030324484-71260-1b9df2fe/stdout.log",
+      "sha256": "71bcd6b227bdb9053222b14f144322dcaf16227651286a17973f26be71aa8da5",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-02/20260827024343149-46222-ce7f1882/stderr.log",
+      "path": "outputs/verification-evidence/2026-08-27-sustainable-repository-footprint/V-02/20260827030324484-71260-1b9df2fe/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "requirement": "requirements/archive/2026/REQ-2026-032-sustainable-repository-footprint.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -52,8 +52,8 @@
       "D-12",
       "D-13"
     ],
-    "revision": "R-01",
-    "sha256": "ac833768718d7f1058beb32e799f9496af65ad83d450533c3b30ca61e43c7a3b",
+    "revision": "R-02",
+    "sha256": "694cf85a685f3c8a317cc2804772e410198da9e54c2e1ba5aa14aab94aa30365",
     "testCaseIds": [
       "TC-01",
       "TC-02",
@@ -62,7 +62,7 @@
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-27T02:43:43.151Z",
+  "startedAt": "2026-08-27T03:03:24.485Z",
   "status": "passed",
-  "workspaceFingerprint": "46fd659f6659e236cef16487b834ed1d295b5debebdafc8eb5307157bcb6f573"
+  "workspaceFingerprint": "6134ba99e49ae6135840dcde582d09aa312be43a26b168e0c36cc0ea9bee99f6"
 }

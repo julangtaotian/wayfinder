@@ -21,8 +21,8 @@
 
 ## 外部五平台边界
 
-- V-07 当前保持待第四次复跑。只有最新修复提交上的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 全部成功，才能将 V-07 更新为通过。
-- 本地路径归一化、LFS 指针/缺失失败和 CI YAML 合同测试已经通过，但这些证据不冒充远端 runner 回执。
+- V-07 已人工复核通过：提交 `1e3d566f9e344e30c4bdb19cfe380dc3a126140d` 的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 在 Validate #53 首次执行全部成功。
+- 本地路径归一化、LFS 指针/缺失失败和 CI YAML 合同测试继续由 V-04/V-06 机器证据证明；Validate #53 作为人工复核的外部 runner 事实记录，不冒充插件独立远程读取回执。
 
 ### 首次矩阵失败复盘
 
@@ -40,7 +40,7 @@
 - 此前回归缺口：第一次修复只验证了底层范围解析和结构校验调用，没有直接执行统一验证使用的 CLI，也没有让 UI 自动化额外检查复用矩阵目标；完整本地克隆中的五平台真实资产遮蔽了两个遗漏。
 - 修复：新增 `verifyConfiguredPlaywrightIntegrity` 作为结构校验、统一验证 CLI 与 UI 自动化的共同入口；新增 `resolvePlaywrightValidationTarget` 统一 UI 运行时目标，本地无矩阵变量时仍保留 linux-x64 额外检查。
 - 新增回归：单平台 LFS 指针 fixture 验证目标平台通过、本地全平台失败；真实 `--check` 子进程断言输出只包含 darwin-arm64；CI 模拟和本地全平台两套完整 `npm run verify` 均通过。
-- 第二次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`；最新修复提交的真实五平台矩阵待第三次运行确认。
+- 第二次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`；其后第三次运行确认了回归测试仍固定平台的遗漏。
 
 ### 第三次矩阵失败复盘
 
@@ -48,4 +48,17 @@
 - 根因：新增的 CLI 入口回归固定向子进程注入 `UI_REVIEW_EXPECT_PLATFORM=darwin-arm64`。该断言在完整本地克隆和 darwin-arm64 单平台克隆都通过，但其余四个平台只拉取自身 LFS 资产，因此测试错误地要求读取 darwin-arm64 指针。
 - 修复：CLI 子进程回归在 CI 中继承当前 `UI_REVIEW_EXPECT_PLATFORM`，本地无矩阵变量时使用当前 `process.platform-process.arch`；断言结果只能包含该实际目标平台。
 - 新增验证边界：五个平台环境值继续逐一执行真实 `--check`；单平台 LFS 指针 fixture 保留“目标通过、非目标失败”的确定性保护，不再用固定的其他平台测试真实 checkout。
-- 第三次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`；最新修复提交的真实五平台矩阵待第四次运行确认。
+- 第三次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`；该根因修复后由第四次运行确认。
+
+### 第四次矩阵通过
+
+- 运行：[GitHub Actions Validate #53](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332)，精确提交 `1e3d566f9e344e30c4bdb19cfe380dc3a126140d`，总耗时 2 分 15 秒，状态 Success，生成 5 份平台产物。
+- 五个平台任务首次执行全部成功：[darwin-arm64](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332/job/98394017252)、[darwin-x64](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332/job/98394017430)、[linux-x64](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332/job/98394017381)、[linux-arm64](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332/job/98394017340)、[win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/33034456332/job/98394017393)。
+- 结论：按平台 LFS 拉取、单平台结构与 CLI 完整性、UI 自动化、统一验证、真实浏览器冒烟、平台打包和产物上传在同一 SHA 上全部闭环；前三次失败及对应回归继续保留，防止重新引入同类范围遗漏。
+
+## 完成归档与恢复
+
+- 首次正式完成已成功同步六项主规格、归档变更并分层归档需求正文，但归档后审计发现测试方案和机器证据仍指向根需求存根，因此返回可重复恢复的 `archive_partial_failure`，没有二次归档或伪造通过。
+- 根因修复提取 `finalize-change-references.mjs`：需求正文进入年度目录后，完成流程同步迁移测试方案和全部 `V-*.json` 的需求路径；无独立测试方案的历史变更保持兼容，恢复执行重复运行不产生额外改写。
+- 回归覆盖正常完成、部分失败恢复、有/无测试方案和证据清单路径迁移；修复后的统一验证 9/9 阶段通过，174 项测试中 171 项通过、3 项按合同跳过、0 失败。
+- 最终恢复返回 `archive_recovered`；归档需求、测试方案和 6 份 schema v2 机器证据的 complete 审计全部通过，错误与警告均为空。

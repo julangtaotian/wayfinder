@@ -526,10 +526,15 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
   fs.writeFileSync(successfulFixture.changePath + '/test-plan.md', [
     '# 测试方案',
     '',
+    '- 需求：`requirements/REQ-2026-001-evidence.md`',
     '- 变更：evidence-change',
     '- 证据：`openspec/changes/evidence-change/evidence/V-01.json`',
     '',
   ].join('\n'), 'utf8');
+  write(successfulFixture.root, 'openspec/changes/evidence-change/evidence/V-01.json', `${JSON.stringify({
+    evidenceId: 'V-01',
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+  }, null, 2)}\n`);
   const successfulArchiveTarget = path.join(successfulFixture.root, 'openspec', 'changes', 'archive', archiveName);
   const successfulCheck = {
     ok: true,
@@ -575,8 +580,11 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
       assert.match(archivedRequirement, /- 状态：已验收/u);
       assert.match(archivedRequirement, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
       assert.match(archivedPlan, /- 变更：2026-08-18-evidence-change/u);
+      assert.match(archivedPlan, /- 需求：`requirements\/archive\/2026\/REQ-2026-001-evidence\.md`/u);
       assert.match(archivedPlan, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
       assert.doesNotMatch(archivedPlan, /openspec\/changes\/evidence-change\/evidence/u);
+      const archivedEvidence = JSON.parse(fs.readFileSync(path.join(changePath, 'evidence', 'V-01.json'), 'utf8'));
+      assert.equal(archivedEvidence.requirement, 'requirements/archive/2026/REQ-2026-001-evidence.md');
       return { ok: true, errors: [], warnings: [] };
     },
   });
@@ -629,7 +637,11 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
   const recoveryArchiveTarget = path.join(recoveryFixture.root, 'openspec', 'changes', 'archive', archiveName);
   const acceptedRequirement = rewriteRequirementForArchive(content, 'evidence-change', archiveName);
   fs.writeFileSync(recoveryFixture.requirementPath, acceptedRequirement.content, 'utf8');
-  fs.writeFileSync(recoveryFixture.changePath + '/test-plan.md', '- 变更：evidence-change\n- 证据：`openspec/changes/evidence-change/evidence/V-01.json`\n', 'utf8');
+  fs.writeFileSync(recoveryFixture.changePath + '/test-plan.md', '- 需求：`requirements/REQ-2026-001-evidence.md`\n- 变更：evidence-change\n- 证据：`openspec/changes/evidence-change/evidence/V-01.json`\n', 'utf8');
+  write(recoveryFixture.root, 'openspec/changes/evidence-change/evidence/V-01.json', `${JSON.stringify({
+    evidenceId: 'V-01',
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+  }, null, 2)}\n`);
   fs.mkdirSync(path.dirname(recoveryArchiveTarget), { recursive: true });
   fs.renameSync(recoveryFixture.changePath, recoveryArchiveTarget);
   let recoveryAuditCalls = 0;
@@ -644,7 +656,10 @@ test('[TC-04] 归档引用迁移与恢复', (context) => {
       recoveryAuditCalls += 1;
       const archivedPlan = fs.readFileSync(path.join(changePath, 'test-plan.md'), 'utf8');
       assert.match(archivedPlan, /- 变更：2026-08-18-evidence-change/u);
+      assert.match(archivedPlan, /- 需求：`requirements\/archive\/2026\/REQ-2026-001-evidence\.md`/u);
       assert.match(archivedPlan, /openspec\/changes\/archive\/2026-08-18-evidence-change\/evidence\/V-01\.json/u);
+      const archivedEvidence = JSON.parse(fs.readFileSync(path.join(changePath, 'evidence', 'V-01.json'), 'utf8'));
+      assert.equal(archivedEvidence.requirement, 'requirements/archive/2026/REQ-2026-001-evidence.md');
       return { ok: true, errors: [], warnings: [] };
     },
   });

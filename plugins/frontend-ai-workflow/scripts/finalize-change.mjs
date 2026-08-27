@@ -12,6 +12,7 @@ import {
 } from './project-path-safety.mjs';
 import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
 import { archiveRequirement as archiveAcceptedRequirement } from './requirement-archive.mjs';
+import { migrateArchivedRequirementReferences } from './finalize-change-references.mjs';
 
 const REQUIREMENT_STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
 
@@ -325,6 +326,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     }] : []),
     ...(!requirementAlreadyArchived ? [{ action: 'recover-references', target: recovery.requirementPath, rewrites: next.rewrites }] : []),
     { action: 'archive-requirement', target: recovery.requirementPath },
+    { action: 'recover-archived-requirement-references', target: recovery.changePath },
     { action: 'post-archive-audit', target: recovery.changePath },
   ];
   if (!write) {
@@ -402,6 +404,31 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
       error: `归档恢复无法分层需求正文：${error.message}`,
     });
   }
+  let archivedRequirementReferences;
+  try {
+    archivedRequirementReferences = migrateArchivedRequirementReferences({
+      root: recovery.root,
+      changePath: recovery.changePath,
+      sourceRequirementPath: recovery.requirementPath,
+      archivedRequirementPath: requirementArchive.archivePath,
+      writeFile,
+    });
+  } catch (error) {
+    return partialFailure({
+      write,
+      check: { changeName: recovery.changeName },
+      actions,
+      archiveResult: { archivedAs: recovery.archiveName },
+      archiveRoot: null,
+      archiveWarnings: [],
+      archiveTarget: recovery.changePath,
+      rewrites: next.rewrites,
+      testPlanRewrites: testPlan.rewrites,
+      testPlanChangeRenamed: testPlan.changeRenamed,
+      failedStage: 'archived-requirement-reference-rewrite',
+      error: `归档恢复无法迁移年度需求引用：${error.message}`,
+    });
+  }
   const audit = services.postArchiveAudit({
     requirementPath: requirementArchive.archivePath,
     changePath: recovery.changePath,
@@ -436,6 +463,7 @@ function recoverArchivedChange({ target, requirement, change, write }, services)
     postArchiveAudit: audit,
     requirementStatus: '已验收',
     requirementArchive,
+    archivedRequirementReferences,
   };
 }
 
@@ -515,6 +543,7 @@ export function finalizeChange({
     { action: 'rewrite-evidence-references', target: check.requirementPath, rewrites: predictedRequirement.rewrites },
     { action: 'mark-requirement-accepted', target: check.requirementPath },
     { action: 'archive-requirement', target: check.requirementPath },
+    { action: 'rewrite-archived-requirement-references', target: check.archive?.targetPath || null },
     { action: 'post-archive-audit', target: check.archive?.targetPath || null },
   ];
   if (!write) {
@@ -654,6 +683,31 @@ export function finalizeChange({
       error: `变更已归档，但需求正文分层归档失败：${error.message}`,
     });
   }
+  let archivedRequirementReferences;
+  try {
+    archivedRequirementReferences = migrateArchivedRequirementReferences({
+      root: check.root,
+      changePath: archiveTarget,
+      sourceRequirementPath: check.requirementPath,
+      archivedRequirementPath: requirementArchive.archivePath,
+      writeFile,
+    });
+  } catch (error) {
+    return partialFailure({
+      write,
+      check,
+      actions,
+      archiveResult,
+      archiveRoot,
+      archiveWarnings,
+      archiveTarget,
+      rewrites: nextRequirement.rewrites,
+      testPlanRewrites: nextTestPlan.rewrites,
+      testPlanChangeRenamed: nextTestPlan.changeRenamed,
+      failedStage: 'archived-requirement-reference-rewrite',
+      error: `变更已归档，但年度需求引用迁移失败：${error.message}`,
+    });
+  }
   const audit = services.postArchiveAudit({
     requirementPath: requirementArchive.archivePath,
     changePath: archiveTarget,
@@ -691,6 +745,7 @@ export function finalizeChange({
     postArchiveAudit: audit,
     requirementStatus: '已验收',
     requirementArchive,
+    archivedRequirementReferences,
   };
 }
 

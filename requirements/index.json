@@ -279,6 +279,15 @@
       "entryPath": "requirements/REQ-2026-031-ai-context-and-repository-efficiency.md",
       "archivePath": "requirements/archive/2026/REQ-2026-031-ai-context-and-repository-efficiency.md",
       "change": "reduce-ai-context-cost"
+    },
+    {
+      "id": "REQ-2026-032",
+      "title": "REQ-2026-032：仓库持续瘦身与生命周期治理",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-032-sustainable-repository-footprint.md",
+      "change": "sustainable-repository-footprint"
     }
   ]
 }

@@ -2,10 +2,10 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-032-sustainable-repository-footprint.md`
-- 变更：sustainable-repository-footprint
-- 需求修订基线：R-01
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-032-sustainable-repository-footprint.md`
+- 变更：2026-08-27-sustainable-repository-footprint
+- 需求修订基线：R-02
 - 默认聚焦命令：`npm run test:repository`
 
 ## 测试上下文
@@ -40,7 +40,7 @@
 - 聚焦命令：`node --test tests/requirement-archive.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-02.json`
 
 ### TC-02：完成与恢复流程自动归档需求且保持幂等
 
@@ -62,7 +62,7 @@
 - 聚焦命令：`node --test tests/requirement-archive.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-02.json`
 
 ### TC-03：历史需求默认不展开且显式审计可定位
 
@@ -84,7 +84,7 @@
 - 聚焦命令：`node --test tests/requirement-archive.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-02.json`
 
 ### TC-04：仓库体积预算稳定通过并阻断各类回归
 
@@ -106,7 +106,7 @@
 - 聚焦命令：`node --test tests/repository-footprint.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-03.json`
 
 ### TC-05：精简蓝湖 AI 规范独立完整且重资产退役
 
@@ -128,7 +128,7 @@
 - 聚焦命令：`node --test tests/lanhu-ai-spec.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-01.json`
 
 ### TC-06：测试拆分与聚焦入口保持真实发现
 
@@ -150,7 +150,7 @@
 - 聚焦命令：`node --test tests/test-entrypoints.test.mjs tests/repository-footprint.test.mjs`
 - 关联验证：V-05、V-06
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-05.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-05.json`
 
 ### TC-07：核心脚本拆分保持导出与 CLI 兼容
 
@@ -172,7 +172,7 @@
 - 聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs tests/real-project-validation.test.mjs tests/repository-footprint.test.mjs`
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-05.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-05.json`
 
 ### TC-08：目标平台 LFS 资产准备与指针失败关闭
 
@@ -194,7 +194,7 @@
 - 聚焦命令：`npm run test:platform`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-04.json`
 
 ### TC-09：CI 每个矩阵只拉取目标平台并保留真实门禁
 
@@ -216,7 +216,7 @@
 - 聚焦命令：`npm run test:platform`
 - 关联验证：V-04、V-07
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/evidence/V-04.json`；远端 URL 待生成
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-04.json`
 
 ### TC-10：统一验证、版本与长期治理规则保持一致
 
@@ -238,13 +238,13 @@
 - 聚焦命令：`node --test tests/repository-footprint.test.mjs`
 - 关联验证：V-03、V-04、V-05、V-06、V-08
 - 结果分类：通过
-- 证据：V-03～V-06 schema v2 JSON 与 `verification.md`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/evidence/V-06.json`
 
 ### TC-11：真实五平台矩阵分层取证
 
-- 状态：三次失败，待最新修复提交复跑
+- 状态：人工通过
 - 优先级：P0
-- 验证类型：自动
+- 验证类型：人工
 - 测试层级：端到端
 - 关联决策：D-10、D-13
 - 关联验收：A-04、A-08
@@ -255,12 +255,12 @@
 - 测试替身：不适用；本地模拟不能替代
 - 操作：读取同一运行的五项任务状态与报告
 - 可观察断言：五项全部成功才把 V-07 更新为通过；任一失败记录平台、步骤、稳定 code、根因和新增回归定位
-- 目标测试：`tests/ui-review-platform-runtime.test.mjs`
-- 测试定位：`[TC-11] 真实五平台矩阵分层取证合同`
-- 聚焦命令：`node --test --test-name-pattern="真实五平台矩阵分层取证合同" tests/ui-review-platform-runtime.test.mjs`
+- 目标测试：不适用
+- 测试定位：不适用
+- 聚焦命令：不适用
 - 关联验证：V-07
-- 结果分类：未通过（前三次运行）；第三次已证明 darwin-arm64 完整链成功，其余平台的回归测试固定目标已改为继承矩阵目标，真实矩阵待复跑
-- 证据：首次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`，提交 `cec8a026aab8330c4f0e09f2eb516f7f222f2065`；第二次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`，提交 `d6a0d31c52209a76b1a5a3d84f428e083fac8c71`；第三次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`，提交 `7251a9db996a544777cf208129c10c4daa787073`；失败复盘见 `verification.md`
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/verification.md`
 
 ### TC-12：人工核对根入口和已退役路径
 
@@ -282,12 +282,12 @@
 - 聚焦命令：不适用
 - 关联验证：V-08
 - 结果分类：通过
-- 证据：`openspec/changes/sustainable-repository-footprint/verification.md`
+- 证据：`openspec/changes/archive/2026-08-27-sustainable-repository-footprint/verification.md`
 
 ## 执行记录
 
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
 | TC-01～TC-10 | 三个聚焦入口、`npm test`、`npm run validate`、`npm run verify`、官方 validators 与当前平台成品 | 通过 | V-01～V-06 |
-| TC-11 | Validate #50/#51/#52、单平台 LFS 指针、真实 CLI 目标范围与 UI 自动化目标回归；最新修复提交待复跑 | 三次失败，待复跑 | V-07、`verification.md` |
+| TC-11 | Validate #50/#51/#52 失败复盘与 Validate #53 同一提交五平台任务人工复核 | 通过 | V-07、`verification.md` |
 | TC-12 | WebStorm 项目树与文件搜索人工核对 | 通过 | V-08 |

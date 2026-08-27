@@ -13,12 +13,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-27T02:43:46.035Z",
+  "completedAt": "2026-08-27T03:03:28.666Z",
   "evidenceId": "V-05",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "7251a9db996a544777cf208129c10c4daa787073",
+    "commit": "1e3d566f9e344e30c4bdb19cfe380dc3a126140d",
     "dirty": true
   },
   "kind": "local-command",
@@ -26,19 +26,19 @@
   "locatorMatches": 4,
   "logs": [
     {
-      "bytes": 3451,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-05/20260827024343163-46225-540b5386/stdout.log",
-      "sha256": "bd88e96b95bc1b9b7001cd1246294bb7fcbe4bb65ae82a62312dea0fb377cda4",
+      "bytes": 3459,
+      "path": "outputs/verification-evidence/2026-08-27-sustainable-repository-footprint/V-05/20260827030326098-71344-13ad9641/stdout.log",
+      "sha256": "0884ddc6a56d85999ea4740281c30a1b41c818a77a96bf3ce44f31f8ac2eb1e2",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-05/20260827024343163-46225-540b5386/stderr.log",
+      "path": "outputs/verification-evidence/2026-08-27-sustainable-repository-footprint/V-05/20260827030326098-71344-13ad9641/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "requirement": "requirements/archive/2026/REQ-2026-032-sustainable-repository-footprint.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -58,8 +58,8 @@
       "D-12",
       "D-13"
     ],
-    "revision": "R-01",
-    "sha256": "155d932df67b2f6a6112ebe406880ec4fa898e78ca294c99dabd093e4be11e1d",
+    "revision": "R-02",
+    "sha256": "34b02e0246fb476da7a0d4ef51568ac9a2c767114cc79daca257a2ff4a214a2e",
     "testCaseIds": [
       "TC-06",
       "TC-07",
@@ -68,7 +68,7 @@
     "verificationId": "V-05",
     "version": 1
   },
-  "startedAt": "2026-08-27T02:43:43.165Z",
+  "startedAt": "2026-08-27T03:03:26.100Z",
   "status": "passed",
-  "workspaceFingerprint": "46fd659f6659e236cef16487b834ed1d295b5debebdafc8eb5307157bcb6f573"
+  "workspaceFingerprint": "6134ba99e49ae6135840dcde582d09aa312be43a26b168e0c36cc0ea9bee99f6"
 }
