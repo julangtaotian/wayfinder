@@ -16,7 +16,9 @@ import {
   normalizePlaywrightPlatformPath,
   playwrightLfsInclude,
   resolvePlaywrightIntegrityScope,
+  resolvePlaywrightValidationTarget,
   smokeTestBundledPlaywright,
+  verifyConfiguredPlaywrightIntegrity,
   verifyPlaywrightIntegrity,
   writePlaywrightIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
@@ -36,6 +38,10 @@ const EXPECTED_PLATFORMS = [
 ];
 const packagePluginScript = fileURLToPath(new URL(
   '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs',
+  import.meta.url,
+));
+const playwrightRuntimeScript = fileURLToPath(new URL(
+  '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs',
   import.meta.url,
 ));
 
@@ -372,8 +378,11 @@ test('[V-04] CI 完整性校验只检查已拉取平台，本地仍检查全部�
   const nonTargetExecutable = path.join(runtimeRoot, platformMetadata('darwin', 'arm64').browser.executable);
   fs.writeFileSync(nonTargetExecutable, 'version https://git-lfs.github.com/spec/v1\noid sha256:fixture\nsize 123\n');
 
-  const targetScope = resolvePlaywrightIntegrityScope({ UI_REVIEW_EXPECT_PLATFORM: 'linux-x64' });
-  const targetIntegrity = verifyPlaywrightIntegrity({ runtimeRoot, integrityPath, ...targetScope });
+  const targetIntegrity = verifyConfiguredPlaywrightIntegrity({
+    environment: { UI_REVIEW_EXPECT_PLATFORM: 'linux-x64' },
+    runtimeRoot,
+    integrityPath,
+  });
   assert.equal(targetIntegrity.ok, true, targetIntegrity.errors.join('\n'));
   assert.deepEqual(Object.keys(targetIntegrity.platforms), ['linux-x64']);
 
@@ -388,6 +397,22 @@ test('[V-04] CI 完整性校验只检查已拉取平台，本地仍检查全部�
     () => resolvePlaywrightIntegrityScope({ UI_REVIEW_EXPECT_PLATFORM: 'win32-arm64' }),
     /不支持的 Playwright 完整性校验平台/u,
   );
+});
+
+test('[V-04] CI 命令行完整性入口和 UI 自动化检查都继承矩阵目标', () => {
+  const target = resolvePlaywrightValidationTarget({ UI_REVIEW_EXPECT_PLATFORM: 'linux-arm64' });
+  assert.deepEqual(target, { platform: 'linux', arch: 'arm64', platformKey: 'linux-arm64' });
+  assert.deepEqual(
+    resolvePlaywrightValidationTarget({}, 'darwin-x64'),
+    { platform: 'darwin', arch: 'x64', platformKey: 'darwin-x64' },
+  );
+
+  const result = spawnSync(process.execPath, [playwrightRuntimeScript, '--check'], {
+    encoding: 'utf8',
+    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: 'darwin-arm64' },
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.deepEqual(Object.keys(JSON.parse(result.stdout).platforms), ['darwin-arm64']);
 });
 
 test('平台插件成品预览保持零写入并公开带余量预算', async (context) => {

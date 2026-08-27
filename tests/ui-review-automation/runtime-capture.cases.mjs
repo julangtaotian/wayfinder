@@ -8,7 +8,9 @@ import {
   BUNDLED_PLAYWRIGHT_VERSION,
   inspectBundledPlaywright,
   loadBundledPlaywright,
+  resolvePlaywrightValidationTarget,
   smokeTestBundledPlaywright,
+  verifyConfiguredPlaywrightIntegrity,
   verifyPlaywrightIntegrity,
   executeStructuredInteractions,
   runUiReview,
@@ -30,14 +32,17 @@ test('内置 Playwright 固定版本、完整性、平台和 Chromium 启动均�
   assert.equal(runtime.browser, 'chromium-headless-shell');
   assert.equal(runtime.integrity.ok, true);
   assert.equal(verifyPlaywrightIntegrity().ok, true);
+  assert.equal(verifyConfiguredPlaywrightIntegrity().ok, true);
 
-  const linux = inspectBundledPlaywright({
-    platform: 'linux',
-    arch: 'x64',
+  // 完整克隆继续额外检查 linux-x64；CI 单平台克隆只检查矩阵目标。
+  const expectedTarget = resolvePlaywrightValidationTarget();
+  const expectedPlatformRuntime = inspectBundledPlaywright({
+    platform: expectedTarget.platform,
+    arch: expectedTarget.arch,
     useCache: false,
   });
-  assert.equal(linux.available, true, linux.reason);
-  assert.equal(linux.platformKey, 'linux-x64');
+  assert.equal(expectedPlatformRuntime.available, true, expectedPlatformRuntime.reason);
+  assert.equal(expectedPlatformRuntime.platformKey, expectedTarget.platformKey);
 
   const smoke = await smokeTestBundledPlaywright();
   assert.equal(smoke.ok, true);

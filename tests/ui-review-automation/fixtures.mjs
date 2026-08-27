@@ -11,7 +11,9 @@ import {
   BUNDLED_PLAYWRIGHT_VERSION,
   inspectBundledPlaywright,
   loadBundledPlaywright,
+  resolvePlaywrightValidationTarget,
   smokeTestBundledPlaywright,
+  verifyConfiguredPlaywrightIntegrity,
   verifyPlaywrightIntegrity,
 } from '../../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 import { executeStructuredInteractions } from '../../plugins/frontend-ai-workflow/scripts/ui-review-interactions.mjs';
@@ -155,7 +157,9 @@ export {
   BUNDLED_PLAYWRIGHT_VERSION,
   inspectBundledPlaywright,
   loadBundledPlaywright,
+  resolvePlaywrightValidationTarget,
   smokeTestBundledPlaywright,
+  verifyConfiguredPlaywrightIntegrity,
   verifyPlaywrightIntegrity,
   executeStructuredInteractions,
   compareUiEvidence,

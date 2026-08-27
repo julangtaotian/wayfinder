@@ -78,6 +78,16 @@ export function resolvePlaywrightIntegrityScope(environment = process.env) {
   return { platform, arch: archParts.join('-'), verifyAllPlatforms: false };
 }
 
+export function resolvePlaywrightValidationTarget(environment = process.env, fallbackKey = 'linux-x64') {
+  const scope = resolvePlaywrightIntegrityScope(environment);
+  const targetKey = scope.verifyAllPlatforms ? fallbackKey : `${scope.platform}-${scope.arch}`;
+  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(targetKey)) {
+    throw new Error(`不支持的 Playwright 验证平台：${targetKey}`);
+  }
+  const [platform, ...archParts] = targetKey.split('-');
+  return { platform, arch: archParts.join('-'), platformKey: targetKey };
+}
+
 export function inspectPlaywrightAsset(filePath, { runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT } = {}) {
   const absolutePath = path.resolve(filePath);
   const target = normalizePlaywrightPlatformPath(path.relative(path.resolve(runtimeRoot), absolutePath));
@@ -369,6 +379,18 @@ export function verifyPlaywrightIntegrity({
   }
 }
 
+export function verifyConfiguredPlaywrightIntegrity({
+  environment = process.env,
+  runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
+  integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
+} = {}) {
+  return verifyPlaywrightIntegrity({
+    runtimeRoot,
+    integrityPath,
+    ...resolvePlaywrightIntegrityScope(environment),
+  });
+}
+
 export function writePlaywrightIntegrity({
   runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
   integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
@@ -576,7 +598,7 @@ if (isEntryPoint()) {
     const { mode } = parseArgs(process.argv.slice(2));
     if (mode === 'write') console.log(JSON.stringify(writePlaywrightIntegrity(), null, 2));
     else if (mode === 'check') {
-      const result = verifyPlaywrightIntegrity({ verifyAllPlatforms: true });
+      const result = verifyConfiguredPlaywrightIntegrity();
       console.log(JSON.stringify(result, null, 2));
       if (!result.ok) process.exitCode = 1;
     } else if (mode === 'smoke') console.log(JSON.stringify(await smokeTestBundledPlaywright(), null, 2));

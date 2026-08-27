@@ -7,8 +7,7 @@ import {
   SUPPORTED_PLAYWRIGHT_PLATFORMS,
   inspectBundledPlaywright,
   readPlaywrightDistribution,
-  resolvePlaywrightIntegrityScope,
-  verifyPlaywrightIntegrity,
+  verifyConfiguredPlaywrightIntegrity,
 } from './playwright-runtime.mjs';
 import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plugin-platform.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
@@ -352,7 +351,7 @@ function validatePlaywrightRuntime(errors, distribution) {
   } else if (runtime.version !== BUNDLED_PLAYWRIGHT_VERSION) {
     errors.push(`插件内置 Playwright 版本不一致：${runtime.version}`);
   }
-  const integrity = verifyPlaywrightIntegrity(resolvePlaywrightIntegrityScope());
+  const integrity = verifyConfiguredPlaywrightIntegrity();
   if (!integrity.ok) errors.push(`Playwright 跨平台完整性校验失败：${integrity.errors.join('；')}`);
   if (distribution.kind === 'platform') {
     const expectedBudget = PLATFORM_PLUGIN_SIZE_BUDGETS[distribution.platformKey];
