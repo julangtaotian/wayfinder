@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { pathToFileURL } from 'node:url';
 import {
   REPOSITORY_FOOTPRINT_BUDGETS,
   auditRepositoryFootprint,
@@ -107,15 +108,56 @@ test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁�
   assert.match(readme, /预算调整必须先形成正式需求和设计决策/u);
 });
 
-test('[V-05] 聚焦入口与核心脚本兼容合同：拆分后文件保持日常预算', () => {
-  const boundedFiles = [
-    'plugins/frontend-ai-workflow/scripts/verification-evidence.mjs',
-    'plugins/frontend-ai-workflow/scripts/verification-evidence-foundation.mjs',
-    'plugins/frontend-ai-workflow/scripts/real-project-validation.mjs',
-    'plugins/frontend-ai-workflow/scripts/real-project-validation-foundation.mjs',
-  ];
-  for (const relativePath of boundedFiles) {
-    const lineCount = fs.readFileSync(path.join(repositoryRoot, relativePath), 'utf8').split(/\r?\n/u).length;
-    assert.equal(lineCount <= REPOSITORY_FOOTPRINT_BUDGETS.pluginScriptFileLines, true, relativePath);
+test('[V-03] 核心入口职责边界：公开导出、依赖方向与行数预算稳定', async () => {
+  const entryContracts = {
+    'finalize-change.mjs': [
+      'buildEvidenceReferenceRewrites',
+      'finalizeChange',
+      'rewriteRequirementForArchive',
+      'rewriteTestPlanForArchive',
+    ],
+    'validate-requirement-decisions.mjs': ['validateRequirementDecisions'],
+    'verification-evidence.mjs': [
+      'EVIDENCE_SCHEMA_VERSION',
+      'EvidenceError',
+      'LEGACY_EVIDENCE_SCHEMA_VERSION',
+      'auditProjectVerificationEvidence',
+      'computeVerificationSemanticBinding',
+      'computeWorkspaceFingerprint',
+      'createEvidenceFileDescriptor',
+      'extractEvidenceReferences',
+      'normalizeEvidenceCommand',
+      'runVerificationEvidence',
+      'stableJson',
+      'validateEvidenceManifest',
+      'validateVerificationEvidenceRecords',
+      'verificationEvidenceRequired',
+    ],
+  };
+  const helperOwners = {
+    'finalize-change-archive.mjs': 'finalize-change.mjs',
+    'requirement-decision-parser.mjs': 'validate-requirement-decisions.mjs',
+    'requirement-delivery-validation.mjs': 'validate-requirement-decisions.mjs',
+    'verification-evidence-validation.mjs': 'verification-evidence.mjs',
+  };
+  const scriptsRoot = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
+
+  for (const [fileName, expectedExports] of Object.entries(entryContracts)) {
+    const absolutePath = path.join(scriptsRoot, fileName);
+    const lineCount = fs.readFileSync(absolutePath, 'utf8').split(/\r?\n/u).length;
+    assert.equal(lineCount <= 600, true, `${fileName} 超过 600 行入口预算`);
+    const module = await import(pathToFileURL(absolutePath).href);
+    assert.deepEqual(Object.keys(module).sort(), [...expectedExports].sort(), `${fileName} 公开导出发生漂移`);
   }
+
+  for (const [fileName, owner] of Object.entries(helperOwners)) {
+    const content = fs.readFileSync(path.join(scriptsRoot, fileName), 'utf8');
+    const lineCount = content.split(/\r?\n/u).length;
+    assert.equal(lineCount <= REPOSITORY_FOOTPRINT_BUDGETS.pluginScriptFileLines, true, fileName);
+    assert.doesNotMatch(content, new RegExp(`from ['"]\\./${owner.replace('.', '\\.')}['"]`, 'u'));
+  }
+
+  const packageManifest = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
+  assert.deepEqual(packageManifest.dependencies || {}, {});
+  assert.deepEqual(packageManifest.devDependencies || {}, {});
 });

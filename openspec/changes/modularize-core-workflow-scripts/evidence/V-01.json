@@ -1,0 +1,71 @@
+{
+  "artifacts": [],
+  "change": "modularize-core-workflow-scripts",
+  "command": {
+    "args": [
+      "--test",
+      "tests/workflow-requirements.test.mjs",
+      "tests/workflow-openspec.test.mjs",
+      "tests/workflow-trust-boundary.test.mjs",
+      "tests/verification-evidence-integrity.test.mjs",
+      "tests/workflow-project.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-27T09:58:33.065Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "fa913be99ea97ee98681c68585886db9f02b68e2",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[V-01] 完成流程与需求决策模块化兼容",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 8393,
+      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-01/20260827095824091-10627-70751a16/stdout.log",
+      "sha256": "ffc936adf1b9b7fdf0f97c4a96890ed066a0855710ad95f0d15bb1576b630784",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-01/20260827095824091-10627-70751a16/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-06",
+      "D-07",
+      "D-08"
+    ],
+    "revision": "R-01",
+    "sha256": "72d1e6c887792615580b3bd488813c9084b3cc816ec367b960e9ee6f15d003af",
+    "testCaseIds": [
+      "TC-01",
+      "TC-02"
+    ],
+    "verificationId": "V-01",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T09:58:24.093Z",
+  "status": "passed",
+  "workspaceFingerprint": "85f927bf1850c2fd5919b10d084a6b73b873e112539ede01736f002c9a48171b"
+}

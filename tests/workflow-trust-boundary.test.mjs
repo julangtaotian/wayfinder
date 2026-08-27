@@ -337,7 +337,7 @@ test('[TC-01] 受管写入符号链接边界与兼容性', async (context) => {
   });
 });
 
-test('[TC-02] 机器证据语义完整性与信任聚合', async (context) => {
+test('[V-02] 验证证据模块化兼容：机器证据语义完整性与信任聚合', async (context) => {
   const fixture = createEvidenceFixture(context);
   const locator = '[TC-01] 本地证据完整性';
   const recorded = await runVerificationEvidence({

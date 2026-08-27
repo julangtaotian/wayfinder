@@ -1,0 +1,67 @@
+{
+  "artifacts": [],
+  "change": "modularize-core-workflow-scripts",
+  "command": {
+    "args": [
+      "--test",
+      "tests/repository-footprint.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-27T09:58:35.504Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "fa913be99ea97ee98681c68585886db9f02b68e2",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[V-03] 核心入口职责边界",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 1179,
+      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-03/20260827095835357-12283-4d9661ae/stdout.log",
+      "sha256": "934684b38db44ca33f0baee1f9fe48238ed50e9c7006d0a0b3d94e4bef72cfc8",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-03/20260827095835357-12283-4d9661ae/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-03",
+      "A-04"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07"
+    ],
+    "revision": "R-01",
+    "sha256": "b692f9088e0f364f827d03db0a80edc44edcf0a2c983e95265f50d38d77535c2",
+    "testCaseIds": [
+      "TC-04"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T09:58:35.358Z",
+  "status": "passed",
+  "workspaceFingerprint": "85f927bf1850c2fd5919b10d084a6b73b873e112539ede01736f002c9a48171b"
+}

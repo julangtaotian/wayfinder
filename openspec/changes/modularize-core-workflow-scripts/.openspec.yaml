@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-08-27
+skip_specs: true
+test_plan: required
+verification_evidence: required

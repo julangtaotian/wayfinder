@@ -232,7 +232,7 @@ test('新版需求状态、变更范围、逐任务引用和持久证据形成�
   assert.match(missingEvidence.errors.join('\n'), /持久证据不存在/);
 });
 
-test('分层检查与完成入口阻止未完成变更并在成功后同步归档', (t) => {
+test('[V-01] 完成流程与需求决策模块化兼容：门禁、写入和归档保持一致', (t) => {
   const root = createVueFixture(t);
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-004-finalize.md');
   initializeGitBaseline(root);
