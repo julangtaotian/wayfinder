@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-27T09:58:34.678Z",
+  "completedAt": "2026-08-27T10:24:44.029Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "fa913be99ea97ee98681c68585886db9f02b68e2",
+    "commit": "bad393776148ee6591d5a1896e1128d461db684f",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,19 +24,19 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 2225,
-      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-02/20260827095833745-12093-0fc4be85/stdout.log",
-      "sha256": "57650f7e8eb38721b9f7f7f1077a0e3b0dca8428c2a79affcfae3472360c497e",
+      "bytes": 2224,
+      "path": "outputs/verification-evidence/2026-08-27-modularize-core-workflow-scripts/V-02/20260827102443079-40565-bce54e16/stdout.log",
+      "sha256": "a070caf87f1bd3cd7794e66a07343086de60665ff61b0e2f9b10375ec9720e64",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-02/20260827095833745-12093-0fc4be85/stderr.log",
+      "path": "outputs/verification-evidence/2026-08-27-modularize-core-workflow-scripts/V-02/20260827102443079-40565-bce54e16/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
+  "requirement": "requirements/archive/2026/REQ-2026-033-maintainable-core-script-boundaries.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -52,15 +52,15 @@
       "D-07",
       "D-08"
     ],
-    "revision": "R-01",
-    "sha256": "2806ff4fe74a9ee88098b50a0c2c3037d421a4b2c2819a5dc5f56a139fc837f3",
+    "revision": "R-02",
+    "sha256": "cfea47217e76f23c2715984ca93e9a8e56f6a960803054b0e7986335c8472700",
     "testCaseIds": [
       "TC-03"
     ],
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-27T09:58:33.747Z",
+  "startedAt": "2026-08-27T10:24:43.081Z",
   "status": "passed",
   "workspaceFingerprint": "85f927bf1850c2fd5919b10d084a6b73b873e112539ede01736f002c9a48171b"
 }

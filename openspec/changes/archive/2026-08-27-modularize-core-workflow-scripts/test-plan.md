@@ -2,10 +2,10 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-033-maintainable-core-script-boundaries.md`
-- 变更：modularize-core-workflow-scripts
-- 需求修订基线：R-01
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-033-maintainable-core-script-boundaries.md`
+- 变更：2026-08-27-modularize-core-workflow-scripts
+- 需求修订基线：R-02
 - 默认聚焦命令：`node --test tests/workflow-requirements.test.mjs tests/workflow-openspec.test.mjs tests/workflow-trust-boundary.test.mjs tests/verification-evidence-integrity.test.mjs tests/repository-footprint.test.mjs`
 
 ## 测试上下文
@@ -35,12 +35,12 @@
 - 测试替身：注入确定性 OpenSpec 响应，不执行外部项目命令
 - 操作：从原 `finalize-change.mjs` 导入并执行改写函数与 `finalizeChange`
 - 可观察断言：导出名称不变；动作、归档目标、`archive_partial_failure` 阶段、恢复参数和幂等结果保持兼容
-- 目标测试：`tests/workflow-requirements.test.mjs`、`tests/workflow-openspec.test.mjs`、`tests/workflow-trust-boundary.test.mjs`、`tests/verification-evidence-integrity.test.mjs`
+- 目标测试：`tests/workflow-requirements.test.mjs`
 - 测试定位：`[V-01] 完成流程与需求决策模块化兼容`
 - 聚焦命令：`node --test tests/workflow-requirements.test.mjs tests/workflow-openspec.test.mjs tests/workflow-trust-boundary.test.mjs tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-core-workflow-scripts/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/evidence/V-01.json`
 
 ### TC-02：需求决策四阶段解析与交付校验保持兼容
 
@@ -57,12 +57,12 @@
 - 测试替身：隔离 Git fixture；不读取归档历史之外的无关内容
 - 操作：从原入口调用 `validateRequirementDecisions` 并执行 CLI
 - 可观察断言：相同输入的 ok、errors、warnings、阶段、计数、任务引用和退出状态兼容
-- 目标测试：`tests/workflow-requirements.test.mjs`、`tests/workflow-project.test.mjs`
+- 目标测试：`tests/workflow-requirements.test.mjs`
 - 测试定位：`[V-01] 完成流程与需求决策模块化兼容`
 - 聚焦命令：`node --test tests/workflow-requirements.test.mjs tests/workflow-project.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-core-workflow-scripts/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/evidence/V-01.json`
 
 ### TC-03：验证证据执行与清单信任边界保持兼容
 
@@ -79,12 +79,12 @@
 - 测试替身：无 shell 子进程与有界 `outputs/verification-evidence-integrity/test-fixtures`
 - 操作：从原入口调用命令规范化、证据执行、清单校验和记录审计 API
 - 可观察断言：公开导出、日志、描述符、schema 分类、fresh/trust、code/status/target、退出码和机器证据缺失判断兼容
-- 目标测试：`tests/verification-evidence-integrity.test.mjs`、`tests/workflow-trust-boundary.test.mjs`
+- 目标测试：`tests/workflow-trust-boundary.test.mjs`
 - 测试定位：`[V-02] 验证证据模块化兼容`
 - 聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs tests/workflow-trust-boundary.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-core-workflow-scripts/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/evidence/V-02.json`
 
 ### TC-04：入口与内部模块满足职责行数合同
 
@@ -106,7 +106,7 @@
 - 聚焦命令：`node --test tests/repository-footprint.test.mjs && npm run footprint`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-core-workflow-scripts/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/evidence/V-03.json`
 
 ### TC-05：本地共享发布链完整通过
 
@@ -123,16 +123,16 @@
 - 测试替身：无；执行真实本地门禁，临时运行时写入 `outputs`
 - 操作：运行 `npm test`、`npm run validate`、`npm run verify` 和官方 validators
 - 可观察断言：所有本地阶段通过，清理结束后不残留根依赖或临时 fixture，工作区只包含计划内变更
-- 目标测试：`tests/repository-footprint.test.mjs`
-- 测试定位：`统一验证通过：9 个阶段全部完成。`
+- 目标测试：`tests/workflow-project.test.mjs`
+- 测试定位：`统一验证固定阶段顺序、短路失败并由 CI 单一调用`
 - 聚焦命令：不适用；本用例为全量验证
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-core-workflow-scripts/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/evidence/V-04.json`
 
 ### TC-06：真实五平台矩阵分层取证
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -149,8 +149,8 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
-- 证据：待提交后记录 GitHub Actions URL
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-27-modularize-core-workflow-scripts/verification.md`
 
 ## 执行记录
 
@@ -158,4 +158,4 @@
 | --- | --- | --- | --- |
 | TC-01～TC-04 | 聚焦 Node 测试与体积结构合同 | 通过 | V-01～V-03 |
 | TC-05 | `npm test`、`npm run validate`、`npm run verify` 与官方 validators | 通过 | V-04 |
-| TC-06 | 尚未提交，真实矩阵未运行 | 计划 | V-05 |
+| TC-06 | 人工复核提交 `bad393776148ee6591d5a1896e1128d461db684f` 的 GitHub Actions Validate #33061812570 | 通过 | V-05、`verification.md` |

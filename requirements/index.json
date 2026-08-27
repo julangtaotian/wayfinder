@@ -288,6 +288,15 @@
       "entryPath": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
       "archivePath": "requirements/archive/2026/REQ-2026-032-sustainable-repository-footprint.md",
       "change": "sustainable-repository-footprint"
+    },
+    {
+      "id": "REQ-2026-033",
+      "title": "REQ-2026-033：核心脚本可维护边界",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-033-maintainable-core-script-boundaries.md",
+      "change": "modularize-core-workflow-scripts"
     }
   ]
 }

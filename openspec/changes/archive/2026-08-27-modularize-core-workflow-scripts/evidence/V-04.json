@@ -10,32 +10,32 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-27T09:59:26.045Z",
+  "completedAt": "2026-08-27T10:25:46.772Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "fa913be99ea97ee98681c68585886db9f02b68e2",
+    "commit": "bad393776148ee6591d5a1896e1128d461db684f",
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "统一验证通过：9 个阶段全部完成。",
-  "locatorMatches": 1,
+  "locator": "统一验证固定阶段顺序、短路失败并由 CI 单一调用",
+  "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 38608,
-      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-04/20260827095846050-12342-485409c4/stdout.log",
-      "sha256": "2d92b409ec4e1f32093aac6f19bda6de2d708a857f8c59de714aacee19d8426b",
+      "bytes": 38622,
+      "path": "outputs/verification-evidence/2026-08-27-modularize-core-workflow-scripts/V-04/20260827102454727-40825-4cccef73/stdout.log",
+      "sha256": "55aeaf2e467cfab07affd444392b85014c39e4ad5a67ee4af0114c42030234f5",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/modularize-core-workflow-scripts/V-04/20260827095846050-12342-485409c4/stderr.log",
+      "path": "outputs/verification-evidence/2026-08-27-modularize-core-workflow-scripts/V-04/20260827102454727-40825-4cccef73/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
+  "requirement": "requirements/archive/2026/REQ-2026-033-maintainable-core-script-boundaries.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -51,15 +51,15 @@
       "D-07",
       "D-08"
     ],
-    "revision": "R-01",
-    "sha256": "60b219a5b187be736bad5c6963f113d68a6205e572e343d9168cbdee1c396013",
+    "revision": "R-02",
+    "sha256": "8c04d67669d8a51a242fe3b9f64990224b3e8d5c6ab0bdf9f12a41295e155228",
     "testCaseIds": [
       "TC-05"
     ],
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-08-27T09:58:46.052Z",
+  "startedAt": "2026-08-27T10:24:54.729Z",
   "status": "passed",
   "workspaceFingerprint": "85f927bf1850c2fd5919b10d084a6b73b873e112539ede01736f002c9a48171b"
 }
