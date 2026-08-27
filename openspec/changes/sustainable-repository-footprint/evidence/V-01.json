@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-27T02:34:37.395Z",
+  "completedAt": "2026-08-27T02:43:43.251Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "d6a0d31c52209a76b1a5a3d84f428e083fac8c71",
+    "commit": "7251a9db996a544777cf208129c10c4daa787073",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,13 +24,13 @@
   "logs": [
     {
       "bytes": 296,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827023437291-31332-ecfcd207/stdout.log",
-      "sha256": "fdef208a48b58c9d2a51d328d799b902d4d2ffdd6677e6ea84af361fd16b1442",
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827024343146-46223-a3ccf800/stdout.log",
+      "sha256": "844bc794c9f27df09a7f294c9efd3733ea9d121d7a3a6342c4cc5ac7df6a8d34",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827023437291-31332-ecfcd207/stderr.log",
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827024343146-46223-a3ccf800/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -54,7 +54,7 @@
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-27T02:34:37.293Z",
+  "startedAt": "2026-08-27T02:43:43.147Z",
   "status": "passed",
-  "workspaceFingerprint": "5a86b435154daf6e98e6656e252bdb18275fb081c8f96cda2dc31f5951ad003b"
+  "workspaceFingerprint": "46fd659f6659e236cef16487b834ed1d295b5debebdafc8eb5307157bcb6f573"
 }

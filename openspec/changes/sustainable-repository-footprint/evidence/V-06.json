@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-27T02:35:56.884Z",
+  "completedAt": "2026-08-27T02:46:17.337Z",
   "evidenceId": "V-06",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "d6a0d31c52209a76b1a5a3d84f428e083fac8c71",
+    "commit": "7251a9db996a544777cf208129c10c4daa787073",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 1,
   "logs": [
     {
-      "bytes": 38441,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827023517746-32377-b7030995/stdout.log",
-      "sha256": "eabf64c8d2ec94f95c393ffda6b3856a5a07b5b30bdf814a756ad9537561f0aa",
+      "bytes": 38438,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827024534705-47421-9580c2c5/stdout.log",
+      "sha256": "08f3af612b44e44577798fa2c736cd26424254b0950ee64c300d72aa1b80f798",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827023517746-32377-b7030995/stderr.log",
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827024534705-47421-9580c2c5/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
@@ -64,7 +64,7 @@
     "verificationId": "V-06",
     "version": 1
   },
-  "startedAt": "2026-08-27T02:35:17.748Z",
+  "startedAt": "2026-08-27T02:45:34.707Z",
   "status": "passed",
-  "workspaceFingerprint": "5a86b435154daf6e98e6656e252bdb18275fb081c8f96cda2dc31f5951ad003b"
+  "workspaceFingerprint": "46fd659f6659e236cef16487b834ed1d295b5debebdafc8eb5307157bcb6f573"
 }

@@ -407,12 +407,13 @@ test('[V-04] CI 命令行完整性入口和 UI 自动化检查都继承矩阵目
     { platform: 'darwin', arch: 'x64', platformKey: 'darwin-x64' },
   );
 
+  const expectedPlatformKey = process.env.UI_REVIEW_EXPECT_PLATFORM || `${process.platform}-${process.arch}`;
   const result = spawnSync(process.execPath, [playwrightRuntimeScript, '--check'], {
     encoding: 'utf8',
-    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: 'darwin-arm64' },
+    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: expectedPlatformKey },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.deepEqual(Object.keys(JSON.parse(result.stdout).platforms), ['darwin-arm64']);
+  assert.deepEqual(Object.keys(JSON.parse(result.stdout).platforms), [expectedPlatformKey]);
 });
 
 test('平台插件成品预览保持零写入并公开带余量预算', async (context) => {

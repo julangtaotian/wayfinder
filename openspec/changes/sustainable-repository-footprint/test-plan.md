@@ -242,7 +242,7 @@
 
 ### TC-11：真实五平台矩阵分层取证
 
-- 状态：两次失败，待最新修复提交复跑
+- 状态：三次失败，待最新修复提交复跑
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：端到端
@@ -259,8 +259,8 @@
 - 测试定位：`[TC-11] 真实五平台矩阵分层取证合同`
 - 聚焦命令：`node --test --test-name-pattern="真实五平台矩阵分层取证合同" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-07
-- 结果分类：未通过（前两次运行）；两类遗漏均已新增入口级回归，本地 CI 模拟和全平台验证通过，真实矩阵待复跑
-- 证据：首次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`，提交 `cec8a026aab8330c4f0e09f2eb516f7f222f2065`；第二次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`，提交 `d6a0d31c52209a76b1a5a3d84f428e083fac8c71`；失败复盘见 `verification.md`
+- 结果分类：未通过（前三次运行）；第三次已证明 darwin-arm64 完整链成功，其余平台的回归测试固定目标已改为继承矩阵目标，真实矩阵待复跑
+- 证据：首次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`，提交 `cec8a026aab8330c4f0e09f2eb516f7f222f2065`；第二次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`，提交 `d6a0d31c52209a76b1a5a3d84f428e083fac8c71`；第三次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`，提交 `7251a9db996a544777cf208129c10c4daa787073`；失败复盘见 `verification.md`
 
 ### TC-12：人工核对根入口和已退役路径
 
@@ -289,5 +289,5 @@
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
 | TC-01～TC-10 | 三个聚焦入口、`npm test`、`npm run validate`、`npm run verify`、官方 validators 与当前平台成品 | 通过 | V-01～V-06 |
-| TC-11 | Validate #50/#51、单平台 LFS 指针、真实 CLI 目标范围与 UI 自动化目标回归；最新修复提交待复跑 | 两次失败，待复跑 | V-07、`verification.md` |
+| TC-11 | Validate #50/#51/#52、单平台 LFS 指针、真实 CLI 目标范围与 UI 自动化目标回归；最新修复提交待复跑 | 三次失败，待复跑 | V-07、`verification.md` |
 | TC-12 | WebStorm 项目树与文件搜索人工核对 | 通过 | V-08 |

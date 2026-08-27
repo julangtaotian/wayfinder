@@ -21,7 +21,7 @@
 
 ## 外部五平台边界
 
-- V-07 当前保持待第三次复跑。只有最新修复提交上的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 全部成功，才能将 V-07 更新为通过。
+- V-07 当前保持待第四次复跑。只有最新修复提交上的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 全部成功，才能将 V-07 更新为通过。
 - 本地路径归一化、LFS 指针/缺失失败和 CI YAML 合同测试已经通过，但这些证据不冒充远端 runner 回执。
 
 ### 首次矩阵失败复盘
@@ -41,3 +41,11 @@
 - 修复：新增 `verifyConfiguredPlaywrightIntegrity` 作为结构校验、统一验证 CLI 与 UI 自动化的共同入口；新增 `resolvePlaywrightValidationTarget` 统一 UI 运行时目标，本地无矩阵变量时仍保留 linux-x64 额外检查。
 - 新增回归：单平台 LFS 指针 fixture 验证目标平台通过、本地全平台失败；真实 `--check` 子进程断言输出只包含 darwin-arm64；CI 模拟和本地全平台两套完整 `npm run verify` 均通过。
 - 第二次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`；最新修复提交的真实五平台矩阵待第三次运行确认。
+
+### 第三次矩阵失败复盘
+
+- 运行：GitHub Actions Validate #52，提交 `7251a9db996a544777cf208129c10c4daa787073`；darwin-arm64 完整通过并产出平台包，darwin-x64、linux-x64、linux-arm64 和 win32-x64 在自动测试阶段失败。
+- 根因：新增的 CLI 入口回归固定向子进程注入 `UI_REVIEW_EXPECT_PLATFORM=darwin-arm64`。该断言在完整本地克隆和 darwin-arm64 单平台克隆都通过，但其余四个平台只拉取自身 LFS 资产，因此测试错误地要求读取 darwin-arm64 指针。
+- 修复：CLI 子进程回归在 CI 中继承当前 `UI_REVIEW_EXPECT_PLATFORM`，本地无矩阵变量时使用当前 `process.platform-process.arch`；断言结果只能包含该实际目标平台。
+- 新增验证边界：五个平台环境值继续逐一执行真实 `--check`；单平台 LFS 指针 fixture 保留“目标通过、非目标失败”的确定性保护，不再用固定的其他平台测试真实 checkout。
+- 第三次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`；最新修复提交的真实五平台矩阵待第四次运行确认。

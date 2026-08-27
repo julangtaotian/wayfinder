@@ -157,7 +157,7 @@
 | V-04 | 自动 | macOS ARM64：平台 LFS/CI 合同、真实 Chromium 与原生成品 | 2026-08-26 | 通过 | `openspec/changes/sustainable-repository-footprint/evidence/V-04.json` |
 | V-05 | 自动 | Node Test Runner：聚焦发现与核心脚本拆分兼容 | 2026-08-26 | 通过 | `openspec/changes/sustainable-repository-footprint/evidence/V-05.json` |
 | V-06 | 自动 | 本地全量测试、结构、九阶段统一验证与官方 validators | 2026-08-26 | 通过 | `openspec/changes/sustainable-repository-footprint/evidence/V-06.json` |
-| V-07 | 自动 | 同一提交上的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 外部 CI 矩阵；前两次运行分别暴露结构校验、CLI 和 UI 自动化的目标范围遗漏 | 2026-08-27 | 失败 | Validate #50：`https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`；Validate #51：`https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`；失败复盘见变更 `verification.md`，最新修复提交待复跑 |
+| V-07 | 自动 | 同一提交上的 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 外部 CI 矩阵；前三次运行分别暴露结构校验、CLI/UI 自动化和回归测试固定平台的范围遗漏 | 2026-08-27 | 失败 | Validate #50：`https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`；#51：`https://github.com/julangtaotian/wayfinder/actions/runs/33032788437`；#52：`https://github.com/julangtaotian/wayfinder/actions/runs/33033888961`；失败复盘见变更 `verification.md`，最新修复提交待复跑 |
 | V-08 | 人工 | WebStorm：根需求入口、年度归档、索引、精简规范和退役路径核对 | 2026-08-26 | 通过 | `openspec/changes/sustainable-repository-footprint/verification.md` |
 
 ## 验收标准
