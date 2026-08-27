@@ -242,7 +242,7 @@
 
 ### TC-11：真实五平台矩阵分层取证
 
-- 状态：计划
+- 状态：首次失败，待修复提交复跑
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：端到端
@@ -259,8 +259,8 @@
 - 测试定位：`[TC-11] 真实五平台矩阵分层取证合同`
 - 聚焦命令：`node --test --test-name-pattern="真实五平台矩阵分层取证合同" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-07
-- 结果分类：未执行
-- 证据：GitHub Actions URL 与精确提交 SHA 待生成
+- 结果分类：未通过（首次运行）；修复回归通过，真实矩阵待复跑
+- 证据：首次运行 `https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`，提交 `cec8a026aab8330c4f0e09f2eb516f7f222f2065`；失败复盘见 `verification.md`
 
 ### TC-12：人工核对根入口和已退役路径
 
@@ -289,5 +289,5 @@
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
 | TC-01～TC-10 | 三个聚焦入口、`npm test`、`npm run validate`、`npm run verify`、官方 validators 与当前平台成品 | 通过 | V-01～V-06 |
-| TC-11 | 待提交后运行真实五平台矩阵 | 未执行 | V-07 |
+| TC-11 | Validate #50 与新增单平台完整性回归；修复提交待复跑 | 首次失败，待复跑 | V-07、`verification.md` |
 | TC-12 | WebStorm 项目树与文件搜索人工核对 | 通过 | V-08 |

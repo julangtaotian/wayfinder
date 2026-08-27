@@ -18,5 +18,13 @@
 
 ## 外部五平台边界
 
-- V-07 当前保持待执行。只有本次实现提交推送后，同一提交上的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 全部成功，才能将 V-07 更新为通过。
+- V-07 当前保持待复跑。只有修复提交上的 Linux x64、Linux ARM64、Windows x64、macOS Intel、macOS ARM64 五项 GitHub Actions 全部成功，才能将 V-07 更新为通过。
 - 本地路径归一化、LFS 指针/缺失失败和 CI YAML 合同测试已经通过，但这些证据不冒充远端 runner 回执。
+
+### 首次矩阵失败复盘
+
+- 运行：GitHub Actions Validate #50，提交 `cec8a026aab8330c4f0e09f2eb516f7f222f2065`，五个平台任务均在 `npm run verify` 的“插件与技能结构”阶段以退出码 1 失败。
+- 根因：CI 已按 `matrix.platform` 只拉取目标平台 LFS 资产，但 `validate-structure.mjs` 仍强制校验全部五个平台；其余平台保留的 LFS 指针被误判为运行时摘要变化。本地完整克隆包含全部真实资产，因此此前本地验证无法复现。
+- 修复：`resolvePlaywrightIntegrityScope` 在没有矩阵目标时继续全平台校验；存在 `UI_REVIEW_EXPECT_PLATFORM` 时只校验该目标平台，并拒绝不受支持的平台键。
+- 新增回归：`tests/ui-review-platform-runtime.test.mjs` 的 `[V-04] CI 完整性校验只检查已拉取平台，本地仍检查全部平台`，同时验证 CI 单平台成功、本地全平台仍能阻止非目标摘要变化和非法平台失败关闭。
+- 首次运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33032201305`；修复后的真实五平台复跑仍待新提交触发。

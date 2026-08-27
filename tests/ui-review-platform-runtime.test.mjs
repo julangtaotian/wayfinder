@@ -15,6 +15,7 @@ import {
   inspectPlaywrightAsset,
   normalizePlaywrightPlatformPath,
   playwrightLfsInclude,
+  resolvePlaywrightIntegrityScope,
   smokeTestBundledPlaywright,
   verifyPlaywrightIntegrity,
   writePlaywrightIntegrity,
@@ -357,11 +358,36 @@ test('[V-04] 平台资产与 CI 按需拉取合同：矩阵只拉取目标平台
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   assert.match(workflow, /lfs:\s*false/u);
   assert.doesNotMatch(workflow, /lfs:\s*true/u);
+  assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM:\s*\$\{\{ matrix\.platform \}\}/u);
   assert.match(
     workflow,
     /git lfs pull --include="plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\$\{\{ matrix\.platform \}\}\/\*\*" --exclude=""/u,
   );
   for (const platform of EXPECTED_PLATFORMS) assert.match(workflow, new RegExp(`platform: ${platform}`, 'u'));
+});
+
+test('[V-04] CI 完整性校验只检查已拉取平台，本地仍检查全部平台', (context) => {
+  const runtimeRoot = createRuntimeFixture(context);
+  const integrityPath = path.join(runtimeRoot, 'integrity');
+  const nonTargetExecutable = path.join(runtimeRoot, platformMetadata('darwin', 'arm64').browser.executable);
+  fs.writeFileSync(nonTargetExecutable, 'version https://git-lfs.github.com/spec/v1\noid sha256:fixture\nsize 123\n');
+
+  const targetScope = resolvePlaywrightIntegrityScope({ UI_REVIEW_EXPECT_PLATFORM: 'linux-x64' });
+  const targetIntegrity = verifyPlaywrightIntegrity({ runtimeRoot, integrityPath, ...targetScope });
+  assert.equal(targetIntegrity.ok, true, targetIntegrity.errors.join('\n'));
+  assert.deepEqual(Object.keys(targetIntegrity.platforms), ['linux-x64']);
+
+  const localIntegrity = verifyPlaywrightIntegrity({
+    runtimeRoot,
+    integrityPath,
+    ...resolvePlaywrightIntegrityScope({}),
+  });
+  assert.equal(localIntegrity.ok, false);
+  assert.match(localIntegrity.errors.join('\n'), /Playwright darwin-arm64 运行包运行时文件摘要变化/u);
+  assert.throws(
+    () => resolvePlaywrightIntegrityScope({ UI_REVIEW_EXPECT_PLATFORM: 'win32-arm64' }),
+    /不支持的 Playwright 完整性校验平台/u,
+  );
 });
 
 test('平台插件成品预览保持零写入并公开带余量预算', async (context) => {

@@ -67,6 +67,17 @@ export function playwrightLfsInclude(key) {
   return `plugins/frontend-ai-workflow/runtime/playwright/platform-assets/${normalizedKey}/**`;
 }
 
+export function resolvePlaywrightIntegrityScope(environment = process.env) {
+  const targetKey = String(environment.UI_REVIEW_EXPECT_PLATFORM || '').trim();
+  if (!targetKey) return { verifyAllPlatforms: true };
+  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(targetKey)) {
+    throw new Error(`不支持的 Playwright 完整性校验平台：${targetKey}`);
+  }
+  const [platform, ...archParts] = targetKey.split('-');
+  // CI 只拉取矩阵目标的 LFS 资产，因此结构校验必须保持同一平台边界。
+  return { platform, arch: archParts.join('-'), verifyAllPlatforms: false };
+}
+
 export function inspectPlaywrightAsset(filePath, { runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT } = {}) {
   const absolutePath = path.resolve(filePath);
   const target = normalizePlaywrightPlatformPath(path.relative(path.resolve(runtimeRoot), absolutePath));
