@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "REQ-2026-001",
+      "title": "REQ-2026-001：工作流交付证据与命令语义强化",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-001-workflow-delivery-evidence.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-001-workflow-delivery-evidence.md",
+      "change": "enforce-delivery-evidence"
+    },
+    {
+      "id": "REQ-2026-002",
+      "title": "REQ-2026-002：交互状态矩阵与旧需求升级预览",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-002-scenario-matrix-and-legacy-preview.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-002-scenario-matrix-and-legacy-preview.md",
+      "change": "strengthen-scenario-matrix-and-legacy-preview"
+    },
+    {
+      "id": "REQ-2026-003",
+      "title": "REQ-2026-003：蓝湖规范补齐与 AI 还原验证",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-003-lanhu-ui-reconstruction-validation.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-003-lanhu-ui-reconstruction-validation.md",
+      "change": "validate-lanhu-ui-reconstruction`、`backfill-lanhu-precision-specs`、`remove-ui-brand-prefix`、`add-responsive-form-layout-spec`、`validate-responsive-form-layout-in-ui-libraries`、`normalize-responsive-layout-documentation`、`normalize-responsive-layout-readme-index`、`correct-responsive-form-label-layout"
+    },
+    {
+      "id": "REQ-2026-004",
+      "title": "REQ-2026-004：工作流生命周期安全与闭环强化",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-004-workflow-lifecycle-hardening.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-004-workflow-lifecycle-hardening.md",
+      "change": "harden-workflow-lifecycle"
+    },
+    {
+      "id": "REQ-2026-005",
+      "title": "REQ-2026-005：OpenSpec 1.7.0 受控升级",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-005-openspec-1-7-upgrade.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-005-openspec-1-7-upgrade.md",
+      "change": "upgrade-openspec-1-7"
+    },
+    {
+      "id": "REQ-2026-006",
+      "title": "REQ-2026-006：深度项目分析与可追溯上下文",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-006-deep-project-analysis.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-006-deep-project-analysis.md",
+      "change": "add-deep-project-analysis"
+    },
+    {
+      "id": "REQ-2026-007",
+      "title": "REQ-2026-007：Wayfinder 工作流布局与安全迁移",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-007-wayfinder-workspace.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-007-wayfinder-workspace.md",
+      "change": "consolidate-wayfinder-workspace"
+    },
+    {
+      "id": "REQ-2026-008",
+      "title": "REQ-2026-008：功能测试文件与验证范围策略",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-008-feature-test-file-strategy.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-008-feature-test-file-strategy.md",
+      "change": "enforce-feature-test-files"
+    },
+    {
+      "id": "REQ-2026-009",
+      "title": "REQ-2026-009：需求决策台账与确定性校验",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-009-requirement-decision-ledger.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-009-requirement-decision-ledger.md",
+      "change": "stabilize-requirement-decisions"
+    },
+    {
+      "id": "REQ-2026-010",
+      "title": "REQ-2026-010：统一验证、多框架覆盖与运行时完整性",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-010-verification-hardening.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-010-verification-hardening.md",
+      "change": "harden-verification-and-runtime-integrity"
+    },
+    {
+      "id": "REQ-2026-011",
+      "title": "REQ-2026-011：CLI 参数安全加固",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-011-cli-argument-safety.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-011-cli-argument-safety.md",
+      "change": "harden-cli-argument-safety"
+    },
+    {
+      "id": "REQ-2026-012",
+      "title": "REQ-2026-012：移除 AI 行数统计注释",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-012-remove-ai-line-markers.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-012-remove-ai-line-markers.md",
+      "change": "remove-ai-line-markers"
+    },
+    {
+      "id": "REQ-2026-013",
+      "title": "REQ-2026-013：轻量项目终端画像",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-013-project-target-profile.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-013-project-target-profile.md",
+      "change": "add-project-target-profile"
+    },
+    {
+      "id": "REQ-2026-014",
+      "title": "REQ-2026-014：轻量项目平台框架画像",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-014-project-platform-profile.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-014-project-platform-profile.md",
+      "change": "待建立"
+    },
+    {
+      "id": "REQ-2026-015",
+      "title": "REQ-2026-015：平台命令证据闭环",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-015-platform-command-evidence.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-015-platform-command-evidence.md",
+      "change": "openspec/changes/add-platform-command-evidence"
+    },
+    {
+      "id": "REQ-2026-016",
+      "title": "REQ-2026-016：受管工作流内容一致性与小程序扫描完整性",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-016-managed-workflow-content-consistency.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-016-managed-workflow-content-consistency.md",
+      "change": "openspec/changes/fix-managed-workflow-content-drift"
+    },
+    {
+      "id": "REQ-2026-017",
+      "title": "REQ-2026-017：深度分析证据边界与小程序静态观察加固",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-017-deep-analysis-evidence-boundary.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-017-deep-analysis-evidence-boundary.md",
+      "change": "openspec/changes/harden-deep-analysis-evidence-boundary"
+    },
+    {
+      "id": "REQ-2026-018",
+      "title": "REQ-2026-018：排除 WXML 注释中的静态观察误报",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-018-ignore-wxml-comment-observations.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-018-ignore-wxml-comment-observations.md",
+      "change": "openspec/changes/exclude-wxml-comment-observations"
+    },
+    {
+      "id": "REQ-2026-019",
+      "title": "REQ-2026-019：AI UI 验收标注截图与节点报告",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-019-ai-ui-review-artifacts.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-019-ai-ui-review-artifacts.md",
+      "change": "add-ai-ui-review-artifacts`、`enhance-ai-ui-review-source-guidance`、`fix-ai-ui-review-ci-portability"
+    },
+    {
+      "id": "REQ-2026-020",
+      "title": "REQ-2026-020：插件化 UI 验收与受控自动修复",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-020-plugin-ui-review-automation.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-020-plugin-ui-review-automation.md",
+      "change": "add-plugin-ui-review-automation`、`prefer-portable-ui-review-capture`、`bundle-playwright-runtime`、`complete-ui-review-capability-chain`、`expand-playwright-platform-runtime"
+    },
+    {
+      "id": "REQ-2026-021",
+      "title": "REQ-2026-021：OpenSpec 1.8.0 受控升级",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-021-openspec-1-8-upgrade.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-021-openspec-1-8-upgrade.md",
+      "change": "upgrade-openspec-1-8"
+    },
+    {
+      "id": "REQ-2026-022",
+      "title": "REQ-2026-022：仓库提交过滤与插件健康审查",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-022-repository-hygiene-and-plugin-audit.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-022-repository-hygiene-and-plugin-audit.md",
+      "change": "harden-repository-ignore-policy"
+    },
+    {
+      "id": "REQ-2026-023",
+      "title": "REQ-2026-023：UI 验收工作流超长文件模块化",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-023-ui-review-modularization.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-023-ui-review-modularization.md",
+      "change": "modularize-ui-review-workflow"
+    },
+    {
+      "id": "REQ-2026-024",
+      "title": "REQ-2026-024：OpenSpec 1.9.0 受控升级",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-024-openspec-1-9-upgrade.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-024-openspec-1-9-upgrade.md",
+      "change": "upgrade-openspec-1-9"
+    },
+    {
+      "id": "REQ-2026-025",
+      "title": "REQ-2026-025：前端测试用例工作流",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-025-frontend-test-workflow.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-025-frontend-test-workflow.md",
+      "change": "add-frontend-test-workflow"
+    },
+    {
+      "id": "REQ-2026-026",
+      "title": "REQ-2026-026：验证证据完整性与归档可追溯性",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-026-verification-evidence-integrity.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-026-verification-evidence-integrity.md",
+      "change": "harden-verification-evidence-integrity"
+    },
+    {
+      "id": "REQ-2026-027",
+      "title": "REQ-2026-027：历史 JSON 证据分类兼容修复",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-027-legacy-json-evidence-classification.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-027-legacy-json-evidence-classification.md",
+      "change": "fix-legacy-json-evidence-classification"
+    },
+    {
+      "id": "REQ-2026-028",
+      "title": "REQ-2026-028：安全写入与机器证据可信度闭环",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-028-workflow-trust-boundary.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-028-workflow-trust-boundary.md",
+      "change": "harden-workflow-trust-boundary"
+    },
+    {
+      "id": "REQ-2026-029",
+      "title": "REQ-2026-029：动态框架与第三方依赖上下文",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-029-dynamic-dependency-context.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-029-dynamic-dependency-context.md",
+      "change": "add-dynamic-dependency-context"
+    },
+    {
+      "id": "REQ-2026-030",
+      "title": "REQ-2026-030：六项目真实验证矩阵",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-030-real-project-validation-matrix.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-030-real-project-validation-matrix.md",
+      "change": "validate-real-project-matrix"
+    },
+    {
+      "id": "REQ-2026-031",
+      "title": "REQ-2026-031：AI 上下文与仓库研发效率优化",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-031-ai-context-and-repository-efficiency.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-031-ai-context-and-repository-efficiency.md",
+      "change": "reduce-ai-context-cost"
+    }
+  ]
+}

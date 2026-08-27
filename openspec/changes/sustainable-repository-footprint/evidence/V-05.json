@@ -1,0 +1,74 @@
+{
+  "artifacts": [],
+  "change": "sustainable-repository-footprint",
+  "command": {
+    "args": [
+      "--test",
+      "tests/test-entrypoints.test.mjs",
+      "tests/repository-footprint.test.mjs",
+      "tests/verification-evidence-integrity.test.mjs",
+      "tests/real-project-validation.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-27T01:59:09.416Z",
+  "evidenceId": "V-05",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "60edbedc6178863b51293a0251dc9d5c88fa4988",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[V-05] 聚焦入口与核心脚本兼容合同",
+  "locatorMatches": 4,
+  "logs": [
+    {
+      "bytes": 3445,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-05/20260827015906394-98241-da35dbaa/stdout.log",
+      "sha256": "c5690242d609fd37354fb3556806ff05276d195e63555c687824ee4de50719d8",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-05/20260827015906394-98241-da35dbaa/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-05",
+      "A-06",
+      "A-07",
+      "A-08"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-10",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-01",
+    "sha256": "155d932df67b2f6a6112ebe406880ec4fa898e78ca294c99dabd093e4be11e1d",
+    "testCaseIds": [
+      "TC-06",
+      "TC-07",
+      "TC-10"
+    ],
+    "verificationId": "V-05",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T01:59:06.396Z",
+  "status": "passed",
+  "workspaceFingerprint": "151a2d404013b1a1b00d987de0ac69e26ad26d08f7b7224020b19639c14cabf6"
+}

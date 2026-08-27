@@ -1,0 +1,60 @@
+{
+  "artifacts": [],
+  "change": "sustainable-repository-footprint",
+  "command": {
+    "args": [
+      "--test",
+      "tests/lanhu-ai-spec.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-27T01:59:06.474Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "60edbedc6178863b51293a0251dc9d5c88fa4988",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "蓝湖 AI 规范是唯一、轻量且自包含的正式输入",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 296,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827015906371-98238-857b069d/stdout.log",
+      "sha256": "ef3ba25657ebaaedc9e61a16272a6058f1cb1d7b2b779aa2a7e161ab8417c087",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-01/20260827015906371-98238-857b069d/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02"
+    ],
+    "revision": "R-01",
+    "sha256": "7f59d7574f2ef27e3a07d6adcbf2f02c188e5b69b473ecc6c8fa18bbca299c1a",
+    "testCaseIds": [
+      "TC-05"
+    ],
+    "verificationId": "V-01",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T01:59:06.373Z",
+  "status": "passed",
+  "workspaceFingerprint": "151a2d404013b1a1b00d987de0ac69e26ad26d08f7b7224020b19639c14cabf6"
+}

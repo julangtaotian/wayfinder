@@ -1,0 +1,68 @@
+{
+  "artifacts": [],
+  "change": "sustainable-repository-footprint",
+  "command": {
+    "args": [
+      "--test",
+      "tests/repository-footprint.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-27T01:59:06.547Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "60edbedc6178863b51293a0251dc9d5c88fa4988",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[V-03] 仓库体积与统一验证治理合同",
+  "locatorMatches": 4,
+  "logs": [
+    {
+      "bytes": 1180,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-03/20260827015906386-98240-99ce6a9e/stdout.log",
+      "sha256": "35650a0c51ceac9655edf8b2190ceb014157772d01c9d7eee5f9b6b6a6ece431",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-03/20260827015906386-98240-99ce6a9e/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-06",
+      "A-07",
+      "A-08"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-06",
+      "D-08",
+      "D-10",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-01",
+    "sha256": "055fd4318e613361561f3d6c1b24b4aae1e5c530de618ebe1a81fecd0461057d",
+    "testCaseIds": [
+      "TC-04",
+      "TC-10"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T01:59:06.388Z",
+  "status": "passed",
+  "workspaceFingerprint": "151a2d404013b1a1b00d987de0ac69e26ad26d08f7b7224020b19639c14cabf6"
+}

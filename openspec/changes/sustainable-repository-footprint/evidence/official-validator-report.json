@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "validatedOn": "2026-08-26",
+  "plugin": {
+    "target": "plugins/frontend-ai-workflow/.codex-plugin/plugin.json",
+    "validator": "official plugin validator",
+    "status": "passed"
+  },
+  "skills": [
+    "frontend-change",
+    "frontend-requirement-write",
+    "frontend-test",
+    "frontend-ui-fix",
+    "frontend-ui-review",
+    "frontend-ui-verify",
+    "frontend-workflow-bootstrap",
+    "frontend-workflow-check",
+    "frontend-workflow-upgrade"
+  ],
+  "skillValidator": "official quick_validate.py",
+  "skillStatus": "passed"
+}

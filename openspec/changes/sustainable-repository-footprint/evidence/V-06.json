@@ -1,0 +1,70 @@
+{
+  "artifacts": [],
+  "change": "sustainable-repository-footprint",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-27T02:00:30.842Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "60edbedc6178863b51293a0251dc9d5c88fa4988",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "统一验证通过",
+  "locatorMatches": 1,
+  "logs": [
+    {
+      "bytes": 37995,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827015950095-99289-abf7c9db/stdout.log",
+      "sha256": "5081c7b8a3e9a29a33fcf122735bb8e6f644a1b8041d33d51faa9da1622438b2",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/sustainable-repository-footprint/V-06/20260827015950095-99289-abf7c9db/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-032-sustainable-repository-footprint.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-05",
+      "A-06",
+      "A-07",
+      "A-08"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-10",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-01",
+    "sha256": "c39a8181d0802ee86622640be7251326f925e5ce155c12df1b0435de993f9ba6",
+    "testCaseIds": [
+      "TC-06",
+      "TC-10"
+    ],
+    "verificationId": "V-06",
+    "version": 1
+  },
+  "startedAt": "2026-08-27T01:59:50.098Z",
+  "status": "passed",
+  "workspaceFingerprint": "151a2d404013b1a1b00d987de0ac69e26ad26d08f7b7224020b19639c14cabf6"
+}
