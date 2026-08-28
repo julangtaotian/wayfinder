@@ -1,0 +1,60 @@
+{
+  "artifacts": [],
+  "change": "reduce-ci-validation-cost",
+  "command": {
+    "args": [
+      "run",
+      "verify:shared"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-28T01:45:50.826Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "39f23e59467a1b10d8ec7e037309fb3121eac5ac",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 28210,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828014510526-97610-2190de28/stdout.log",
+      "sha256": "ad0fa597e670c0675c850452f8bae76e8172f328c04233e810f5a2b366067462",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828014510526-97610-2190de28/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-07",
+      "D-08"
+    ],
+    "revision": "R-02",
+    "sha256": "dd13da6e80d6d1f5d2123d9659a918c63bbf77eece47767040ecc874eb5fb64b",
+    "testCaseIds": [
+      "TC-07"
+    ],
+    "verificationId": "V-04",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T01:45:10.527Z",
+  "status": "passed",
+  "workspaceFingerprint": "37e1928f2038f0fcd37188d47227767b36c106835cd37ec031e9edf937b78503"
+}

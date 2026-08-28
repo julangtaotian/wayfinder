@@ -4,9 +4,11 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { prepareFrontendTestRuntime } from './prepare-frontend-test-runtime.mjs';
 import { cleanupFrontendTestRuntime } from './cleanup-frontend-test-runtime.mjs';
+import { buildTestCommand } from './test-groups.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultRepositoryRoot = path.resolve(scriptDir, '..');
+const VERIFICATION_SCOPES = new Set(['all', 'shared', 'platform']);
 
 function resolveVerificationRuntime(repositoryRoot) {
   const outputsRoot = path.join(repositoryRoot, 'outputs');
@@ -18,17 +20,43 @@ function resolveVerificationRuntime(repositoryRoot) {
   return { runtimeRoot, tempRoot: path.join(runtimeRoot, 'tmp') };
 }
 
-function discoverTests(repositoryRoot) {
-  const testsRoot = path.join(repositoryRoot, 'tests');
-  return fs.readdirSync(testsRoot)
-    .filter((name) => name.endsWith('.test.mjs'))
-    .sort()
-    .map((name) => path.join('tests', name));
+function verificationArgumentError(code, message, { scope = null } = {}) {
+  const error = new Error(message);
+  error.code = code;
+  error.scope = scope;
+  error.status = 1;
+  return error;
 }
 
-export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
+function resolveVerificationScope(scope = 'all') {
+  if (!VERIFICATION_SCOPES.has(scope)) {
+    throw verificationArgumentError('unknown_verification_scope', `未知验证作用域：${scope}`, { scope });
+  }
+  return scope;
+}
+
+export function parseVerificationArgs(argv = []) {
+  let scope = 'all';
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (value !== '--scope') {
+      throw verificationArgumentError('unknown_verification_argument', `不支持的验证参数：${value}`);
+    }
+    const requested = argv[index + 1];
+    if (!requested || requested.startsWith('--')) {
+      throw verificationArgumentError('verification_scope_missing', '参数 --scope 缺少值');
+    }
+    scope = resolveVerificationScope(requested);
+    index += 1;
+  }
+  return { scope };
+}
+
+export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, { scope = 'all' } = {}) {
+  const selectedScope = resolveVerificationScope(scope);
   const pluginScripts = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
-  return [
+  const testCommand = buildTestCommand({ root: repositoryRoot, group: selectedScope });
+  const steps = [
     {
       id: 'footprint',
       label: '仓库体积与生命周期预算',
@@ -37,7 +65,7 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
     {
       id: 'tests',
       label: '自动测试',
-      args: ['--test', ...discoverTests(repositoryRoot)],
+      args: testCommand.args,
     },
     {
       id: 'structure',
@@ -86,6 +114,13 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot) {
       args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--smoke'],
     },
   ];
+  if (selectedScope === 'shared') {
+    return steps.filter((step) => !['playwright-integrity', 'playwright-smoke'].includes(step.id));
+  }
+  if (selectedScope === 'platform') {
+    return steps.filter((step) => ['tests', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
+  }
+  return steps;
 }
 
 export function buildVerificationEnvironment(tempRoot, environment = process.env) {
@@ -112,6 +147,7 @@ function executeStep(step, repositoryRoot, tempRoot, environment) {
 
 export function runVerification({
   repositoryRoot = defaultRepositoryRoot,
+  scope = 'all',
   execute = executeStep,
   environment = process.env,
   prepareRuntime = (root) => prepareFrontendTestRuntime({ repositoryRoot: root, environment }),
@@ -120,35 +156,51 @@ export function runVerification({
   reportError = (message) => console.error(message),
 } = {}) {
   const root = fs.realpathSync(path.resolve(repositoryRoot));
-  const steps = buildVerificationSteps(root);
+  const selectedScope = resolveVerificationScope(scope);
+  const steps = buildVerificationSteps(root, { scope: selectedScope });
   const completed = [];
   const { runtimeRoot, tempRoot } = resolveVerificationRuntime(root);
   const inheritedTempRoots = [environment.TMPDIR, environment.TMP, environment.TEMP]
     .filter(Boolean)
     .map((item) => path.resolve(item));
   const ownsRuntime = !inheritedTempRoots.includes(path.resolve(tempRoot));
+  const managesFrontendTestRuntime = ownsRuntime && selectedScope !== 'platform';
   fs.mkdirSync(tempRoot, { recursive: true });
 
   try {
-    if (ownsRuntime) prepareRuntime(root);
+    if (managesFrontendTestRuntime) prepareRuntime(root);
     for (const [index, step] of steps.entries()) {
       report(`[verify ${index + 1}/${steps.length}] ${step.label}`);
       const result = execute(step, root, tempRoot, environment);
       if (result.error || result.status !== 0) {
         const reason = result.error?.message || `退出码 ${result.status ?? '未知'}`;
         reportError(`统一验证失败：${step.label}（${reason}）`);
-        return { ok: false, completed, failedStep: step.id, status: result.status ?? 1 };
+        return {
+          ok: false,
+          code: 'verification_step_failed',
+          scope: selectedScope,
+          completed,
+          failedStep: step.id,
+          status: result.status ?? 1,
+        };
       }
       completed.push(step.id);
     }
 
     report(`统一验证通过：${completed.length} 个阶段全部完成。`);
-    return { ok: true, completed, failedStep: null, status: 0 };
+    return {
+      ok: true,
+      code: 'verification_passed',
+      scope: selectedScope,
+      completed,
+      failedStep: null,
+      status: 0,
+    };
   } finally {
     // 只有最外层验证负责回收，避免嵌套验证删除仍在使用的共享临时目录。
     if (ownsRuntime) {
       try {
-        cleanupRuntime(root);
+        if (managesFrontendTestRuntime) cleanupRuntime(root);
       } finally {
         fs.rmSync(runtimeRoot, { recursive: true, force: true });
       }
@@ -162,10 +214,10 @@ function isEntryPoint() {
 
 if (isEntryPoint()) {
   try {
-    const result = runVerification();
+    const result = runVerification(parseVerificationArgs(process.argv.slice(2)));
     process.exitCode = result.status;
   } catch (error) {
-    console.error(`统一验证无法启动：${error.message}`);
-    process.exitCode = 1;
+    console.error(`${error.code || 'verification_start_failed'}：统一验证无法启动：${error.message}`);
+    process.exitCode = error.status || 1;
   }
 }

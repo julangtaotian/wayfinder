@@ -4,12 +4,32 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  validate:
+  shared:
+    name: Shared validation (linux-x64)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20.19.0
+      - run: npm run verify:shared
+      - name: Clean frontend test runtime
+        if: always()
+        run: npm run cleanup:test-runtime
+
+  platform:
     name: Validate (${{ matrix.platform }})
+    needs: shared
     strategy:
       fail-fast: false
       matrix:
@@ -36,10 +56,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0
-      - run: npm run verify
-      - name: Clean frontend test runtime
-        if: always()
-        run: npm run cleanup:test-runtime
+      - run: npm run verify:platform
       - name: Build and verify platform plugin package
         run: node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --write --platform ${{ matrix.platform }}
       - name: Upload platform package report

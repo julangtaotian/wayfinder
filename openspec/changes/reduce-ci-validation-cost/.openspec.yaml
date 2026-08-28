@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-08-28
+goal: 降低 GitHub Actions 重复 runner 时间，不削弱五平台发布门禁，也不建立定时优化任务。
+test_plan: required
+verification_evidence: required

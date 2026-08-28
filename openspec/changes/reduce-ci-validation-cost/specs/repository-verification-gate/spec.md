@@ -1,0 +1,70 @@
+## MODIFIED Requirements
+
+### Requirement: 仓库必须提供统一完整验证入口
+
+系统 MUST 提供根级 `npm run verify` 命令，并 MUST 以稳定顺序覆盖自动测试、仓库体积预算、插件结构、全部 OpenSpec 活动变更和主规格严格校验、归档变更任务完成检查、内置 OpenSpec 版本及运行时完整性、Playwright 完整性和真实浏览器冒烟；任何阶段失败时 MUST 返回非零状态并标明失败阶段。系统 MUST 通过同一编排提供 `shared` 与 `platform` 作用域，且两个作用域的测试并集 MUST 等于完整测试集合，未知作用域或零测试 MUST 失败关闭。（D-02、D-03、D-07；A-01、A-02、A-03）
+
+#### Scenario: 完整验证全部通过
+
+- **WHEN** 开发者在完整仓库中执行 `npm run verify`
+- **THEN** 所有验证阶段按声明顺序执行并最终返回零状态
+
+#### Scenario: 子验证失败
+
+- **WHEN** 任一测试、仓库体积预算、结构、活动或主规格、归档任务、版本或完整性检查返回失败
+- **THEN** 当前作用域停止后续阶段、返回真实非零状态并输出作用域与失败阶段
+
+#### Scenario: 归档任务检查独立执行
+
+- **WHEN** 完整或共享作用域中的活动变更与主规格严格校验通过
+- **THEN** 统一入口继续运行 `validate --archived --no-interactive`，并以稳定阶段 id `openspec-archived` 记录结果
+
+#### Scenario: 共享与平台作用域分区
+
+- **WHEN** CI 分别调用共享与平台作用域
+- **THEN** 共享作用域运行全部非平台测试和仓库治理阶段，平台作用域运行非空平台测试、目标 Playwright 完整性与真实浏览器冒烟，且两者不遗漏完整测试集合
+
+#### Scenario: 作用域无效或没有测试
+
+- **WHEN** 调用方传入未知作用域，或测试分组漂移导致共享或平台测试集合为空
+- **THEN** 命令以稳定 `code`、`scope`、`status` 和非零退出状态失败，不得回退完整作用域或报告成功
+
+### Requirement: 持续集成必须复用统一入口
+
+GitHub Actions MUST 使用满足根 `engines.node` 最低要求的 Node.js 版本，并 MUST 通过根 npm 脚本复用同一验证编排。每次运行 MUST 先在一个 Linux x64 任务执行一次共享作用域；共享成功后，五平台矩阵 MUST 分别执行平台作用域、目标平台资产拉取、平台打包和报告上传。共享失败 MUST 阻止平台矩阵开始，且同一精确提交的共享任务与全部五个平台任务成功前 MUST NOT 报告跨平台发布通过。（D-02、D-03、D-06、D-08；A-02、A-03、A-05、A-06）
+
+#### Scenario: CI 触发验证
+
+- **WHEN** push 或 pull request 触发验证工作流
+- **THEN** 工作流以 Node.js 20.19.0 执行一次共享作用域，并在其成功后执行 macOS ARM64/x64、Linux ARM64/x64、Windows x64 五个平台作用域
+
+#### Scenario: 共享验证失败
+
+- **WHEN** 共享作用域中的任一阶段失败
+- **THEN** 共享任务返回失败，依赖它的五平台矩阵不得开始
+
+#### Scenario: 平台验证或打包失败
+
+- **WHEN** 任一平台的专属测试、目标完整性、浏览器冒烟、打包或报告上传失败
+- **THEN** 工作流保留该平台失败，且本次精确提交不得标记五平台发布证据通过
+
+## ADDED Requirements
+
+### Requirement: 持续集成必须取消同一引用的过时运行
+
+GitHub Actions MUST 以工作流和 Git 引用组成并发组，并 MUST 在同一组出现新运行时取消旧的等待或在途运行。工作流 MUST 保留 push 与 pull request 触发、只读权限和不同引用的独立边界，并 MUST NOT 增加定时触发。（D-04、D-05；A-04、A-06）
+
+#### Scenario: 同一引用连续更新
+
+- **WHEN** 同一工作流和同一 Git 引用已有等待或运行中的验证，且新提交触发另一运行
+- **THEN** 旧运行被取消，最新运行继续执行
+
+#### Scenario: 不同引用分别验证
+
+- **WHEN** push 与 pull request 使用不同 Git 引用，或两个分支分别触发工作流
+- **THEN** 它们不共享同一并发组，任一运行不得取消另一个引用的必要检查
+
+#### Scenario: 工作流触发边界
+
+- **WHEN** 检查 Validate 工作流的事件和权限配置
+- **THEN** push、pull request 与 `contents: read` 保持存在，且没有 schedule、路径忽略、缓存或新增写权限

@@ -14,6 +14,8 @@
     "validate": "node plugins/frontend-ai-workflow/scripts/validate-structure.mjs",
     "openspec:version": "node plugins/frontend-ai-workflow/scripts/openspec-cli.mjs --version",
     "verify": "node scripts/verify.mjs",
+    "verify:shared": "node scripts/verify.mjs --scope shared",
+    "verify:platform": "node scripts/verify.mjs --scope platform",
     "requirements:archive": "node plugins/frontend-ai-workflow/scripts/requirement-archive.mjs",
     "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs"
   },

@@ -10,11 +10,8 @@ import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-proj
 import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-project.mjs';
 import { validateRequirementDecisions } from '../plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs';
 import { previewRequirementUpgrade } from '../plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs';
-import {
-  buildVerificationEnvironment,
-  buildVerificationSteps,
-  runVerification,
-} from '../scripts/verify.mjs';
+import * as verificationRunner from '../scripts/verify.mjs';
+import { buildTestCommand } from '../scripts/test-groups.mjs';
 import {
   pluginRoot,
   expectedPublicSkills,
@@ -27,6 +24,13 @@ import {
   renderDeliveryRequirement,
   renderStateMatrixRequirement,
 } from './helpers/workflow-fixtures.mjs';
+
+const {
+  buildVerificationEnvironment,
+  buildVerificationSteps,
+  parseVerificationArgs,
+  runVerification,
+} = verificationRunner;
 
 test('识别 Vue 3 + Vite 项目及真实命令', (t) => {
   const root = createVueFixture(t);
@@ -265,12 +269,65 @@ test('插件只公开团队自有技能', () => {
   assert.equal(skills.some((name) => name.startsWith('openspec-')), false);
 });
 
-test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) => {
-  const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'verification-runner-')));
+test('[TC-01] 验证作用域测试集合完整分区', (t) => {
+  const fixturesRoot = path.resolve('outputs', 'ci-validation-cost', 'test-fixtures');
+  fs.mkdirSync(fixturesRoot, { recursive: true });
+  const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'test-groups-')));
   t.after(() => fs.rmSync(verificationRoot, { recursive: true, force: true }));
   fs.mkdirSync(path.join(verificationRoot, 'tests'), { recursive: true });
-  const steps = buildVerificationSteps(verificationRoot);
-  assert.deepEqual(steps.map((step) => step.id), [
+  for (const name of [
+    'ordinary.test.mjs',
+    'new-feature.test.mjs',
+    'ui-review-automation.test.mjs',
+    'ui-review-platform-runtime.test.mjs',
+  ]) {
+    fs.writeFileSync(path.join(verificationRoot, 'tests', name), 'export {};\n');
+  }
+
+  const all = buildTestCommand({ root: verificationRoot, group: 'all' }).args.slice(1);
+  const shared = buildTestCommand({ root: verificationRoot, group: 'shared' }).args.slice(1);
+  const platform = buildTestCommand({ root: verificationRoot, group: 'platform' }).args.slice(1);
+  assert.deepEqual(all, [
+    'tests/new-feature.test.mjs',
+    'tests/ordinary.test.mjs',
+    'tests/ui-review-automation.test.mjs',
+    'tests/ui-review-platform-runtime.test.mjs',
+  ]);
+  assert.deepEqual(shared, ['tests/new-feature.test.mjs', 'tests/ordinary.test.mjs']);
+  assert.deepEqual(platform, [
+    'tests/ui-review-automation.test.mjs',
+    'tests/ui-review-platform-runtime.test.mjs',
+  ]);
+  assert.deepEqual([...new Set([...shared, ...platform])].sort(), all);
+  assert.deepEqual(shared.filter((file) => platform.includes(file)), []);
+
+  assert.throws(
+    () => buildTestCommand({ root: verificationRoot, group: 'missing' }),
+    (error) => error.code === 'unknown_test_group',
+  );
+  fs.rmSync(path.join(verificationRoot, 'tests', 'ui-review-automation.test.mjs'));
+  assert.throws(
+    () => buildTestCommand({ root: verificationRoot, group: 'platform' }),
+    (error) => error.code === 'test_group_expected_file_missing' && error.group === 'platform',
+  );
+  fs.rmSync(path.join(verificationRoot, 'tests', 'ui-review-platform-runtime.test.mjs'));
+  assert.throws(
+    () => buildTestCommand({ root: verificationRoot, group: 'platform' }),
+    (error) => error.code === 'test_group_empty',
+  );
+});
+
+test('[TC-02] 统一验证作用域与生命周期', (t) => {
+  const fixturesRoot = path.resolve('outputs', 'ci-validation-cost', 'test-fixtures');
+  fs.mkdirSync(fixturesRoot, { recursive: true });
+  const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'verification-runner-')));
+  t.after(() => fs.rmSync(verificationRoot, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(verificationRoot, 'tests'), { recursive: true });
+  for (const name of ['ordinary.test.mjs', 'ui-review-automation.test.mjs', 'ui-review-platform-runtime.test.mjs']) {
+    fs.writeFileSync(path.join(verificationRoot, 'tests', name), 'export {};\n');
+  }
+
+  assert.deepEqual(buildVerificationSteps(verificationRoot).map((step) => step.id), [
     'footprint',
     'tests',
     'structure',
@@ -281,6 +338,35 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) 
     'playwright-integrity',
     'playwright-smoke',
   ]);
+  assert.deepEqual(buildVerificationSteps(verificationRoot, { scope: 'shared' }).map((step) => step.id), [
+    'footprint',
+    'tests',
+    'structure',
+    'openspec',
+    'openspec-archived',
+    'runtime-version',
+    'runtime-integrity',
+  ]);
+  assert.deepEqual(buildVerificationSteps(verificationRoot, { scope: 'platform' }).map((step) => step.id), [
+    'tests',
+    'playwright-integrity',
+    'playwright-smoke',
+  ]);
+
+  assert.deepEqual(parseVerificationArgs([]), { scope: 'all' });
+  assert.deepEqual(parseVerificationArgs(['--scope', 'shared']), { scope: 'shared' });
+  assert.throws(
+    () => parseVerificationArgs(['--scope', 'future']),
+    (error) => error.code === 'unknown_verification_scope' && error.scope === 'future' && error.status === 1,
+  );
+  assert.throws(
+    () => parseVerificationArgs(['--scope']),
+    (error) => error.code === 'verification_scope_missing' && error.status === 1,
+  );
+  assert.throws(
+    () => parseVerificationArgs(['--unexpected']),
+    (error) => error.code === 'unknown_verification_argument' && error.status === 1,
+  );
 
   const executed = [];
   const tempRoots = [];
@@ -301,6 +387,8 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) 
     reportError: (message) => errors.push(message),
   });
   assert.equal(failed.ok, false);
+  assert.equal(failed.code, 'verification_step_failed');
+  assert.equal(failed.scope, 'all');
   assert.equal(failed.failedStep, 'openspec');
   assert.deepEqual(failed.completed, ['footprint', 'tests', 'structure']);
   assert.deepEqual(executed, ['footprint', 'tests', 'structure', 'openspec']);
@@ -310,34 +398,27 @@ test('统一验证固定阶段顺序、短路失败并由 CI 单一调用', (t) 
   assert.equal(fs.existsSync(path.join(verificationRoot, 'outputs', 'verify-runtime')), false);
   assert.match(errors[0], /OpenSpec 全量严格校验/);
 
-  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  const workflow = fs.readFileSync('.github/workflows/validate.yml', 'utf8');
-  const attributes = fs.readFileSync('.gitattributes', 'utf8');
-  assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
-  assert.equal(packageJson.scripts['cleanup:test-runtime'], 'node scripts/cleanup-frontend-test-runtime.mjs');
-  assert.match(workflow, /node-version: 20\.19\.0/);
-  for (const [runner, platform] of [
-    ['macos-15', 'darwin-arm64'],
-    ['macos-15-intel', 'darwin-x64'],
-    ['ubuntu-24.04', 'linux-x64'],
-    ['ubuntu-24.04-arm', 'linux-arm64'],
-    ['windows-2025', 'win32-x64'],
-  ]) {
-    assert.match(workflow, new RegExp(`- os: ${runner}\\r?\\n\\s+platform: ${platform}`));
-  }
-  assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM: \$\{\{ matrix\.platform }}/);
-  assert.match(workflow, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform }}/);
-  // 产物上传必须使用默认运行于 Node.js 24 的 action，避免 CI 重新出现 Node.js 20 弃用警告。
-  assert.match(workflow, /actions\/upload-artifact@v7/u);
-  assert.doesNotMatch(workflow, /actions\/upload-artifact@v[1-6]\b/u);
-  assert.deepEqual([...workflow.matchAll(/^\s*-\s*run:\s*(.+)$/gmu)].map((match) => match[1]), [
-    'npm run verify',
-  ]);
-  assert.match(workflow, /run: npm run cleanup:test-runtime/u);
-  assert.match(workflow, /if: always\(\)/u);
-  assert.doesNotMatch(workflow, /npm test|npm run validate/);
-  assert.match(attributes, /^\* text=auto eol=lf$/mu);
-  assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
+  const platformLifecycle = [];
+  const platform = runVerification({
+    repositoryRoot: verificationRoot,
+    scope: 'platform',
+    execute: () => ({ status: 0 }),
+    environment: {},
+    prepareRuntime: () => platformLifecycle.push('prepare'),
+    cleanupRuntime: () => platformLifecycle.push('cleanup'),
+    report: () => {},
+    reportError: () => {},
+  });
+  assert.deepEqual(platform, {
+    ok: true,
+    code: 'verification_passed',
+    scope: 'platform',
+    completed: ['tests', 'playwright-integrity', 'playwright-smoke'],
+    failedStep: null,
+    status: 0,
+  });
+  assert.deepEqual(platformLifecycle, []);
+  assert.equal(fs.existsSync(path.join(verificationRoot, 'outputs', 'verify-runtime')), false);
 });
 
 test('[TC-06] 统一验证隔离仓库内临时 fixture 的父 Git 状态', (t) => {

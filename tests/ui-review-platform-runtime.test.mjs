@@ -360,16 +360,77 @@ test('[V-04] 平台资产与 CI 按需拉取合同：LFS 诊断失败关闭', (c
   assert.equal(mismatch.target, 'linux-x64');
 });
 
-test('[V-04] 平台资产与 CI 按需拉取合同：矩阵只拉取目标平台', () => {
+test('[TC-03] CI 共享验证前置门禁', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
+  const packageJson = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8'));
+  const sharedStart = workflow.indexOf('\n  shared:');
+  const platformStart = workflow.indexOf('\n  platform:');
+  assert.notEqual(sharedStart, -1);
+  assert.ok(platformStart > sharedStart);
+  const sharedJob = workflow.slice(sharedStart, platformStart);
+  const platformJob = workflow.slice(platformStart);
+
+  assert.match(sharedJob, /runs-on:\s*ubuntu-24\.04/u);
+  assert.match(sharedJob, /lfs:\s*false/u);
+  assert.match(sharedJob, /node-version:\s*20\.19\.0/u);
+  assert.match(sharedJob, /run:\s*npm run verify:shared/u);
+  assert.match(sharedJob, /if:\s*always\(\)/u);
+  assert.match(sharedJob, /run:\s*npm run cleanup:test-runtime/u);
+  assert.doesNotMatch(sharedJob, /git lfs pull|UI_REVIEW_EXPECT_PLATFORM/u);
+  assert.match(platformJob, /needs:\s*shared/u);
+  assert.equal([...workflow.matchAll(/run:\s*npm run verify:shared/gmu)].length, 1);
+  assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
+  assert.equal(packageJson.scripts['verify:shared'], 'node scripts/verify.mjs --scope shared');
+  assert.equal(packageJson.scripts['verify:platform'], 'node scripts/verify.mjs --scope platform');
+  assert.equal(packageJson.scripts['cleanup:test-runtime'], 'node scripts/cleanup-frontend-test-runtime.mjs');
+});
+
+test('[TC-04] CI 五平台专属验证与产物合同', () => {
+  const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
+  const attributes = fs.readFileSync(path.resolve('.gitattributes'), 'utf8');
+  const platformStart = workflow.indexOf('\n  platform:');
+  assert.notEqual(platformStart, -1);
+  const platformJob = workflow.slice(platformStart);
   assert.match(workflow, /lfs:\s*false/u);
   assert.doesNotMatch(workflow, /lfs:\s*true/u);
-  assert.match(workflow, /UI_REVIEW_EXPECT_PLATFORM:\s*\$\{\{ matrix\.platform \}\}/u);
+  assert.match(platformJob, /needs:\s*shared/u);
+  assert.match(platformJob, /fail-fast:\s*false/u);
+  assert.match(platformJob, /UI_REVIEW_EXPECT_PLATFORM:\s*\$\{\{ matrix\.platform \}\}/u);
   assert.match(
-    workflow,
+    platformJob,
     /git lfs pull --include="plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\$\{\{ matrix\.platform \}\}\/\*\*" --exclude=""/u,
   );
-  for (const platform of EXPECTED_PLATFORMS) assert.match(workflow, new RegExp(`platform: ${platform}`, 'u'));
+  for (const [runner, platform] of [
+    ['macos-15', 'darwin-arm64'],
+    ['macos-15-intel', 'darwin-x64'],
+    ['ubuntu-24.04', 'linux-x64'],
+    ['ubuntu-24.04-arm', 'linux-arm64'],
+    ['windows-2025', 'win32-x64'],
+  ]) {
+    assert.match(platformJob, new RegExp(`- os: ${runner}\\r?\\n\\s+platform: ${platform}`, 'u'));
+  }
+  assert.equal([...platformJob.matchAll(/run:\s*npm run verify:platform/gmu)].length, 1);
+  assert.match(platformJob, /package-plugin-platform\.mjs --write --platform \$\{\{ matrix\.platform \}\}/u);
+  // 产物上传继续使用默认运行于 Node.js 24 的版本，避免恢复旧版 action 的弃用警告。
+  assert.match(platformJob, /actions\/upload-artifact@v7/u);
+  assert.doesNotMatch(platformJob, /actions\/upload-artifact@v[1-6]\b/u);
+  assert.match(platformJob, /name:\s*plugin-package-report-\$\{\{ matrix\.platform \}\}/u);
+  assert.match(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
+  assert.match(attributes, /^\* text=auto eol=lf$/mu);
+  assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
+});
+
+test('[TC-05] CI 同引用在途运行治理', () => {
+  const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
+  assert.match(
+    workflow,
+    /^concurrency:\r?\n\s+group:\s*\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\r?\n\s+cancel-in-progress:\s*true$/mu,
+  );
+  assert.match(workflow, /^on:\r?\n\s+push:\s*\r?\n\s+pull_request:\s*$/mu);
+  assert.match(workflow, /^permissions:\r?\n\s+contents:\s*read$/mu);
+  assert.doesNotMatch(workflow, /github\.head_ref|github\.ref_name/u);
+  assert.doesNotMatch(workflow, /^\s*(?:schedule|paths|paths-ignore):/mu);
+  assert.doesNotMatch(workflow, /actions\/cache|cache:/u);
 });
 
 test('[V-04] CI 完整性校验只检查已拉取平台，本地仍检查全部平台', (context) => {

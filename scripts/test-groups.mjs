@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 export const TEST_GROUPS = Object.freeze({
   all: ['tests/*.test.mjs'],
+  shared: ['tests/*.test.mjs'],
   repository: [
     'tests/ai-code-marker-policy.test.mjs',
     'tests/ai-context-efficiency.test.mjs',
@@ -23,7 +24,10 @@ export const TEST_GROUPS = Object.freeze({
     'tests/project-platform-profile.test.mjs',
     'tests/real-project-validation.test.mjs',
   ],
-  platform: ['tests/ui-review-platform-runtime.test.mjs'],
+  platform: [
+    'tests/ui-review-automation.test.mjs',
+    'tests/ui-review-platform-runtime.test.mjs',
+  ],
 });
 
 function patternExpression(pattern) {
@@ -49,13 +53,59 @@ export function discoverTestFiles(root, patterns) {
   return files;
 }
 
+export function discoverVerificationTestGroups(root = process.cwd()) {
+  const all = discoverTestFiles(root, TEST_GROUPS.all);
+  const platform = discoverTestFiles(root, TEST_GROUPS.platform);
+  const missingPlatformPatterns = TEST_GROUPS.platform.filter((pattern) => {
+    const expression = patternExpression(pattern);
+    return !platform.some((file) => expression.test(file));
+  });
+  if (missingPlatformPatterns.length > 0) {
+    const error = new Error(`平台测试分组缺少声明文件：${missingPlatformPatterns.join(', ')}`);
+    error.code = 'test_group_expected_file_missing';
+    error.group = 'platform';
+    error.status = 1;
+    throw error;
+  }
+  const allSet = new Set(all);
+  const platformSet = new Set(platform);
+  if (platform.some((file) => !allSet.has(file))) {
+    const error = new Error('平台测试分组包含完整集合之外的文件');
+    error.code = 'test_group_partition_invalid';
+    error.status = 1;
+    throw error;
+  }
+
+  // 共享集合始终从完整集合扣除平台集合，新增普通测试会自动进入共享验证。
+  const shared = all.filter((file) => !platformSet.has(file));
+  if (shared.length === 0) {
+    const error = new Error('共享测试分组没有发现任何文件');
+    error.code = 'test_group_empty';
+    error.group = 'shared';
+    error.status = 1;
+    throw error;
+  }
+  if (shared.some((file) => platformSet.has(file)) || new Set([...shared, ...platform]).size !== all.length) {
+    const error = new Error('共享与平台测试分组没有完整分区全部测试');
+    error.code = 'test_group_partition_invalid';
+    error.status = 1;
+    throw error;
+  }
+  return { all, shared, platform };
+}
+
 export function buildTestCommand({ root = process.cwd(), group = 'all' } = {}) {
   if (!TEST_GROUPS[group]) {
     const error = new Error(`未知测试分组：${group}`);
     error.code = 'unknown_test_group';
+    error.group = group;
+    error.status = 1;
     throw error;
   }
-  return { command: process.execPath, args: ['--test', ...discoverTestFiles(root, TEST_GROUPS[group])] };
+  const files = ['all', 'shared', 'platform'].includes(group)
+    ? discoverVerificationTestGroups(root)[group]
+    : discoverTestFiles(root, TEST_GROUPS[group]);
+  return { command: process.execPath, args: ['--test', ...files] };
 }
 
 function isEntryPoint() {

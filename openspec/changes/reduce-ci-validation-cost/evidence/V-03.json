@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "reduce-ci-validation-cost",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-28T01:44:09.728Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "39f23e59467a1b10d8ec7e037309fb3121eac5ac",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 统一验证作用域与生命周期",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 38969,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-03/20260828014327185-90809-e24c7445/stdout.log",
+      "sha256": "cd77aac1064ad9bcafba343c5b37f1d81f369493db50d056e3195dabb512a0d1",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 208,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-03/20260828014327185-90809-e24c7445/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-03",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08"
+    ],
+    "revision": "R-02",
+    "sha256": "667421e564a6e7dc1df44d131bd1a1437ca912205d1041e8ec97549fdc493a12",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T01:43:27.186Z",
+  "status": "passed",
+  "workspaceFingerprint": "37e1928f2038f0fcd37188d47227767b36c106835cd37ec031e9edf937b78503"
+}
