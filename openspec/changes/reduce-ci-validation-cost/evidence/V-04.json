@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-28T03:00:16.356Z",
+  "completedAt": "2026-08-28T05:54:29.981Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "69ecedbab14dd90578821c5a0bb72d3395243588",
+    "commit": "b7b6e224395fe2d66115e057cf64b1eabcdd0456",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 28208,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828025932141-42693-5f97e72a/stdout.log",
-      "sha256": "eadf3691d1f11fa44bac9c6b1c22ea1712f8dbdc38ea10b7a7d25576ed9aa54c",
+      "bytes": 28221,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828055350875-16275-d2f3e6ec/stdout.log",
+      "sha256": "30f02b7bbade55d4c493ebc47caf194ef252dc19bb2754b23ba6d98af100a384",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828025932141-42693-5f97e72a/stderr.log",
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828055350875-16275-d2f3e6ec/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
@@ -46,15 +46,15 @@
       "D-07",
       "D-08"
     ],
-    "revision": "R-03",
-    "sha256": "c708c6ba02fd6f443fab169725bff05c5dd8e6f0c954d6dfb028dfe122232e3f",
+    "revision": "R-04",
+    "sha256": "45c6b150502029c1646af7b3cadb359c12cf83aae4f7fe116e4757bdd4760e5c",
     "testCaseIds": [
       "TC-07"
     ],
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-08-28T02:59:32.144Z",
+  "startedAt": "2026-08-28T05:53:50.877Z",
   "status": "passed",
-  "workspaceFingerprint": "71891ff521a88e301b2fbac425b6bd76aeb7e66461909f4bf4895141f7c1ece0"
+  "workspaceFingerprint": "92b94a6c44ff73dc8c161f418e13e141dc94965f4c4c97915f8c7a98f903c08a"
 }

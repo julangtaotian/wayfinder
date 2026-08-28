@@ -28,7 +28,7 @@
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 - 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
-0.18.0 在动态根依赖画像和精简健康检查之上增加持续仓库治理：已验收需求正文按年度归档，根目录只保留轻量入口；统一验证固定执行体积预算门禁；综合测试和核心脚本按职责拆分；蓝湖交付收敛为单一轻量 AI 规范；五平台 CI 只拉取当前矩阵平台的 Git LFS 资产。AI 默认不展开历史需求正文、无关平台二进制或历史验收资产。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
+0.18.0 在动态根依赖画像和精简健康检查之上增加持续仓库治理：已验收需求正文按年度归档，根目录只保留轻量入口；统一验证固定执行体积预算门禁；综合测试和核心脚本按职责拆分；蓝湖交付收敛为单一轻量 AI 规范；五平台 CI 从固定 Playwright 官方源只重建当前矩阵平台资产，不依赖仓库 Git LFS 下载额度。AI 默认不展开历史需求正文、无关平台二进制或历史验收资产。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
 
 ## 安装
 
@@ -345,7 +345,7 @@ npm run cleanup:test-runtime
 
 `prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
 
-仓库使用 Git LFS 保存 Playwright 浏览器二进制。普通源码开发可用 `GIT_LFS_SKIP_SMUDGE=1 git clone <repo>` 轻量克隆，再按当前平台执行 `git lfs pull --include="plugins/frontend-ai-workflow/runtime/playwright/platform-assets/<platform>/**" --exclude=""`；`<platform>` 为 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 或 `win32-x64`。CI 普通检出后只拉取 `matrix.platform` 对应目录，LFS 指针、缺失资产或错误平台都会稳定失败，不能用跳过冒烟代替成功。只有用户明确决定回收当前克隆的无引用缓存时才执行 `git lfs prune`；自动化不得删除用户缓存、远端对象或重写 Git 历史。
+仓库使用 Git LFS 保存 Playwright 浏览器二进制。普通源码开发可用 `GIT_LFS_SKIP_SMUDGE=1 git clone <repo>` 轻量克隆，再按当前平台执行 `git lfs pull --include="plugins/frontend-ai-workflow/runtime/playwright/platform-assets/<platform>/**" --exclude=""`；`<platform>` 为 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 或 `win32-x64`。Validate CI 使用 `lfs: false` 轻量检出，并在各原生 runner 上通过固定 Playwright 1.62.1 CLI 重建唯一目标平台资产，不消耗仓库 LFS 下载额度；只有纯 LFS 指针/零字节占位目录可被显式替换，失败会恢复占位并阻止后续验证。完整性、许可和真实浏览器冒烟仍是必需门禁，不能用跳过冒烟代替成功。只有用户明确决定回收当前克隆的无引用缓存时才执行 `git lfs prune`；自动化不得删除用户缓存、远端对象或重写 Git 历史。
 
 ### 升级内置 Playwright
 

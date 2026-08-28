@@ -4,7 +4,9 @@
 
 实现中的共享入口证明 `tests/ui-review-automation.test.mjs` 会真实启动内置 Chromium 和本地服务，必须与 `tests/ui-review-platform-runtime.test.mjs` 共同归入五平台集合；其余 19 个测试属于跨平台无差异的仓库或工作流验证。两个平台文件覆盖 UI 采集、目标资产、完整性、真实浏览器、平台打包和五平台工作流合同。实现必须继续只使用 Node.js 标准库，临时目录位于 `outputs/`，Windows 不直接启动 `.cmd`，外平台路径测试显式选择对应路径语义。
 
-设计依据 REQ-2026-034 的 D-01～D-08；技术取舍不得扩大其已确认或项目默认边界。
+真实运行 `33137835028` 证明共享分层修复有效，但五个平台在测试前均因 Git LFS 账户额度耗尽而无法拉取目标资产。R-04 将 CI 资产来源调整为仓库内固定 Playwright CLI 的官方版本下载；发布包仍携带唯一平台资产且运行阶段保持离线。
+
+设计依据 REQ-2026-034 的 D-01～D-09；技术取舍不得扩大其已确认或项目默认边界。
 
 ## Goals / Non-Goals
 
@@ -19,7 +21,7 @@
 
 - 不重写单项校验器、测试运行器、Playwright 或平台打包实现。
 - 不合并 push 与 pull request 的不同 Git 引用，不改变事件覆盖范围。
-- 不在本阶段评估或引入缓存、路径忽略、runner 规格调整、Git LFS 存储迁移和具体费用换算。
+- 不在本阶段评估或引入缓存、路径忽略、runner 规格调整、Git LFS 历史迁移和具体费用换算。
 - 不创建 schedule、定时清理、定时复验或自动费用监控。
 
 ## Decisions
@@ -48,7 +50,7 @@
 
 ### 4. CI 使用一个共享前置任务和一个五平台任务
 
-`.github/workflows/validate.yml` 增加 `shared` job：在 `ubuntu-24.04`、Node.js 20.19.0 上以 `lfs: false` checkout 后执行 `npm run verify:shared`，并保留 `if: always()` 的 Vitest 兜底清理。`platform` job 通过 `needs: shared` 等待共享成功，再按现有五个平台逐项拉取目标 Git LFS 资产、执行 `npm run verify:platform`、构建平台插件并使用 `actions/upload-artifact@v7` 上传原报告。
+`.github/workflows/validate.yml` 增加 `shared` job：在 `ubuntu-24.04`、Node.js 20.19.0 上以 `lfs: false` checkout 后执行 `npm run verify:shared`，并保留 `if: always()` 的 Vitest 兜底清理。`platform` job 通过 `needs: shared` 等待共享成功，再按现有五个平台用固定 Playwright CLI 重建目标资产、执行 `npm run verify:platform`、构建平台插件并使用 `actions/upload-artifact@v7` 上传原报告。
 
 矩阵继续 `fail-fast: false`，使已经开始的平台任务各自给出诊断；共享任务失败则矩阵整体不启动。`package.json` 新增两个可审计脚本，根 `verify` 值保持不变。备选方案是在每个平台内用条件只让 Linux x64 执行共享阶段；其他平台仍会先占用 runner，而且依赖和失败关系更难审计，因此不采用。
 
@@ -66,11 +68,22 @@
 
 Git LFS 平台资产与 Vitest 依赖缓存需要独立处理缓存键、架构隔离、失效、存储配额和可信边界；本阶段从五次安装降为一次已获得主要重复量收益，缓存留给后续单独需求评估。
 
+### 7. 平台 runner 从固定官方源安全重建目标资产
+
+运行 `33137835028` 的共享任务在 44 秒内成功，五个平台却在 `git lfs pull` 步骤以退出码 2 失败，服务端明确报告仓库 LFS 预算已耗尽。CI 因此外部依赖于账户额度，无法进入已有完整性、冒烟和打包门禁。平台 job 改为在 `actions/setup-node` 后调用 `build-playwright-platform.mjs --write --replace-lfs-pointers --platform <key>`；脚本继续使用仓库内 Playwright 1.62.1 CLI、固定主机映射和官方 CDN，不安装 npm 依赖、不启用 cache，也不改变发布包 `downloadsAtRuntime: false`。
+
+替换模式只接受目标目录至少包含一个合法 LFS 指针，且其他文件均为合法指针或 Git 保留的零字节占位；目录中出现符号链接、设备文件或任一真实非空文件时以稳定机器字段失败关闭。构建器先在同级暂存目录下载，发布前把原占位目录原子改名为备份；完整性生成或检查失败时删除不完整发布物并恢复备份，成功后才精确清理备份。普通本地构建仍拒绝覆盖已存在的真实平台资产。
+
+Linux ARM64 的上游 headless shell 不包含完整授权文本，因此该平台构建继续从同版本 Linux x64 官方包补齐许可；补充包只存在于本次有界暂存目录，完成或失败均清理，不读取仓库内其他平台 LFS 资产。此下载只发生在发布 CI 构建期，插件安装后的 UI Review 运行期仍不得联网。
+
 ## Risks / Trade-offs
 
 - [测试分区错误导致漏验] → 从完整集合动态扣除平台集合，并增加非空、子集、互斥、并集合同；根 `npm run verify` 仍运行完整集合。
 - [共享任务增加第六个 job 的启动与分钟舍入] → 共享任务固定在 Linux x64，主要收益来自消除四次共享链和四次 Vitest 安装；只报告实际耗时，不承诺金额。
 - [共享 job 的 LFS 指针被测试意外读取] → 真实启动浏览器或本地服务的 UI 自动化测试已归入平台集合；共享作用域聚焦测试确保剩余文件不依赖平台二进制。
+- [LFS 额度耗尽阻断五平台] → 平台 runner 不再执行 `git lfs pull`，而是用固定内置 CLI 重建唯一目标资产；静态合同明确无 cache、无新增依赖，真实矩阵验证官方源可用性。
+- [安全替换误删本地真实资产] → 只有显式 `--replace-lfs-pointers` 且目标树全部是 LFS 指针或零字节占位时允许替换；先备份、后发布，失败恢复，普通模式继续拒绝覆盖。
+- [Linux ARM64 许可依赖其他 LFS 目录] → 构建期在独立暂存目录下载同版本 Linux x64 官方包，仅复制许可文件并立即清理；任何失败都阻止发布。
 - [结构校验再次读取未拉取的平台 LFS 指针] → 共享作用域显式传入结构校验范围，只校验共享运行时；确定性回归使用平台指针样本证明共享完整性通过、完整平台完整性仍失败关闭。
 - [Windows 参数、路径或环境变量回退] → CLI 使用当前 Node 入口且 `shell: false`；路径双侧规范化，稳定字段优先断言；真实 Windows x64 job 是完成证据。
 - [平台失败清理不完整] → `runVerification` 的 `finally` 继续清理 `verify-runtime`，共享 job 另有 Vitest 兜底清理；只删除本次明确目录。

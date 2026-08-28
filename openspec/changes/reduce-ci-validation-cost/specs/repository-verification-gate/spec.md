@@ -31,7 +31,7 @@
 
 ### Requirement: 持续集成必须复用统一入口
 
-GitHub Actions MUST 使用满足根 `engines.node` 最低要求的 Node.js 版本，并 MUST 通过根 npm 脚本复用同一验证编排。每次运行 MUST 先在一个 Linux x64 任务执行一次共享作用域；共享成功后，五平台矩阵 MUST 分别执行平台作用域、目标平台资产拉取、平台打包和报告上传。共享失败 MUST 阻止平台矩阵开始，且同一精确提交的共享任务与全部五个平台任务成功前 MUST NOT 报告跨平台发布通过。（D-02、D-03、D-06、D-08；A-02、A-03、A-05、A-06）
+GitHub Actions MUST 使用满足根 `engines.node` 最低要求的 Node.js 版本，并 MUST 通过根 npm 脚本复用同一验证编排。每次运行 MUST 先在一个 Linux x64 任务执行一次共享作用域；共享成功后，五平台矩阵 MUST 使用仓库内固定 Playwright CLI 从官方源重建唯一目标平台资产，再分别执行平台作用域、平台打包和报告上传。平台资产重建 MUST 只替换纯 Git LFS 指针占位目录，MUST 保持固定版本、目标平台完整性、许可、真实浏览器冒烟和发布包运行期离线合同，并 MUST 在下载或校验失败时恢复原占位目录。共享失败 MUST 阻止平台矩阵开始，且同一精确提交的共享任务与全部五个平台任务成功前 MUST NOT 报告跨平台发布通过。（D-02、D-03、D-06、D-08、D-09；A-02、A-03、A-05、A-06、A-07）
 
 #### Scenario: CI 触发验证
 
@@ -47,6 +47,16 @@ GitHub Actions MUST 使用满足根 `engines.node` 最低要求的 Node.js 版�
 
 - **WHEN** 任一平台的专属测试、目标完整性、浏览器冒烟、打包或报告上传失败
 - **THEN** 工作流保留该平台失败，且本次精确提交不得标记五平台发布证据通过
+
+#### Scenario: CI 重建目标平台资产
+
+- **WHEN** 平台 runner 在 `lfs: false` checkout 后准备目标 Playwright 运行包
+- **THEN** 构建器只接受由 LFS 指针和零字节占位组成的目标目录，使用固定 Playwright 1.62.1 CLI 下载对应主机资产，生成独立完整性清单后再进入平台验证
+
+#### Scenario: 平台资产重建失败
+
+- **WHEN** 目标目录混入真实文件或链接、官方下载失败、许可补齐失败或完整性检查失败
+- **THEN** 构建器以稳定 `code`、`status` 和 `target` 失败关闭，恢复原目标目录并清理本次暂存目录，不得继续验证或打包
 
 ## ADDED Requirements
 

@@ -5,7 +5,7 @@
 - 状态：已实现
 - 需求：`requirements/REQ-2026-034-ci-validation-cost-control.md`
 - 变更：reduce-ci-validation-cost
-- 需求修订基线：R-03
+- 需求修订基线：R-04
 - 默认聚焦命令：`node --test tests/workflow-project.test.mjs tests/ui-review-platform-runtime.test.mjs`
 
 ## 测试上下文
@@ -14,7 +14,7 @@
 - 测试命令：`npm test`
 - 测试运行器：Node Test Runner
 - 测试目录：`tests`
-- Git 基线：available；`tests/workflow-project.test.mjs` 与 `tests/ui-review-platform-runtime.test.mjs` 均已受跟踪，前者直接覆盖统一验证阶段、临时运行时和 CI 调用合同，后者直接覆盖五平台、目标 LFS、环境变量、浏览器和打包。
+- Git 基线：available；`tests/workflow-project.test.mjs` 与 `tests/ui-review-platform-runtime.test.mjs` 均已受跟踪，前者直接覆盖统一验证阶段、临时运行时和 CI 调用合同，后者直接覆盖五平台、LFS 占位安全替换、固定官方源重建、环境变量、浏览器和打包。
 - 测试文件策略：复用上述两个同功能手写专用测试；不修改 `.generated.spec.` 文件，不新建重复 CI 测试文件。
 - 兼容说明：只使用 Node.js 标准库；根 `npm run verify` 保持完整九阶段；新增作用域使用当前 Node 入口且 `shell: false`；工作流继续 Node.js 20.19.0、只读权限、五个平台和原报告路径。
 - 跨平台高风险：是；命中 CI、路径、临时目录、子进程、包管理器入口、环境变量和机器可读诊断，影响 macOS ARM64/x64、Linux ARM64/x64、Windows x64。确定性测试优先断言 scope/code/status/target 和任务关系，外平台路径显式使用目标路径语义，真实矩阵只接受同一精确 SHA。
@@ -99,10 +99,10 @@
 - 关联规格：`持续集成必须复用统一入口`
 - 状态矩阵：初始（已有数据）、用户操作、错误态
 - 前置条件：现有平台矩阵、Playwright 元数据和平台打包入口
-- 测试数据：darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64，目标 LFS include、UI_REVIEW_EXPECT_PLATFORM、报告名称/路径
+- 测试数据：darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64，纯 LFS 指针与零字节占位、混入真实文件、下载失败、Linux ARM64 许可补齐、UI_REVIEW_EXPECT_PLATFORM、报告名称/路径
 - 测试替身：工作流静态合同与现有运行时 fixture；聚焦阶段不启动五台外部 runner
-- 操作：解析矩阵并验证每个平台的平台作用域、目标资产、打包命令和报告上传配置
-- 可观察断言：五个平台无删减；矩阵 `fail-fast: false`；每个平台只运行一次 `verify:platform`；LFS 双引号参数边界、环境变量、打包目标、upload-artifact v7 和报告路径保持一致
+- 操作：模拟安全替换成功、混入真实文件和下载失败，解析矩阵并验证每个平台的平台作用域、资产重建、打包命令和报告上传配置
+- 可观察断言：五个平台无删减；矩阵 `fail-fast: false`；每个平台只运行一次 `verify:platform`；Node 设置早于固定 CLI 重建；无 `git lfs pull`；只有纯占位可替换；失败恢复原目录并清理暂存；Linux ARM64 许可来自临时同版本官方包；环境变量、打包目标、upload-artifact v7 和报告路径保持一致
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-04] CI 五平台专属验证与产物合同`
 - 聚焦命令：`node --test --test-name-pattern="TC-04" tests/ui-review-platform-runtime.test.mjs`
@@ -202,7 +202,7 @@
 
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
-| TC-01～TC-05 | 修复后重跑两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02 |
-| TC-06 | 修复后重跑 `npm test`、`npm run validate`、完整九阶段统一验证与官方 validators | 通过 | V-03、`verification.md` |
-| TC-07 | 修复后重跑 Vue 3 + Vite fixture 初始化、重复、升级、检查与真实 Vitest | 通过 | V-04 |
+| TC-01～TC-05 | R-04 实现后重跑两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02 |
+| TC-06 | R-04 实现后重跑 `npm test`、`npm run validate`、完整/共享/平台统一验证、官方 validators 与真实官方源重建 | 通过 | V-03、`verification.md` |
+| TC-07 | R-04 实现后重跑 Vue 3 + Vite fixture 初始化、重复、升级、检查与真实 Vitest | 通过 | V-04 |
 | TC-08 | 计划：WebStorm 推送后的同一 SHA 共享+五平台 Actions 复核 | 计划 | V-05、`verification.md` |

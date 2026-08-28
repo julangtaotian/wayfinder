@@ -6,7 +6,7 @@
 
 - 按 D-02、D-03 为同一统一验证脚本增加 `all`、`shared`、`platform` 三个失败关闭的作用域；根 `npm run verify` 继续是完整九阶段入口。
 - 将 CI 改为一次 Linux x64 共享验证和依赖共享成功的五平台专属矩阵；共享测试与平台测试的并集保持完整，零测试或未知作用域不得通过。
-- 在平台矩阵中继续执行目标 Git LFS 资产拉取、Playwright 完整性、真实浏览器冒烟、平台插件打包和报告上传，不删除任何现有平台。
+- 在平台矩阵中使用仓库内固定 Playwright 1.62.1 CLI 从官方源重建唯一目标平台资产，再执行完整性、真实浏览器冒烟、平台插件打包和报告上传；CI 不再依赖 Git LFS 下载额度，也不删除任何现有平台。
 - 按 D-04 为同一工作流、同一 Git 引用启用在途运行取消；保留 push、pull request、只读权限和跨事件引用边界，不增加 schedule。
 - 按 D-05、D-06 暂不增加路径忽略或缓存，以工作流合同和任务耗时记录共享验证由五次降为一次、平台验证保持五次，不承诺具体金额。
 - 按 D-07、D-08 扩展现有手写测试，并通过聚焦、本地统一、Vue 3 + Vite fixture 与同一精确提交的真实五平台 CI 分层取证。
@@ -23,7 +23,7 @@
 
 ## Impact
 
-- 受影响文件：`.github/workflows/validate.yml`、`package.json`、`scripts/verify.mjs`、`scripts/test-groups.mjs`、`tests/workflow-project.test.mjs`、`tests/ui-review-platform-runtime.test.mjs`。
-- 受影响系统：GitHub Actions runner 调度、Git LFS 目标平台资产、Vitest 临时运行时、Playwright 平台运行时与插件平台包报告。
+- 受影响文件：`.github/workflows/validate.yml`、`package.json`、`scripts/verify.mjs`、`scripts/test-groups.mjs`、`plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs`、`tests/workflow-project.test.mjs`、`tests/ui-review-platform-runtime.test.mjs`。
+- 受影响系统：GitHub Actions runner 调度、Playwright 官方下载源、Git LFS 指针占位、Vitest 临时运行时、Playwright 平台运行时与插件平台包报告。
 - 兼容边界：根 `npm run verify`、Node.js 20.19.0、五个平台键、报告名称/路径和工作流只读权限保持兼容；不新增 npm 依赖或第三方 action。
 - 风险：命中 CI、路径、临时目录、子进程、包管理器、环境变量和机器诊断；必须用稳定 scope/code/status/target 与同一精确提交五平台结果证明没有漏验。

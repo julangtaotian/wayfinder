@@ -27,6 +27,7 @@
 | D-06 | 成本证据 | 项目默认 | 以工作流中共享验证执行次数从每提交五次降为一次、平台验证仍为五次和实际任务耗时作为可观察指标；仓库可见性与计费套餐未确认前不承诺具体金额 | 当前工作流静态结构与 GitHub Actions 计费边界 |
 | D-07 | 测试文件策略 | 项目默认 | 复用同功能手写测试 `tests/workflow-project.test.mjs` 与 `tests/ui-review-platform-runtime.test.mjs`；补充作用域分区、空作用域、失败短路、依赖关系、五平台保留和 concurrency 断言，不新建重复功能测试文件 | Git 跟踪基线和现有测试职责 |
 | D-08 | 跨平台风险与证据 | 项目默认 | 跨平台高风险：是；命中 CI、路径、临时目录、子进程、包管理器入口、环境变量和机器可读诊断，影响 macOS ARM64/x64、Linux ARM64/x64、Windows x64；本地聚焦、统一验证和真实五平台 CI 分层取证 | `plugins/frontend-ai-workflow/references/cross-platform-ci-checklist.md` 与真实矩阵 |
+| D-09 | CI 平台资产来源 | 项目默认 | 平台 runner 使用仓库内固定 Playwright 1.62.1 CLI 从官方源重建唯一目标平台资产，不再执行 `git lfs pull`；仅可显式替换纯 LFS 指针/零字节占位目录，失败必须恢复并清理；Linux ARM64 从临时下载的同版本 Linux x64 官方包补齐许可；发布包运行期继续离线 | 运行 `33137835028` 的共享任务成功，五个平台均在测试前因 Git LFS 预算耗尽失败；现有平台构建与离线发布合同 |
 
 ## 范围
 
@@ -35,7 +36,8 @@
 - 为 `scripts/verify.mjs` 增加完整、共享、平台三个确定性作用域，保持完整作用域为根级默认行为。
 - 共享作用域运行仓库体积、除平台专属文件外的全部共享测试、结构、全部与归档 OpenSpec、内置 OpenSpec 版本和完整性校验，并只准备一次 Vitest 临时运行时。
 - 平台作用域运行 `tests/ui-review-automation.test.mjs`、`tests/ui-review-platform-runtime.test.mjs`、目标平台 Playwright 完整性与浏览器冒烟，不准备 Vitest 临时运行时。
-- 调整 `.github/workflows/validate.yml` 为一个 Linux x64 共享任务和一个依赖它的五平台矩阵任务；每个平台继续拉取自己的 Git LFS 资产、构建插件并上传报告。
+- 调整 `.github/workflows/validate.yml` 为一个 Linux x64 共享任务和一个依赖它的五平台矩阵任务；每个平台从固定 Playwright 官方源重建自己的目标资产、构建插件并上传报告。
+- 为平台构建器增加显式 LFS 占位替换模式、稳定机器诊断和失败回滚；普通本地模式继续拒绝覆盖真实资产。
 - 增加同一工作流与同一引用的并发取消规则，取消被更新提交替代的在途运行。
 - 扩展现有手写测试，验证作用域的阶段集合、失败短路、临时运行时生命周期、CI 依赖、矩阵和并发合同。
 
@@ -44,7 +46,7 @@
 - 删除任何平台、减少同一精确提交的五平台发布证据或用本地模拟替代真实矩阵。
 - 修改 `push`、`pull_request` 事件范围或忽略文档、需求、规格和测试文件变更。
 - 引入 GitHub Actions cache、缓存 Git LFS 平台资产、增加第三方 action 或新增 npm 依赖。
-- 修改 Playwright 平台运行时存储和发布格式、插件仓库识别或业务工作流行为。
+- 修改 Playwright 平台运行时的 Git LFS 存储格式、发布格式、插件仓库识别或业务工作流行为。
 - 承诺具体费用金额、修改 GitHub 套餐或建立定时优化、定时清理与监控任务。
 
 ## 当前行为
@@ -70,12 +72,19 @@
 - 则：只执行一次共享作用域，覆盖除平台专属测试和 Playwright 平台检查外的完整共享链。
 - 并且：共享任务失败时五平台任务不得开始，失败阶段和退出状态可定位。
 
-### 场景：CI 执行平台验证与打包
+### 场景：CI 重建平台资产、验证与打包
 
 - 前置条件：同一运行的共享任务成功。
-- 当：五平台矩阵分别拉取目标平台资产并执行平台作用域。
-- 则：每个平台运行专属测试、目标平台完整性、真实浏览器冒烟、平台打包和报告上传。
+- 当：五平台矩阵分别用固定 Playwright CLI 安全替换 checkout 中的目标 LFS 占位并执行平台作用域。
+- 则：每个平台从官方源得到唯一目标资产，再运行专属测试、目标平台完整性、真实浏览器冒烟、平台打包和报告上传。
 - 并且：macOS ARM64/x64、Linux ARM64/x64、Windows x64 五项必须属于同一精确提交，任一失败均不得宣称跨平台发布通过。
+
+### 场景：平台资产不能安全重建
+
+- 前置条件：目标目录混入真实非空文件/链接，或官方下载、许可补齐、完整性生成任一失败。
+- 当：平台构建器尝试显式替换 LFS 占位目录。
+- 则：以稳定 `code`、`status`、`target` 和非零状态失败关闭，恢复原占位目录并清理本次暂存目录。
+- 并且：不得继续平台验证、打包或上传；普通本地构建不得覆盖已存在的真实平台资产。
 
 ### 场景：同一引用出现更新提交
 
@@ -116,13 +125,14 @@
 - `scripts/verify.mjs` 的作用域使用稳定英文值 `all`、`shared`、`platform`；未知值失败，不自动降级。
 - 验证结果继续包含 `ok`、`completed`、`failedStep`、`status`，并增加稳定 `scope`；错误路径增加稳定 `code`，避免以完整中文消息作为唯一断言。
 - `UI_REVIEW_EXPECT_PLATFORM` 仍只由平台矩阵注入并用于目标资产、完整性、冒烟和打包；共享任务不伪造平台值。
+- `build-playwright-platform.mjs --write --replace-lfs-pointers --platform <key>` 是 CI 唯一资产重建入口；成功结果包含稳定 `code`、`status`、`target`、资产来源和替换计数，错误保持中文并附稳定机器字段。
 - 工作流权限继续为只读；平台报告名称和路径保持兼容。
 
 ## 关联变更范围
 
 | 变更 | 决策范围 | 验收范围 |
 | --- | --- | --- |
-| reduce-ci-validation-cost | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08 | A-01、A-02、A-03、A-04、A-05、A-06 |
+| reduce-ci-validation-cost | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08、D-09 | A-01、A-02、A-03、A-04、A-05、A-06、A-07 |
 
 ## 修订记录
 
@@ -131,6 +141,7 @@
 | R-01 | 2026-08-28 | D-01～D-08 | A-01～A-06 | 建立第二阶段 CI 成本优化需求；所有验证保持计划，任务待规划。 |
 | R-02 | 2026-08-28 | D-02、D-03、D-07、D-08 | A-01、A-02、A-03、A-05 | 实施中的共享入口证明 `ui-review-automation` 会真实启动 Chromium 与本地服务，因此与平台运行时测试共同归入五平台集合；重开 TC-01、任务 1.1/2.1，V-01～V-05 继续保持计划。 |
 | R-03 | 2026-08-28 | D-02、D-03、D-05、D-08 | A-01、A-02、A-03、A-05、A-06 | 提交 `69ecedba` 的真实共享 CI 在结构阶段失败：`lfs: false` checkout 后完整结构校验把五个平台 LFS 指针误判为运行时摘要变化。业务边界不变；共享结构校验改为只核验共享 Playwright 运行时，平台二进制完整性继续由五个平台专属阶段负责；重开 TC-01～TC-07 与 V-01～V-04。 |
+| R-04 | 2026-08-28 | D-05、D-08、D-09 | A-03、A-05、A-06、A-07 | 提交 `b7b6e224` 的运行 `33137835028` 中共享任务已成功，五个平台均在测试前因 Git LFS 预算耗尽失败。平台 CI 改为从固定 Playwright 官方源安全重建目标资产，不购买额度、不启用缓存、不改变发布包运行期离线合同；重开 TC-01～TC-07 与 V-01～V-04。 |
 
 ## 兼容性与风险
 
@@ -139,12 +150,14 @@
 - 平台矩阵必须显式依赖共享任务，避免共享失败后继续消耗昂贵平台 runner；同时 `fail-fast: false` 继续让已开始的五平台结果完整可见。
 - concurrency 只取消同一工作流、同一引用的旧运行；不同事件引用不合并，避免 PR 必需检查因 push 运行互相取消。
 - 首阶段不使用路径过滤和缓存，减少隐藏的触发缺口、缓存污染、跨架构键错误与额外存储成本。
+- CI 官方下载存在外部可用性风险，但比账户 LFS 额度具有更直接的固定版本语义；任何下载失败都必须保留原占位目录并失败关闭，不能跳过完整性或冒烟。
+- LFS 占位替换是精确目录的受控破坏性操作：必须显式开启、验证整棵目标树只有合法指针/零字节占位、原子备份并在失败时恢复；不得作用于运行时根或真实资产目录。
 
 ## 测试与验证
 
 - 测试文件策略：复用；目标路径：`tests/workflow-project.test.mjs`；基线证据：available，规划前已受 Git 跟踪；选择理由：该文件已经覆盖统一验证阶段、生命周期和 CI 调用合同，适合承载作用域分区回归。
-- 补充测试路径：复用已受 Git 跟踪的 `tests/ui-review-platform-runtime.test.mjs`，继续覆盖五平台矩阵、目标 LFS 拉取、环境变量、平台完整性、浏览器冒烟和打包。
-- 独立测试方案：需要；目标路径：`openspec/changes/reduce-ci-validation-cost/test-plan.md`；需求修订基线：R-03。
+- 补充测试路径：复用已受 Git 跟踪的 `tests/ui-review-platform-runtime.test.mjs`，继续覆盖五平台矩阵、LFS 占位安全替换与回滚、固定官方源重建、环境变量、平台完整性、浏览器冒烟和打包。
+- 独立测试方案：需要；目标路径：`openspec/changes/reduce-ci-validation-cost/test-plan.md`；需求修订基线：R-04。
 - 验证范围：全量；计划执行验证作用域聚焦测试、`npm test`、`npm run validate`、`npm run verify`、官方 Skill/Plugin validators、Vue 3 + Vite fixture 和真实五平台 CI；选择理由：变更直接修改共享发布入口与五平台 CI 门禁。
 - 跨平台回归定位：`tests/workflow-project.test.mjs` 中作用域、失败短路、临时运行时和 CI 依赖断言；`tests/ui-review-platform-runtime.test.mjs` 中五平台、目标资产、环境变量、冒烟、打包和报告断言；Windows 外平台样本显式使用目标路径语义。
 - 外部证据：实现提交推送后记录精确 SHA、运行 URL、共享任务及五个平台任务；矩阵全部成功前 V-05 保持计划。
@@ -154,8 +167,8 @@
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 自动 | 验证作用域分区、空/未知作用域、失败短路和临时运行时生命周期聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-01.json` |
-| V-02 | 自动 | CI 共享任务、依赖关系、concurrency、五平台矩阵、LFS、打包与报告合同聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-02.json` |
-| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-03.json`；`openspec/changes/reduce-ci-validation-cost/verification.md` |
+| V-02 | 自动 | CI 共享任务、依赖关系、concurrency、五平台安全重建、打包与报告合同聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-02.json` |
+| V-03 | 自动 | `npm test`、`npm run validate`、完整/共享/平台统一验证、真实官方源重建与官方 Skill/Plugin validators | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-03.json`；`openspec/changes/reduce-ci-validation-cost/verification.md` |
 | V-04 | 自动 | Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-04.json` |
 | V-05 | 人工 | 精确提交的共享任务与 macOS ARM64/x64、Linux ARM64/x64、Windows x64 CI 矩阵 | 计划 | 计划 | `openspec/changes/reduce-ci-validation-cost/verification.md` |
 
@@ -167,6 +180,7 @@
 - [ ] [A-04] 同一工作流、同一 Git 引用的新运行取消旧在途运行；不同引用不合并，且没有新增定时任务。
 - [ ] [A-05] 聚焦、全量、结构、统一验证、官方 validators、Vue 3 + Vite fixture 和同一精确提交的共享+五平台 CI 全部通过。
 - [ ] [A-06] 保留 push/PR 触发与文档验证，不增加路径忽略、缓存、依赖、权限或具体费用承诺；静态合同证明共享验证次数由五次降为一次、平台验证仍为五次。
+- [ ] [A-07] 五平台 CI 不依赖 Git LFS 下载额度；只用固定 Playwright CLI 安全重建目标资产，拒绝覆盖真实文件，失败恢复占位目录并清理暂存；发布包继续运行期离线且包含许可。
 
 ## 验收—证据映射
 
@@ -178,6 +192,7 @@
 | A-04 | 在途运行取消且无定时任务 | D-04 | 自动+人工 | workflow concurrency 静态断言与 Actions 运行复核 | 同引用旧运行取消；工作流无 schedule | V-02、V-05 |
 | A-05 | 发布级回归 | D-07、D-08 | 自动+人工 | 全量、本地统一、validators、fixture 与真实 CI URL | 本地共享链和同一 SHA 的六项 CI 任务全部成功 | V-03、V-04、V-05 |
 | A-06 | 优化边界与确定性成本指标 | D-05、D-06 | 自动 | workflow 与 package scripts 静态合同 | 触发/权限/缓存边界不变；共享 1 次、平台 5 次 | V-02、V-03 |
+| A-07 | 平台资产安全重建与离线发布边界 | D-08、D-09 | 自动+人工 | 构建器回滚测试、workflow 静态合同与真实五平台矩阵 | CI 无 `git lfs pull`；纯占位才可替换；下载/校验失败恢复；成品完整性、许可和冒烟通过 | V-02、V-03、V-05 |
 
 ## 待确认问题
 

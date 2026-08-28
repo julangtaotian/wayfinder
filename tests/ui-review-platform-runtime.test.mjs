@@ -105,6 +105,39 @@ function createRuntimeFixture(context) {
   return root;
 }
 
+function visitFixtureFiles(directory, files = []) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) visitFixtureFiles(target, files);
+    else files.push(target);
+  }
+  return files;
+}
+
+function replaceFixtureTreeWithLfsPointers(directory) {
+  let pointerFiles = 0;
+  for (const filePath of visitFixtureFiles(directory)) {
+    if (fs.statSync(filePath).size === 0) continue;
+    fs.writeFileSync(
+      filePath,
+      `version https://git-lfs.github.com/spec/v1\noid sha256:${'a'.repeat(64)}\nsize 123\n`,
+    );
+    pointerFiles += 1;
+  }
+  return pointerFiles;
+}
+
+function writeDownloadedFixture(runtimeRoot, platformKey, browsersPath, { includeBrowserLicense = true } = {}) {
+  const metadata = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'platforms', `${platformKey}.json`), 'utf8'));
+  const relativePaths = [metadata.browser.executable, metadata.ffmpeg.executable, metadata.ffmpeg.license];
+  if (includeBrowserLicense) relativePaths.push(metadata.browser.license);
+  for (const relativePath of relativePaths) {
+    const stagedPath = path.join(browsersPath, path.relative(metadata.browsersPath, relativePath));
+    fs.mkdirSync(path.dirname(stagedPath), { recursive: true });
+    fs.writeFileSync(stagedPath, `${platformKey}:${path.basename(stagedPath)}\n`);
+  }
+}
+
 function createPluginFixture(context) {
   const repositoryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-plugin-'));
   context.after(() => fs.rmSync(repositoryRoot, { recursive: true, force: true }));
@@ -265,6 +298,125 @@ test('单平台构建只更新当前清单并在校验失败时回滚', (context
   assert.equal(fs.existsSync(brokenRoot), false);
 });
 
+test('[TC-04] CI 只安全替换 LFS 占位并生成稳定构建结果', (context) => {
+  const runtimeRoot = createRuntimeFixture(context);
+  const targetKey = 'linux-arm64';
+  const targetRoot = path.join(runtimeRoot, 'platform-assets', targetKey);
+  const pointerFiles = replaceFixtureTreeWithLfsPointers(targetRoot);
+  const linuxX64License = path.join(runtimeRoot, platformMetadata('linux', 'x64').browser.license);
+  fs.writeFileSync(
+    linuxX64License,
+    `version https://git-lfs.github.com/spec/v1\noid sha256:${'b'.repeat(64)}\nsize 456\n`,
+  );
+
+  const downloadedPlatforms = [];
+  const execute = (_command, _args, options) => {
+    const sourceKey = options.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE === PLAYWRIGHT_PLATFORM_CONFIGS['linux-x64'].hostPlatform
+      ? 'linux-x64'
+      : targetKey;
+    downloadedPlatforms.push(sourceKey);
+    writeDownloadedFixture(runtimeRoot, sourceKey, options.env.PLAYWRIGHT_BROWSERS_PATH, {
+      includeBrowserLicense: sourceKey !== targetKey,
+    });
+    return { status: 0 };
+  };
+  const result = buildPlaywrightPlatform({
+    platformKey: targetKey,
+    write: true,
+    replaceLfsPointers: true,
+    runtimeRoot,
+    execute,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 'passed');
+  assert.equal(result.code, 'playwright_platform_built');
+  assert.equal(result.target, targetKey);
+  assert.equal(result.assetSource, 'playwright-official-download');
+  assert.equal(result.replacedLfsPointers, pointerFiles);
+  assert.equal(result.supplementalLicenseSource, 'playwright-official-download');
+  assert.deepEqual(downloadedPlatforms, ['linux-arm64', 'linux-x64']);
+  assert.equal(inspectPlaywrightAsset(path.join(runtimeRoot, platformMetadata('linux', 'arm64').browser.executable), { runtimeRoot }).ok, true);
+  assert.equal(fs.existsSync(path.join(runtimeRoot, platformMetadata('linux', 'arm64').browser.license)), true);
+  assert.deepEqual(
+    fs.readdirSync(path.join(runtimeRoot, 'platform-assets')).filter((name) => name.includes('.build-') || name.includes('.backup-') || name.includes('.license-')),
+    [],
+  );
+});
+
+test('[TC-04] CI 替换拒绝真实文件并在下载失败时恢复占位', (context) => {
+  const unsafeRuntimeRoot = createRuntimeFixture(context);
+  const targetKey = 'darwin-arm64';
+  const unsafeRoot = path.join(unsafeRuntimeRoot, 'platform-assets', targetKey);
+  replaceFixtureTreeWithLfsPointers(unsafeRoot);
+  const unsafeFile = path.join(unsafeRoot, 'unexpected.txt');
+  fs.writeFileSync(unsafeFile, '真实文件不能被覆盖\n');
+  assert.throws(
+    () => buildPlaywrightPlatform({
+      platformKey: targetKey,
+      write: true,
+      replaceLfsPointers: true,
+      runtimeRoot: unsafeRuntimeRoot,
+    }),
+    (error) => error.code === 'playwright_platform_replacement_unsafe'
+      && error.status === 'failed'
+      && error.target === targetKey,
+  );
+  assert.equal(fs.readFileSync(unsafeFile, 'utf8'), '真实文件不能被覆盖\n');
+
+  const rollbackRuntimeRoot = createRuntimeFixture(context);
+  const rollbackRoot = path.join(rollbackRuntimeRoot, 'platform-assets', targetKey);
+  replaceFixtureTreeWithLfsPointers(rollbackRoot);
+  const pointerPath = path.join(rollbackRuntimeRoot, platformMetadata('darwin', 'arm64').browser.executable);
+  const pointerContent = fs.readFileSync(pointerPath, 'utf8');
+  assert.throws(
+    () => buildPlaywrightPlatform({
+      platformKey: targetKey,
+      write: true,
+      replaceLfsPointers: true,
+      runtimeRoot: rollbackRuntimeRoot,
+      execute: () => ({ status: 23 }),
+    }),
+    (error) => error.code === 'playwright_platform_download_failed'
+      && error.status === 'failed'
+      && error.target === targetKey,
+  );
+  assert.equal(fs.readFileSync(pointerPath, 'utf8'), pointerContent);
+  assert.deepEqual(
+    fs.readdirSync(path.join(rollbackRuntimeRoot, 'platform-assets')).filter((name) => name.includes('.build-') || name.includes('.backup-') || name.includes('.license-')),
+    [],
+  );
+
+  const validationRuntimeRoot = createRuntimeFixture(context);
+  const validationRoot = path.join(validationRuntimeRoot, 'platform-assets', targetKey);
+  replaceFixtureTreeWithLfsPointers(validationRoot);
+  const validationPointerPath = path.join(validationRuntimeRoot, platformMetadata('darwin', 'arm64').browser.executable);
+  const validationPointerContent = fs.readFileSync(validationPointerPath, 'utf8');
+  const incompleteExecute = (_command, _args, options) => {
+    const metadata = platformMetadata('darwin', 'arm64');
+    const executable = path.join(
+      options.env.PLAYWRIGHT_BROWSERS_PATH,
+      path.relative(metadata.browsersPath, metadata.browser.executable),
+    );
+    fs.mkdirSync(path.dirname(executable), { recursive: true });
+    fs.writeFileSync(executable, '不完整的下载结果\n');
+    return { status: 0 };
+  };
+  assert.throws(
+    () => buildPlaywrightPlatform({
+      platformKey: targetKey,
+      write: true,
+      replaceLfsPointers: true,
+      runtimeRoot: validationRuntimeRoot,
+      execute: incompleteExecute,
+    }),
+    (error) => error.code === 'playwright_platform_build_failed'
+      && error.status === 'failed'
+      && error.target === targetKey,
+  );
+  assert.equal(fs.readFileSync(validationPointerPath, 'utf8'), validationPointerContent);
+});
+
 test('平台选择拒绝缺包、混装、摘要变化和未支持平台', (context) => {
   const runtimeRoot = createRuntimeFixture(context);
   const integrityPath = path.join(runtimeRoot, 'integrity');
@@ -408,9 +560,14 @@ test('[TC-04] CI 五平台专属验证与产物合同', () => {
   assert.match(platformJob, /needs:\s*shared/u);
   assert.match(platformJob, /fail-fast:\s*false/u);
   assert.match(platformJob, /UI_REVIEW_EXPECT_PLATFORM:\s*\$\{\{ matrix\.platform \}\}/u);
+  assert.doesNotMatch(workflow, /git lfs pull/u);
   assert.match(
     platformJob,
-    /git lfs pull --include="plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\$\{\{ matrix\.platform \}\}\/\*\*" --exclude=""/u,
+    /build-playwright-platform\.mjs --write --replace-lfs-pointers --platform \$\{\{ matrix\.platform \}\}/u,
+  );
+  assert.ok(
+    platformJob.indexOf('actions/setup-node@v6') < platformJob.indexOf('build-playwright-platform.mjs'),
+    '平台资产重建必须在固定 Node.js 准备完成后执行',
   );
   for (const [runner, platform] of [
     ['macos-15', 'darwin-arm64'],

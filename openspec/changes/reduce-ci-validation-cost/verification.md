@@ -2,11 +2,11 @@
 
 ## 当前结论
 
-- 本地实现验证：通过。
-- 真实五平台 CI：提交 `69ecedba` 的共享任务失败，五平台矩阵按依赖正确跳过；修复后仍需按新的最终精确提交复核。
+- 本地实现验证：R-04 已通过。
+- 真实五平台 CI：提交 `b7b6e224` 的共享任务成功，五个平台在测试前均被 Git LFS 预算耗尽阻断；改为固定官方源重建后仍需按新的最终精确提交复核。
 - 完成与归档：待 V-05 通过后执行；当前不宣称跨平台发布完成。
 
-## 本地证据
+## R-03 本地历史证据
 
 | 证据 | 内容 | 结果 |
 | --- | --- | --- |
@@ -16,6 +16,16 @@
 | V-04 | Vue 3 + Vite fixture 与共享验证 | 127 个测试中 124 个通过、3 个按环境约定跳过、0 个失败；初始化、重复执行、升级、检查和真实 Vitest 回归通过 |
 
 补充门禁：`npm test`、`npm run validate`、`npm run verify`、`npm run verify:shared`、`npm run verify:platform` 均通过；9 个自定义 Skill 和 1 个插件 manifest 均通过官方 validator。根目录没有 `node_modules`，Vitest、统一验证、官方 validator 和测试 fixture 的本次临时目录已清理。
+
+## R-04 本地证据
+
+- 聚焦回归：TC-01/TC-02 2/2 通过；TC-03～TC-05 5/5 通过。新增回归覆盖纯 LFS 占位替换、真实文件拒绝、下载失败、发布后校验失败恢复、Linux ARM64 临时许可来源和工作流无 `git lfs pull`。
+- 全量测试：179 项中 176 项通过、3 项按既有环境约定跳过、0 项失败。
+- 统一验证：共享 7/7、平台 3/3、完整 9/9 阶段通过；完整性覆盖 880 个 Playwright 文件，当前 `darwin-arm64` Chromium 冒烟返回 `skipped=false`、`screenshotBytes=3509`。
+- 固定官方源仿真：在 `outputs/ci-platform-rebuild/` 构造 24 个 Git 跟踪文件，其中 20 个为 LFS 指针、4 个为零字节占位；构建器从官方 CDN 下载固定 Chromium headless shell revision 1234 与 FFmpeg 1011，返回 `playwright_platform_built/passed/darwin-arm64/replacedLfsPointers=20`，242 个目标+共享文件完整性通过，真实浏览器截图 3509 字节。验证目录已精确清理。
+- 其他门禁：`npm run validate`、32 项活动 OpenSpec 严格校验、47 项归档任务、9 个官方 Skill validator 和 1 个官方 Plugin validator 全部通过；验证专用 Vitest、validator 和平台重建目录均已清理。
+
+R-03 证据保留为历史；当前 V-01～V-04 将按 R-04 语义重新生成 schema v2 清单。真实五平台仍只由 V-05 证明。
 
 ## 未覆盖边界
 
@@ -34,6 +44,17 @@
 - 回归定位：TC-02 校验共享结构参数；TC-03 使用平台 LFS 指针样本证明共享结构只验证共享运行时、完整平台校验仍失败关闭。
 - 修复边界：不让共享任务拉取全部 LFS，不删除结构阶段，不放宽根完整校验，也不减少五平台目标完整性与浏览器冒烟。
 - 修复仿真：从 `69ecedba` 以 `GIT_LFS_SKIP_SMUDGE=1` 建立临时检出，确认 639 个平台文件保持 LFS 指针；覆盖修复后，共享结构模式通过，默认完整结构模式以状态 1 继续报告平台摘要变化。临时检出与日志已按 `outputs/` 边界精确清理。
+
+## CI 失败复盘：运行 33137835028
+
+- 运行地址：`https://github.com/julangtaotian/wayfinder/actions/runs/33137835028`
+- 精确提交：`b7b6e224395fe2d66115e057cf64b1eabcdd0456`
+- 已证明边界：`Shared validation (linux-x64)` 在 44 秒内成功，说明 R-03 的共享结构范围修复有效。
+- 失败平台与步骤：macOS ARM64/x64、Linux ARM64/x64、Windows x64 均在 `Pull target Playwright platform assets` 失败，尚未进入平台测试、完整性、浏览器冒烟或打包。
+- 稳定失败事实：`git lfs pull` 返回状态 2；GitHub LFS 服务明确报告仓库已超过 LFS budget，需要增加账户额度后才能恢复访问。
+- 根因：平台 CI 把仓库账户的可用 LFS 下载额度作为发布门禁前置依赖；本地真实资产和静态工作流测试无法暴露账户额度耗尽。
+- 修复边界：不购买额度、不启用缓存、不删除平台、不跳过完整性或浏览器；平台 runner 改用仓库内固定 Playwright 1.62.1 CLI 从官方源重建唯一目标资产，发布成品运行期继续离线。
+- 回归定位：TC-04 增加纯 LFS 占位安全替换、真实文件拒绝、下载失败恢复、Linux ARM64 临时许可来源和工作流无 `git lfs pull` 合同。
 
 ## V-05 待办
 

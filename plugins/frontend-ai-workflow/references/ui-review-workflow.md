@@ -79,9 +79,9 @@ UI Review 作为严格 V-* 机器证据时，schema v2 清单必须绑定状态�
 
 ## 跨平台发布合同
 
-Playwright 1.62.1、PNGJS 7.0.0 和 pixelmatch 7.1.0 固定在插件共享运行时。浏览器资产按 `platform-arch` 独立发布，首批支持 `darwin-arm64` 与 `linux-x64`；每个平台分别包含 Chromium headless shell、FFmpeg、许可、元数据和 SHA-256 清单。
+Playwright 1.62.1、PNGJS 7.0.0 和 pixelmatch 7.1.0 固定在插件共享运行时。浏览器资产按 `platform-arch` 独立发布，支持 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`；每个平台分别包含 Chromium headless shell、FFmpeg、许可、元数据和 SHA-256 清单。
 
-`build-playwright-platform.mjs` 只供插件维护和发布阶段使用，默认预览，显式 `--write` 才下载指定平台资产并更新摘要。普通检查、冒烟和业务验收没有下载代码路径。GitHub Actions 必须在 Linux x64 实际启动内置 Chromium 并得到 `skipped: false`；受支持平台缺包或跳过都失败。Windows、Intel Mac 和 Linux ARM 本轮明确阻塞，可在配置已声明时转视觉兜底。
+`build-playwright-platform.mjs` 只供插件维护和发布阶段使用，默认预览，显式 `--write` 才下载指定平台资产并更新摘要。Validate CI 在 `lfs: false` 检出后额外使用 `--replace-lfs-pointers`，只允许安全替换纯 LFS 指针/零字节占位目录，失败恢复并清理。普通检查、冒烟、已安装插件和业务验收没有下载代码路径。GitHub Actions 必须在五个原生平台实际启动内置 Chromium 并得到 `skipped: false`；受支持平台缺包或跳过都失败，视觉兜底不能作为平台支持证据。
 
 ## 权限边界
 
