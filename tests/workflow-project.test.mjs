@@ -10,6 +10,7 @@ import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-proj
 import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-project.mjs';
 import { validateRequirementDecisions } from '../plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs';
 import { previewRequirementUpgrade } from '../plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs';
+import { parseStructureValidationArgs } from '../plugins/frontend-ai-workflow/scripts/validate-structure.mjs';
 import * as verificationRunner from '../scripts/verify.mjs';
 import { buildTestCommand } from '../scripts/test-groups.mjs';
 import {
@@ -327,7 +328,8 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     fs.writeFileSync(path.join(verificationRoot, 'tests', name), 'export {};\n');
   }
 
-  assert.deepEqual(buildVerificationSteps(verificationRoot).map((step) => step.id), [
+  const allSteps = buildVerificationSteps(verificationRoot);
+  assert.deepEqual(allSteps.map((step) => step.id), [
     'footprint',
     'tests',
     'structure',
@@ -338,7 +340,8 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     'playwright-integrity',
     'playwright-smoke',
   ]);
-  assert.deepEqual(buildVerificationSteps(verificationRoot, { scope: 'shared' }).map((step) => step.id), [
+  const sharedSteps = buildVerificationSteps(verificationRoot, { scope: 'shared' });
+  assert.deepEqual(sharedSteps.map((step) => step.id), [
     'footprint',
     'tests',
     'structure',
@@ -352,6 +355,12 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     'playwright-integrity',
     'playwright-smoke',
   ]);
+  const allStructureArgs = allSteps.find((step) => step.id === 'structure').args;
+  const sharedStructureArgs = sharedSteps.find((step) => step.id === 'structure').args;
+  assert.equal(path.basename(allStructureArgs[0]), 'validate-structure.mjs');
+  assert.deepEqual(allStructureArgs.slice(1), []);
+  assert.equal(path.basename(sharedStructureArgs[0]), 'validate-structure.mjs');
+  assert.deepEqual(sharedStructureArgs.slice(1), ['--scope', 'shared']);
 
   assert.deepEqual(parseVerificationArgs([]), { scope: 'all' });
   assert.deepEqual(parseVerificationArgs(['--scope', 'shared']), { scope: 'shared' });
@@ -366,6 +375,16 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.throws(
     () => parseVerificationArgs(['--unexpected']),
     (error) => error.code === 'unknown_verification_argument' && error.status === 1,
+  );
+  assert.deepEqual(parseStructureValidationArgs([]), { scope: 'all' });
+  assert.deepEqual(parseStructureValidationArgs(['--scope', 'shared']), { scope: 'shared' });
+  assert.throws(
+    () => parseStructureValidationArgs(['--scope', 'platform']),
+    (error) => error.code === 'unknown_structure_validation_scope' && error.scope === 'platform' && error.status === 1,
+  );
+  assert.throws(
+    () => parseStructureValidationArgs(['--scope']),
+    (error) => error.code === 'structure_validation_scope_missing' && error.status === 1,
   );
 
   const executed = [];

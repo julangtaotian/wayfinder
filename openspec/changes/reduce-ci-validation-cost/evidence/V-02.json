@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-28T01:43:11.660Z",
+  "completedAt": "2026-08-28T02:58:29.721Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "39f23e59467a1b10d8ec7e037309fb3121eac5ac",
+    "commit": "69ecedbab14dd90578821c5a0bb72d3395243588",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,14 +24,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 523,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828014311573-90707-8e15a4f7/stdout.log",
-      "sha256": "b676a98641f2c57f7fe7cd7d9154ee45ac4b41b0573a180a6698e6861e1031d5",
+      "bytes": 521,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828025829617-35892-a81ee12c/stdout.log",
+      "sha256": "2063ed0a09863cecc2c8b2a6757c16cc527796373d17d005deba15c601470c75",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828014311573-90707-8e15a4f7/stderr.log",
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828025829617-35892-a81ee12c/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -56,8 +56,8 @@
       "D-07",
       "D-08"
     ],
-    "revision": "R-02",
-    "sha256": "c4075134dd6a3b191cf69bf302c4bdd936799012e27fe89062a3f079fb7726da",
+    "revision": "R-03",
+    "sha256": "71c954716c943ca4f6199ec38b8df397bca310d7d8cb9d947570b55b43640009",
     "testCaseIds": [
       "TC-03",
       "TC-04",
@@ -66,7 +66,7 @@
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-28T01:43:11.574Z",
+  "startedAt": "2026-08-28T02:58:29.619Z",
   "status": "passed",
-  "workspaceFingerprint": "37e1928f2038f0fcd37188d47227767b36c106835cd37ec031e9edf937b78503"
+  "workspaceFingerprint": "71891ff521a88e301b2fbac425b6bd76aeb7e66461909f4bf4895141f7c1ece0"
 }

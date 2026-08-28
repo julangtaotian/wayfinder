@@ -70,7 +70,10 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
     {
       id: 'structure',
       label: '插件与技能结构',
-      args: [path.join(pluginScripts, 'validate-structure.mjs')],
+      args: [
+        path.join(pluginScripts, 'validate-structure.mjs'),
+        ...(selectedScope === 'shared' ? ['--scope', 'shared'] : []),
+      ],
     },
     {
       id: 'openspec',

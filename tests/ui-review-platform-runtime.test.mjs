@@ -20,6 +20,7 @@ import {
   smokeTestBundledPlaywright,
   verifyConfiguredPlaywrightIntegrity,
   verifyPlaywrightIntegrity,
+  verifyPlaywrightSharedIntegrity,
   writePlaywrightIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 import { buildPlaywrightPlatform } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
@@ -360,7 +361,7 @@ test('[V-04] 平台资产与 CI 按需拉取合同：LFS 诊断失败关闭', (c
   assert.equal(mismatch.target, 'linux-x64');
 });
 
-test('[TC-03] CI 共享验证前置门禁', () => {
+test('[TC-03] CI 共享验证前置门禁', (context) => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   const packageJson = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8'));
   const sharedStart = workflow.indexOf('\n  shared:');
@@ -383,6 +384,17 @@ test('[TC-03] CI 共享验证前置门禁', () => {
   assert.equal(packageJson.scripts['verify:shared'], 'node scripts/verify.mjs --scope shared');
   assert.equal(packageJson.scripts['verify:platform'], 'node scripts/verify.mjs --scope platform');
   assert.equal(packageJson.scripts['cleanup:test-runtime'], 'node scripts/cleanup-frontend-test-runtime.mjs');
+
+  const runtimeRoot = createRuntimeFixture(context);
+  const integrityPath = path.join(runtimeRoot, 'integrity');
+  const platformExecutable = path.join(runtimeRoot, platformMetadata('darwin', 'arm64').browser.executable);
+  fs.writeFileSync(platformExecutable, 'version https://git-lfs.github.com/spec/v1\noid sha256:fixture\nsize 123\n');
+  const sharedIntegrity = verifyPlaywrightSharedIntegrity({ runtimeRoot, integrityPath });
+  assert.equal(sharedIntegrity.ok, true, sharedIntegrity.errors.join('\n'));
+  assert.deepEqual(Object.keys(sharedIntegrity.platforms), []);
+  const fullIntegrity = verifyPlaywrightIntegrity({ runtimeRoot, integrityPath, verifyAllPlatforms: true });
+  assert.equal(fullIntegrity.ok, false);
+  assert.match(fullIntegrity.errors.join('\n'), /Playwright darwin-arm64 运行包运行时文件摘要变化/u);
 });
 
 test('[TC-04] CI 五平台专属验证与产物合同', () => {

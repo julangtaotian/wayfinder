@@ -130,6 +130,7 @@
 | --- | --- | --- | --- | --- |
 | R-01 | 2026-08-28 | D-01～D-08 | A-01～A-06 | 建立第二阶段 CI 成本优化需求；所有验证保持计划，任务待规划。 |
 | R-02 | 2026-08-28 | D-02、D-03、D-07、D-08 | A-01、A-02、A-03、A-05 | 实施中的共享入口证明 `ui-review-automation` 会真实启动 Chromium 与本地服务，因此与平台运行时测试共同归入五平台集合；重开 TC-01、任务 1.1/2.1，V-01～V-05 继续保持计划。 |
+| R-03 | 2026-08-28 | D-02、D-03、D-05、D-08 | A-01、A-02、A-03、A-05、A-06 | 提交 `69ecedba` 的真实共享 CI 在结构阶段失败：`lfs: false` checkout 后完整结构校验把五个平台 LFS 指针误判为运行时摘要变化。业务边界不变；共享结构校验改为只核验共享 Playwright 运行时，平台二进制完整性继续由五个平台专属阶段负责；重开 TC-01～TC-07 与 V-01～V-04。 |
 
 ## 兼容性与风险
 
@@ -143,7 +144,7 @@
 
 - 测试文件策略：复用；目标路径：`tests/workflow-project.test.mjs`；基线证据：available，规划前已受 Git 跟踪；选择理由：该文件已经覆盖统一验证阶段、生命周期和 CI 调用合同，适合承载作用域分区回归。
 - 补充测试路径：复用已受 Git 跟踪的 `tests/ui-review-platform-runtime.test.mjs`，继续覆盖五平台矩阵、目标 LFS 拉取、环境变量、平台完整性、浏览器冒烟和打包。
-- 独立测试方案：需要；目标路径：`openspec/changes/reduce-ci-validation-cost/test-plan.md`；需求修订基线：R-02。
+- 独立测试方案：需要；目标路径：`openspec/changes/reduce-ci-validation-cost/test-plan.md`；需求修订基线：R-03。
 - 验证范围：全量；计划执行验证作用域聚焦测试、`npm test`、`npm run validate`、`npm run verify`、官方 Skill/Plugin validators、Vue 3 + Vite fixture 和真实五平台 CI；选择理由：变更直接修改共享发布入口与五平台 CI 门禁。
 - 跨平台回归定位：`tests/workflow-project.test.mjs` 中作用域、失败短路、临时运行时和 CI 依赖断言；`tests/ui-review-platform-runtime.test.mjs` 中五平台、目标资产、环境变量、冒烟、打包和报告断言；Windows 外平台样本显式使用目标路径语义。
 - 外部证据：实现提交推送后记录精确 SHA、运行 URL、共享任务及五个平台任务；矩阵全部成功前 V-05 保持计划。
@@ -154,7 +155,7 @@
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 自动 | 验证作用域分区、空/未知作用域、失败短路和临时运行时生命周期聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-01.json` |
 | V-02 | 自动 | CI 共享任务、依赖关系、concurrency、五平台矩阵、LFS、打包与报告合同聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-02.json` |
-| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-03.json` |
+| V-03 | 自动 | `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-03.json`；`openspec/changes/reduce-ci-validation-cost/verification.md` |
 | V-04 | 自动 | Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-28 | 通过 | `openspec/changes/reduce-ci-validation-cost/evidence/V-04.json` |
 | V-05 | 人工 | 精确提交的共享任务与 macOS ARM64/x64、Linux ARM64/x64、Windows x64 CI 矩阵 | 计划 | 计划 | `openspec/changes/reduce-ci-validation-cost/verification.md` |
 

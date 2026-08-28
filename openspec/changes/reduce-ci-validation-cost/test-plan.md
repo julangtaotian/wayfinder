@@ -5,7 +5,7 @@
 - 状态：已实现
 - 需求：`requirements/REQ-2026-034-ci-validation-cost-control.md`
 - 变更：reduce-ci-validation-cost
-- 需求修订基线：R-02
+- 需求修订基线：R-03
 - 默认聚焦命令：`node --test tests/workflow-project.test.mjs tests/ui-review-platform-runtime.test.mjs`
 
 ## 测试上下文
@@ -77,10 +77,10 @@
 - 关联规格：`持续集成必须复用统一入口`
 - 状态矩阵：初始（已有数据）、用户操作、错误态
 - 前置条件：Validate 工作流与根 package scripts 可读
-- 测试数据：shared job id、ubuntu-24.04、Node.js 20.19.0、`verify:shared`、兜底清理、platform `needs`
+- 测试数据：shared job id、ubuntu-24.04、Node.js 20.19.0、`verify:shared`、结构 `--scope shared`、共享运行时清单、平台 LFS 指针样本、兜底清理、platform `needs`
 - 测试替身：静态读取工作流，不请求 GitHub API
 - 操作：解析稳定 job、依赖和 run 字段并统计共享脚本出现次数
-- 可观察断言：每次 workflow 只有一个共享 job；共享脚本只出现一次；共享 job 不拉取平台 LFS；平台 job 显式依赖 shared；共享失败时由 job 依赖阻止矩阵开始
+- 可观察断言：每次 workflow 只有一个共享 job；共享脚本只出现一次；共享 job 不拉取平台 LFS；共享结构模式校验共享 Playwright 运行时但不读取平台二进制摘要；平台 job 显式依赖 shared；共享失败时由 job 依赖阻止矩阵开始
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-03] CI 共享验证前置门禁`
 - 聚焦命令：`node --test --test-name-pattern="TC-03" tests/ui-review-platform-runtime.test.mjs`
@@ -130,7 +130,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-05" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-02、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-02.json`、`openspec/changes/reduce-ci-validation-cost/verification.md`
+- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-02.json`；失败复盘：`openspec/changes/reduce-ci-validation-cost/verification.md`
 
 ### TC-06：本地共享发布链保持完整
 
@@ -202,7 +202,7 @@
 
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
-| TC-01～TC-05 | 两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02；5 个用例全部通过 |
-| TC-06 | `npm test`、`npm run validate`、完整九阶段统一验证与 9 个 Skill/1 个 Plugin 官方 validator | 通过 | V-03；177 个测试中 174 个通过、3 个按环境约定跳过，零失败 |
-| TC-07 | Vue 3 + Vite fixture 初始化、重复、升级、检查与真实 Vitest | 通过 | V-04；共享验证 127 个测试中 124 个通过、3 个按环境约定跳过，零失败 |
+| TC-01～TC-05 | 修复后重跑两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02 |
+| TC-06 | 修复后重跑 `npm test`、`npm run validate`、完整九阶段统一验证与官方 validators | 通过 | V-03、`verification.md` |
+| TC-07 | 修复后重跑 Vue 3 + Vite fixture 初始化、重复、升级、检查与真实 Vitest | 通过 | V-04 |
 | TC-08 | 计划：WebStorm 推送后的同一 SHA 共享+五平台 Actions 复核 | 计划 | V-05、`verification.md` |

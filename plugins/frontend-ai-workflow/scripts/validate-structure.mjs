@@ -8,6 +8,7 @@ import {
   inspectBundledPlaywright,
   readPlaywrightDistribution,
   verifyConfiguredPlaywrightIntegrity,
+  verifyPlaywrightSharedIntegrity,
 } from './playwright-runtime.mjs';
 import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plugin-platform.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
@@ -156,6 +157,43 @@ const PLAYWRIGHT_SHARED_RUNTIME_ASSETS = [
   'runtime/playwright/node_modules/pngjs/LICENSE',
   'runtime/playwright/node_modules/pixelmatch/LICENSE',
 ];
+const STRUCTURE_VALIDATION_SCOPES = new Set(['all', 'shared']);
+
+function structureValidationError(code, message, { scope = null } = {}) {
+  const error = new Error(message);
+  error.code = code;
+  error.scope = scope;
+  error.status = 1;
+  return error;
+}
+
+function resolveStructureValidationScope(scope = 'all') {
+  if (!STRUCTURE_VALIDATION_SCOPES.has(scope)) {
+    throw structureValidationError(
+      'unknown_structure_validation_scope',
+      `未知结构校验作用域：${scope}`,
+      { scope },
+    );
+  }
+  return scope;
+}
+
+export function parseStructureValidationArgs(argv = []) {
+  let scope = 'all';
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (value !== '--scope') {
+      throw structureValidationError('unknown_structure_validation_argument', `不支持的结构校验参数：${value}`);
+    }
+    const requested = argv[index + 1];
+    if (!requested || requested.startsWith('--')) {
+      throw structureValidationError('structure_validation_scope_missing', '参数 --scope 缺少值');
+    }
+    scope = resolveStructureValidationScope(requested);
+    index += 1;
+  }
+  return { scope };
+}
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -330,7 +368,7 @@ async function validateUiReviewStructure(errors, distribution) {
   }
 }
 
-function validatePlaywrightRuntime(errors, distribution) {
+function validatePlaywrightRuntime(errors, distribution, { scope = 'all' } = {}) {
   const platformKeys = distribution.kind === 'platform'
     ? [distribution.platformKey]
     : SUPPORTED_PLAYWRIGHT_PLATFORMS;
@@ -345,14 +383,28 @@ function validatePlaywrightRuntime(errors, distribution) {
   for (const file of requiredAssets) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 Playwright 运行时资产：${file}`);
   }
-  const runtime = inspectBundledPlaywright();
-  if (!runtime.valid) {
-    errors.push(`插件内置 Playwright 运行时不可用：${runtime.reason || '未知错误'}`);
-  } else if (runtime.version !== BUNDLED_PLAYWRIGHT_VERSION) {
-    errors.push(`插件内置 Playwright 版本不一致：${runtime.version}`);
+  if (scope === 'shared') {
+    // 共享 CI 不拉取平台 LFS 二进制，只校验平台无关依赖和共享完整性清单。
+    const integrity = verifyPlaywrightSharedIntegrity();
+    if (!integrity.ok) errors.push(`Playwright 共享运行时完整性校验失败：${integrity.errors.join('；')}`);
+    const versions = [
+      integrity.runtime?.runtimeVersion,
+      integrity.runtime?.playwrightVersion,
+      integrity.runtime?.playwrightCoreVersion,
+    ];
+    if (versions.some((version) => version !== BUNDLED_PLAYWRIGHT_VERSION)) {
+      errors.push(`插件内置 Playwright 共享运行时版本不一致：${versions.join(' / ')}`);
+    }
+  } else {
+    const runtime = inspectBundledPlaywright();
+    if (!runtime.valid) {
+      errors.push(`插件内置 Playwright 运行时不可用：${runtime.reason || '未知错误'}`);
+    } else if (runtime.version !== BUNDLED_PLAYWRIGHT_VERSION) {
+      errors.push(`插件内置 Playwright 版本不一致：${runtime.version}`);
+    }
+    const integrity = verifyConfiguredPlaywrightIntegrity();
+    if (!integrity.ok) errors.push(`Playwright 跨平台完整性校验失败：${integrity.errors.join('；')}`);
   }
-  const integrity = verifyConfiguredPlaywrightIntegrity();
-  if (!integrity.ok) errors.push(`Playwright 跨平台完整性校验失败：${integrity.errors.join('；')}`);
   if (distribution.kind === 'platform') {
     const expectedBudget = PLATFORM_PLUGIN_SIZE_BUDGETS[distribution.platformKey];
     if (distribution.budgetBytes !== expectedBudget) {
@@ -366,31 +418,50 @@ function validatePlaywrightRuntime(errors, distribution) {
   }
 }
 
-const errors = [];
-try {
-  const distribution = readPlaywrightDistribution();
-  validatePlugin(errors);
-  validateRuntime(errors);
-  validateMarketplace(errors);
-  validateSkills(errors);
-  validateDeepAnalysisAssets(errors);
-  validateRequirementDecisionAssets(errors);
-  validateRequirementMigrationAssets(errors);
-  validateDeliveryGuardAssets(errors);
-  validateProjectProfileAssets(errors);
-  validateTestWorkflowAssets(errors);
-  validateCoreModularAssets(errors);
-  validateRuntimeIntegrityAssets(errors);
-  validateUiReviewAssets(errors);
-  await validateUiReviewStructure(errors, distribution);
-  validatePlaywrightRuntime(errors, distribution);
-} catch (error) {
-  errors.push(error.message);
+export async function validateStructure({ scope = 'all' } = {}) {
+  const selectedScope = resolveStructureValidationScope(scope);
+  const errors = [];
+  try {
+    const distribution = readPlaywrightDistribution();
+    validatePlugin(errors);
+    validateRuntime(errors);
+    validateMarketplace(errors);
+    validateSkills(errors);
+    validateDeepAnalysisAssets(errors);
+    validateRequirementDecisionAssets(errors);
+    validateRequirementMigrationAssets(errors);
+    validateDeliveryGuardAssets(errors);
+    validateProjectProfileAssets(errors);
+    validateTestWorkflowAssets(errors);
+    validateCoreModularAssets(errors);
+    validateRuntimeIntegrityAssets(errors);
+    validateUiReviewAssets(errors);
+    await validateUiReviewStructure(errors, distribution);
+    validatePlaywrightRuntime(errors, distribution, { scope: selectedScope });
+  } catch (error) {
+    errors.push(error.message);
+  }
+  return {
+    ok: errors.length === 0,
+    code: errors.length === 0 ? 'structure_validation_passed' : 'structure_validation_failed',
+    status: errors.length === 0 ? 0 : 1,
+    scope: selectedScope,
+    errors,
+  };
 }
 
-if (errors.length) {
-  console.error(errors.map((error) => `- ${error}`).join('\n'));
-  process.exitCode = 1;
-} else {
-  console.log('Frontend AI Workflow structure is valid.');
+function isEntryPoint() {
+  return process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+}
+
+if (isEntryPoint()) {
+  try {
+    const result = await validateStructure(parseStructureValidationArgs(process.argv.slice(2)));
+    if (!result.ok) console.error(result.errors.map((error) => `- ${error}`).join('\n'));
+    else console.log('Frontend AI Workflow structure is valid.');
+    process.exitCode = result.status;
+  } catch (error) {
+    console.error(`${error.code || 'structure_validation_start_failed'}：结构校验无法启动：${error.message}`);
+    process.exitCode = error.status || 1;
+  }
 }

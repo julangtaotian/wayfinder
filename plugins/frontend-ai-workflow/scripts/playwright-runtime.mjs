@@ -307,6 +307,42 @@ function verifyOneManifest(expectedPath, actual, label) {
   return { ok: errors.length === 0, files: actual.files.length, errors };
 }
 
+export function verifyPlaywrightSharedIntegrity({
+  runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
+  integrityPath = DEFAULT_PLAYWRIGHT_INTEGRITY_PATH,
+} = {}) {
+  const root = path.resolve(runtimeRoot);
+  const integrityRoot = path.resolve(integrityPath);
+  try {
+    const distribution = readPlaywrightDistribution(root);
+    const actual = buildPlaywrightIntegrityManifest(root, { kind: 'shared' });
+    const shared = verifyOneManifest(
+      path.join(integrityRoot, 'shared.json'),
+      actual,
+      'Playwright 共享运行时',
+    );
+    return {
+      ok: shared.ok,
+      files: shared.files,
+      shared,
+      platforms: {},
+      distribution,
+      runtime: actual.runtime,
+      errors: shared.errors,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      files: 0,
+      shared: null,
+      platforms: {},
+      distribution: null,
+      runtime: null,
+      errors: [error.message],
+    };
+  }
+}
+
 function distributionLayoutErrors(runtimeRoot, integrityRoot, distribution) {
   if (distribution.kind !== 'platform') return [];
   const errors = [];
