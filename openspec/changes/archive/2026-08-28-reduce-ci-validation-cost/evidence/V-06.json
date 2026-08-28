@@ -1,0 +1,66 @@
+{
+  "artifacts": [],
+  "change": "reduce-ci-validation-cost",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-04",
+      "tests/ui-review-platform-runtime.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-28T06:03:01.661Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "9879756a3f94170070aa1fc15c0423cea3870369",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-04] CI 五平台专属验证与产物合同",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 647,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-06/20260828060301513-23529-55bbc298/stdout.log",
+      "sha256": "ab95654523b9b7972d6e0f545b7272ff54ae56a3283855716edcaa42059e490a",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-06/20260828060301513-23529-55bbc298/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08"
+    ],
+    "revision": "R-04",
+    "sha256": "834243770b28aa1d5b77f3638fba6d468251cbe012c35f078fda5faa7f5427bf",
+    "testCaseIds": [
+      "TC-04"
+    ],
+    "verificationId": "V-06",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T06:03:01.515Z",
+  "status": "passed",
+  "workspaceFingerprint": "92b94a6c44ff73dc8c161f418e13e141dc94965f4c4c97915f8c7a98f903c08a"
+}

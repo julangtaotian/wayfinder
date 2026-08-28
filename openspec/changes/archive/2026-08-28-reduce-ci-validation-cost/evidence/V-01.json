@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-28T05:51:23.366Z",
+  "completedAt": "2026-08-28T06:03:24.279Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "b7b6e224395fe2d66115e057cf64b1eabcdd0456",
+    "commit": "9879756a3f94170070aa1fc15c0423cea3870369",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,19 +24,19 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 412,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-01/20260828055123260-9310-7482daf2/stdout.log",
-      "sha256": "16b9b8c066aeea98cc9a6d3ff9dc64a6812d5908ace5f1e3ac6dd10cba713126",
+      "bytes": 408,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-01/20260828060324172-23659-029c8dd0/stdout.log",
+      "sha256": "30132eb458618109f31c24ea352b09fa88dc1863fe02576cba659cd97e867290",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-01/20260828055123260-9310-7482daf2/stderr.log",
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-01/20260828060324172-23659-029c8dd0/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+  "requirement": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -53,15 +53,14 @@
       "D-08"
     ],
     "revision": "R-04",
-    "sha256": "8f0c8aae6d231e081fa5f3272c530e0f0c74e6cc70a45a86c0527a71f34789a1",
+    "sha256": "265d3d5fea3fb42ff8662813bce807e3625ee28bc4a71b178721a102d4f9ceb0",
     "testCaseIds": [
-      "TC-01",
-      "TC-02"
+      "TC-01"
     ],
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-28T05:51:23.262Z",
+  "startedAt": "2026-08-28T06:03:24.174Z",
   "status": "passed",
   "workspaceFingerprint": "92b94a6c44ff73dc8c161f418e13e141dc94965f4c4c97915f8c7a98f903c08a"
 }

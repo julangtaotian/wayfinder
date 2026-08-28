@@ -297,6 +297,15 @@
       "entryPath": "requirements/REQ-2026-033-maintainable-core-script-boundaries.md",
       "archivePath": "requirements/archive/2026/REQ-2026-033-maintainable-core-script-boundaries.md",
       "change": "modularize-core-workflow-scripts"
+    },
+    {
+      "id": "REQ-2026-034",
+      "title": "REQ-2026-034：CI 验证成本分层与在途任务治理",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
+      "change": "reduce-ci-validation-cost"
     }
   ]
 }

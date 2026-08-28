@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-28T05:51:23.426Z",
+  "completedAt": "2026-08-28T06:03:24.338Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "b7b6e224395fe2d66115e057cf64b1eabcdd0456",
+    "commit": "9879756a3f94170070aa1fc15c0423cea3870369",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,26 +24,24 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 906,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828055123258-9309-4faa5bb0/stdout.log",
-      "sha256": "8021105af45e64e23252c377f417d94a7e88c348e0a15e8d6ebb9667964e9300",
+      "bytes": 900,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828060324176-23660-e4035bbd/stdout.log",
+      "sha256": "6e380655429afa697b39255f6f7a7663ace83a2fca56f4e1583c8adb95f2c605",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828055123258-9309-4faa5bb0/stderr.log",
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-02/20260828060324176-23660-e4035bbd/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+  "requirement": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
       "A-02",
       "A-03",
-      "A-04",
-      "A-05",
       "A-06",
       "A-07"
     ],
@@ -51,7 +49,6 @@
     "decisionIds": [
       "D-02",
       "D-03",
-      "D-04",
       "D-05",
       "D-06",
       "D-07",
@@ -59,16 +56,14 @@
       "D-09"
     ],
     "revision": "R-04",
-    "sha256": "b07cc886258352a61338610e2f617aae9f1e30418c8c89c79251559901b0eb2b",
+    "sha256": "05b1882868d4a035f6db7fdd512dddf7ae2e18d49335e442c37fb6342de9121e",
     "testCaseIds": [
-      "TC-03",
-      "TC-04",
-      "TC-05"
+      "TC-03"
     ],
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-28T05:51:23.259Z",
+  "startedAt": "2026-08-28T06:03:24.177Z",
   "status": "passed",
   "workspaceFingerprint": "92b94a6c44ff73dc8c161f418e13e141dc94965f4c4c97915f8c7a98f903c08a"
 }

@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-28T05:54:29.981Z",
+  "completedAt": "2026-08-28T06:05:10.591Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "b7b6e224395fe2d66115e057cf64b1eabcdd0456",
+    "commit": "9879756a3f94170070aa1fc15c0423cea3870369",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,19 +23,19 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 28221,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828055350875-16275-d2f3e6ec/stdout.log",
-      "sha256": "30f02b7bbade55d4c493ebc47caf194ef252dc19bb2754b23ba6d98af100a384",
+      "bytes": 28228,
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828060431825-30466-0723529c/stdout.log",
+      "sha256": "1a7ce9f24d68e084bd03c4a374464deb1d964cc5d6785829111dcca7f377875d",
       "stream": "stdout"
     },
     {
       "bytes": 208,
-      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828055350875-16275-d2f3e6ec/stderr.log",
+      "path": "outputs/verification-evidence/reduce-ci-validation-cost/V-04/20260828060431825-30466-0723529c/stderr.log",
       "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-034-ci-validation-cost-control.md",
+  "requirement": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -47,14 +47,14 @@
       "D-08"
     ],
     "revision": "R-04",
-    "sha256": "45c6b150502029c1646af7b3cadb359c12cf83aae4f7fe116e4757bdd4760e5c",
+    "sha256": "bffee7e24c9f2133b3f8381ecf564e996a57a7b4fcb14bc2e8afb27826d6d276",
     "testCaseIds": [
       "TC-07"
     ],
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-08-28T05:53:50.877Z",
+  "startedAt": "2026-08-28T06:04:31.827Z",
   "status": "passed",
   "workspaceFingerprint": "92b94a6c44ff73dc8c161f418e13e141dc94965f4c4c97915f8c7a98f903c08a"
 }

@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-034-ci-validation-cost-control.md`
-- 变更：reduce-ci-validation-cost
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md`
+- 变更：2026-08-28-reduce-ci-validation-cost
 - 需求修订基线：R-04
 - 默认聚焦命令：`node --test tests/workflow-project.test.mjs tests/ui-review-platform-runtime.test.mjs`
 
@@ -42,7 +42,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-01" tests/workflow-project.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-01.json`
 
 ### TC-02：统一验证作用域、失败短路与临时运行时生命周期
 
@@ -62,9 +62,9 @@
 - 目标测试：`tests/workflow-project.test.mjs`
 - 测试定位：`[TC-02] 统一验证作用域与生命周期`
 - 聚焦命令：`node --test --test-name-pattern="TC-02" tests/workflow-project.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-03.json`
 
 ### TC-03：共享任务单次执行并阻断失败运行
 
@@ -86,7 +86,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-03" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-02.json`
 
 ### TC-04：五平台专属验证、打包与报告保持完整
 
@@ -106,9 +106,9 @@
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-04] CI 五平台专属验证与产物合同`
 - 聚焦命令：`node --test --test-name-pattern="TC-04" tests/ui-review-platform-runtime.test.mjs`
-- 关联验证：V-02
+- 关联验证：V-06
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-06.json`
 
 ### TC-05：同一引用取消旧运行且触发边界不扩张
 
@@ -128,9 +128,9 @@
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-05] CI 同引用在途运行治理`
 - 聚焦命令：`node --test --test-name-pattern="TC-05" tests/ui-review-platform-runtime.test.mjs`
-- 关联验证：V-02、V-05
+- 关联验证：V-07、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-02.json`；失败复盘：`openspec/changes/reduce-ci-validation-cost/verification.md`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-07.json`
 
 ### TC-06：本地共享发布链保持完整
 
@@ -152,7 +152,7 @@
 - 聚焦命令：不适用；本用例为发布级全量验证
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-03.json`
 
 ### TC-07：Vue 3 + Vite 真实 fixture 工作流兼容
 
@@ -174,11 +174,11 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/workflow-project.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/reduce-ci-validation-cost/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/evidence/V-04.json`
 
 ### TC-08：最终精确提交的共享与五平台外部证据
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -195,14 +195,14 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
-- 证据：`openspec/changes/reduce-ci-validation-cost/verification.md`
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-28-reduce-ci-validation-cost/verification.md`
 
 ## 执行记录
 
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
-| TC-01～TC-05 | R-04 实现后重跑两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02 |
+| TC-01～TC-05 | R-04 实现后重跑两个现有手写测试文件的聚焦 Node 回归 | 通过 | V-01、V-02、V-03、V-06、V-07 |
 | TC-06 | R-04 实现后重跑 `npm test`、`npm run validate`、完整/共享/平台统一验证、官方 validators 与真实官方源重建 | 通过 | V-03、`verification.md` |
 | TC-07 | R-04 实现后重跑 Vue 3 + Vite fixture 初始化、重复、升级、检查与真实 Vitest | 通过 | V-04 |
-| TC-08 | 计划：WebStorm 推送后的同一 SHA 共享+五平台 Actions 复核 | 计划 | V-05、`verification.md` |
+| TC-08 | WebStorm 推送 SHA `9879756a` 后复核运行 `33146231087`：共享与五平台六项任务全部成功并产生五份平台报告；推送时没有旧在途运行可触发取消 | 通过 | V-05、`verification.md` |
