@@ -5,13 +5,19 @@ import {
   http,
   path,
   spawnSync,
+  inspectBundledPlaywright,
   runUiReview,
   workflowScript,
   configInput,
   createProject,
 } from './fixtures.mjs';
 
-test('统一入口完成预览、验收、同上下文复验并映射稳定退出码', async (context) => {
+const bundledRuntime = inspectBundledPlaywright();
+const platformRuntimeOnly = bundledRuntime.available
+  ? {}
+  : { skip: '共享源码不携带当前平台 Chromium；该用例由平台成品验证执行' };
+
+test('统一入口完成预览、验收、同上下文复验并映射稳定退出码', platformRuntimeOnly, async (context) => {
   let fixed = false;
   const server = http.createServer((_request, response) => {
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
@@ -91,7 +97,7 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   assert.equal(verify.verification.resolved.length, 1);
 });
 
-test('统一入口对不确定、非内置适配器和产物冲突失败关闭', async (context) => {
+test('统一入口对不确定、非内置适配器和产物冲突失败关闭', platformRuntimeOnly, async (context) => {
   const projectRoot = createProject(context, {
     schemaVersion: 2,
     scenarios: [{

@@ -2,6 +2,7 @@ export const CHECK_PROJECT_OUTPUT_SCHEMA_VERSION = '1.0.0';
 export const CHECK_PROJECT_OBSERVATION_SAMPLE_LIMIT = 5;
 export const CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE = 20;
 export const CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE = 100;
+export const CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT = 20;
 
 function compareText(left, right) {
   if (left < right) return -1;
@@ -39,12 +40,43 @@ function compactDeepAnalysis(deepAnalysis = {}) {
   };
 }
 
+function comparePlugin(left, right) {
+  return compareText(`${left.name || ''}\u0000${left.path || ''}`, `${right.name || ''}\u0000${right.path || ''}`);
+}
+
+function compactPluginRepository(pluginRepository = null) {
+  if (!pluginRepository) return pluginRepository;
+  const plugins = Array.isArray(pluginRepository.plugins) ? [...pluginRepository.plugins].sort(comparePlugin) : [];
+  const diagnostics = Array.isArray(pluginRepository.diagnostics)
+    ? [...pluginRepository.diagnostics].sort((left, right) => compareText(
+      `${left.code || ''}\u0000${left.target || ''}`,
+      `${right.code || ''}\u0000${right.target || ''}`,
+    ))
+    : [];
+  const displayedPlugins = plugins.slice(0, CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT);
+  const displayedDiagnostics = diagnostics.slice(0, CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT);
+  return {
+    ...pluginRepository,
+    plugins: displayedPlugins,
+    totalPlugins: plugins.length,
+    displayedPlugins: displayedPlugins.length,
+    omittedPlugins: Math.max(0, plugins.length - displayedPlugins.length),
+    pluginStatusCounts: countByCode(plugins.map((item) => ({ code: item.status || 'unknown' }))),
+    diagnostics: displayedDiagnostics,
+    totalDiagnostics: diagnostics.length,
+    displayedDiagnostics: displayedDiagnostics.length,
+    omittedDiagnostics: Math.max(0, diagnostics.length - displayedDiagnostics.length),
+    diagnosticCounts: countByCode(diagnostics),
+  };
+}
+
 // 精简模式只收起可以按需恢复的长数组，完整依赖事实和当前健康状态保持不变。
 export function summarizeProjectCheck(result) {
   return {
     ...result,
     schemaVersion: CHECK_PROJECT_OUTPUT_SCHEMA_VERSION,
     mode: 'summary',
+    ...(result.pluginRepository ? { pluginRepository: compactPluginRepository(result.pluginRepository) } : {}),
     verificationEvidenceAudit: compactVerificationEvidenceAudit(result.verificationEvidenceAudit),
     deepAnalysis: compactDeepAnalysis(result.deepAnalysis),
   };

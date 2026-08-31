@@ -16,7 +16,7 @@ Perform a read-only audit of the target repository.
    node <plugin-root>/scripts/check-project.mjs --target <repository-root> --summary
    ```
 
-3. Parse the summary into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, migration state, analysis freshness, validation evidence, historical verification-evidence counts, sampled static observations, completed-but-active changes, and planning-engine status.
+3. Parse the summary into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, plugin repository category, migration state, analysis freshness, validation evidence, historical verification-evidence counts, sampled static observations, completed-but-active changes, and planning-engine status.
 4. Only when a non-zero historical count and the user's question require exact targets, query that code without loading unrelated diagnostics:
 
    ```bash
@@ -38,6 +38,9 @@ Perform a read-only audit of the target repository.
 ## Interpretation
 
 - Missing required workflow files are errors.
+- `repositoryKind: plugin-repository` 仅在根 `.agents/plugins/marketplace.json` 含有至少一个 `source.source=local` 条目时出现。此时应优先读取 `pluginRepository.status`、本地插件条目和插件命令事实；`healthy` 表示业务项目专属的工作流文件、深度分析和构建/lint/类型检查不适用，不能把这些缺项报告成插件错误。
+- `pluginRepository.status: invalid` 是失败关闭结果。先按嵌套 `pluginRepository.diagnostics` 的稳定 `code`、`status` 和 `target` 定位 marketplace、本地插件目录、manifest 或技能目录；中文 `message` 只用于解释。不要从原始不安全路径推断文件位置。
+- 插件仓库摘要最多显示 20 个插件和 20 条插件诊断，同时给出总数、显示数、遗漏数和状态/诊断计数。只有用户需要被省略的条目或完整事实时，才运行不带 `--summary` 的检查；历史诊断分页查询不用于读取插件仓库诊断。
 - `dependencyProfile.packages` is the complete root direct-dependency declaration for this audit; its human summary may be truncated. Report declaration facts separately from usage, installation, compatibility, safety and execution evidence. It does not cover workspaces, transitive packages, registry metadata, vulnerabilities or licenses.
 - Missing optional lint or typecheck scripts are warnings, not invented commands.
 - `commandSemantics` separates the default build from the delivery-build candidate and marks known failing test placeholders as `placeholder`. `commandEvidence.status: detected` only proves the script was found; `placeholder` is unavailable, and a command is passed only when `executed: true` comes from an actual successful run.
