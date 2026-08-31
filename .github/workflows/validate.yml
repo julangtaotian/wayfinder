@@ -3,6 +3,13 @@ name: Validate
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      collect_platform_install_evidence:
+        description: Collect real Codex install, load, and offline Chromium evidence on all five platforms
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
