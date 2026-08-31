@@ -6,9 +6,9 @@ import test from 'node:test';
 import {
   CODEX_INSTALL_EVIDENCE_CLI_VERSION,
   compactInstallStageName,
+  createInstalledRuntimeView,
   verifyPlatformMarketplaceInstall,
 } from '../plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs';
-import { browserExecutableForLaunch } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 
 const NATIVE_PLATFORM_KEY = `${process.platform}-${process.arch}`;
 
@@ -168,6 +168,10 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
   assert.equal(report.load.skill, 'frontend-ai-workflow:frontend-ui-review');
   assert.equal(report.load.visibleInNewSession, true);
   assert.equal(report.offline.install, true);
+  assert.equal(
+    report.offline.runtimePathStrategy,
+    process.platform === 'win32' ? 'installed-junction' : 'installed-path',
+  );
   assert.equal(report.offline.chromium.ok, true);
   assert.equal(report.offline.chromium.screenshotBytes, 512);
   assert.deepEqual(JSON.parse(fs.readFileSync(fixture.outputPath, 'utf8')), report);
@@ -235,7 +239,7 @@ test('[TC-12] 安装证据写入拒绝伪造的非原生平台', async (context)
   assert.equal(fs.existsSync(fixture.outputPath), false);
 });
 
-test('[TC-12] Windows 安装缓存的超长 Chromium 路径使用系统命名空间', () => {
+test('[TC-12] Windows 安装缓存通过受控目录联接缩短 Chromium 启动路径', () => {
   const workRoot = path.win32.join(
     'D:\\a\\wayfinder\\wayfinder\\outputs',
     compactInstallStageName({ processId: 5092, timestamp: 1788137696439 }),
@@ -257,13 +261,32 @@ test('[TC-12] Windows 安装缓存的超长 Chromium 路径使用系统命名空
     'chrome-headless-shell-win64',
     'chrome-headless-shell.exe',
   );
-  const launchPath = browserExecutableForLaunch(browserExecutable, {
-    platform: 'win32',
+  const links = [];
+  const runtimeView = createInstalledRuntimeView({
+    installedPath: path.win32.join(workRoot, 'c', 'plugins', 'cache', 'frontend-ai-workflow-win32-x64', 'frontend-ai-workflow', '0.18.0+codex.20260826072715'),
+    workRoot,
+    currentPlatform: 'win32',
     pathApi: path.win32,
+    createDirectoryLink: (...args) => links.push(args),
   });
+  const launchPath = path.win32.join(
+    runtimeView.runtimeRoot,
+    'platform-assets',
+    'win32-x64',
+    '.local-browsers',
+    'chromium_headless_shell-1234',
+    'chrome-headless-shell-win64',
+    'chrome-headless-shell.exe',
+  );
   assert.ok(browserExecutable.length >= 260, `测试样本没有覆盖 Windows 超长路径：${browserExecutable.length}`);
-  assert.match(launchPath, /^\\\\\?\\D:\\/u);
-  assert.equal(launchPath.slice(4), browserExecutable);
+  assert.ok(launchPath.length < 260, `Windows 短路径仍超过传统预算：${launchPath.length}`);
+  assert.equal(runtimeView.preserveRuntimeRoot, true);
+  assert.equal(runtimeView.strategy, 'installed-junction');
+  assert.deepEqual(links, [[
+    path.win32.join(workRoot, 'c', 'plugins', 'cache', 'frontend-ai-workflow-win32-x64', 'frontend-ai-workflow', '0.18.0+codex.20260826072715'),
+    path.win32.join(workRoot, 'r'),
+    'junction',
+  ]]);
 });
 
 test('[TC-12] 人工证据收集复用原五平台矩阵且不增加日常成本', () => {

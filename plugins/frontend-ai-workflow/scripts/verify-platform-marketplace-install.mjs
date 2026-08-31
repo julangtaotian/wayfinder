@@ -236,8 +236,10 @@ export function compactInstallStageName({
   return `.i-${processId.toString(36)}-${timestamp.toString(36)}`;
 }
 
-async function defaultOfflineSmoke({ runtimeRoot, platformKey, environment }) {
-  const result = spawnSync(process.execPath, [scriptPath, '--offline-smoke-runtime', runtimeRoot, '--platform', platformKey], {
+async function defaultOfflineSmoke({ runtimeRoot, platformKey, environment, preserveRuntimeRoot = false }) {
+  const args = [scriptPath, '--offline-smoke-runtime', runtimeRoot, '--platform', platformKey];
+  if (preserveRuntimeRoot) args.push('--preserve-runtime-root');
+  const result = spawnSync(process.execPath, args, {
     encoding: 'utf8',
     env: environment,
     timeout: 120000,
@@ -252,6 +254,36 @@ async function defaultOfflineSmoke({ runtimeRoot, platformKey, environment }) {
     });
   }
   return parseJsonCommand(result.stdout, 'offline-smoke', environment);
+}
+
+export function createInstalledRuntimeView({
+  installedPath,
+  workRoot,
+  currentPlatform = process.platform,
+  pathApi = path,
+  createDirectoryLink = fs.symlinkSync,
+} = {}) {
+  if (currentPlatform !== 'win32') {
+    return {
+      runtimeRoot: pathApi.join(installedPath, 'runtime', 'playwright'),
+      preserveRuntimeRoot: false,
+      strategy: 'installed-path',
+    };
+  }
+  const aliasRoot = pathApi.join(workRoot, 'r');
+  try {
+    createDirectoryLink(installedPath, aliasRoot, 'junction');
+  } catch (error) {
+    fail(`无法创建 Windows 安装运行时短路径：${error.message}`, {
+      code: 'platform_install_runtime_alias_failed',
+      target: aliasRoot,
+    });
+  }
+  return {
+    runtimeRoot: pathApi.join(aliasRoot, 'runtime', 'playwright'),
+    preserveRuntimeRoot: true,
+    strategy: 'installed-junction',
+  };
 }
 
 export async function verifyPlatformMarketplaceInstall({
@@ -270,6 +302,7 @@ export async function verifyPlatformMarketplaceInstall({
   runOfflineSmoke = defaultOfflineSmoke,
   copyPath = fs.cpSync,
   removePath = fs.rmSync,
+  createDirectoryLink = fs.symlinkSync,
 } = {}) {
   if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(platformKey)) {
     fail(`不支持的平台：${platformKey}`, {
@@ -391,11 +424,17 @@ export async function verifyPlatformMarketplaceInstall({
         target: expectedSkill,
       });
     }
-    const runtimeRoot = path.join(installedPath, 'runtime', 'playwright');
+    const runtimeView = createInstalledRuntimeView({
+      installedPath,
+      workRoot,
+      currentPlatform,
+      createDirectoryLink,
+    });
     const offlineSmoke = await runOfflineSmoke({
-      runtimeRoot,
+      runtimeRoot: runtimeView.runtimeRoot,
       platformKey,
       environment: isolatedEnvironment,
+      preserveRuntimeRoot: runtimeView.preserveRuntimeRoot,
     });
     if (!offlineSmoke?.ok
       || offlineSmoke.skipped
@@ -438,6 +477,7 @@ export async function verifyPlatformMarketplaceInstall({
         networkPolicy: 'unreachable-loopback-proxy',
         install: true,
         downloadsAtRuntime: false,
+        runtimePathStrategy: runtimeView.strategy,
         chromium: {
           ok: true,
           skipped: false,
@@ -516,6 +556,7 @@ async function runOfflineSmokeEntry(argv) {
     arch: archParts.join('-'),
     expectedPlatformKey: platformKey,
     useCache: false,
+    preserveRuntimeRoot: argv.includes('--preserve-runtime-root'),
   });
 }
 

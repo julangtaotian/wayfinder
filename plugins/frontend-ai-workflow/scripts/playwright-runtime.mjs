@@ -250,8 +250,14 @@ function sharedDescriptor(runtimeRoot) {
   };
 }
 
-export function buildPlaywrightIntegrityManifest(runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT, { platform, arch, kind } = {}) {
-  const root = fs.realpathSync(path.resolve(runtimeRoot));
+export function buildPlaywrightIntegrityManifest(runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT, {
+  platform,
+  arch,
+  kind,
+  preserveRuntimeRoot = false,
+} = {}) {
+  const resolvedRoot = path.resolve(runtimeRoot);
+  const root = preserveRuntimeRoot ? resolvedRoot : fs.realpathSync(resolvedRoot);
   if (kind === 'shared' || (!platform && !arch)) {
     return {
       schemaVersion: PLAYWRIGHT_INTEGRITY_SCHEMA_VERSION,
@@ -369,6 +375,7 @@ export function verifyPlaywrightIntegrity({
   platform = process.platform,
   arch = process.arch,
   verifyAllPlatforms = false,
+  preserveRuntimeRoot = false,
 } = {}) {
   const root = path.resolve(runtimeRoot);
   const integrityRoot = path.resolve(integrityPath);
@@ -376,7 +383,7 @@ export function verifyPlaywrightIntegrity({
     const distribution = readPlaywrightDistribution(root);
     const shared = verifyOneManifest(
       path.join(integrityRoot, 'shared.json'),
-      buildPlaywrightIntegrityManifest(root, { kind: 'shared' }),
+      buildPlaywrightIntegrityManifest(root, { kind: 'shared', preserveRuntimeRoot }),
       'Playwright 共享运行时',
     );
     const requestedKey = platformKey(platform, arch);
@@ -397,7 +404,11 @@ export function verifyPlaywrightIntegrity({
     for (const key of keys) {
       const [targetPlatform, ...archParts] = key.split('-');
       const targetArch = archParts.join('-');
-      const actual = buildPlaywrightIntegrityManifest(root, { platform: targetPlatform, arch: targetArch });
+      const actual = buildPlaywrightIntegrityManifest(root, {
+        platform: targetPlatform,
+        arch: targetArch,
+        preserveRuntimeRoot,
+      });
       platforms[key] = verifyOneManifest(path.join(integrityRoot, `${key}.json`), actual, `Playwright ${key} 运行包`);
     }
     const errors = [
@@ -476,6 +487,7 @@ export function inspectBundledPlaywright({
   platform = process.platform,
   arch = process.arch,
   verifyIntegrity = true,
+  preserveRuntimeRoot = false,
   useCache = runtimeRoot === DEFAULT_PLAYWRIGHT_RUNTIME_ROOT
     && integrityPath === DEFAULT_PLAYWRIGHT_INTEGRITY_PATH
     && platform === process.platform
@@ -548,7 +560,13 @@ export function inspectBundledPlaywright({
       });
     }
     const integrity = verifyIntegrity
-      ? verifyPlaywrightIntegrity({ runtimeRoot: root, integrityPath, platform, arch })
+      ? verifyPlaywrightIntegrity({
+        runtimeRoot: root,
+        integrityPath,
+        platform,
+        arch,
+        preserveRuntimeRoot,
+      })
       : { ok: true, files: null, errors: [] };
     if (!integrity.ok) return unavailable(`Playwright 运行时完整性校验失败：${integrity.errors.join('；')}`, { integrity });
     const inspection = {
@@ -590,15 +608,6 @@ export async function loadBundledPlaywright(options = {}) {
   return bundledPlaywrightPromise;
 }
 
-export function browserExecutableForLaunch(filePath, {
-  platform = process.platform,
-  pathApi = path,
-} = {}) {
-  const absolutePath = pathApi.resolve(filePath);
-  // Windows 安装缓存可能超过传统 MAX_PATH，使用系统命名空间路径交给 spawn。
-  return platform === 'win32' ? pathApi.toNamespacedPath(absolutePath) : absolutePath;
-}
-
 export async function smokeTestBundledPlaywright(options = {}) {
   const inspection = inspectBundledPlaywright(options);
   if (!inspection.available) throw new Error(inspection.reason || '当前平台没有内置 Playwright 运行包');
@@ -607,10 +616,7 @@ export async function smokeTestBundledPlaywright(options = {}) {
     throw new Error(`Playwright 冒烟平台不匹配：期望 ${expectedPlatformKey}，实际 ${inspection.platformKey}`);
   }
   const playwright = await loadBundledPlaywright(options);
-  const browser = await playwright.chromium.launch({
-    headless: true,
-    executablePath: browserExecutableForLaunch(inspection.browserExecutable, { platform: inspection.platform }),
-  });
+  const browser = await playwright.chromium.launch({ headless: true, executablePath: inspection.browserExecutable });
   try {
     const page = await browser.newPage({ viewport: { width: 320, height: 240 } });
     await page.setContent('<main data-runtime="bundled">Playwright runtime ready</main>');
