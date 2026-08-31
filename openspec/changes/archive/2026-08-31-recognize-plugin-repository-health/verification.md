@@ -28,5 +28,6 @@
 
 ## V-05：提交后的 CI
 
-- 待通过 WebStorm 提交并推送后，复核同一精确 SHA 的 shared 与 macOS ARM64/x64、Linux ARM64/x64、Windows x64 六项任务。
-- 平台 UI 用例仅在已准备 Chromium 的平台成品中执行；共享源码验证会明确跳过，避免把固定运行时交付成本重新引入共享验证。
+- 实现通过 WebStorm 提交并推送，精确 SHA：`4b2936f6bbd1e9543a5a501a17dbad6354a6b1f5`。
+- [GitHub Actions Validate #78](https://github.com/julangtaotian/wayfinder/actions/runs/33377691203) 成功，耗时 3 分 14 秒；shared validation（linux-x64）与 macOS ARM64/x64、Linux ARM64/x64、Windows x64 五个平台任务全部通过。
+- 五个平台均生成对应 `plugin-package-report-*` 报告；平台 UI 用例只在已准备 Chromium 的平台成品中执行，共享源码验证仍明确跳过，未把固定运行时交付成本重新引入共享验证。

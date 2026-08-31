@@ -2,10 +2,10 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-036-plugin-repository-health-recognition.md`
-- 变更：recognize-plugin-repository-health
-- 需求修订基线：R-01
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-036-plugin-repository-health-recognition.md`
+- 变更：2026-08-31-recognize-plugin-repository-health
+- 需求修订基线：R-02
 - 默认聚焦命令：`node --test tests/plugin-repository-health.test.mjs`
 
 ## 测试上下文
@@ -41,7 +41,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-01" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-02：多插件 summary 有界且完整结果保留全部事实
 
@@ -63,7 +63,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-02" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-03：重复检查只读并反映当前 marketplace 与 manifest
 
@@ -85,7 +85,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-03" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-04：空本地条目与损坏 JSON 失败关闭
 
@@ -107,7 +107,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-04" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-05：不安全路径与 manifest 结构失配可定位
 
@@ -129,7 +129,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-05" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-06：非插件项目保持现有工作流行为
 
@@ -151,7 +151,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-06" tests/plugin-repository-health.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：V-01：2026-08-31 运行 `node --test tests/plugin-repository-health.test.mjs`，6/6 通过。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-07：当前插件仓库的轻量检查与发布链复核
 
@@ -173,11 +173,11 @@
 - 聚焦命令：不适用
 - 关联验证：V-02、V-03、V-04
 - 结果分类：通过
-- 证据：V-02、V-03、V-04：2026-08-31 已完成全量、结构、统一与当前仓库 summary 复核，详情见 `verification.md`。
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ### TC-08：同一 SHA 的共享与五平台 CI 证据
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -194,8 +194,8 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
-- 证据：待执行
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-31-recognize-plugin-repository-health/verification.md`
 
 ## 执行记录
 
@@ -203,4 +203,4 @@
 | --- | --- | --- | --- |
 | TC-01～TC-06 | `node --test tests/plugin-repository-health.test.mjs` | 通过（6/6） | V-01；`verification.md` |
 | TC-07 | 当前插件仓库 summary、本地全量/结构/统一验证与 Vue fixture 人工复核 | 人工通过 | V-02、V-03、V-04；`verification.md` |
-| TC-08 | 使用 WebStorm 推送后复核同一 SHA 的 shared 与五平台 Actions 矩阵 | 待执行 | V-05 |
+| TC-08 | 使用 WebStorm 推送后复核同一 SHA 的 shared 与五平台 Actions 矩阵 | 通过（shared + 五个平台均成功） | V-05；[GitHub Actions #78](https://github.com/julangtaotian/wayfinder/actions/runs/33377691203) |
