@@ -11,15 +11,24 @@ export const REPOSITORY_FOOTPRINT_BUDGETS = Object.freeze({
   pluginScriptFileLines: 800,
 });
 
+export const REPOSITORY_RETIREMENT_LIMITS = Object.freeze({
+  platformAssetFiles: 0,
+  platformIntegrityManifests: 0,
+  platformLfsRules: 0,
+});
+
 const RETIRED_PATHS = Object.freeze(['outputs/lanhu-design-spec']);
 const STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
+const PLAYWRIGHT_PLATFORM_ASSET_PREFIX = 'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/';
+const PLAYWRIGHT_PLATFORM_INTEGRITY_PATTERN = /^plugins\/frontend-ai-workflow\/runtime\/playwright\/integrity\/(?:darwin-arm64|darwin-x64|linux-arm64|linux-x64|win32-x64)\.json$/u;
+const PLAYWRIGHT_LFS_RULE_PATTERN = /^\s*plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\*\*\s+.*\bfilter=lfs\b.*$/gmu;
 
 function normalizePath(value) {
   return String(value).replaceAll('\\', '/').replace(/^\.\//u, '');
 }
 
-function gitTrackedOutputs(root) {
-  const result = spawnSync('git', ['-C', root, 'ls-files', '-z', '--', 'outputs'], {
+function gitTrackedFiles(root) {
+  const result = spawnSync('git', ['-C', root, 'ls-files', '-z'], {
     encoding: 'utf8',
     shell: false,
   });
@@ -46,7 +55,7 @@ function lineCount(filePath) {
 }
 
 function diagnostic(code, target, actual, budget) {
-  return { code, target: normalizePath(target), status: 'failed', actual, budget };
+  return { code, target: normalizePath(target), status: 'failed', actual, budget, limit: budget };
 }
 
 export function auditRepositoryFootprint({
@@ -55,13 +64,14 @@ export function auditRepositoryFootprint({
   budgets = REPOSITORY_FOOTPRINT_BUDGETS,
 } = {}) {
   const repositoryRoot = fs.realpathSync(path.resolve(root));
-  const tracked = (trackedFiles || gitTrackedOutputs(repositoryRoot))
+  const tracked = (trackedFiles || gitTrackedFiles(repositoryRoot))
     .map(normalizePath)
     // 待提交删除仍会出现在索引中，预算按本次提交后的实际文件面统计。
     .filter((relativePath) => fs.existsSync(path.join(repositoryRoot, relativePath)))
     .sort();
+  const trackedOutputs = tracked.filter((relativePath) => relativePath === 'outputs' || relativePath.startsWith('outputs/'));
   const diagnostics = [];
-  const trackedOutputBytes = tracked.reduce((total, relativePath) => {
+  const trackedOutputBytes = trackedOutputs.reduce((total, relativePath) => {
     const filePath = path.join(repositoryRoot, relativePath);
     return total + (fs.existsSync(filePath) && fs.statSync(filePath).isFile() ? fs.statSync(filePath).size : 0);
   }, 0);
@@ -75,12 +85,42 @@ export function auditRepositoryFootprint({
     path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts'),
     (name) => name.endsWith('.mjs'),
   );
+  const platformAssetFiles = tracked.filter((relativePath) => relativePath.startsWith(PLAYWRIGHT_PLATFORM_ASSET_PREFIX));
+  const platformIntegrityManifests = tracked.filter((relativePath) => PLAYWRIGHT_PLATFORM_INTEGRITY_PATTERN.test(relativePath));
+  const attributesPath = path.join(repositoryRoot, '.gitattributes');
+  const platformLfsRules = fs.existsSync(attributesPath)
+    ? [...fs.readFileSync(attributesPath, 'utf8').matchAll(PLAYWRIGHT_LFS_RULE_PATTERN)].length
+    : 0;
 
   for (const retiredPath of RETIRED_PATHS) {
     if (fs.existsSync(path.join(repositoryRoot, retiredPath))) diagnostics.push(diagnostic('retired_path_present', retiredPath, 1, 0));
   }
-  if (tracked.length > budgets.trackedOutputFiles) {
-    diagnostics.push(diagnostic('tracked_outputs_file_budget_exceeded', 'outputs', tracked.length, budgets.trackedOutputFiles));
+  if (platformAssetFiles.length > REPOSITORY_RETIREMENT_LIMITS.platformAssetFiles) {
+    diagnostics.push(diagnostic(
+      'retired_platform_asset_files_present',
+      PLAYWRIGHT_PLATFORM_ASSET_PREFIX,
+      platformAssetFiles.length,
+      REPOSITORY_RETIREMENT_LIMITS.platformAssetFiles,
+    ));
+  }
+  if (platformIntegrityManifests.length > REPOSITORY_RETIREMENT_LIMITS.platformIntegrityManifests) {
+    diagnostics.push(diagnostic(
+      'retired_platform_integrity_manifests_present',
+      'plugins/frontend-ai-workflow/runtime/playwright/integrity',
+      platformIntegrityManifests.length,
+      REPOSITORY_RETIREMENT_LIMITS.platformIntegrityManifests,
+    ));
+  }
+  if (platformLfsRules > REPOSITORY_RETIREMENT_LIMITS.platformLfsRules) {
+    diagnostics.push(diagnostic(
+      'retired_platform_lfs_rules_present',
+      '.gitattributes',
+      platformLfsRules,
+      REPOSITORY_RETIREMENT_LIMITS.platformLfsRules,
+    ));
+  }
+  if (trackedOutputs.length > budgets.trackedOutputFiles) {
+    diagnostics.push(diagnostic('tracked_outputs_file_budget_exceeded', 'outputs', trackedOutputs.length, budgets.trackedOutputFiles));
   }
   if (trackedOutputBytes > budgets.trackedOutputBytes) {
     diagnostics.push(diagnostic('tracked_outputs_byte_budget_exceeded', 'outputs', trackedOutputBytes, budgets.trackedOutputBytes));
@@ -117,11 +157,14 @@ export function auditRepositoryFootprint({
   }
   diagnostics.sort((left, right) => left.code.localeCompare(right.code) || left.target.localeCompare(right.target));
   const counts = {
-    trackedOutputFiles: tracked.length,
+    trackedOutputFiles: trackedOutputs.length,
     trackedOutputBytes,
     activeFullRequirements: activeFullRequirements.length,
     rootTestFiles: testFiles.length,
     pluginScriptFiles: scriptFiles.length,
+    platformAssetFiles: platformAssetFiles.length,
+    platformIntegrityManifests: platformIntegrityManifests.length,
+    platformLfsRules,
   };
   return {
     ok: diagnostics.length === 0,
@@ -129,6 +172,7 @@ export function auditRepositoryFootprint({
     status: diagnostics.length === 0 ? 'passed' : 'failed',
     target: normalizePath(path.relative(process.cwd(), repositoryRoot) || '.'),
     budgets: { ...budgets },
+    retirementLimits: { ...REPOSITORY_RETIREMENT_LIMITS },
     counts,
     diagnostics,
   };

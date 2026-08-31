@@ -4,15 +4,15 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-03",
-      "tests/ui-review-platform-runtime.test.mjs"
+      "--test-name-pattern=TC-06",
+      "tests/repository-hygiene.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T03:54:09.501Z",
-  "evidenceId": "V-08",
+  "completedAt": "2026-08-31T03:54:08.757Z",
+  "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
@@ -20,18 +20,18 @@
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-03] 源码外唯一平台 marketplace 成品",
+  "locator": "[TC-06] 平台二进制、生成清单和 LFS 规则退役且本地成品保持忽略",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 577,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831035409354-7610-2ea248e0/stdout.log",
-      "sha256": "fb9c7e7406d17a2fed88eee231e6a774e66f9f4d1c720fc1ba79f81267c4f3d2",
+      "bytes": 344,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-02/20260831035408619-7478-dd255681/stdout.log",
+      "sha256": "9dabbd310886bf7290f72b294826f1851b54fcdec10d3969639aa2e711025a8f",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831035409354-7610-2ea248e0/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-02/20260831035408619-7478-dd255681/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -40,31 +40,25 @@
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
-      "A-02",
-      "A-05"
+      "A-06"
     ],
     "algorithm": "sha256",
     "decisionIds": [
-      "D-03",
-      "D-04",
-      "D-05",
+      "D-02",
       "D-06",
-      "D-08",
-      "D-09",
+      "D-07",
       "D-10",
-      "D-11",
-      "D-12",
-      "D-13"
+      "D-11"
     ],
     "revision": "R-05",
-    "sha256": "3a39d4f6996a2906a3446dbad858c692501db7d534649baf19778bd910c9ba22",
+    "sha256": "0e5e1cca660d401cdeb71e1228dab95c9a190a2f0004786f28ae771269e75ab3",
     "testCaseIds": [
-      "TC-03"
+      "TC-06"
     ],
-    "verificationId": "V-08",
+    "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-08-31T03:54:09.355Z",
+  "startedAt": "2026-08-31T03:54:08.621Z",
   "status": "passed",
   "workspaceFingerprint": "ba76e947c3cad754bf024ff81773ade030c73d0a2f3c561e94098779eedd353f"
 }

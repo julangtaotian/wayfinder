@@ -29,11 +29,10 @@ function fail(message, { code = 'playwright_platform_build_failed', target = nul
 }
 
 function parseArgs(argv) {
-  const options = { write: false, replaceLfsPointers: false, platformKey: null };
+  const options = { write: false, platformKey: null };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--write') options.write = true;
-    else if (value === '--replace-lfs-pointers') options.replaceLfsPointers = true;
     else if (value === '--platform') options.platformKey = argv[++index];
     else fail(`不支持的参数：${value}`);
   }
@@ -180,54 +179,6 @@ export function copyExternalRuntimeSource({ sourceRuntimeRoot, targetRuntimeRoot
   }
 }
 
-function inspectReplaceableLfsTree({ runtimeRoot, platformKey, targetRoot }) {
-  const targetStat = fs.lstatSync(targetRoot);
-  if (!targetStat.isDirectory() || targetStat.isSymbolicLink()) {
-    fail(`目标平台占位路径不是安全目录：${targetRoot}`, {
-      code: 'playwright_platform_replacement_unsafe',
-      target: platformKey,
-    });
-  }
-  let pointerFiles = 0;
-  let emptyFiles = 0;
-  const visit = (directory) => {
-    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-      const target = path.join(directory, entry.name);
-      const stat = fs.lstatSync(target);
-      if (stat.isDirectory()) {
-        visit(target);
-        continue;
-      }
-      if (!stat.isFile()) {
-        fail(`目标平台占位目录包含不安全的非普通文件：${target}`, {
-          code: 'playwright_platform_replacement_unsafe',
-          target: platformKey,
-        });
-      }
-      if (stat.size === 0) {
-        emptyFiles += 1;
-        continue;
-      }
-      const inspection = inspectPlaywrightAsset(target, { runtimeRoot });
-      if (inspection.code !== 'playwright_lfs_pointer') {
-        fail(`目标平台占位目录包含真实文件，拒绝覆盖：${target}`, {
-          code: 'playwright_platform_replacement_unsafe',
-          target: platformKey,
-        });
-      }
-      pointerFiles += 1;
-    }
-  };
-  visit(targetRoot);
-  if (pointerFiles === 0) {
-    fail(`目标平台目录没有可识别的 Git LFS 指针，拒绝替换：${targetRoot}`, {
-      code: 'playwright_platform_replacement_unsafe',
-      target: platformKey,
-    });
-  }
-  return { pointerFiles, emptyFiles };
-}
-
 function copySupplementalBrowserLicense({
   runtimeRoot,
   platformKey,
@@ -304,7 +255,6 @@ function copySupplementalBrowserLicense({
 export function buildPlaywrightPlatform({
   platformKey,
   write = false,
-  replaceLfsPointers = false,
   runtimeRoot = DEFAULT_PLAYWRIGHT_RUNTIME_ROOT,
   outputRuntimeRoot = null,
   execute = spawnSync,
@@ -322,7 +272,6 @@ export function buildPlaywrightPlatform({
       code: 'playwright_platform_build_plan',
       target: platformKey,
       write,
-      replaceLfsPointers: false,
       platformKey,
       playwrightVersion: BUNDLED_PLAYWRIGHT_VERSION,
       hostOverride: PLAYWRIGHT_PLATFORM_CONFIGS[platformKey].hostPlatform,
@@ -373,7 +322,6 @@ export function buildPlaywrightPlatform({
     code: 'playwright_platform_build_plan',
     target: platformKey,
     write,
-    replaceLfsPointers,
     platformKey,
     playwrightVersion: BUNDLED_PLAYWRIGHT_VERSION,
     hostOverride: PLAYWRIGHT_PLATFORM_CONFIGS[platformKey].hostPlatform,
@@ -383,15 +331,12 @@ export function buildPlaywrightPlatform({
   };
   if (!write) return plan;
 
-  let replacement = { pointerFiles: 0, emptyFiles: 0 };
   const targetExists = fs.existsSync(finalRoot);
-  if (targetExists && !replaceLfsPointers) fail(`平台运行包已存在，拒绝覆盖：${finalRoot}`);
-  if (targetExists) replacement = inspectReplaceableLfsTree({ runtimeRoot: root, platformKey, targetRoot: finalRoot });
+  if (targetExists) fail(`平台运行包已存在，拒绝覆盖：${finalRoot}`);
 
   const stageRoot = path.join(root, 'platform-assets', `.build-${platformKey}-${process.pid}`);
-  const backupRoot = path.join(root, 'platform-assets', `.backup-${platformKey}-${process.pid}`);
   const browsersPath = path.join(stageRoot, '.local-browsers');
-  if (fs.existsSync(stageRoot) || fs.existsSync(backupRoot)) {
+  if (fs.existsSync(stageRoot)) {
     fail(`平台构建暂存目录已存在，拒绝复用：${stageRoot}`, {
       code: 'playwright_platform_stage_exists',
       target: platformKey,
@@ -417,9 +362,6 @@ export function buildPlaywrightPlatform({
       environment,
       downloadPolicy,
     });
-    if (targetExists) {
-      fs.renameSync(finalRoot, backupRoot);
-    }
     fs.renameSync(stageRoot, finalRoot);
     const [platform, ...archParts] = platformKey.split('-');
     const inspection = inspectBundledPlaywright({
@@ -435,15 +377,10 @@ export function buildPlaywrightPlatform({
       integrityPath: path.join(root, 'integrity'),
       platformKeys: [platformKey],
     });
-    if (targetExists) {
-      fs.rmSync(backupRoot, { recursive: true, force: true });
-    }
     return {
       ...plan,
       status: 'passed',
       code: 'playwright_platform_built',
-      replacedLfsPointers: replacement.pointerFiles,
-      retainedEmptyPlaceholders: replacement.emptyFiles,
       download,
       supplementalLicenseSource: supplementalLicense.source,
       inspection: { browser: inspection.browser, revision: inspection.browserRevision },
@@ -455,20 +392,11 @@ export function buildPlaywrightPlatform({
     } catch (cleanupError) {
       cleanupErrors.push(`暂存目录清理失败：${cleanupError.message}`);
     }
-    const backupExists = fs.existsSync(backupRoot);
-    // 仅当新发布目录可以由备份或原始“目标不存在”状态判定时，才删除不完整产物。
-    if (fs.existsSync(finalRoot) && (!targetExists || backupExists)) {
+    if (fs.existsSync(finalRoot)) {
       try {
         fs.rmSync(finalRoot, { recursive: true, force: true });
       } catch (cleanupError) {
         cleanupErrors.push(`不完整发布物清理失败：${cleanupError.message}`);
-      }
-    }
-    if (backupExists) {
-      try {
-        fs.renameSync(backupRoot, finalRoot);
-      } catch (cleanupError) {
-        cleanupErrors.push(`原占位目录恢复失败：${cleanupError.message}`);
       }
     }
     if (!error.code) error.code = 'playwright_platform_build_failed';

@@ -117,7 +117,8 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--smoke'],
     },
   ];
-  if (selectedScope === 'shared') {
+  if (selectedScope !== 'platform') {
+    // 规范源码不再携带平台二进制；真实完整性与 Chromium 冒烟只在平台成品作用域执行。
     return steps.filter((step) => !['playwright-integrity', 'playwright-smoke'].includes(step.id));
   }
   if (selectedScope === 'platform') {

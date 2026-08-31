@@ -192,7 +192,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 自动 | 计划：TC-01 平台准备入口预览、路径、原生平台和零写入聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-01.json` |
-| V-02 | 自动 | 计划：TC-06 仓库卫生、LFS 退役和受跟踪平台资产聚焦测试 | 待执行 | 计划 | `openspec/changes/<change-name>/evidence/V-02.json` |
+| V-02 | 自动 | TC-06 仓库卫生、LFS 退役和受跟踪平台资产聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-02.json` |
 | V-03 | 自动 | 计划：全量测试、结构校验、统一验证和官方 Skill/Plugin validators | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-03.json`；官方 validators 结果见 `openspec/changes/deliver-platform-runtime-on-install/verification.md` |
 | V-04 | 自动 | 计划：Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-04.json` |
 | V-05 | 人工 | macOS ARM64/x64、Linux ARM64/x64、Windows x64 本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用复核 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/verification.md`；GitHub Actions [run #71](https://github.com/julangtaotian/wayfinder/actions/runs/33352448361) |
@@ -201,7 +201,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | V-08 | 自动 | 计划：TC-03 源码外唯一平台 marketplace 与离线复制聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-08.json` |
 | V-09 | 自动 | 计划：TC-04 重复准备、原子升级和旧包保留聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-09.json` |
 | V-10 | 自动 | 计划：TC-05 五平台 CI 新准备入口与小型报告静态合同测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-10.json` |
-| V-11 | 自动 | 计划：TC-07 平台资产退役零预算门禁聚焦测试 | 待执行 | 计划 | `openspec/changes/<change-name>/evidence/V-11.json` |
+| V-11 | 自动 | TC-07 平台资产退役零预算门禁聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-11.json` |
 | V-12 | 自动 | 计划：TC-12 Codex 隔离安装、新会话加载、断网冒烟、失败清理与人工 CI 开关聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-12.json` |
 
 ## 验收标准
@@ -226,4 +226,4 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 
 ## 待确认问题
 
-- 无。需求已确认并实施中；任务 4.1 的五平台证据未齐全前不删除 LFS 资产。
+- 无。五平台安装证据和第二阶段退役实现已完成，最终验收仍等待同一精确提交的普通 CI 与五平台矩阵。

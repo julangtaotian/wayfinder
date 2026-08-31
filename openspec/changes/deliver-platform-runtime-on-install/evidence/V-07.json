@@ -4,19 +4,19 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-02] 平台下载重试超时与代理脱敏",
+      "--test-name-pattern=TC-02",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T02:55:49.879Z",
+  "completedAt": "2026-08-31T03:54:09.185Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "27686d82a2f0d36a64353a1db232ad85f626aae1",
+    "commit": "f415c2e80bcb64ba9ec0fdf951bf50b0a0496762",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,14 +24,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 270,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831025549652-79100-63e2f578/stdout.log",
-      "sha256": "a282b5681645a48de54436e0db75bc4a19cb192cdf652803f3b141095a799181",
+      "bytes": 268,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831035409010-7573-ae3d6ebf/stdout.log",
+      "sha256": "10127d5e1c2d1eaa404a4f21fc17593f3a7ca967d3412a059d52547326b8be07",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831025549652-79100-63e2f578/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831035409010-7573-ae3d6ebf/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -59,7 +59,7 @@
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-08-31T02:55:49.653Z",
+  "startedAt": "2026-08-31T03:54:09.012Z",
   "status": "passed",
-  "workspaceFingerprint": "8da1ed43a9981bae4a78e5260c282b97ba855464c5745fa163bf9ff179f6c2fb"
+  "workspaceFingerprint": "ba76e947c3cad754bf024ff81773ade030c73d0a2f3c561e94098779eedd353f"
 }

@@ -81,7 +81,7 @@ UI Review 作为严格 V-* 机器证据时，schema v2 清单必须绑定状态�
 
 Playwright 1.62.1、PNGJS 7.0.0 和 pixelmatch 7.1.0 固定在插件共享运行时。浏览器资产按 `platform-arch` 独立发布，支持 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`；每个平台分别包含 Chromium headless shell、FFmpeg、许可、元数据和 SHA-256 清单。
 
-`build-playwright-platform.mjs` 只供插件维护和发布阶段使用，默认预览，显式 `--write` 才下载指定平台资产并更新摘要。Validate CI 在 `lfs: false` 检出后额外使用 `--replace-lfs-pointers`，只允许安全替换纯 LFS 指针/零字节占位目录，失败恢复并清理。普通检查、冒烟、已安装插件和业务验收没有下载代码路径。GitHub Actions 必须在五个原生平台实际启动内置 Chromium 并得到 `skipped: false`；受支持平台缺包或跳过都失败，视觉兜底不能作为平台支持证据。
+`prepare-platform-marketplace.mjs` 只供插件维护、验证和发布阶段使用，默认预览，显式 `--write` 才在源码外有界暂存中下载当前原生平台资产、生成完整性清单并组装 marketplace。失败只清理本次暂存，不修改共享源码。普通检查、冒烟、已安装插件和业务验收没有下载代码路径。GitHub Actions 必须在五个原生平台实际启动成品 Chromium 并得到 `skipped: false`；受支持平台缺包或跳过都失败，视觉兜底不能作为平台支持证据。经验证的单平台 marketplace 可以复制到离线环境安装，回滚使用上一份已验证成品或提交，不改写 Git 历史。
 
 ## 权限边界
 

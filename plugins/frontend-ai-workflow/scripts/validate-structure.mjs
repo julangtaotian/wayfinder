@@ -376,17 +376,19 @@ function validatePlaywrightRuntime(errors, distribution, { scope = 'all' } = {})
     : SUPPORTED_PLAYWRIGHT_PLATFORMS;
   const requiredAssets = [
     ...PLAYWRIGHT_SHARED_RUNTIME_ASSETS,
-    ...platformKeys.flatMap((platformKey) => [
-      `runtime/playwright/platforms/${platformKey}.json`,
-      `runtime/playwright/integrity/${platformKey}.json`,
-    ]),
+    ...platformKeys.map((platformKey) => `runtime/playwright/platforms/${platformKey}.json`),
   ];
-  if (distribution.kind === 'platform') requiredAssets.push('runtime/playwright/distribution.json');
+  if (distribution.kind === 'platform') {
+    requiredAssets.push(
+      'runtime/playwright/distribution.json',
+      `runtime/playwright/integrity/${distribution.platformKey}.json`,
+    );
+  }
   for (const file of requiredAssets) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少 Playwright 运行时资产：${file}`);
   }
-  if (scope === 'shared') {
-    // 共享 CI 不拉取平台 LFS 二进制，只校验平台无关依赖和共享完整性清单。
+  if (distribution.kind === 'source' || scope === 'shared') {
+    // 源码仓库只交付共享依赖、平台元数据和共享完整性，平台成品由固定构建入口生成。
     const integrity = verifyPlaywrightSharedIntegrity();
     if (!integrity.ok) errors.push(`Playwright 共享运行时完整性校验失败：${integrity.errors.join('；')}`);
     const versions = [

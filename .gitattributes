@@ -1,4 +1,2 @@
 # 文本文件统一使用 LF，避免跨平台检出改变运行时摘要和测试夹具内容。
 * text=auto eol=lf
-
-plugins/frontend-ai-workflow/runtime/playwright/platform-assets/** filter=lfs diff=lfs merge=lfs -text

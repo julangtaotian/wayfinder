@@ -18,7 +18,7 @@
 ## AI 读取路由
 
 - 普通功能、修复和检查先在日常源码范围内定位；优先使用精确文件名和限定目录搜索。
-- 除非任务明确涉及运行时、平台打包、视觉证据或历史规划，不递归枚举 `runtime/**/node_modules`、`runtime/playwright/platform-assets`、`outputs`、`.frontend-ui-review/runs` 和 `openspec/changes/archive`。
+- 除非任务明确涉及运行时、平台打包、视觉证据或历史规划，不递归枚举 `runtime/**/node_modules`、被忽略的单平台成品、`outputs`、`.frontend-ui-review/runs` 和 `openspec/changes/archive`。
 - 项目健康检查先使用精简模式；只有计数和用户问题需要具体目标时才按诊断 code 查询，完整结果作为必要事实缺失时的兜底。
 
 ## 持续体积治理

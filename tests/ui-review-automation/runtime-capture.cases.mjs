@@ -24,8 +24,18 @@ import {
   createProject,
 } from './fixtures.mjs';
 
-test('内置 Playwright 固定版本、完整性、平台和 Chromium 启动均有效', async () => {
+function preparedPlatformRuntime(context) {
   const runtime = inspectBundledPlaywright();
+  if (!runtime.available && !process.env.UI_REVIEW_RUNTIME_ROOT) {
+    context.skip('规范源码只包含共享运行时；真实浏览器回归在准备后的平台成品中执行');
+    return null;
+  }
+  return runtime;
+}
+
+test('内置 Playwright 固定版本、完整性、平台和 Chromium 启动均有效', async (context) => {
+  const runtime = preparedPlatformRuntime(context);
+  if (!runtime) return;
   assert.equal(runtime.valid, true, runtime.reason);
   assert.equal(runtime.version, BUNDLED_PLAYWRIGHT_VERSION);
   assert.equal(runtime.source, 'bundled');
@@ -141,13 +151,13 @@ test('内置 Playwright 适配器生成零安装采集计划并注入真实浏�
   assert.equal(plan.projectPlaywright.source, 'bundled-adapter');
   const runtime = inspectBundledPlaywright();
   assert.equal(plan.projectPlaywright.portable, runtime.available, plan.projectPlaywright.unavailableReason);
-  assert.equal(plan.projectPlaywright.runtime.version, BUNDLED_PLAYWRIGHT_VERSION);
-  assert.equal(plan.projectPlaywright.runtime.integrityOk, true);
   if (!runtime.available) {
     assert.equal(plan.projectPlaywright.command, null);
-    assert.match(plan.projectPlaywright.unavailableReason, /当前环境/u);
+    assert.match(plan.projectPlaywright.unavailableReason, /当前环境|不完整/u);
     return;
   }
+  assert.equal(plan.projectPlaywright.runtime.version, BUNDLED_PLAYWRIGHT_VERSION);
+  assert.equal(plan.projectPlaywright.runtime.integrityOk, true);
   assert.equal(plan.projectPlaywright.command[0], process.execPath);
   assert.match(plan.projectPlaywright.command[1], /playwright-adapter-runner\.mjs$/u);
   assert.equal(plan.projectPlaywright.command.includes('npm'), false);
@@ -224,10 +234,11 @@ test('版本 2 统一入口只执行摘要匹配的受信适配器', async (cont
 });
 
 test('默认适配器在真实 Chromium 中完成弹窗、下拉、悬停和表单综合交互', async (context) => {
-  const runtime = inspectBundledPlaywright();
+  const runtime = preparedPlatformRuntime(context);
+  if (!runtime) return;
   assert.equal(runtime.available, true, runtime.reason);
   const html = `<!doctype html>
-<html><head><style>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>UI 交互测试</title><style>
 body{font:16px sans-serif}.tooltip{display:none}.help:hover+.tooltip{display:block}
 dialog[open]{display:block}dialog:not([open]){display:none}
 </style></head><body><main>
@@ -321,7 +332,8 @@ document.querySelector('[data-save]').onclick=()=>{document.querySelector('[data
 });
 
 test('结构化交互等待弹窗过渡结束后再保存截图', async (context) => {
-  const runtime = inspectBundledPlaywright();
+  const runtime = preparedPlatformRuntime(context);
+  if (!runtime) return;
   assert.equal(runtime.available, true, runtime.reason);
   const projectRoot = createProject(context);
   const playwright = await loadBundledPlaywright();
@@ -331,11 +343,11 @@ test('结构化交互等待弹窗过渡结束后再保存截图', async (context
   });
   try {
     const page = await browser.newPage({ viewport: { width: 200, height: 160 } });
-    await page.setContent(`<!doctype html><style>
+    await page.setContent(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>稳定截图测试</title><style>
       body{margin:0;background:#fff}.panel{position:fixed;inset:0;width:100px;height:100px;background:#f00;opacity:0;transition:opacity 220ms linear}.panel.open{opacity:1}
-    </style><button data-open style="position:fixed;left:120px">打开</button><div class="panel"></div><script>
+    </style></head><body><button data-open style="position:fixed;left:120px">打开</button><div class="panel"></div><script>
       document.querySelector('[data-open]').onclick=()=>document.querySelector('.panel').classList.add('open');
-    </script>`);
+    </script></body></html>`);
     const captureRoot = path.join(projectRoot, '.frontend-ui-review', 'stable-transition');
     const result = await executeStructuredInteractions({
       page,

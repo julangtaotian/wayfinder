@@ -337,8 +337,6 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     'openspec-archived',
     'runtime-version',
     'runtime-integrity',
-    'playwright-integrity',
-    'playwright-smoke',
   ]);
   const sharedSteps = buildVerificationSteps(verificationRoot, { scope: 'shared' });
   assert.deepEqual(sharedSteps.map((step) => step.id), [

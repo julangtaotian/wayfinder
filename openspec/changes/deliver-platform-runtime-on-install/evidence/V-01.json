@@ -4,19 +4,19 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-01] 平台准备预览与安全写入边界",
+      "--test-name-pattern=TC-01",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T02:55:44.722Z",
+  "completedAt": "2026-08-31T03:54:08.431Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "27686d82a2f0d36a64353a1db232ad85f626aae1",
+    "commit": "f415c2e80bcb64ba9ec0fdf951bf50b0a0496762",
     "dirty": true
   },
   "kind": "local-command",
@@ -25,13 +25,13 @@
   "logs": [
     {
       "bytes": 269,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831025544613-79100-f8031292/stdout.log",
-      "sha256": "557ba2684dc80c38a08105a3f7aed2a6c6251500f290a8ffb0d36c531935e6aa",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831035408322-7444-c346a17f/stdout.log",
+      "sha256": "2787c08c98b09d31ab14bb47f69d293012a25f3fa1c742a8d682d7da2358a9bc",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831025544613-79100-f8031292/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831035408322-7444-c346a17f/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -58,7 +58,7 @@
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-31T02:55:44.615Z",
+  "startedAt": "2026-08-31T03:54:08.324Z",
   "status": "passed",
-  "workspaceFingerprint": "8da1ed43a9981bae4a78e5260c282b97ba855464c5745fa163bf9ff179f6c2fb"
+  "workspaceFingerprint": "ba76e947c3cad754bf024ff81773ade030c73d0a2f3c561e94098779eedd353f"
 }

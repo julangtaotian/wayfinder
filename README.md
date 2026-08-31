@@ -345,22 +345,24 @@ npm run cleanup:test-runtime
 
 `prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
 
-仓库使用 Git LFS 保存 Playwright 浏览器二进制。普通源码开发可用 `GIT_LFS_SKIP_SMUDGE=1 git clone <repo>` 轻量克隆，再按当前平台执行 `git lfs pull --include="plugins/frontend-ai-workflow/runtime/playwright/platform-assets/<platform>/**" --exclude=""`；`<platform>` 为 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 或 `win32-x64`。Validate CI 使用 `lfs: false` 轻量检出，并在各原生 runner 上通过固定 Playwright 1.62.1 CLI 重建唯一目标平台资产，不消耗仓库 LFS 下载额度；只有纯 LFS 指针/零字节占位目录可被显式替换，失败会恢复占位并阻止后续验证。完整性、许可和真实浏览器冒烟仍是必需门禁，不能用跳过冒烟代替成功。只有用户明确决定回收当前克隆的无引用缓存时才执行 `git lfs prune`；自动化不得删除用户缓存、远端对象或重写 Git 历史。
+规范源码只保存 Playwright 共享 JavaScript 运行时、锁文件、许可证、五平台元数据和共享完整性清单，不再保存 Chromium/FFmpeg 二进制或平台生成清单。Validate CI 在各原生 runner 上通过固定 Playwright 1.62.1 CLI，在源码目录之外的有界暂存中只生成当前平台 marketplace；普通 push/PR 只上传小型 `package-report.json`，不上传大型浏览器成品，也不增加 cache、schedule 或写权限。完整性、许可、体积和真实 Chromium 冒烟仍是必需门禁，不能用跳过冒烟代替成功。
+
+安装或离线交付时，先用 `prepare-platform-marketplace.mjs --platform <platform-arch> --output <被忽略的成品目录>` 预览，确认后追加 `--write`；写入只允许当前原生平台。生成的完整 marketplace 可以复制到离线环境安装，插件使用阶段不会下载浏览器或回退用户缓存。失败时只清理本次暂存；需要回滚时恢复上一条已验证提交或保留的旧成品，不改写 Git 历史，也不自动清理本地或远端 LFS 对象。
 
 ### 升级内置 Playwright
 
 1. 在 `plugins/frontend-ai-workflow/runtime/playwright/package.json` 固定同一个 Playwright 版本，使用官方 npm 注册表更新包和锁文件。
-2. 用 `build-playwright-platform.mjs --platform <platform-arch>` 预览发布计划，只有维护阶段才追加 `--write` 下载固定 Chromium headless shell 与 FFmpeg。
+2. 用 `prepare-platform-marketplace.mjs --platform <platform-arch> --output <被忽略的成品目录>` 预览发布计划，只有当前原生平台的维护阶段才追加 `--write` 下载固定 Chromium headless shell 与 FFmpeg。
 3. 更新 `runtime/playwright/platforms/<platform-arch>.json` 的浏览器 revision、可执行文件和许可路径；平台资产只能位于自己的独立目录。
-4. 执行 `node plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs --write` 重建共享及各平台完整性清单，再运行 `--inspect`、`--check` 与目标平台上的 `--smoke`。
-5. 确认 `platform-assets` 文件由 Git LFS 跟踪，在五个受支持平台都取得 `skipped: false` 的真实启动证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
+4. 重建并校验源码共享完整性；平台完整性清单只在实际单平台成品中生成，不回写规范源码。
+5. 在五个受支持平台都完成结构、体积、许可、真实 Chromium 冒烟和安装证据后再更新插件 cachebuster。不得把某个平台的浏览器发布物标记为通用版本。
 
 ### 生成单平台插件成品
 
 1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output outputs/<平台成品目录>` 预览平台、排除资产和体积预算；预览不创建目录。
 2. 仅在 `<platform-arch>` 与当前原生平台一致时追加 `--write`。成品完整保留共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时排除其他四个平台资产。
 3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。许可、FFmpeg、共享运行时和完整性文件不得用于体积裁剪。
-4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改 Git LFS 规范源；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
+4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改规范源码；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
 
 ### 升级内置 OpenSpec
 

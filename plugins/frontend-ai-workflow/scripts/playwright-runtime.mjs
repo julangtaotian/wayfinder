@@ -62,14 +62,6 @@ export function normalizePlaywrightPlatformPath(value) {
   return String(value || '').replaceAll('\\', '/').replace(/^\.\//u, '');
 }
 
-export function playwrightLfsInclude(key) {
-  const normalizedKey = normalizePlaywrightPlatformPath(key);
-  if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(normalizedKey)) {
-    throw new Error(`不支持的 Playwright 平台：${normalizedKey || '空值'}`);
-  }
-  return `plugins/frontend-ai-workflow/runtime/playwright/platform-assets/${normalizedKey}/**`;
-}
-
 export function resolvePlaywrightIntegrityScope(environment = process.env) {
   const targetKey = String(environment.UI_REVIEW_EXPECT_PLATFORM || '').trim();
   if (!targetKey) return { verifyAllPlatforms: true };
@@ -77,7 +69,7 @@ export function resolvePlaywrightIntegrityScope(environment = process.env) {
     throw new Error(`不支持的 Playwright 完整性校验平台：${targetKey}`);
   }
   const [platform, ...archParts] = targetKey.split('-');
-  // CI 只拉取矩阵目标的 LFS 资产，因此结构校验必须保持同一平台边界。
+  // CI 只准备矩阵目标的外部平台成品，因此完整性校验必须保持同一平台边界。
   return { platform, arch: archParts.join('-'), verifyAllPlatforms: false };
 }
 
@@ -450,7 +442,7 @@ export function writePlaywrightIntegrity({
   const integrityRoot = path.resolve(integrityPath);
   const distribution = readPlaywrightDistribution(root);
   const selectedPlatformKeys = platformKeys || (
-    distribution.kind === 'platform' ? [distribution.platformKey] : SUPPORTED_PLAYWRIGHT_PLATFORMS
+    distribution.kind === 'platform' ? [distribution.platformKey] : []
   );
   for (const key of selectedPlatformKeys) {
     if (!SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(key)) throw new Error(`不支持的 Playwright 平台：${key}`);

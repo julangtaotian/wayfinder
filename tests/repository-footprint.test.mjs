@@ -5,6 +5,7 @@ import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 import {
   REPOSITORY_FOOTPRINT_BUDGETS,
+  REPOSITORY_RETIREMENT_LIMITS,
   auditRepositoryFootprint,
 } from '../plugins/frontend-ai-workflow/scripts/repository-footprint.mjs';
 
@@ -42,7 +43,42 @@ test('仓库体积审计返回稳定预算、计数和通过状态', (context) =
   assert.deepEqual(result.budgets, REPOSITORY_FOOTPRINT_BUDGETS);
   assert.equal(result.counts.activeFullRequirements, 1);
   assert.equal(result.counts.trackedOutputFiles, 1);
+  assert.deepEqual(result.retirementLimits, REPOSITORY_RETIREMENT_LIMITS);
   assert.equal(result.diagnostics.length, 0);
+});
+
+test('[TC-07] 平台资产、生成清单和 LFS 规则使用不可放宽的零上限', (context) => {
+  const root = createFixture(context);
+  const platformAsset = 'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/linux-x64/browser';
+  const platformManifest = 'plugins/frontend-ai-workflow/runtime/playwright/integrity/linux-x64.json';
+  write(root, platformAsset, 'browser');
+  write(root, platformManifest, '{}\n');
+  write(
+    root,
+    '.gitattributes',
+    'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/** filter=lfs diff=lfs merge=lfs -text\n',
+  );
+
+  const result = auditRepositoryFootprint({
+    root,
+    trackedFiles: [platformAsset, platformManifest, '.gitattributes'],
+    budgets: {
+      ...REPOSITORY_FOOTPRINT_BUDGETS,
+      platformAssetFiles: Number.MAX_SAFE_INTEGER,
+      platformIntegrityManifests: Number.MAX_SAFE_INTEGER,
+      platformLfsRules: Number.MAX_SAFE_INTEGER,
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(
+    result.diagnostics.map(({ code, actual, limit }) => ({ code, actual, limit })),
+    [
+      { code: 'retired_platform_asset_files_present', actual: 1, limit: 0 },
+      { code: 'retired_platform_integrity_manifests_present', actual: 1, limit: 0 },
+      { code: 'retired_platform_lfs_rules_present', actual: 1, limit: 0 },
+    ],
+  );
 });
 
 test('[V-03] 仓库体积与统一验证治理合同：各类预算违规稳定失败', (context) => {

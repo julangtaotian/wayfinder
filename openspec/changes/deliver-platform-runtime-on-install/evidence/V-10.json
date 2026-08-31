@@ -4,19 +4,19 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-05] CI 平台 marketplace 准备与小型报告合同",
+      "--test-name-pattern=TC-05",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T02:55:52.089Z",
+  "completedAt": "2026-08-31T03:54:10.082Z",
   "evidenceId": "V-10",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "27686d82a2f0d36a64353a1db232ad85f626aae1",
+    "commit": "f415c2e80bcb64ba9ec0fdf951bf50b0a0496762",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,14 +24,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 289,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-10/20260831025551887-79100-707cdcad/stdout.log",
-      "sha256": "ca586c2228a56c2a11465858b04e0181f6ad1950f5306c9b8705153be6730072",
+      "bytes": 421,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-10/20260831035409956-7682-c9a1636e/stdout.log",
+      "sha256": "62f5640471a6b7979974e71398e5de7a2fa94de465dab824f7362235b55a1abd",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-10/20260831025551887-79100-707cdcad/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-10/20260831035409956-7682-c9a1636e/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -58,7 +58,7 @@
     "verificationId": "V-10",
     "version": 1
   },
-  "startedAt": "2026-08-31T02:55:51.888Z",
+  "startedAt": "2026-08-31T03:54:09.957Z",
   "status": "passed",
-  "workspaceFingerprint": "8da1ed43a9981bae4a78e5260c282b97ba855464c5745fa163bf9ff179f6c2fb"
+  "workspaceFingerprint": "ba76e947c3cad754bf024ff81773ade030c73d0a2f3c561e94098779eedd353f"
 }

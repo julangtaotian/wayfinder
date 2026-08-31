@@ -134,7 +134,7 @@
 
 ### TC-06：平台资产与 LFS 规则从 HEAD 退役
 
-- 状态：计划
+- 状态：通过
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：集成
@@ -148,15 +148,15 @@
 - 操作：读取 Git 跟踪与忽略语义，检查共享保留路径、退役路径和本地成品样本
 - 可观察断言：共享生产运行时继续受跟踪；platform-assets 内容、生成清单和 LFS 规则为零；本地成品被忽略；重新引入任一退役目标返回稳定路径诊断
 - 目标测试：`tests/repository-hygiene.test.mjs`
-- 测试定位：`[TC-06] 平台运行时 LFS 资产退役边界`
+- 测试定位：`[TC-06] 平台二进制、生成清单和 LFS 规则退役且本地成品保持忽略`
 - 聚焦命令：`node --test --test-name-pattern="TC-06" tests/repository-hygiene.test.mjs`
 - 关联验证：V-02
-- 结果分类：未执行
-- 证据：待执行；第二阶段通过后写入 `openspec/changes/deliver-platform-runtime-on-install/evidence/V-02.json`
+- 结果分类：通过
+- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-02.json`
 
 ### TC-07：平台资产退役零预算门禁
 
-- 状态：计划
+- 状态：通过
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：集成
@@ -170,11 +170,11 @@
 - 操作：分别审计零目标和三类回归样本
 - 可观察断言：零目标通过且报告 actual=0/limit=0；任一回归返回稳定 code/status/target/actual/limit；普通预算变化不能放行退役目标
 - 目标测试：`tests/repository-footprint.test.mjs`
-- 测试定位：`[TC-07] 平台运行时退役零预算门禁`
+- 测试定位：`[TC-07] 平台资产、生成清单和 LFS 规则使用不可放宽的零上限`
 - 聚焦命令：`node --test --test-name-pattern="TC-07" tests/repository-footprint.test.mjs`
 - 关联验证：V-11
-- 结果分类：未执行
-- 证据：待执行；第二阶段通过后写入 `openspec/changes/deliver-platform-runtime-on-install/evidence/V-11.json`
+- 结果分类：通过
+- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-11.json`
 
 ### TC-08：本地发布级共享链保持完整
 
@@ -222,7 +222,7 @@
 
 ### TC-10：五个平台 marketplace 安装与断网运行
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -239,8 +239,8 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/verification.md`；本机运行产物位于被忽略的 `outputs/platform-runtime-delivery/`
+- 结果分类：通过
+- 证据：`openspec/changes/deliver-platform-runtime-on-install/verification.md`；GitHub Actions run #71
 
 ### TC-11：最终精确提交的共享与五平台 CI
 
