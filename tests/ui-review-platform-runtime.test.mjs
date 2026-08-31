@@ -26,6 +26,7 @@ import { buildPlaywrightPlatform, copyExternalRuntimeSource } from '../plugins/f
 import {
   PLATFORM_PLUGIN_SIZE_BUDGETS,
   PLATFORM_STAGE_RETRY_POLICY,
+  compactPlatformStageName,
   packagePluginPlatform,
 } from '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs';
 import { preparePlatformMarketplace } from '../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs';
@@ -37,14 +38,8 @@ const EXPECTED_PLATFORMS = [
   'win32-x64',
 ];
 const packagePluginScript = fileURLToPath(new URL('../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs', import.meta.url));
-const playwrightRuntimeScript = fileURLToPath(new URL(
-  '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs',
-  import.meta.url,
-));
-const preparePlatformMarketplaceScript = fileURLToPath(new URL(
-  '../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs',
-  import.meta.url,
-));
+const playwrightRuntimeScript = fileURLToPath(new URL('../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs', import.meta.url));
+const preparePlatformMarketplaceScript = fileURLToPath(new URL('../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs', import.meta.url));
 function platformMetadata(platform, arch) {
   const key = `${platform}-${arch}`;
   const browsersPath = `platform-assets/${key}/.local-browsers`;
@@ -673,7 +668,7 @@ test('平台插件成品超预算或校验失败时清理半成品', async (cont
     /超过预算/u,
   );
   assert.equal(fs.existsSync(options.outputRoot), false);
-  assert.equal(fs.existsSync(options.distRoot) ? fs.readdirSync(options.distRoot).some((name) => name.includes('.stage-')) : false, false);
+  assert.equal(fs.existsSync(options.distRoot) ? fs.readdirSync(options.distRoot).some((name) => name.startsWith('.s-')) : false, false);
   await assert.rejects(
     () => packagePluginPlatform({
       ...options,
@@ -731,7 +726,7 @@ test('平台插件清理重试耗尽时保留原始打包错误和清理定位',
       assert.equal(error.cause?.message, '平台成品结构校验失败：fixture invalid');
       assert.equal(error.cleanupError, cleanupError);
       assert.equal(error.target, cleanupTarget);
-      assert.match(path.basename(error.target), /\.stage-\d+-\d+$/u);
+      assert.match(path.basename(error.target), /^\.s-[0-9a-z]+-[0-9a-z]+$/u);
       return true;
     },
   );
@@ -913,6 +908,11 @@ test('[TC-03] Windows 外部运行时复制排除源码平台资产', (context) 
   copyExternalRuntimeSource({ sourceRuntimeRoot, targetRuntimeRoot });
   assert.equal(fs.existsSync(path.join(targetRuntimeRoot, 'node_modules', 'playwright', 'package.json')), true);
   for (const excluded of ['platform-assets', 'integrity', 'distribution.json']) assert.equal(fs.existsSync(path.join(targetRuntimeRoot, excluded)), false);
+  const windowsOutputRoot = 'D:\\a\\wayfinder\\wayfinder\\dist\\frontend-ai-workflow-win32-x64';
+  const windowsStageExecutable = path.win32.join(path.win32.dirname(windowsOutputRoot),
+    compactPlatformStageName('p', { processId: 5092, timestamp: 1788137687493 }), compactPlatformStageName('s', { processId: 5092, timestamp: 1788137696439 }),
+    'plugins', 'frontend-ai-workflow', 'runtime', 'playwright', ...platformMetadata('win32', 'x64').browser.executable.split('/'));
+  assert.ok(windowsStageExecutable.length < 260, `Windows 暂存启动路径过长：${windowsStageExecutable.length}`);
 });
 test('[TC-04] 平台 marketplace 原子升级与旧包保留', async (context) => {
   const options = packagingOptions(context);
@@ -954,7 +954,7 @@ test('[TC-04] 平台 marketplace 原子升级与旧包保留', async (context) =
   );
   assert.equal(fs.readFileSync(path.join(options.outputRoot, 'version.txt'), 'utf8'), 'stable\n');
   assert.equal(
-    fs.readdirSync(options.distRoot).some((name) => name.includes('.prepare-') || name.includes('.backup-')),
+    fs.readdirSync(options.distRoot).some((name) => name.startsWith('.p-') || name.startsWith('.b-')),
     false,
   );
 });

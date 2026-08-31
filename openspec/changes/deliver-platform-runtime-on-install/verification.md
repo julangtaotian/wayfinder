@@ -30,6 +30,8 @@
 - 第一阶段已通过 WebStorm 提交并推送，提交 SHA 为 `5f0d3fb9b3f08557e38f56d4ece441618c5c1153`，对应 GitHub Actions [run #61](https://github.com/julangtaotian/wayfinder/actions/runs/33345203213)。shared 任务通过，但 `win32-x64` 在 `Prepare platform marketplace outside source runtime` 步骤失败，因此 V-06 与任务 3.4 保持未完成。
 - Windows 稳定失败字段：`status=failed`、`code=playwright_platform_build_failed`、`target=win32-x64`、`attempts=0`。失败发生在下载前，外部暂存运行时错误保留了源码 `platform-assets/win32-x64`，递归构建因目标已存在而按安全规则拒绝覆盖。
 - 修复定位：`build-playwright-platform.mjs` 的外部运行时复制改为显式顶层白名单复制；`tests/ui-review-platform-runtime.test.mjs` 的 `[TC-03] Windows 外部运行时复制排除源码平台资产` 固定验证 Windows 平台资产哨兵、旧完整性目录和旧发布描述均不会进入外部运行时。只有修复提交的同一精确 SHA 在 shared 与五个平台全部成功后，任务 3.4 才能完成。
+- 第一处修复通过 WebStorm 提交并推送为 `791b6c530328510828fcf2b6527e09a929811cd6`，对应 GitHub Actions [run #62](https://github.com/julangtaotian/wayfinder/actions/runs/33345902625)。shared 与四个非 Windows 平台完成，Windows 已越过旧的目录覆盖错误并完成下载，但在同一步骤的真实 Chromium 冒烟中返回 `status=failed`、`code=platform_marketplace_prepare_failed`、`target=win32-x64`、`attempts=0`，启动 `.exe` 时为 `ENOENT`。
+- 第二处根因是准备目录和打包目录连续叠加后，Windows CI 的浏览器启动路径达到 297 字符；最终交付路径只有 233 字符。修复把准备、打包和升级备份改为同级短暂存名，并以 `path.win32` 固定 GitHub runner 样本的启动路径低于 260 字符；路径安全校验、独占标识、失败清理和原子发布合同保持不变。
 - 其他四个平台的本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网运行记录尚未收集，任务 4.1 与 A-05 保持未完成。
 - 在五平台安装证据齐全前，不删除仓库 HEAD 中的 LFS 平台资产、不移除 `.gitattributes` 规则，也不开始第二阶段退役任务。
 - 本变更没有创建 schedule、定时优化、定时清理或定时发布任务。

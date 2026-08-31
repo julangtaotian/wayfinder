@@ -77,10 +77,10 @@
 - 关联规格：`plugin-ui-review-automation / 生成只包含一个平台的完整成品`、`离线环境安装已验证成品`
 - 状态矩阵：初始（已有数据）、用户操作、空态、错误态
 - 前置条件：共享源码运行时可能仍含第一阶段 LFS 平台资产，下载器能够在全新外部运行时根生成确定性 fixture
-- 测试数据：darwin-arm64 目标、win32-x64 源码平台资产哨兵、其他平台元数据样本、固定版本、许可、完整性、体积和 screenshot bytes
+- 测试数据：darwin-arm64 目标、win32-x64 源码平台资产哨兵、GitHub Windows runner 根路径样本、其他平台元数据样本、固定版本、许可、完整性、体积和 screenshot bytes
 - 测试替身：使用 `outputs/platform-runtime-delivery/test-fixtures/` 下的有界运行时 fixture 和注入冒烟，不访问网络
 - 操作：从共享源码和外部平台运行时生成完整 marketplace，再从复制后的目录执行结构、分发描述和完整性检查
-- 可观察断言：源码没有被修改；外部复制明确排除源码 `platform-assets`、`integrity` 和 `distribution.json`；成品只含目标平台；distribution/version/license/shared+platform integrity/预算/冒烟均通过；复制完整目录后无需下载仍能通过同一结构与运行时检查
+- 可观察断言：源码没有被修改；外部复制明确排除源码 `platform-assets`、`integrity` 和 `distribution.json`；Windows 准备与打包暂存启动路径低于 260 字符；成品只含目标平台；distribution/version/license/shared+platform integrity/预算/冒烟均通过；复制完整目录后无需下载仍能通过同一结构与运行时检查
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-03] 源码外唯一平台 marketplace 成品`
 - 聚焦命令：`node --test --test-name-pattern="TC-03" tests/ui-review-platform-runtime.test.mjs`

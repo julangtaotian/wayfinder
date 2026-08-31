@@ -14,6 +14,7 @@ import {
 } from './build-playwright-platform.mjs';
 import {
   PLATFORM_PLUGIN_SIZE_BUDGETS,
+  compactPlatformStageName,
   packagePluginPlatform,
   publishPlatformStage,
   validatePlatformOutputRoot,
@@ -54,7 +55,7 @@ async function publishPreparedMarketplace({
   waitForRetry,
   environment,
 }) {
-  const backupRoot = `${finalRoot}.backup-${process.pid}-${Date.now()}`;
+  const backupRoot = path.join(path.dirname(finalRoot), compactPlatformStageName('b'));
   let backupMoved = false;
   try {
     if (upgrade) {
@@ -149,9 +150,9 @@ export async function preparePlatformMarketplace({
   }
 
   fs.mkdirSync(path.dirname(finalRoot), { recursive: true });
-  const workRoot = `${finalRoot}.prepare-${process.pid}-${Date.now()}`;
+  const workRoot = path.join(path.dirname(finalRoot), compactPlatformStageName('p'));
   const runtimeRoot = path.join(workRoot, 'runtime', 'playwright');
-  const preparedRoot = path.join(workRoot, 'marketplace');
+  const preparedRoot = path.join(workRoot, 'm');
   if (fs.existsSync(workRoot)) {
     fail(`准备暂存目录已存在：${workRoot}`, { code: 'platform_marketplace_stage_exists', target: workRoot });
   }

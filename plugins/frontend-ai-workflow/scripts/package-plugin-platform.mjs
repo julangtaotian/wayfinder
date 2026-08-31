@@ -25,6 +25,17 @@ export const PLATFORM_PLUGIN_SIZE_BUDGETS = Object.freeze({
   'win32-x64': 340 * MEBIBYTE,
 });
 
+export function compactPlatformStageName(label, {
+  processId = process.pid,
+  timestamp = Date.now(),
+} = {}) {
+  if (!/^[a-z]$/u.test(label)) fail(`平台暂存标签必须是单个小写字母：${label}`);
+  if (!Number.isSafeInteger(processId) || processId < 0 || !Number.isSafeInteger(timestamp) || timestamp < 0) {
+    fail('平台暂存标识必须是非负安全整数');
+  }
+  return `.${label}-${processId.toString(36)}-${timestamp.toString(36)}`;
+}
+
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const defaultPluginRoot = path.resolve(scriptDir, '..');
 const defaultRepositoryRoot = path.resolve(defaultPluginRoot, '..', '..');
@@ -303,7 +314,8 @@ export async function packagePluginPlatform({
   }
 
   fs.mkdirSync(path.dirname(finalRoot), { recursive: true });
-  const stageRoot = `${finalRoot}.stage-${process.pid}-${Date.now()}`;
+  const stageRoot = path.join(path.dirname(finalRoot), compactPlatformStageName('s'));
+  if (fs.existsSync(stageRoot)) fail(`平台打包暂存目录已存在：${stageRoot}`);
   const stagePluginRoot = path.join(stageRoot, 'plugins', 'frontend-ai-workflow');
   const sourceRuntimeRoot = path.join(sourcePluginRoot, 'runtime', 'playwright');
   const platformRuntimeRoot = fs.realpathSync(path.resolve(runtimeSourceRoot || sourceRuntimeRoot));

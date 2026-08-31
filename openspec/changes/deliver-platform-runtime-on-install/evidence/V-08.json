@@ -14,12 +14,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T00:48:52.896Z",
+  "completedAt": "2026-08-31T01:02:12.948Z",
   "evidenceId": "V-08",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "5f0d3fb9b3f08557e38f56d4ece441618c5c1153",
+    "commit": "791b6c530328510828fcf2b6527e09a929811cd6",
     "dirty": true
   },
   "kind": "local-command",
@@ -27,14 +27,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 574,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831004852671-4603-a17c3d6f/stdout.log",
-      "sha256": "72ff214dceca01f9c5c9c6023234dbb2e7ac4b2d4c849c9352ee005ff0381574",
+      "bytes": 575,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831010212711-20359-eadb64a5/stdout.log",
+      "sha256": "2360468b154490a658ef7c971fc764e3913d75fafd55be702b913b6f017e7316",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831004852671-4603-a17c3d6f/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-08/20260831010212711-20359-eadb64a5/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -60,14 +60,14 @@
       "D-13"
     ],
     "revision": "R-04",
-    "sha256": "6654a5c61d16fed39474409619a2614a258f8ebbee03bed2ded392dbc37c74f2",
+    "sha256": "92d358dc314a254dab1ddf1c81a46b8efc5981778858e9ad7ca209ac8c663377",
     "testCaseIds": [
       "TC-03"
     ],
     "verificationId": "V-08",
     "version": 1
   },
-  "startedAt": "2026-08-31T00:48:52.672Z",
+  "startedAt": "2026-08-31T01:02:12.713Z",
   "status": "passed",
-  "workspaceFingerprint": "8c38d0276df30d5099dd49f6818f068e4a7a5a901dcdfd734ea9d1f56f88857f"
+  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
 }

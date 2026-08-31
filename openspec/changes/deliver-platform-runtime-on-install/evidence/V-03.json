@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-31T00:49:41.311Z",
+  "completedAt": "2026-08-31T01:02:59.671Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "5f0d3fb9b3f08557e38f56d4ece441618c5c1153",
+    "commit": "791b6c530328510828fcf2b6527e09a929811cd6",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 40402,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831004912636-5344-71be1213/stdout.log",
-      "sha256": "dc50681d8ecd238104178991f85327595afda366e39de40069778d797794da06",
+      "bytes": 40389,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831010231590-21111-b97b5c3b/stdout.log",
+      "sha256": "6b270eb697d28e8f7397d13fd263e0d4188fcdc187c8542c5a7fec6aad763f53",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831004912636-5344-71be1213/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831010231590-21111-b97b5c3b/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -68,7 +68,7 @@
     "verificationId": "V-03",
     "version": 1
   },
-  "startedAt": "2026-08-31T00:49:12.637Z",
+  "startedAt": "2026-08-31T01:02:31.592Z",
   "status": "passed",
-  "workspaceFingerprint": "8c38d0276df30d5099dd49f6818f068e4a7a5a901dcdfd734ea9d1f56f88857f"
+  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
 }
