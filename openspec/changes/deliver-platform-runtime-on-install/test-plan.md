@@ -273,4 +273,4 @@
 | TC-08 | 执行全量、结构、统一验证和官方 validators | 通过 | V-03 已生成；validators 见 `verification.md` |
 | TC-09 | 执行 Vue 3 + Vite fixture | 通过 | V-04 已生成 |
 | TC-10 | macOS ARM64 已完成真实本地 marketplace 安装、新上下文加载、Chromium 冒烟和下载源不可达复核；其他四个平台待外部环境 | 部分通过 | V-05 已记录当前平台，五平台结论保持待完成 |
-| TC-11 | 计划复核第一阶段与最终第二阶段精确提交的真实 Actions | 未执行 | V-06 待记录 |
+| TC-11 | 第一阶段精确 SHA `de6c73f1300aa88f4885f7eef68fbb3e73c21f83` 的 shared 与五平台 CI 已通过；第二阶段最终 SHA 待执行 | 部分通过 | V-06 继续等待第二阶段完整记录 |

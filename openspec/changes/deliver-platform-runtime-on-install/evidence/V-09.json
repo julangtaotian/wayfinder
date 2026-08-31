@@ -14,12 +14,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T01:02:12.961Z",
+  "completedAt": "2026-08-31T01:08:54.939Z",
   "evidenceId": "V-09",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "791b6c530328510828fcf2b6527e09a929811cd6",
+    "commit": "de6c73f1300aa88f4885f7eef68fbb3e73c21f83",
     "dirty": true
   },
   "kind": "local-command",
@@ -27,14 +27,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 812,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010212715-20360-c9fddf23/stdout.log",
-      "sha256": "fd8dc4d68bcd65aa7085d6f42fcf6b82f9cb5ee01170da70d1adf2f5eb938978",
+      "bytes": 808,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010854709-28180-f9961d48/stdout.log",
+      "sha256": "c3893388faf3d693db919d0a809286dc22c31f457649b0ac6e24109317c498c9",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010212715-20360-c9fddf23/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010854709-28180-f9961d48/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -61,7 +61,7 @@
     "verificationId": "V-09",
     "version": 1
   },
-  "startedAt": "2026-08-31T01:02:12.718Z",
+  "startedAt": "2026-08-31T01:08:54.710Z",
   "status": "passed",
   "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
 }
