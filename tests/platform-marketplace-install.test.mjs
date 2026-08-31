@@ -9,18 +9,21 @@ import {
   verifyPlatformMarketplaceInstall,
 } from '../plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs';
 
+const NATIVE_PLATFORM_KEY = `${process.platform}-${process.arch}`;
+
 function createMarketplaceFixture(context) {
   fs.mkdirSync(path.resolve('outputs'), { recursive: true });
   const repositoryRoot = fs.mkdtempSync(path.resolve('outputs', 'platform-install-fixture-'));
   context.after(() => fs.rmSync(repositoryRoot, { recursive: true, force: true }));
-  const marketplaceRoot = path.join(repositoryRoot, 'dist', 'frontend-ai-workflow-darwin-arm64');
+  const marketplaceName = `frontend-ai-workflow-${NATIVE_PLATFORM_KEY}`;
+  const marketplaceRoot = path.join(repositoryRoot, 'dist', marketplaceName);
   const pluginRoot = path.join(marketplaceRoot, 'plugins', 'frontend-ai-workflow');
   fs.mkdirSync(path.join(marketplaceRoot, '.agents', 'plugins'), { recursive: true });
   fs.mkdirSync(path.join(pluginRoot, '.codex-plugin'), { recursive: true });
   fs.mkdirSync(path.join(pluginRoot, 'skills', 'frontend-ui-review'), { recursive: true });
   fs.mkdirSync(path.join(pluginRoot, 'runtime', 'playwright'), { recursive: true });
   fs.writeFileSync(path.join(marketplaceRoot, '.agents', 'plugins', 'marketplace.json'), `${JSON.stringify({
-    name: 'frontend-ai-workflow-darwin-arm64',
+    name: marketplaceName,
     plugins: [{
       name: 'frontend-ai-workflow',
       source: { source: 'local', path: './plugins/frontend-ai-workflow' },
@@ -34,17 +37,20 @@ function createMarketplaceFixture(context) {
   fs.writeFileSync(path.join(pluginRoot, 'skills', 'frontend-ui-review', 'SKILL.md'), '# UI Review\n');
   fs.writeFileSync(path.join(marketplaceRoot, 'package-report.json'), `${JSON.stringify({
     schemaVersion: 1,
-    platformKey: 'darwin-arm64',
-    smoke: { ok: true, skipped: false, platformKey: 'darwin-arm64', screenshotBytes: 256 },
+    platformKey: NATIVE_PLATFORM_KEY,
+    smoke: { ok: true, skipped: false, platformKey: NATIVE_PLATFORM_KEY, screenshotBytes: 256 },
   }, null, 2)}\n`);
   return {
     repositoryRoot,
     marketplaceRoot,
-    outputPath: path.join(repositoryRoot, 'outputs', 'platform-install-evidence', 'darwin-arm64.json'),
+    marketplaceName,
+    outputPath: path.join(repositoryRoot, 'outputs', 'platform-install-evidence', `${NATIVE_PLATFORM_KEY}.json`),
   };
 }
 
-function createCodexFixtureExecutor(marketplaceRoot, calls) {
+function createCodexFixtureExecutor(fixture, calls) {
+  const { marketplaceName, marketplaceRoot } = fixture;
+  const pluginId = `frontend-ai-workflow@${marketplaceName}`;
   return (_command, args, options) => {
     calls.push({ args, env: options.env });
     const commandArgs = args.slice(1);
@@ -55,7 +61,7 @@ function createCodexFixtureExecutor(marketplaceRoot, calls) {
       return {
         status: 0,
         stdout: `${JSON.stringify({
-          marketplaceName: 'frontend-ai-workflow-darwin-arm64',
+          marketplaceName,
           installedRoot: commandArgs[3],
           alreadyAdded: false,
         })}\n`,
@@ -67,7 +73,7 @@ function createCodexFixtureExecutor(marketplaceRoot, calls) {
         options.env.CODEX_HOME,
         'plugins',
         'cache',
-        'frontend-ai-workflow-darwin-arm64',
+        marketplaceName,
         'frontend-ai-workflow',
         '0.18.0+codex.fixture',
       );
@@ -75,9 +81,9 @@ function createCodexFixtureExecutor(marketplaceRoot, calls) {
       return {
         status: 0,
         stdout: `${JSON.stringify({
-          pluginId: 'frontend-ai-workflow@frontend-ai-workflow-darwin-arm64',
+          pluginId,
           name: 'frontend-ai-workflow',
-          marketplaceName: 'frontend-ai-workflow-darwin-arm64',
+          marketplaceName,
           version: '0.18.0+codex.fixture',
           installedPath,
         })}\n`,
@@ -89,7 +95,7 @@ function createCodexFixtureExecutor(marketplaceRoot, calls) {
         status: 0,
         stdout: `${JSON.stringify({
           installed: [{
-            pluginId: 'frontend-ai-workflow@frontend-ai-workflow-darwin-arm64',
+            pluginId,
             version: '0.18.0+codex.fixture',
             installed: true,
             enabled: true,
@@ -105,7 +111,7 @@ function createCodexFixtureExecutor(marketplaceRoot, calls) {
         options.env.CODEX_HOME,
         'plugins',
         'cache',
-        'frontend-ai-workflow-darwin-arm64',
+        marketplaceName,
         'frontend-ai-workflow',
         '0.18.0+codex.fixture',
       );
@@ -125,10 +131,10 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
   const smokeCalls = [];
   const preview = await verifyPlatformMarketplaceInstall({
     ...fixture,
-    platformKey: 'darwin-arm64',
+    platformKey: NATIVE_PLATFORM_KEY,
     codexEntry: '/fixture/codex.js',
     allowedOutputRoots: [path.join(fixture.repositoryRoot, 'outputs')],
-    execute: createCodexFixtureExecutor(fixture.marketplaceRoot, calls),
+    execute: createCodexFixtureExecutor(fixture, calls),
   });
   assert.equal(preview.status, 'planned');
   assert.equal(preview.code, 'platform_install_evidence_plan');
@@ -137,7 +143,7 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
 
   const report = await verifyPlatformMarketplaceInstall({
     ...fixture,
-    platformKey: 'darwin-arm64',
+    platformKey: NATIVE_PLATFORM_KEY,
     codexEntry: '/fixture/codex.js',
     write: true,
     allowedOutputRoots: [path.join(fixture.repositoryRoot, 'outputs')],
@@ -146,10 +152,10 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
       CODEX_API_KEY: 'must-not-leak',
       OPENAI_API_KEY: 'must-not-leak',
     },
-    execute: createCodexFixtureExecutor(fixture.marketplaceRoot, calls),
+    execute: createCodexFixtureExecutor(fixture, calls),
     runOfflineSmoke: async (options) => {
       smokeCalls.push(options);
-      return { ok: true, skipped: false, platformKey: 'darwin-arm64', screenshotBytes: 512 };
+      return { ok: true, skipped: false, platformKey: NATIVE_PLATFORM_KEY, screenshotBytes: 512 };
     },
   });
   assert.equal(report.status, 'passed');
@@ -190,7 +196,7 @@ test('[TC-12] Codex 安装失败保留稳定诊断并清理隔离目录', async 
   await assert.rejects(
     () => verifyPlatformMarketplaceInstall({
       ...fixture,
-      platformKey: 'darwin-arm64',
+      platformKey: NATIVE_PLATFORM_KEY,
       codexEntry: '/fixture/codex.js',
       write: true,
       allowedOutputRoots: [path.join(fixture.repositoryRoot, 'outputs')],
@@ -206,6 +212,26 @@ test('[TC-12] Codex 安装失败保留稳定诊断并清理隔离目录', async 
     fs.readdirSync(path.join(fixture.repositoryRoot, 'outputs')).some((name) => name.startsWith('.i-')),
     false,
   );
+});
+
+test('[TC-12] 安装证据写入拒绝伪造的非原生平台', async (context) => {
+  const fixture = createMarketplaceFixture(context);
+  await assert.rejects(
+    () => verifyPlatformMarketplaceInstall({
+      ...fixture,
+      platformKey: NATIVE_PLATFORM_KEY,
+      currentPlatform: process.platform === 'win32' ? 'linux' : 'win32',
+      currentArch: process.arch,
+      codexEntry: '/fixture/codex.js',
+      write: true,
+      allowedOutputRoots: [path.join(fixture.repositoryRoot, 'outputs')],
+      execute: createCodexFixtureExecutor(fixture, []),
+    }),
+    (error) => error.code === 'platform_install_non_native_write'
+      && error.status === 'failed'
+      && error.target === NATIVE_PLATFORM_KEY,
+  );
+  assert.equal(fs.existsSync(fixture.outputPath), false);
 });
 
 test('[TC-12] Windows 安装证据缓存路径保持在传统路径预算内', () => {

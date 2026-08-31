@@ -35,6 +35,7 @@
 - 第一阶段最终提交 `de6c73f1300aa88f4885f7eef68fbb3e73c21f83` 对应 GitHub Actions [run #63](https://github.com/julangtaotian/wayfinder/actions/runs/33346473461)，总耗时 2 分 25 秒。shared 与 darwin-arm64、darwin-x64、linux-arm64、linux-x64、win32-x64 五个平台全部成功，分别上传 388B、390B、441B、388B、387B 的 `package-report.json`；Windows 已完成真实 Chromium 冒烟。任务 3.4 完成，TC-11 仅记第一阶段部分通过，V-06 继续等待第二阶段最终 SHA。
 - 其他四个平台的本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网运行记录尚未收集，任务 4.1 与 A-05 保持未完成。
 - 任务 4.1 的本机入口验证使用 CI 同版官方 `@openai/codex@0.150.0-alpha.8`，在隔离 Codex home 中从复制后的本地 marketplace 安装并启用插件；通过 `debug prompt-input` 确认新会话可见 `frontend-ai-workflow:frontend-ui-review`，再把全部代理与 Playwright 下载地址指向不可达的 `127.0.0.1:9`，从安装缓存启动真实 Chromium 并生成 3509 字节截图。过程未读取用户插件配置、未保留 API 密钥、未认证、未调用模型，结束后隔离缓存清理成功。
-- `[TC-12]` 的 4 项自动回归和既有平台聚焦回归共 32 项通过；它们固定验证预览零写入、成功与失败清理、Windows 路径预算、普通 push/PR 不下载 Codex，以及人工证据开关只复用原五平台矩阵并上传小型 JSON 报告。V-12 仅证明入口与成本合同，不能替代尚待收集的五个平台真实报告。
+- `[TC-12]` 的 5 项自动回归和既有平台聚焦回归共 33 项通过；它们固定验证预览零写入、成功与失败清理、非原生写入拒绝、Windows 路径预算、普通 push/PR 不下载 Codex，以及人工证据开关只复用原五平台矩阵并上传小型 JSON 报告。V-12 仅证明入口与成本合同，不能替代尚待收集的五个平台真实报告。
+- 安装门禁首个提交 `7303b73230ff46c5cec4f6818f34870b2b5f1081` 对应 GitHub Actions [run #65](https://github.com/julangtaotian/wayfinder/actions/runs/33349852906)，shared 在 TC-12 的两条测试夹具上失败：夹具把 `platformKey` 固定为 `darwin-arm64`，因此 Linux runner 在真实原生平台保护前失败。修复改为从 `process.platform` 与 `process.arch` 生成夹具身份，并新增独立非原生拒绝回归；生产门禁没有放宽。修复后的本地 `verify:shared` 共 132 项测试，129 项通过、3 项既定跳过、0 项失败；只有修复提交的精确 SHA 通过 normal CI 后才启动人工五平台证据收集。
 - 在五平台安装证据齐全前，不删除仓库 HEAD 中的 LFS 平台资产、不移除 `.gitattributes` 规则，也不开始第二阶段退役任务。
 - 本变更没有创建 schedule、定时优化、定时清理或定时发布任务。
