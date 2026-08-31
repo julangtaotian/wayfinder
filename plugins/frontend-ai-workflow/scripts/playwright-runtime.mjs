@@ -590,6 +590,15 @@ export async function loadBundledPlaywright(options = {}) {
   return bundledPlaywrightPromise;
 }
 
+export function browserExecutableForLaunch(filePath, {
+  platform = process.platform,
+  pathApi = path,
+} = {}) {
+  const absolutePath = pathApi.resolve(filePath);
+  // Windows 安装缓存可能超过传统 MAX_PATH，使用系统命名空间路径交给 spawn。
+  return platform === 'win32' ? pathApi.toNamespacedPath(absolutePath) : absolutePath;
+}
+
 export async function smokeTestBundledPlaywright(options = {}) {
   const inspection = inspectBundledPlaywright(options);
   if (!inspection.available) throw new Error(inspection.reason || '当前平台没有内置 Playwright 运行包');
@@ -598,7 +607,10 @@ export async function smokeTestBundledPlaywright(options = {}) {
     throw new Error(`Playwright 冒烟平台不匹配：期望 ${expectedPlatformKey}，实际 ${inspection.platformKey}`);
   }
   const playwright = await loadBundledPlaywright(options);
-  const browser = await playwright.chromium.launch({ headless: true, executablePath: inspection.browserExecutable });
+  const browser = await playwright.chromium.launch({
+    headless: true,
+    executablePath: browserExecutableForLaunch(inspection.browserExecutable, { platform: inspection.platform }),
+  });
   try {
     const page = await browser.newPage({ viewport: { width: 320, height: 240 } });
     await page.setContent('<main data-runtime="bundled">Playwright runtime ready</main>');

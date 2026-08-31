@@ -5,7 +5,7 @@
 - 日期：2026-08-31
 - 环境：macOS ARM64，Node.js 22.12.0；仓库交付合同仍以 Node.js 20.19.0 和真实五平台 CI 为最终外部证据。
 - 聚焦测试：TC-01～TC-05 与 TC-12 均通过，分别记录为 V-01、V-07～V-10、V-12 的 schema v2 机器证据。
-- 全量测试：189 项测试中 186 项通过、3 项按既定外部项目条件跳过、0 项失败。
+- 全量测试：190 项测试中 187 项通过、3 项按既定外部项目条件跳过、0 项失败。
 - 统一验证：9 个阶段全部通过，包含体积门禁、全量测试、结构、活动/归档 OpenSpec、两套固定运行时完整性和真实 Chromium 冒烟；记录为 V-03。
 - Vue 3 + Vite fixture：初始化、重复执行、升级、检查和真实 Vitest 发现通过；记录为 V-04。
 - 官方校验器：插件 manifest 通过官方 plugin validator；9 个自定义 Skill 全部通过官方 skill validator。临时 PyYAML 只安装于 `outputs/validator-runtime/`，验证后已精确清理。
@@ -37,5 +37,6 @@
 - 任务 4.1 的本机入口验证使用 CI 同版官方 `@openai/codex@0.150.0-alpha.8`，在隔离 Codex home 中从复制后的本地 marketplace 安装并启用插件；通过 `debug prompt-input` 确认新会话可见 `frontend-ai-workflow:frontend-ui-review`，再把全部代理与 Playwright 下载地址指向不可达的 `127.0.0.1:9`，从安装缓存启动真实 Chromium 并生成 3509 字节截图。过程未读取用户插件配置、未保留 API 密钥、未认证、未调用模型，结束后隔离缓存清理成功。
 - `[TC-12]` 的 5 项自动回归和既有平台聚焦回归共 33 项通过；它们固定验证预览零写入、成功与失败清理、非原生写入拒绝、Windows 路径预算、普通 push/PR 不下载 Codex，以及人工证据开关只复用原五平台矩阵并上传小型 JSON 报告。V-12 仅证明入口与成本合同，不能替代尚待收集的五个平台真实报告。
 - 安装门禁首个提交 `7303b73230ff46c5cec4f6818f34870b2b5f1081` 对应 GitHub Actions [run #65](https://github.com/julangtaotian/wayfinder/actions/runs/33349852906)，shared 在 TC-12 的两条测试夹具上失败：夹具把 `platformKey` 固定为 `darwin-arm64`，因此 Linux runner 在真实原生平台保护前失败。修复改为从 `process.platform` 与 `process.arch` 生成夹具身份，并新增独立非原生拒绝回归；生产门禁没有放宽。修复后的本地 `verify:shared` 共 132 项测试，129 项通过、3 项既定跳过、0 项失败；只有修复提交的精确 SHA 通过 normal CI 后才启动人工五平台证据收集。
+- 修复提交 `d1cef92742958109ee9f9bd582c8143e4e0adbff` 的普通 GitHub Actions [run #66](https://github.com/julangtaotian/wayfinder/actions/runs/33351017037) 已通过。随后只触发一次人工证据 [run #67](https://github.com/julangtaotian/wayfinder/actions/runs/33351176003)：shared、macOS ARM64/x64、Linux ARM64/x64 全部通过，Windows x64 在安装、加载与平台验证均通过后，断网 Chromium 启动因 Codex 缓存中的可执行文件路径超过传统 MAX_PATH 而返回 `ENOENT`。修复仅把 Windows 浏览器启动路径转换为系统扩展长度命名空间，保持实际安装缓存、完整性校验和其他平台路径不变；任务 4.1 继续等待修复 SHA 的五平台报告。
 - 在五平台安装证据齐全前，不删除仓库 HEAD 中的 LFS 平台资产、不移除 `.gitattributes` 规则，也不开始第二阶段退役任务。
 - 本变更没有创建 schedule、定时优化、定时清理或定时发布任务。

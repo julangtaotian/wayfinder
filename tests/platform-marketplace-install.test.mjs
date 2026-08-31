@@ -8,6 +8,7 @@ import {
   compactInstallStageName,
   verifyPlatformMarketplaceInstall,
 } from '../plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs';
+import { browserExecutableForLaunch } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 
 const NATIVE_PLATFORM_KEY = `${process.platform}-${process.arch}`;
 
@@ -234,12 +235,12 @@ test('[TC-12] 安装证据写入拒绝伪造的非原生平台', async (context)
   assert.equal(fs.existsSync(fixture.outputPath), false);
 });
 
-test('[TC-12] Windows 安装证据缓存路径保持在传统路径预算内', () => {
+test('[TC-12] Windows 安装缓存的超长 Chromium 路径使用系统命名空间', () => {
   const workRoot = path.win32.join(
     'D:\\a\\wayfinder\\wayfinder\\outputs',
     compactInstallStageName({ processId: 5092, timestamp: 1788137696439 }),
   );
-  const installedSkill = path.win32.join(
+  const browserExecutable = path.win32.join(
     workRoot,
     'c',
     'plugins',
@@ -247,11 +248,22 @@ test('[TC-12] Windows 安装证据缓存路径保持在传统路径预算内', (
     'frontend-ai-workflow-win32-x64',
     'frontend-ai-workflow',
     '0.18.0+codex.20260826072715',
-    'skills',
-    'frontend-ui-review',
-    'SKILL.md',
+    'runtime',
+    'playwright',
+    'platform-assets',
+    'win32-x64',
+    '.local-browsers',
+    'chromium_headless_shell-1234',
+    'chrome-headless-shell-win64',
+    'chrome-headless-shell.exe',
   );
-  assert.ok(installedSkill.length < 260, `Windows Codex 安装证据路径过长：${installedSkill.length}`);
+  const launchPath = browserExecutableForLaunch(browserExecutable, {
+    platform: 'win32',
+    pathApi: path.win32,
+  });
+  assert.ok(browserExecutable.length >= 260, `测试样本没有覆盖 Windows 超长路径：${browserExecutable.length}`);
+  assert.match(launchPath, /^\\\\\?\\D:\\/u);
+  assert.equal(launchPath.slice(4), browserExecutable);
 });
 
 test('[TC-12] 人工证据收集复用原五平台矩阵且不增加日常成本', () => {
