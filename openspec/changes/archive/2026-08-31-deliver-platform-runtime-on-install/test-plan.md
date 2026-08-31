@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：就绪
-- 需求：`requirements/REQ-2026-035-platform-runtime-delivery.md`
-- 变更：deliver-platform-runtime-on-install
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-035-platform-runtime-delivery.md`
+- 变更：2026-08-31-deliver-platform-runtime-on-install
 - 需求修订基线：R-05
 - 默认聚焦命令：`node --test tests/ui-review-platform-runtime.test.mjs tests/platform-marketplace-install.test.mjs tests/repository-hygiene.test.mjs tests/repository-footprint.test.mjs`
 
@@ -42,7 +42,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-01" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-01.json`
 
 ### TC-02：下载重试、超时、清理与代理凭据保护
 
@@ -64,7 +64,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-02" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-07
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-07.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-07.json`
 
 ### TC-03：源码外唯一平台 marketplace 成品
 
@@ -86,7 +86,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-03" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-08
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-08.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-08.json`
 
 ### TC-04：重复准备、原子升级和旧包保留
 
@@ -108,7 +108,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-04" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-09
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-09.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-09.json`
 
 ### TC-05：CI 五平台使用新准备入口且只上传报告
 
@@ -130,7 +130,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-05" tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-10
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-10.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-10.json`
 
 ### TC-06：平台资产与 LFS 规则从 HEAD 退役
 
@@ -152,7 +152,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-06" tests/repository-hygiene.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-02.json`
 
 ### TC-07：平台资产退役零预算门禁
 
@@ -174,7 +174,7 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-07" tests/repository-footprint.test.mjs`
 - 关联验证：V-11
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-11.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-11.json`
 
 ### TC-08：本地发布级共享链保持完整
 
@@ -189,14 +189,14 @@
 - 前置条件：适用聚焦自动用例通过
 - 测试数据：全仓测试、插件结构、OpenSpec、运行时完整性、当前平台浏览器和工作区状态
 - 测试替身：无；真实本地门禁的临时依赖与 fixture 必须位于 `outputs/`
-- 操作：运行 `npm test`、`npm run validate`、`npm run verify` 与官方 Skill/Plugin validators
-- 可观察断言：全部门禁通过；源码共享校验不要求平台二进制；实际成品完整性与冒烟通过；根无测试专用 node_modules、平台暂存或其他验证残留
-- 目标测试：`tests/ui-review-platform-runtime.test.mjs`
-- 测试定位：`[TC-03] 源码外唯一平台 marketplace 成品`
+- 操作：规范源码运行 `npm run verify:shared` 与官方 Skill/Plugin validators；准备后的五个平台成品在真实矩阵运行 `npm run verify:platform`
+- 可观察断言：共享与平台职责分离后全部门禁通过；源码共享校验不要求平台二进制；实际成品完整性与冒烟通过；根无测试专用 node_modules、平台暂存或其他验证残留
+- 目标测试：`tests/workflow-trust-boundary.test.mjs`
+- 测试定位：`[TC-03] 跨平台诊断与仓库统一验证合同`
 - 聚焦命令：不适用；本用例为需求记录的发布级全量验证
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-03.json`
 
 ### TC-09：Vue 3 + Vite 真实 fixture 工作流兼容
 
@@ -218,7 +218,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/workflow-project.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-04.json`
 
 ### TC-10：五个平台 marketplace 安装与断网运行
 
@@ -240,11 +240,11 @@
 - 聚焦命令：不适用
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/verification.md`；GitHub Actions run #71
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/verification.md`
 
 ### TC-11：最终精确提交的共享与五平台 CI
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -261,8 +261,8 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-06
-- 结果分类：未执行
-- 证据：待执行；`openspec/changes/deliver-platform-runtime-on-install/verification.md` 与外部 CI URL
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/verification.md`
 
 ### TC-12：真实 Codex 安装证据入口与人工 CI 成本边界
 
@@ -284,16 +284,16 @@
 - 聚焦命令：`node --test --test-name-pattern="TC-12" tests/platform-marketplace-install.test.mjs`
 - 关联验证：V-12
 - 结果分类：通过
-- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-12.json`
+- 证据：`openspec/changes/archive/2026-08-31-deliver-platform-runtime-on-install/evidence/V-12.json`
 
 ## 执行记录
 
 | 用例 | 命令或方式 | 结果 | 证据 |
 | --- | --- | --- | --- |
 | TC-01～TC-05 | 按各自精确定位运行平台专用手写测试 | 通过 | V-01、V-07～V-10 已生成 |
-| TC-06～TC-07 | 第二阶段运行仓库卫生和体积退役测试 | 未执行 | V-02、V-11 待生成 |
-| TC-08 | 执行全量、结构、统一验证和官方 validators | 通过 | V-03 已生成；validators 见 `verification.md` |
+| TC-06～TC-07 | 第二阶段运行仓库卫生和体积退役测试 | 通过 | V-02、V-11 已生成 |
+| TC-08 | 规范源码执行共享统一验证和官方 validators；实际平台成品由五平台矩阵执行平台验证 | 通过 | V-03、V-06；validators 见 `verification.md` |
 | TC-09 | 执行 Vue 3 + Vite fixture | 通过 | V-04 已生成 |
-| TC-10 | macOS ARM64 已完成真实本地 marketplace 安装、新上下文加载、Chromium 冒烟和下载源不可达复核；其他四个平台待外部环境 | 部分通过 | V-05 已记录当前平台，五平台结论保持待完成 |
-| TC-11 | 第一阶段精确 SHA `de6c73f1300aa88f4885f7eef68fbb3e73c21f83` 的 shared 与五平台 CI 已通过；第二阶段最终 SHA 待执行 | 部分通过 | V-06 继续等待第二阶段完整记录 |
+| TC-10 | 精确 SHA `eb57c88dee473c241dad50d6e8647cd0027e1e0f` 的人工证据 run #76 完成五平台安装、加载、真实 Chromium 冒烟和断网复核 | 通过 | V-05、`verification.md` |
+| TC-11 | 同一精确 SHA 的普通 run #74 与人工 run #76 均完成一次 shared 和五个平台任务，五份报告全部为小型 JSON | 通过 | V-06、`verification.md` |
 | TC-12 | 执行安装证据入口与人工 CI 成本边界聚焦测试 | 通过 | V-12 已生成 |

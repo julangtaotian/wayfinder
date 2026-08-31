@@ -306,6 +306,15 @@
       "entryPath": "requirements/REQ-2026-034-ci-validation-cost-control.md",
       "archivePath": "requirements/archive/2026/REQ-2026-034-ci-validation-cost-control.md",
       "change": "reduce-ci-validation-cost"
+    },
+    {
+      "id": "REQ-2026-035",
+      "title": "REQ-2026-035：平台运行时轻量交付",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-035-platform-runtime-delivery.md",
+      "change": "deliver-platform-runtime-on-install"
     }
   ]
 }

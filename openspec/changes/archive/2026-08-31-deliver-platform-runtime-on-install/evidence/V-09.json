@@ -4,15 +4,15 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-12",
-      "tests/platform-marketplace-install.test.mjs"
+      "--test-name-pattern=TC-04",
+      "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T04:01:08.186Z",
-  "evidenceId": "V-12",
+  "completedAt": "2026-08-31T04:01:07.363Z",
+  "evidenceId": "V-09",
   "exitCode": 0,
   "git": {
     "available": true,
@@ -20,52 +20,45 @@
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口",
+  "locator": "[TC-04] 平台 marketplace 原子升级与旧包保留",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 1091,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-12/20260831040108069-10019-db1ecc67/stdout.log",
-      "sha256": "a42abc9841ff0d7a12de0e343dfb32052ea49dac18e4a60b979482bf6cfe60c0",
+      "bytes": 432,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831040107248-9919-c3bb56ef/stdout.log",
+      "sha256": "855434eea2b5553afb21c698420bd7ff8c1972cca3e335f2427e0f0ff5e92af7",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-12/20260831040108069-10019-db1ecc67/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831040107248-9919-c3bb56ef/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+  "requirement": "requirements/archive/2026/REQ-2026-035-platform-runtime-delivery.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
-      "A-04",
-      "A-05"
+      "A-03"
     ],
     "algorithm": "sha256",
     "decisionIds": [
-      "D-03",
-      "D-04",
-      "D-05",
       "D-06",
-      "D-07",
       "D-08",
-      "D-09",
       "D-10",
-      "D-11",
       "D-12",
       "D-13"
     ],
     "revision": "R-05",
-    "sha256": "979ce777a73710b363243049c5514139f3b64f49131a511bb79c3cc5d3146d59",
+    "sha256": "26ad2f28970983e64021a7a41c9f425fca45ede5c96e4c4550dbddb44d810ecc",
     "testCaseIds": [
-      "TC-12"
+      "TC-04"
     ],
-    "verificationId": "V-12",
+    "verificationId": "V-09",
     "version": 1
   },
-  "startedAt": "2026-08-31T04:01:08.070Z",
+  "startedAt": "2026-08-31T04:01:07.249Z",
   "status": "passed",
   "workspaceFingerprint": "ffa2177f8117a17386ea9fd01e65a29d26506867c5b3458ede65983c9b4199e4"
 }

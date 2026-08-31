@@ -4,15 +4,15 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-07",
-      "tests/repository-footprint.test.mjs"
+      "--test-name-pattern=TC-02",
+      "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T04:01:07.910Z",
-  "evidenceId": "V-11",
+  "completedAt": "2026-08-31T04:01:06.748Z",
+  "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
@@ -20,45 +20,46 @@
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-07] 平台资产、生成清单和 LFS 规则使用不可放宽的零上限",
+  "locator": "[TC-02] 平台下载重试超时与代理脱敏",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 332,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-11/20260831040107818-9986-e61db16d/stdout.log",
-      "sha256": "ab0cf24c92b5aeac70cee7af8e4ebd97bb1188361c5dfa981106bec7949fb6e2",
+      "bytes": 270,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831040106557-9846-dc9700ec/stdout.log",
+      "sha256": "5d9b9112a71834a515005e27e5710542111192007fb5e9ec683a305b9bf2e434",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-11/20260831040107818-9986-e61db16d/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831040106557-9846-dc9700ec/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+  "requirement": "requirements/archive/2026/REQ-2026-035-platform-runtime-delivery.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
-      "A-06"
+      "A-03"
     ],
     "algorithm": "sha256",
     "decisionIds": [
-      "D-02",
+      "D-05",
       "D-06",
-      "D-07",
+      "D-08",
       "D-10",
-      "D-11"
+      "D-12",
+      "D-13"
     ],
     "revision": "R-05",
-    "sha256": "bdadeedfa1ec8d50ed482b19b35e7a1ceb84144c7edaed0fee8a1e8ec1846760",
+    "sha256": "ebad3217467ff524375b2e96807214c1831a918cae96fa41fa7671d0ca7b42bf",
     "testCaseIds": [
-      "TC-07"
+      "TC-02"
     ],
-    "verificationId": "V-11",
+    "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-08-31T04:01:07.819Z",
+  "startedAt": "2026-08-31T04:01:06.559Z",
   "status": "passed",
   "workspaceFingerprint": "ffa2177f8117a17386ea9fd01e65a29d26506867c5b3458ede65983c9b4199e4"
 }
