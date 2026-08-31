@@ -30,8 +30,8 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | D-07 | 普通 CI 与交付 CI 边界 | 项目默认 | push/PR 继续执行一次共享任务和五个平台原生验证，按需构建临时平台成品并只上传小型报告；不上传五份大型浏览器包、不增加 cache。正式安装包只由人工显式版本发布或本地准备触发，不增加 schedule | REQ-2026-034 已验收的成本与触发合同；禁止定时任务 |
 | D-08 | 构建安全边界 | 项目默认 | 新构建入口默认只预览，只有显式 `--write` 才写入；输出必须位于仓库 `outputs/<主题>/`、仓库忽略的 `dist/` 或系统临时目录下的精确子目录，拒绝根目录、用户主目录、插件源码目录、符号链接越界和已存在目标；失败清理本次暂存并保留旧可用包 | 项目安全写入、路径规范化和验证产物规则 |
 | D-09 | 平台与许可边界 | 项目默认 | 支持范围保持 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64；固定版本和主机映射不变；Linux ARM64 继续从同版本 Linux x64 官方包补齐授权文本；未知或非原生目标失败关闭 | `PLAYWRIGHT_PLATFORM_CONFIGS`、`SUPPORTED_PLAYWRIGHT_PLATFORMS` 与既有五平台证据 |
-| D-10 | 测试文件策略 | 项目默认 | 复用已受 Git 跟踪的 `tests/ui-review-platform-runtime.test.mjs`，扩展无源码平台资产、外部暂存、安装包唯一平台、失败清理、重复准备、升级、Windows 路径和 CI 合同；仓库/LFS 退役边界复用 `tests/repository-hygiene.test.mjs` 与 `tests/repository-footprint.test.mjs` | Git 基线和现有手写测试职责 |
-| D-11 | 验证范围 | 项目默认 | 执行平台运行时聚焦测试、仓库治理聚焦测试、全量测试、结构校验、统一验证、官方 Skill/Plugin validators、Vue 3 + Vite fixture，以及同一精确提交的真实五平台 CI；另外在每个平台成品中验证本地 marketplace 安装、插件加载和真实 Chromium 冒烟 | 跨平台发布级改造不能由单平台模拟替代 |
+| D-10 | 测试文件策略 | 项目默认 | 既有平台构建与 CI 合同继续复用已受 Git 跟踪的 `tests/ui-review-platform-runtime.test.mjs`；真实 Codex 安装证据入口使用职责单一的 `tests/platform-marketplace-install.test.mjs`，避免向已达 999 行预算的旧文件继续堆叠；仓库/LFS 退役边界复用 `tests/repository-hygiene.test.mjs` 与 `tests/repository-footprint.test.mjs` | Git 基线、测试文件预算和手写测试职责 |
+| D-11 | 验证范围 | 项目默认 | 执行平台运行时聚焦测试、仓库治理聚焦测试、全量测试、结构校验、统一验证、官方 Skill/Plugin validators、Vue 3 + Vite fixture，以及同一精确提交的真实五平台 CI；五平台安装证据通过人工 `workflow_dispatch` 复用原矩阵，固定 Codex CLI 0.150.0-alpha.8，在隔离目录安装本地复制成品，以 `debug prompt-input` 验证新会话加载并从已安装缓存断网启动 Chromium；不使用登录态、API 密钥或模型调用，普通 push/PR 不下载 Codex | 跨平台发布级改造不能由单平台模拟替代；官方 Codex 文档确认新会话加载插件，CLI 本机合同确认安装、列表与模型可见输入可离线检查 |
 | D-12 | 跨平台风险 | 项目默认 | 跨平台高风险：是；命中 CI、路径、临时目录、子进程、环境变量、包管理器入口、安装流程和机器可读诊断，影响 macOS ARM64/x64、Linux ARM64/x64、Windows x64 | `plugins/frontend-ai-workflow/references/cross-platform-ci-checklist.md` |
 | D-13 | 网络降级与离线回退 | 项目默认 | 网络只影响新安装或升级准备；固定官方下载最多执行三次且单次最多十分钟，继承现有代理环境但不记录代理值或凭据，不自动切换未知镜像。失败清理暂存并保留已安装旧插件；已经通过平台、版本、完整性和许可校验的本地 marketplace 成品可以复制到离线环境直接安装 | 用户提出网络环境影响；安全失败、凭据保护和插件内置离线合同 |
 
@@ -44,6 +44,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 - 保持平台成品内的 `distribution.json`、共享/平台完整性清单、体积预算、真实 Chromium 冒烟和结构校验。
 - 为安装/升级提供可复制的本地 marketplace 命令和失败恢复说明；准备入口本身不得静默执行插件安装、提交、推送或发布。
 - 普通 push/PR CI 使用同一外部暂存构建核心验证五个平台，但只上传报告，避免引入五份大型 CI artifact 的存储和下载成本。
+- 提供默认预览、显式 `--write` 的安装证据入口；仅在人工触发的证据收集运行中复用原五平台矩阵，安装固定 Codex CLI 并输出小型安装报告，不读取登录态、不调用模型、不上传完整成品。
 - 在第一阶段验证完成后，从仓库 HEAD 删除 `runtime/playwright/platform-assets/` 的五平台二进制、退役 LFS 规则及只服务占位替换的代码路径，更新结构、完整性、卫生、体积和文档合同。
 - 增加确定性体积验收，证明仓库 HEAD 不再跟踪平台二进制，并记录迁移前后受跟踪文件数与逻辑体积。
 
@@ -53,7 +54,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 - 不把 Chromium 改为使用阶段按需下载，不回退用户系统 Chrome，也不允许业务项目安装 Playwright。
 - 不增加受支持平台，不改变 Playwright 版本，不在本阶段升级 Chromium、OpenSpec 或 Node.js。
 - 不新增 npm 依赖、第三方下载器、第三方发布 action、缓存服务、数据库或独立管理平台。
-- 不自动执行 `codex plugin marketplace add`、`codex plugin add`、Git 提交、推送或外部发布；这些保持用户显式操作。
+- 平台准备入口不自动执行 `codex plugin marketplace add`、`codex plugin add`、Git 提交、推送或外部发布；安装证据入口只有用户显式 `--write` 或人工 CI 开关才在隔离目录执行 Codex 安装检查。
 - 不增加 schedule、定时构建、定时清理、定时复验或费用监控。
 - 不在交付方式确认前删除现有平台 LFS 资产。
 
@@ -99,6 +100,14 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 - 并且：工作流不执行 `git lfs pull`，不要求源码树存在 LFS 指针，不上传完整大型平台包，不增加 cache 或 schedule。
 - 异常或边界：任一平台失败时精确提交不得报告跨平台交付通过。
 
+### 场景：人工收集五平台真实安装证据
+
+- 前置条件：用户手动触发 Validate 并开启安装证据开关，五个平台各自已生成当前原生成品。
+- 当：平台任务下载固定 Codex CLI 到 `outputs/`，把完整 marketplace 复制到离线暂存，从本地副本安装插件并渲染新会话模型可见输入。
+- 则：报告确认插件 `installed/enabled`、`frontend-ai-workflow:frontend-ui-review` 来自隔离安装缓存，并在不可达代理环境从该缓存真实启动 Chromium 截图。
+- 并且：不读取用户 Codex 配置、登录态或 API 密钥，不调用模型，不新增矩阵、cache、schedule、大型 artifact 或写权限；普通 push/PR 不执行该步骤。
+- 异常或边界：CLI 版本、平台、安装目录、加载技能、离线冒烟或清理任一不匹配时返回稳定字段且不生成通过报告，LFS 删除门禁保持关闭。
+
 ### 场景：第二阶段移除源码平台资产
 
 - 前置条件：D-05 已确认；五个平台成品的准备、安装、插件加载、UI Review 冒烟、失败回退和精确提交 CI 全部通过。
@@ -134,6 +143,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 - `package-plugin-platform.mjs` 的默认预览、安全输出、唯一平台、体积预算和成品结构保持兼容；实现可通过注入外部运行时源解耦源码平台目录。
 - `build-playwright-platform.mjs` 的固定版本、主机映射、许可补齐和完整性生成逻辑继续复用；旧 `--replace-lfs-pointers` 只在第一阶段作为回退，第二阶段随 LFS 资产合同一起退役。
 - Codex marketplace 安装继续使用官方 CLI 支持的本地路径；不假设 manifest 能自动按 OS/arch 分流。
+- 安装证据报告至少包含 `status`、`code`、`platformKey`、固定 Codex 版本、marketplace 名称、插件版本、安装/启用状态、新会话技能可见状态、离线 Chromium 冒烟和清理状态；不得包含绝对缓存路径、代理值或凭据。
 
 ## 关联变更范围
 
@@ -151,6 +161,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | R-02 | 2026-08-28 | D-04、D-05、D-13 | A-02、A-03、A-05 | 用户确认安装/升级阶段允许一次官方源下载且成品继续内置运行时；需求转为已确认，补充有界重试、代理保密、旧插件保留和已验证成品离线安装，V-01、V-03、V-05 保持计划，任务待建立。 |
 | R-03 | 2026-08-28 | D-01～D-13 | A-01～A-06 | 建立 `deliver-platform-runtime-on-install` 受管变更并绑定完整范围；业务语义不变，V-01～V-06 继续保持计划，测试方案以本修订为基线。 |
 | R-04 | 2026-08-28 | D-10、D-11 | A-01～A-06 | 实施中发现 schema v2 每份自动证据只能绑定一个精确测试定位；不改变业务行为和验收范围，将 TC-02～TC-05、TC-07 拆分到 V-07～V-11，测试方案同步更新基线。 |
+| R-05 | 2026-08-31 | D-10、D-11、D-12 | A-04、A-05 | 不改变安装期联网或成品离线行为；为任务 4.1 增加固定 Codex CLI 的人工五平台证据开关与独立 TC-12，复用原矩阵且无登录、密钥、模型、schedule、cache 或大型上传；新增 V-12，既有自动证据在当前工作区重新生成。 |
 
 ## 兼容性与风险
 
@@ -167,11 +178,12 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 
 ## 测试与验证
 
-- 测试文件策略：复用；目标路径：`tests/ui-review-platform-runtime.test.mjs`；基线证据：available，规划前已受 Git 跟踪；选择理由：该手写专用测试已经覆盖平台构建、LFS 占位、完整性、冒烟、平台打包、Windows 重试和五平台 CI 合同，适合承载新交付链回归。
+- 测试文件策略：复用；目标路径：`tests/ui-review-platform-runtime.test.mjs`；基线证据：available，规划前已受 Git 跟踪；选择理由：既有平台构建与 CI 合同继续由原测试承载，保持既有回归定位稳定。
+- 安装证据专用测试：新建 `tests/platform-marketplace-install.test.mjs`，独立覆盖真实 Codex 子进程、隔离配置、新会话加载和离线安装；旧平台测试已达 999 行预算，因此不再向旧文件堆叠，新增文件在本次提交建立 Git 基线。
 - 补充测试路径：复用已受 Git 跟踪的 `tests/repository-hygiene.test.mjs` 和 `tests/repository-footprint.test.mjs`；分别验证 LFS 规则退役、平台资产不再受跟踪、仓库体积目标和禁止静默放宽预算。
-- 独立测试方案：需要；触发条件：改造涉及多阶段迁移、五个平台安装和多条可追踪失败场景；活动变更与目标：`openspec/changes/deliver-platform-runtime-on-install/test-plan.md`；需求修订基线：R-04。
+- 独立测试方案：需要；触发条件：改造涉及多阶段迁移、五个平台安装和多条可追踪失败场景；活动变更与目标：`openspec/changes/deliver-platform-runtime-on-install/test-plan.md`；需求修订基线：R-05。
 - 验证范围：全量；计划执行平台运行时与仓库治理聚焦入口、`npm test`、`npm run validate`、`npm run verify`、官方 Skill/Plugin validators、Vue 3 + Vite fixture 和真实五平台 CI；选择理由：修改插件安装与平台发布链、运行时完整性和仓库交付边界。
-- 自动测试：预览零写入、危险路径、非原生目标、外部暂存、唯一平台成品、许可/摘要/冒烟、重复准备、原子升级、下载超时与三次重试、代理凭据不落日志、失败清理、旧包保留、已验证成品离线复用、无 LFS 源码、CI 报告和无 schedule/cache。
+- 自动测试：预览零写入、危险路径、非原生目标、外部暂存、唯一平台成品、许可/摘要/冒烟、重复准备、原子升级、下载超时与三次重试、代理凭据不落日志、失败清理、旧包保留、已验证成品离线复用、Codex 安装/加载证据入口、无 LFS 源码、CI 报告和无 schedule/cache。
 - 人工检查：分别在五个平台下载或准备成品，通过本地 marketplace 安装，启动新 Codex 任务加载插件，运行一次确定性 UI Review 冒烟，并复核成品只包含目标平台且断网后仍可用。
 - 构建与静态检查：结构 validator、插件 validator、体积门禁、正式规格严格校验、工作区无临时平台包与无受跟踪平台二进制。
 
@@ -179,17 +191,18 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | 计划：TC-01 平台准备入口预览、路径、原生平台和零写入聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-01.json` |
+| V-01 | 自动 | 计划：TC-01 平台准备入口预览、路径、原生平台和零写入聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-01.json` |
 | V-02 | 自动 | 计划：TC-06 仓库卫生、LFS 退役和受跟踪平台资产聚焦测试 | 待执行 | 计划 | `openspec/changes/<change-name>/evidence/V-02.json` |
-| V-03 | 自动 | 计划：全量测试、结构校验、统一验证和官方 Skill/Plugin validators | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-03.json`；官方 validators 结果见 `openspec/changes/deliver-platform-runtime-on-install/verification.md` |
-| V-04 | 自动 | 计划：Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-04.json` |
+| V-03 | 自动 | 计划：全量测试、结构校验、统一验证和官方 Skill/Plugin validators | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-03.json`；官方 validators 结果见 `openspec/changes/deliver-platform-runtime-on-install/verification.md` |
+| V-04 | 自动 | 计划：Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-04.json` |
 | V-05 | 人工 | 计划：macOS ARM64/x64、Linux ARM64/x64、Windows x64 本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用复核；macOS ARM64 已记录阶段进展 | 待执行 | 计划 | `openspec/changes/deliver-platform-runtime-on-install/verification.md`；本机运行产物位于被忽略的 `outputs/platform-runtime-delivery/` |
 | V-06 | 人工 | 计划：复核同一精确提交的一次共享任务与五个平台任务、报告、可见耗时，确认无大型包上传、无 LFS、无 cache、无 schedule | 待执行 | 计划 | `openspec/changes/<change-name>/verification.md`；外部 CI URL 待执行后记录 |
-| V-07 | 自动 | 计划：TC-02 下载重试、超时、清理和代理凭据保护聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-07.json` |
-| V-08 | 自动 | 计划：TC-03 源码外唯一平台 marketplace 与离线复制聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-08.json` |
-| V-09 | 自动 | 计划：TC-04 重复准备、原子升级和旧包保留聚焦测试 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-09.json` |
-| V-10 | 自动 | 计划：TC-05 五平台 CI 新准备入口与小型报告静态合同测试 | 2026-08-28 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-10.json` |
+| V-07 | 自动 | 计划：TC-02 下载重试、超时、清理和代理凭据保护聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-07.json` |
+| V-08 | 自动 | 计划：TC-03 源码外唯一平台 marketplace 与离线复制聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-08.json` |
+| V-09 | 自动 | 计划：TC-04 重复准备、原子升级和旧包保留聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-09.json` |
+| V-10 | 自动 | 计划：TC-05 五平台 CI 新准备入口与小型报告静态合同测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-10.json` |
 | V-11 | 自动 | 计划：TC-07 平台资产退役零预算门禁聚焦测试 | 待执行 | 计划 | `openspec/changes/<change-name>/evidence/V-11.json` |
+| V-12 | 自动 | 计划：TC-12 Codex 隔离安装、新会话加载、断网冒烟、失败清理与人工 CI 开关聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-12.json` |
 
 ## 验收标准
 
@@ -207,10 +220,10 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | A-01 | 预览与安全写入边界 | D-08、D-09、D-10、D-12 | 自动 | 平台运行时聚焦测试与机器证据 | 零写入；五平台映射稳定；危险与非原生目标失败关闭 | V-01、V-03 |
 | A-02 | 唯一平台离线成品 | D-03、D-04、D-05、D-06、D-08、D-09 | 自动+人工 | 成品结构、完整性、许可、体积、冒烟及安装复核 | 每份成品只含当前平台，安装后断网仍可运行 | V-08、V-03、V-05 |
 | A-03 | 重复准备、升级与回退 | D-06、D-08、D-10、D-12、D-13 | 自动+人工 | 重复/失败 fixture、下载重试/超时、代理保密、Windows 重试和旧包复核 | 不静默覆盖；失败无半成品、无凭据泄漏且旧版本可用 | V-07、V-09、V-05 |
-| A-04 | 五平台 CI 交付核心 | D-07、D-09、D-10、D-11、D-12 | 自动+人工 | workflow 静态合同、五平台聚焦与真实矩阵 | 共享 1 次、平台 5 次；无 LFS/cache/schedule/大型 artifact，全部成功 | V-10、V-03、V-04、V-06 |
-| A-05 | 删除前五平台安装证据 | D-03、D-04、D-05、D-06、D-09、D-11、D-12、D-13 | 自动+人工 | 五平台安装、加载、冒烟、断网运行和离线成品复制安装记录 | 五个平台都能从新交付链安装并离线使用，网络失败时旧链或已验证成品可回退 | V-08、V-05、V-06 |
+| A-04 | 五平台 CI 交付核心 | D-07、D-09、D-10、D-11、D-12 | 自动+人工 | workflow 静态合同、五平台聚焦与真实矩阵 | 共享 1 次、平台 5 次；普通运行无 Codex 下载、LFS/cache/schedule/大型 artifact，全部成功 | V-10、V-12、V-03、V-04、V-06 |
+| A-05 | 删除前五平台安装证据 | D-03、D-04、D-05、D-06、D-09、D-11、D-12、D-13 | 自动+人工 | 五平台安装、加载、冒烟、断网运行和离线成品复制安装记录 | 五个平台都能从新交付链安装并离线使用，网络失败时旧链或已验证成品可回退 | V-08、V-12、V-05、V-06 |
 | A-06 | 源码与 LFS 退役 | D-02、D-06、D-07、D-10、D-11 | 自动+人工 | Git 跟踪集合、体积/卫生门禁、文档与规格复核 | HEAD 无平台二进制/LFS 规则；历史未改写；完整性边界同步 | V-02、V-11、V-03、V-05、V-06 |
 
 ## 待确认问题
 
-- 无。需求已确认并建立受管变更；当前仍只完成规划，不删除 LFS 资产。
+- 无。需求已确认并实施中；任务 4.1 的五平台证据未齐全前不删除 LFS 资产。

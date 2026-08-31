@@ -10,12 +10,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-08-31T01:09:37.565Z",
+  "completedAt": "2026-08-31T02:03:38.034Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "de6c73f1300aa88f4885f7eef68fbb3e73c21f83",
+    "commit": "57ea5d67e3d21b5e56840fb2e06e8c2a20af03b0",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,15 +23,15 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 40388,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831010909765-28918-c5a879b5/stdout.log",
-      "sha256": "f8073d8ab13fc9931dd684e1e0c86e93c92b9d52117f7e7eada5b1094a8f4f75",
+      "bytes": 41186,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831020257096-47695-c62f7daa/stdout.log",
+      "sha256": "7ed872cc58570d7d2a36097b7bf5d37e0ce1edcdfca022f6e904f7340f159c97",
       "stream": "stdout"
     },
     {
-      "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831010909765-28918-c5a879b5/stderr.log",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 208,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260831020257096-47695-c62f7daa/stderr.log",
+      "sha256": "dfba81674637b2bd31dc0945c46de2782bf89daf73bce9c3717ba0619f07a78a",
       "stream": "stderr"
     }
   ],
@@ -60,15 +60,15 @@
       "D-12",
       "D-13"
     ],
-    "revision": "R-04",
-    "sha256": "4871813b2a8dec53416457eea798187773f4534ef98dd67e42f93edd0a1d8f26",
+    "revision": "R-05",
+    "sha256": "73c070e46ce167b4830c7d7b95fff0e1069a0d31cfd7e1e5e73b4999cf361097",
     "testCaseIds": [
       "TC-08"
     ],
     "verificationId": "V-03",
     "version": 1
   },
-  "startedAt": "2026-08-31T01:09:09.767Z",
+  "startedAt": "2026-08-31T02:02:57.097Z",
   "status": "passed",
-  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
+  "workspaceFingerprint": "9430a5d66a71230fa047096130f274612291f2e9459751002fa17531303d83db"
 }

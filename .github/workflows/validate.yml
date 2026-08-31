@@ -3,6 +3,13 @@ name: Validate
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      collect_platform_install_evidence:
+        description: Collect real Codex install, load, and offline Chromium evidence on all five platforms
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -58,9 +65,17 @@ jobs:
       - name: Prepare platform marketplace outside source runtime
         run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
       - run: npm run verify:platform
+      - name: Install pinned Codex CLI for platform evidence
+        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
+        run: npm install --prefix outputs/platform-install-codex --no-audit --no-fund --no-package-lock --ignore-scripts @openai/codex@0.150.0-alpha.8
+      - name: Verify real Codex install, load, and offline runtime
+        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
+        run: node plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs --write --platform ${{ matrix.platform }} --marketplace dist/frontend-ai-workflow-${{ matrix.platform }} --output outputs/platform-install-evidence/${{ matrix.platform }}.json --codex-entry outputs/platform-install-codex/node_modules/@openai/codex/bin/codex.js
       - name: Upload platform package report
         uses: actions/upload-artifact@v7
         with:
           name: plugin-package-report-${{ matrix.platform }}
-          path: dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
+          path: |
+            dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
+            outputs/platform-install-evidence/${{ matrix.platform }}.json
           if-no-files-found: error

@@ -4,22 +4,19 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-04]",
-      "平台",
-      "marketplace",
-      "原子升级与旧包保留",
+      "--test-name-pattern=TC-04] 平台 marketplace 原子升级与旧包保留",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T01:08:54.939Z",
+  "completedAt": "2026-08-31T02:01:22.741Z",
   "evidenceId": "V-09",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "de6c73f1300aa88f4885f7eef68fbb3e73c21f83",
+    "commit": "57ea5d67e3d21b5e56840fb2e06e8c2a20af03b0",
     "dirty": true
   },
   "kind": "local-command",
@@ -27,14 +24,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 808,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010854709-28180-f9961d48/stdout.log",
-      "sha256": "c3893388faf3d693db919d0a809286dc22c31f457649b0ac6e24109317c498c9",
+      "bytes": 283,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831020122630-46502-35d7e343/stdout.log",
+      "sha256": "726d92c2ae53322e9b1934b83acfaca69542fba7445dd5596887e37582399a9b",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831010854709-28180-f9961d48/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260831020122630-46502-35d7e343/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -53,15 +50,15 @@
       "D-12",
       "D-13"
     ],
-    "revision": "R-04",
-    "sha256": "a1ffd1fdf5c22f037bbc8be6d80d8b95eca9ffa9d40d5e1b6481e06a07052c87",
+    "revision": "R-05",
+    "sha256": "26ad2f28970983e64021a7a41c9f425fca45ede5c96e4c4550dbddb44d810ecc",
     "testCaseIds": [
       "TC-04"
     ],
     "verificationId": "V-09",
     "version": 1
   },
-  "startedAt": "2026-08-31T01:08:54.710Z",
+  "startedAt": "2026-08-31T02:01:22.631Z",
   "status": "passed",
-  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
+  "workspaceFingerprint": "9430a5d66a71230fa047096130f274612291f2e9459751002fa17531303d83db"
 }

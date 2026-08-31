@@ -1,11 +1,11 @@
-# 第一阶段验证记录
+# 阶段验证记录
 
 ## 本地自动验证
 
-- 日期：2026-08-28
+- 日期：2026-08-31
 - 环境：macOS ARM64，Node.js 22.12.0；仓库交付合同仍以 Node.js 20.19.0 和真实五平台 CI 为最终外部证据。
-- 聚焦测试：TC-01～TC-05 均通过，分别记录为 V-01、V-07、V-08、V-09、V-10 的 schema v2 机器证据。
-- 全量测试：184 项测试中 181 项通过、3 项按既定外部项目条件跳过、0 项失败。
+- 聚焦测试：TC-01～TC-05 与 TC-12 均通过，分别记录为 V-01、V-07～V-10、V-12 的 schema v2 机器证据。
+- 全量测试：189 项测试中 186 项通过、3 项按既定外部项目条件跳过、0 项失败。
 - 统一验证：9 个阶段全部通过，包含体积门禁、全量测试、结构、活动/归档 OpenSpec、两套固定运行时完整性和真实 Chromium 冒烟；记录为 V-03。
 - Vue 3 + Vite fixture：初始化、重复执行、升级、检查和真实 Vitest 发现通过；记录为 V-04。
 - 官方校验器：插件 manifest 通过官方 plugin validator；9 个自定义 Skill 全部通过官方 skill validator。临时 PyYAML 只安装于 `outputs/validator-runtime/`，验证后已精确清理。
@@ -34,5 +34,7 @@
 - 第二处根因是准备目录和打包目录连续叠加后，Windows CI 的浏览器启动路径达到 297 字符；最终交付路径只有 233 字符。修复把准备、打包和升级备份改为同级短暂存名，并以 `path.win32` 固定 GitHub runner 样本的启动路径低于 260 字符；路径安全校验、独占标识、失败清理和原子发布合同保持不变。
 - 第一阶段最终提交 `de6c73f1300aa88f4885f7eef68fbb3e73c21f83` 对应 GitHub Actions [run #63](https://github.com/julangtaotian/wayfinder/actions/runs/33346473461)，总耗时 2 分 25 秒。shared 与 darwin-arm64、darwin-x64、linux-arm64、linux-x64、win32-x64 五个平台全部成功，分别上传 388B、390B、441B、388B、387B 的 `package-report.json`；Windows 已完成真实 Chromium 冒烟。任务 3.4 完成，TC-11 仅记第一阶段部分通过，V-06 继续等待第二阶段最终 SHA。
 - 其他四个平台的本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网运行记录尚未收集，任务 4.1 与 A-05 保持未完成。
+- 任务 4.1 的本机入口验证使用 CI 同版官方 `@openai/codex@0.150.0-alpha.8`，在隔离 Codex home 中从复制后的本地 marketplace 安装并启用插件；通过 `debug prompt-input` 确认新会话可见 `frontend-ai-workflow:frontend-ui-review`，再把全部代理与 Playwright 下载地址指向不可达的 `127.0.0.1:9`，从安装缓存启动真实 Chromium 并生成 3509 字节截图。过程未读取用户插件配置、未保留 API 密钥、未认证、未调用模型，结束后隔离缓存清理成功。
+- `[TC-12]` 的 4 项自动回归和既有平台聚焦回归共 32 项通过；它们固定验证预览零写入、成功与失败清理、Windows 路径预算、普通 push/PR 不下载 Codex，以及人工证据开关只复用原五平台矩阵并上传小型 JSON 报告。V-12 仅证明入口与成本合同，不能替代尚待收集的五个平台真实报告。
 - 在五平台安装证据齐全前，不删除仓库 HEAD 中的 LFS 平台资产、不移除 `.gitattributes` 规则，也不开始第二阶段退役任务。
 - 本变更没有创建 schedule、定时优化、定时清理或定时发布任务。

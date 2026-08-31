@@ -4,20 +4,19 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-01]",
-      "平台准备预览与安全写入边界",
+      "--test-name-pattern=TC-01] 平台准备预览与安全写入边界",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T01:08:54.823Z",
+  "completedAt": "2026-08-31T02:01:20.300Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "de6c73f1300aa88f4885f7eef68fbb3e73c21f83",
+    "commit": "57ea5d67e3d21b5e56840fb2e06e8c2a20af03b0",
     "dirty": true
   },
   "kind": "local-command",
@@ -26,13 +25,13 @@
   "logs": [
     {
       "bytes": 269,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831010854694-28177-5a4ccba8/stdout.log",
-      "sha256": "5998c309334aedda88a25ecd259c1d6378797f5b0c7c60fb090bb60108ffc053",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831020120191-46368-3333b83b/stdout.log",
+      "sha256": "71104d2fb409c56dd5b48fd0d2b49851133966c7877379a6bebf5f5ff3767850",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831010854694-28177-5a4ccba8/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-01/20260831020120191-46368-3333b83b/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -51,15 +50,15 @@
       "D-10",
       "D-12"
     ],
-    "revision": "R-04",
-    "sha256": "6e5b8bc532218b952f89a1011e7e978f18a653d30e1a05565b7745a0e5cb554f",
+    "revision": "R-05",
+    "sha256": "bb722779543dfdef1302275d4415d40eca810d9159e37e759cae8ca222d24a23",
     "testCaseIds": [
       "TC-01"
     ],
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-08-31T01:08:54.697Z",
+  "startedAt": "2026-08-31T02:01:20.192Z",
   "status": "passed",
-  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
+  "workspaceFingerprint": "9430a5d66a71230fa047096130f274612291f2e9459751002fa17531303d83db"
 }

@@ -5,8 +5,8 @@
 - 状态：就绪
 - 需求：`requirements/REQ-2026-035-platform-runtime-delivery.md`
 - 变更：deliver-platform-runtime-on-install
-- 需求修订基线：R-04
-- 默认聚焦命令：`node --test tests/ui-review-platform-runtime.test.mjs tests/repository-hygiene.test.mjs tests/repository-footprint.test.mjs`
+- 需求修订基线：R-05
+- 默认聚焦命令：`node --test tests/ui-review-platform-runtime.test.mjs tests/platform-marketplace-install.test.mjs tests/repository-hygiene.test.mjs tests/repository-footprint.test.mjs`
 
 ## 测试上下文
 
@@ -14,11 +14,11 @@
 - 测试命令：`npm test`
 - 测试运行器：Node Test Runner；仓库另有 Vue fixture 的 Vitest 配置，本变更平台与治理用例不切换 runner。
 - 测试目录：`tests`
-- Git 基线：available；`tests/ui-review-platform-runtime.test.mjs`、`tests/repository-hygiene.test.mjs`、`tests/repository-footprint.test.mjs` 均已受跟踪，分别覆盖平台构建/打包、Git 提交边界和体积退役门禁。
-- 测试文件策略：复用上述三个同功能手写专用测试；不修改生成测试，不新增重复平台交付测试文件。
-- 兼容说明：只使用 Node.js 标准库和仓库固定 Playwright CLI；自动用例通过服务注入模拟下载、超时、代理和外平台路径，不在聚焦阶段访问真实网络或安装插件。
+- Git 基线：available；`tests/ui-review-platform-runtime.test.mjs`、`tests/repository-hygiene.test.mjs`、`tests/repository-footprint.test.mjs` 已受跟踪；`tests/platform-marketplace-install.test.mjs` 在 R-05 新建并由本次变更建立基线，分别覆盖平台构建/打包、真实 Codex 安装证据、Git 提交边界和体积退役门禁。
+- 测试文件策略：既有平台合同复用原三个同功能手写专用测试；新建职责单一的 `tests/platform-marketplace-install.test.mjs`，因为真实 Codex 子进程与隔离安装是新的独立测试职责，且旧平台文件已达 999 行预算；不修改生成测试。
+- 兼容说明：只使用 Node.js 标准库和仓库固定 Playwright CLI；TC-12 通过服务注入模拟 Codex 输出并单独在原生环境验证真实 CLI，聚焦测试不访问网络或安装外部依赖；人工矩阵才下载固定 Codex CLI，且不使用认证或模型。
 - 跨平台高风险：是；命中 CI、路径、临时目录、子进程、环境变量、包管理器入口、安装流程和机器可读诊断，影响 macOS ARM64/x64、Linux ARM64/x64、Windows x64。确定性回归优先断言 code/status/target/attempts 和双侧规范化，Windows 外平台样本显式使用 `path.win32`；真实矩阵与五平台安装分别取证。
-- 状态矩阵覆盖：初始、用户操作、刷新、空态、错误态由 TC-01～TC-11 覆盖；卸载不适用，因为准备、安装验证与 CI 都是一次性进程，没有订阅、计时器或组件销毁生命周期。
+- 状态矩阵覆盖：初始、用户操作、刷新、空态、错误态由 TC-01～TC-12 覆盖；卸载不适用，因为准备、安装验证与 CI 都是一次性进程，没有订阅、计时器或组件销毁生命周期。
 
 ## 测试用例
 
@@ -121,10 +121,10 @@
 - 关联规格：`repository-verification-gate / CI 重建目标平台资产`、`普通 CI 控制大型产物成本`
 - 状态矩阵：初始（已有数据）、用户操作、刷新、错误态
 - 前置条件：Validate 工作流和平台准备 CLI 可读
-- 测试数据：shared job、五个平台矩阵、新 CLI、dist 报告路径、upload-artifact v7、concurrency、push/PR、contents read
+- 测试数据：shared job、五个平台矩阵、新 CLI、dist 报告路径、人工证据开关、upload-artifact v7、concurrency、push/PR、contents read
 - 测试替身：静态解析工作流，不请求 GitHub API
 - 操作：统计 jobs、矩阵、命令和上传路径，并搜索退役/禁止字段
-- 可观察断言：共享一次且平台 needs shared；五平台无删减；新准备入口只出现于平台 job；无 git lfs pull、replace-lfs-pointers、cache、schedule、paths-ignore、写权限或完整目录上传；每个平台只上传报告
+- 可观察断言：共享一次且平台 needs shared；五平台无删减；新准备入口只出现于平台 job；无 git lfs pull、replace-lfs-pointers、cache、schedule、paths-ignore、写权限或完整目录上传；普通 push/PR 不下载 Codex，每个平台只上传报告
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-05] CI 平台 marketplace 准备与小型报告合同`
 - 聚焦命令：`node --test --test-name-pattern="TC-05" tests/ui-review-platform-runtime.test.mjs`
@@ -230,10 +230,10 @@
 - 关联验收：A-02、A-03、A-05、A-06
 - 关联规格：`plugin-ui-review-automation / 生成只包含一个平台的完整成品`、`离线环境安装已验证成品`
 - 状态矩阵：用户操作、刷新、错误态
-- 前置条件：macOS ARM64/x64、Linux ARM64/x64、Windows x64 原生环境各自生成成品；记录精确插件版本与报告摘要
+- 前置条件：macOS ARM64/x64、Linux ARM64/x64、Windows x64 原生环境各自生成成品；人工触发安装证据开关；记录精确插件、Codex 版本与报告摘要
 - 测试数据：五个平台成品、本地 marketplace 路径、安装命令、新 Codex 任务、同一 UI Review 冒烟场景和断网环境
-- 测试替身：不适用；必须使用原生成品和真实 Codex 安装，CI 结构校验不能替代
-- 操作：每个平台添加本地 marketplace、安装插件、打开新任务加载能力、运行 Chromium 冒烟；断网后再次运行；另把同平台同版本完整成品复制到离线位置安装
+- 测试替身：不适用；必须使用原生成品和真实 Codex CLI，单元测试或 CI 结构校验不能替代五个平台报告
+- 操作：人工运行复用原矩阵的证据开关；每个平台把完整成品复制到离线暂存，使用隔离 Codex 配置添加 marketplace、安装插件，以 `debug prompt-input` 检查新会话加载能力，再从已安装缓存于不可达代理环境运行 Chromium 冒烟
 - 可观察断言：每个平台安装和加载成功；插件只含当前平台；断网运行不下载、不使用系统 Chrome、不修改业务依赖；网络准备失败时旧插件可用；任一平台缺失则 LFS 删除门禁保持关闭
 - 目标测试：不适用
 - 测试定位：不适用
@@ -264,6 +264,28 @@
 - 结果分类：未执行
 - 证据：待执行；`openspec/changes/deliver-platform-runtime-on-install/verification.md` 与外部 CI URL
 
+### TC-12：真实 Codex 安装证据入口与人工 CI 成本边界
+
+- 状态：通过
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-05、D-08、D-09、D-10、D-11、D-12、D-13
+- 关联验收：A-04、A-05
+- 关联规格：`repository-verification-gate / 人工收集真实 Codex 安装证据`、`plugin-ui-review-automation / 离线环境安装已验证成品`
+- 状态矩阵：初始（已有数据）、用户操作、空态、错误态
+- 前置条件：平台 marketplace、固定 Codex CLI 命令与离线 Chromium 服务可注入；工作流可读
+- 测试数据：预览、原生与非原生平台、隔离 Codex home、本地 marketplace 复制、installed/enabled 列表、新会话模型可见技能、不可达代理、命令失败、Windows CI 路径和人工开关
+- 测试替身：聚焦回归注入 Codex 子进程 JSON 与离线冒烟结果，不访问网络、不安装插件、不读取用户配置；真实五平台结果由 TC-10 人工矩阵提供
+- 操作：先执行零写入预览，再模拟成功安装/加载/断网冒烟和失败清理；静态检查人工开关、固定版本、原矩阵复用、单次小报告上传及禁止项
+- 可观察断言：预览零写入；写入只使用隔离缓存且移除 API 密钥；插件已安装启用并在新会话可见；从安装缓存离线启动 Chromium；失败返回稳定 code/status/target/exitCode 且无残留；普通 push/PR 无 Codex 下载、模型、cache、schedule 或第二矩阵
+- 目标测试：`tests/platform-marketplace-install.test.mjs`
+- 测试定位：`[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口`
+- 聚焦命令：`node --test --test-name-pattern="TC-12" tests/platform-marketplace-install.test.mjs`
+- 关联验证：V-12
+- 结果分类：通过
+- 证据：`openspec/changes/deliver-platform-runtime-on-install/evidence/V-12.json`
+
 ## 执行记录
 
 | 用例 | 命令或方式 | 结果 | 证据 |
@@ -274,3 +296,4 @@
 | TC-09 | 执行 Vue 3 + Vite fixture | 通过 | V-04 已生成 |
 | TC-10 | macOS ARM64 已完成真实本地 marketplace 安装、新上下文加载、Chromium 冒烟和下载源不可达复核；其他四个平台待外部环境 | 部分通过 | V-05 已记录当前平台，五平台结论保持待完成 |
 | TC-11 | 第一阶段精确 SHA `de6c73f1300aa88f4885f7eef68fbb3e73c21f83` 的 shared 与五平台 CI 已通过；第二阶段最终 SHA 待执行 | 部分通过 | V-06 继续等待第二阶段完整记录 |
+| TC-12 | 执行安装证据入口与人工 CI 成本边界聚焦测试 | 通过 | V-12 已生成 |

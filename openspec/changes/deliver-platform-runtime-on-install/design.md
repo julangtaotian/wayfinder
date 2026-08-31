@@ -76,11 +76,14 @@ Codex marketplace 支持本地路径或 Git 仓库/ref，当前 manifest 没有�
 
 第二阶段只有在五个平台成品的结构/冒烟证据及计划要求的安装证据齐全后才执行：从 HEAD 删除 `platform-assets/`、LFS 规则、旧占位替换代码和相应旧断言；更新 README、正式规格、结构清单和体积退役门禁。第二阶段精确提交再次跑六任务 CI。任一阶段失败可回滚到上一提交，不改写历史。
 
-由于当前环境不能替代其他四个平台上的真实 Codex 安装，若外部矩阵只能证明成品与浏览器而不能证明 Codex 安装，A-05 和第二阶段删除任务必须保持未完成，不能用结构校验冒充安装证据。
+任务 4.1 使用人工 `workflow_dispatch` 开关复用同一五平台矩阵，不新增第二套矩阵。每个平台只在该开关开启时把固定 Codex CLI 0.150.0-alpha.8 安装到 `outputs/`，复制完整 marketplace 到短暂存目录，以隔离 `CODEX_HOME` 执行真实 marketplace/plugin 安装，通过 `debug prompt-input` 直接检查新会话模型可见技能，再从已安装缓存于不可达代理环境启动 Chromium。该过程不读取登录态或密钥、不调用模型，普通 push/PR 不下载 Codex；报告仍随原一次 artifact 上传且不包含绝对缓存路径、代理值或凭据。
+
+若人工矩阵任一平台没有生成 `platform_marketplace_install_verified` 小型报告，A-05 和第二阶段删除任务必须保持未完成，不能用结构校验或初次打包冒烟替代安装事实。
 
 ### 8. 测试和证据按三层定位
 
 - `tests/ui-review-platform-runtime.test.mjs`：复用手写平台专用测试，覆盖预览零写入、源/目标分离、下载重试/超时、代理脱敏、外部运行时注入、唯一平台成品、离线复用、失败清理、Windows 路径/重试和 CI 静态合同。
+- `tests/platform-marketplace-install.test.mjs`：新建职责单一的安装证据测试，覆盖默认预览、真实 Codex 命令编排、隔离缓存、新会话技能可见、断网 Chromium、失败清理、Windows 短路径和人工 CI 零日常成本合同；避免继续扩大已达 999 行的旧平台测试。
 - `tests/repository-hygiene.test.mjs`：第二阶段覆盖平台资产与 LFS 规则不再受跟踪、共享运行时仍可提交。
 - `tests/repository-footprint.test.mjs`：第二阶段覆盖退役路径与平台跟踪数量零预算。
 - 本地聚焦与统一验证只证明当前实现和共享链；五平台真实 CI 证明原生构建/冒烟；五平台 Codex 安装记录单独满足人工 A-05。
@@ -95,7 +98,7 @@ Codex marketplace 支持本地路径或 Git 仓库/ref，当前 manifest 没有�
 - [下载重试留下大目录] → 每次尝试使用独立子目录，失败精确删除；清理失败保留原错误并返回独立 cleanup 诊断。
 - [Windows 文件句柄阻止原子发布] → 复用现有有界线性退避和原始错误保留；不使用 shell 或 `.cmd` 包装器。
 - [大型 CI artifact 重新增加成本] → 普通工作流只上传报告；完整 marketplace 由用户本地准备或未来单独确认的人工发布流程交付。
-- [五平台安装证据无法在当前环境完成] → 不提前删除 LFS；将缺失平台和所需人工环境明确报告，不用 CI 结构/冒烟替代安装事实。
+- [五平台安装证据依赖 Codex CLI 可用性] → 人工运行固定官方版本，版本不匹配失败关闭；不使用认证或模型，任一平台缺报告就不提前删除 LFS。
 
 ## Migration Plan
 
@@ -103,7 +106,7 @@ Codex marketplace 支持本地路径或 Git 仓库/ref，当前 manifest 没有�
 2. 先补源/目标分离、网络失败、代理脱敏、平台打包注入和 CI 合同的失败回归。
 3. 实现外部暂存平台构建、总准备入口与平台打包注入，保持旧 LFS 主路径可回退。
 4. 运行平台聚焦、仓库治理、全量、结构、统一验证、validators 和 Vue 3 + Vite fixture；在当前 macOS ARM64 生成并安装本地 marketplace，断网执行真实 UI Review 冒烟。
-5. 使用 WebStorm 提交并推送第一阶段；同一 SHA 的 shared 与五平台任务全部成功后记录 V-06，并收集五个平台安装证据。
+5. 使用 WebStorm 提交并推送第一阶段；同一 SHA 的 shared 与五平台任务全部成功后记录 V-06，再人工触发同一矩阵的安装证据开关收集五个平台小型报告。
 6. 只有 V-05 五平台安装证据齐全，才删除 HEAD 平台资产、LFS 规则和旧占位代码，更新文档、规格与退役门禁。
 7. 再次运行完整本地验证，使用 WebStorm 提交并推送第二阶段；最终 SHA 的六任务 CI 全部成功后进入完成归档。
 8. 若第二阶段失败，恢复到第一阶段已验证提交；若第一阶段失败，恢复现有 LFS 交付链，不删除测试中新增的稳定根因定位。

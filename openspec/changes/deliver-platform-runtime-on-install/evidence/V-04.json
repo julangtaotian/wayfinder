@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-31T01:08:58.855Z",
+  "completedAt": "2026-08-31T02:02:35.689Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "de6c73f1300aa88f4885f7eef68fbb3e73c21f83",
+    "commit": "57ea5d67e3d21b5e56840fb2e06e8c2a20af03b0",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,14 +24,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 5393,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-04/20260831010854718-28182-ba53cc6f/stdout.log",
-      "sha256": "93c220f11164a9698143908f45cc0d3f6aa6771c6ac8b01fc50ceab989298fb5",
+      "bytes": 5390,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-04/20260831020231860-47090-77e1b4ed/stdout.log",
+      "sha256": "00e656809a7562124fc491ed39a64d8b3fd7c3d4d8b0b1cb64e6981c786c93d6",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-04/20260831010854718-28182-ba53cc6f/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-04/20260831020231860-47090-77e1b4ed/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -50,15 +50,15 @@
       "D-11",
       "D-12"
     ],
-    "revision": "R-04",
-    "sha256": "53281b0d3efa43c61f91759e685b6b68aaf31a35cdf9d485e70895ba24c3375b",
+    "revision": "R-05",
+    "sha256": "1fe7a0ca0e3b3442a80a15872479cedb4878107198d2657d824b8d37139d6445",
     "testCaseIds": [
       "TC-09"
     ],
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-08-31T01:08:54.720Z",
+  "startedAt": "2026-08-31T02:02:31.862Z",
   "status": "passed",
-  "workspaceFingerprint": "a94b8994ac1f346b2124991c13c747139c8d9f747d56eb55b1cfb1ec9955dacf"
+  "workspaceFingerprint": "9430a5d66a71230fa047096130f274612291f2e9459751002fa17531303d83db"
 }

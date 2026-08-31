@@ -542,7 +542,7 @@ test('[TC-04] CI 五平台专属验证与产物合同', () => {
   assert.match(platformJob, /actions\/upload-artifact@v7/u);
   assert.doesNotMatch(platformJob, /actions\/upload-artifact@v[1-6]\b/u);
   assert.match(platformJob, /name:\s*plugin-package-report-\$\{\{ matrix\.platform \}\}/u);
-  assert.match(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
+  assert.match(platformJob, /dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
   assert.match(attributes, /^\* text=auto eol=lf$/mu);
   assert.match(attributes, /platform-assets\/\*\* filter=lfs diff=lfs merge=lfs -text/u);
 });
@@ -552,7 +552,7 @@ test('[TC-05] CI 同引用在途运行治理', () => {
     workflow,
     /^concurrency:\r?\n\s+group:\s*\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\r?\n\s+cancel-in-progress:\s*true$/mu,
   );
-  assert.match(workflow, /^on:\r?\n\s+push:\s*\r?\n\s+pull_request:\s*$/mu);
+  assert.match(workflow, /^on:\r?\n\s+push:\s*\r?\n\s+pull_request:\s*\r?\n\s+workflow_dispatch:/mu);
   assert.match(workflow, /^permissions:\r?\n\s+contents:\s*read$/mu);
   assert.doesNotMatch(workflow, /github\.head_ref|github\.ref_name/u);
   assert.doesNotMatch(workflow, /^\s*(?:schedule|paths|paths-ignore):/mu);
@@ -967,7 +967,7 @@ test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
   assert.doesNotMatch(platformJob, /build-playwright-platform\.mjs|package-plugin-platform\.mjs|--replace-lfs-pointers|git lfs pull/u);
   assert.doesNotMatch(workflow, /^\s*schedule:|actions\/cache|cache:|permissions:\s*write/gmu);
   assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 1);
-  assert.match(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
+  assert.match(platformJob, /dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
   assert.doesNotMatch(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\s*$/mu);
   const previewRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-marketplace-preview-'));
   context.after(() => fs.rmSync(previewRoot, { recursive: true, force: true }));
