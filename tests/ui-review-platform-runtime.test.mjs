@@ -862,7 +862,13 @@ test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
 test('源码共享运行时不伪装成已经准备的平台成品', () => {
   const expectedKey = `${process.platform}-${process.arch}`;
   assert.equal(SUPPORTED_PLAYWRIGHT_PLATFORMS.includes(expectedKey), true, `当前验证平台不在支持范围：${expectedKey}`);
-  const runtime = inspectBundledPlaywright();
+  // 平台 CI 会注入外部成品根；此处必须显式检查仓库源码，避免环境变量改变测试对象。
+  const sourceRuntimeRoot = fileURLToPath(new URL('../plugins/frontend-ai-workflow/runtime/playwright/', import.meta.url));
+  const runtime = inspectBundledPlaywright({
+    runtimeRoot: sourceRuntimeRoot,
+    integrityPath: path.join(sourceRuntimeRoot, 'integrity'),
+    useCache: false,
+  });
   assert.equal(runtime.available, false);
   assert.equal(runtime.code, 'playwright_platform_asset_missing');
   assert.match(runtime.target, new RegExp(`^platform-assets/${expectedKey}/`, 'u'));

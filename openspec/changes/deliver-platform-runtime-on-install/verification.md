@@ -44,4 +44,5 @@
 - 第二阶段先增加 TC-06 与 TC-07，再从工作树精确移除 659 个受跟踪平台文件（约 1.3GB）、5 份平台生成完整性清单和对应 LFS 规则；旧 `--replace-lfs-pointers` 参数、占位树安全替换、备份恢复字段及两条旧回归同步退役。Git 历史和远端 LFS 对象均未修改。
 - 仓库体积审计当前报告平台资产文件、平台生成清单和平台 LFS 规则均为 `actual=0/limit=0`；TC-06、TC-07 与平台聚焦相关测试 38/38 通过，仓库治理聚焦 25/25 通过，结构校验与活动/归档 OpenSpec 严格校验通过。规范源码的统一验证不再执行平台完整性和 Chromium 冒烟，真实平台检查只在 `verify:platform` 对准备后的成品执行。
 - 本机全量验证尝试按仓库规则准备隔离 Vitest 运行时，但沙箱 DNS 无法访问锁定镜像，联网授权又因工作区额度不足被系统拒绝；失败目录已由 `cleanup:test-runtime` 精确清理。另有两条本地 HTTP fixture 因沙箱禁止监听 `127.0.0.1` 未执行完成。两类环境缺口不改写为通过，等待普通 CI 官方 runner 补齐。
+- 退役提交 `4a340c3dea5a20fe3e02cb69c89e3016f8d06977` 对应 GitHub Actions [run #73](https://github.com/julangtaotian/wayfinder/actions/runs/33355359676)：shared 在 44 秒内通过，五个平台均完成外部 marketplace 准备，但 `verify:platform` 的同一条源码分发测试失败。根因是平台 CI 注入的 `UI_REVIEW_RUNTIME_ROOT` 改变了测试默认检查对象；修复让该用例显式传入仓库源码运行时与完整性目录，生产准备、安装和运行逻辑未变。
 - 本变更没有创建 schedule、定时优化、定时清理或定时发布任务。
