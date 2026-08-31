@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION,
   SUPPORTED_PLAYWRIGHT_PLATFORMS,
+  inspectBundledPlaywright,
   smokeTestBundledPlaywright,
   verifyPlaywrightIntegrity,
   writePlaywrightIntegrity,
@@ -108,7 +109,7 @@ function canonicalPotentialPath(target) {
   return path.resolve(realExisting, ...missing);
 }
 
-function validateOutputRoot({ outputRoot, repositoryRoot, pluginRoot, allowedRoots }) {
+export function validatePlatformOutputRoot({ outputRoot, repositoryRoot, pluginRoot, allowedRoots, allowExisting = false }) {
   const resolvedOutput = path.resolve(outputRoot);
   const forbidden = [path.parse(resolvedOutput).root, os.homedir(), repositoryRoot, pluginRoot]
     .map((item) => canonicalPotentialPath(item));
@@ -118,7 +119,7 @@ function validateOutputRoot({ outputRoot, repositoryRoot, pluginRoot, allowedRoo
   if (!canonicalAllowedRoots.some((root) => isInside(root, canonicalOutput))) {
     fail(`输出目录必须位于安全暂存范围：${allowedRoots.map((item) => path.resolve(item)).join('、')}`);
   }
-  if (fs.existsSync(resolvedOutput)) fail(`输出目录已存在，拒绝覆盖：${resolvedOutput}`);
+  if (fs.existsSync(resolvedOutput) && !allowExisting) fail(`输出目录已存在，拒绝覆盖：${resolvedOutput}`);
   return resolvedOutput;
 }
 
@@ -139,7 +140,7 @@ function copyDirectoryEntries(sourceRoot, targetRoot, excludedEntries = []) {
   }
 }
 
-function copyPlatformPluginSource({ sourcePluginRoot, stagePluginRoot, platformKey }) {
+function copyPlatformPluginSource({ sourcePluginRoot, platformRuntimeRoot, stagePluginRoot, platformKey }) {
   // 按固定目录层级复制，避免依赖不同系统下 fs.cpSync 回调路径的字符串格式。
   copyDirectoryEntries(sourcePluginRoot, stagePluginRoot, ['runtime']);
 
@@ -156,11 +157,11 @@ function copyPlatformPluginSource({ sourcePluginRoot, stagePluginRoot, platformK
     'platforms',
   ]);
   copyEntry(
-    path.join(sourcePlaywrightRoot, 'platform-assets', platformKey),
+    path.join(platformRuntimeRoot, 'platform-assets', platformKey),
     path.join(packagedPlaywrightRoot, 'platform-assets', platformKey),
   );
   copyEntry(
-    path.join(sourcePlaywrightRoot, 'platforms', `${platformKey}.json`),
+    path.join(platformRuntimeRoot, 'platforms', `${platformKey}.json`),
     path.join(packagedPlaywrightRoot, 'platforms', `${platformKey}.json`),
   );
 }
@@ -222,7 +223,11 @@ function defaultValidatePackage({ marketplaceRoot, pluginRoot, platformKey }) {
   const result = spawnSync(process.execPath, [validator], {
     cwd: marketplaceRoot,
     encoding: 'utf8',
-    env: { ...process.env, UI_REVIEW_EXPECT_PLATFORM: platformKey },
+    env: {
+      ...process.env,
+      UI_REVIEW_EXPECT_PLATFORM: platformKey,
+      UI_REVIEW_RUNTIME_ROOT: path.join(pluginRoot, 'runtime', 'playwright'),
+    },
   });
   return {
     ok: !result.error && result.status === 0,
@@ -255,6 +260,7 @@ export async function packagePluginPlatform({
   write = false,
   repositoryRoot = defaultRepositoryRoot,
   pluginRoot = defaultPluginRoot,
+  runtimeSourceRoot = null,
   allowedRoots,
   currentPlatform = process.platform,
   currentArch = process.arch,
@@ -274,7 +280,7 @@ export async function packagePluginPlatform({
   if (!Number.isSafeInteger(budgetBytes) || budgetBytes <= 0) fail(`缺少 ${platformKey} 的有效体积预算`);
   const effectiveOutput = outputRoot || path.join(sourceRepositoryRoot, 'dist', `frontend-ai-workflow-${platformKey}`);
   const effectiveAllowedRoots = allowedRoots || [path.join(sourceRepositoryRoot, 'dist'), os.tmpdir()];
-  const finalRoot = validateOutputRoot({
+  const finalRoot = validatePlatformOutputRoot({
     outputRoot: effectiveOutput,
     repositoryRoot: sourceRepositoryRoot,
     pluginRoot: sourcePluginRoot,
@@ -300,10 +306,21 @@ export async function packagePluginPlatform({
   const stageRoot = `${finalRoot}.stage-${process.pid}-${Date.now()}`;
   const stagePluginRoot = path.join(stageRoot, 'plugins', 'frontend-ai-workflow');
   const sourceRuntimeRoot = path.join(sourcePluginRoot, 'runtime', 'playwright');
+  const platformRuntimeRoot = fs.realpathSync(path.resolve(runtimeSourceRoot || sourceRuntimeRoot));
   const packagedRuntimeRoot = path.join(stagePluginRoot, 'runtime', 'playwright');
   let stripEvidence = { stripped: false, stripBeforeBytes: null, stripAfterBytes: null, sourceHash: null };
   try {
-    copyPlatformPluginSource({ sourcePluginRoot, stagePluginRoot, platformKey });
+    const { platform, arch } = splitPlatformKey(platformKey);
+    const sourceInspection = inspectBundledPlaywright({
+      runtimeRoot: platformRuntimeRoot,
+      integrityPath: path.join(platformRuntimeRoot, 'integrity'),
+      platform,
+      arch,
+      verifyIntegrity: true,
+      useCache: false,
+    });
+    if (!sourceInspection.available) fail(`外部平台运行时校验失败：${sourceInspection.reason}`);
+    copyPlatformPluginSource({ sourcePluginRoot, platformRuntimeRoot, stagePluginRoot, platformKey });
     writeMarketplaceRoot({ marketplaceRoot: stageRoot, repositoryRoot: sourceRepositoryRoot, platformKey });
     writeJson(path.join(packagedRuntimeRoot, 'distribution.json'), {
       schemaVersion: PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION,
@@ -314,14 +331,13 @@ export async function packagePluginPlatform({
       stripped: platformKey === 'linux-arm64',
     });
     if (platformKey === 'linux-arm64') {
-      stripEvidence = stripLinuxArm64Chromium({ sourceRuntimeRoot, packagedRuntimeRoot, execute });
+      stripEvidence = stripLinuxArm64Chromium({ sourceRuntimeRoot: platformRuntimeRoot, packagedRuntimeRoot, execute });
     }
     writePlaywrightIntegrity({
       runtimeRoot: packagedRuntimeRoot,
       integrityPath: path.join(packagedRuntimeRoot, 'integrity'),
       platformKeys: [platformKey],
     });
-    const { platform, arch } = splitPlatformKey(platformKey);
     const integrity = verifyPlaywrightIntegrity({
       runtimeRoot: packagedRuntimeRoot,
       integrityPath: path.join(packagedRuntimeRoot, 'integrity'),

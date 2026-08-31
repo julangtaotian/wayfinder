@@ -97,6 +97,7 @@ const UI_REVIEW_ASSETS = [
   'scripts/playwright-runtime.mjs',
   'scripts/build-playwright-platform.mjs',
   'scripts/package-plugin-platform.mjs',
+  'scripts/prepare-platform-marketplace.mjs',
   'scripts/ui-review-interactions.mjs',
   'scripts/ui-review-comparator.mjs',
   'assets/templates/ui-review/config.json',

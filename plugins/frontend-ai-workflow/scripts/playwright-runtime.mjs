@@ -22,7 +22,10 @@ export const SUPPORTED_PLAYWRIGHT_PLATFORMS = Object.freeze(Object.keys(PLAYWRIG
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(scriptDir, '..');
-export const DEFAULT_PLAYWRIGHT_RUNTIME_ROOT = path.join(pluginRoot, 'runtime', 'playwright');
+// 平台 CI 在源码外生成成品后，通过显式环境变量让同一校验入口读取该成品运行时。
+export const DEFAULT_PLAYWRIGHT_RUNTIME_ROOT = process.env.UI_REVIEW_RUNTIME_ROOT
+  ? path.resolve(process.env.UI_REVIEW_RUNTIME_ROOT)
+  : path.join(pluginRoot, 'runtime', 'playwright');
 export const DEFAULT_PLAYWRIGHT_INTEGRITY_PATH = path.join(DEFAULT_PLAYWRIGHT_RUNTIME_ROOT, 'integrity');
 
 const cachedInspections = new Map();

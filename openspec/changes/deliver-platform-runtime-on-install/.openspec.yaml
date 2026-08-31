@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-08-28
+goal: 将五个平台浏览器从规范源码迁出，在安装或升级阶段生成内置当前平台运行时的离线 marketplace 成品，并保持可回退、无定时任务。
+test_plan: required
+verification_evidence: required

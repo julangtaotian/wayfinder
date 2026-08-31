@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "deliver-platform-runtime-on-install",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-02] 平台下载重试超时与代理脱敏",
+      "tests/ui-review-platform-runtime.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-28T08:31:06.857Z",
+  "evidenceId": "V-07",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2fbee998f797000a61007f62219af72ed213ba7a",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 平台下载重试超时与代理脱敏",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 271,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260828083106628-88003-8c45bc11/stdout.log",
+      "sha256": "ec5d8a0a1a466b558da991653cef35e1931222062c9d0480ced9a45fba5c7acd",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260828083106628-88003-8c45bc11/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-05",
+      "D-06",
+      "D-08",
+      "D-10",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-04",
+    "sha256": "7cc50749dcb98bfeb86884a6631145eca8632a52525a8d3578234b2ee83d7059",
+    "testCaseIds": [
+      "TC-02"
+    ],
+    "verificationId": "V-07",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T08:31:06.630Z",
+  "status": "passed",
+  "workspaceFingerprint": "c739e54447b18b4205c88bc163c04557c7ee976f60e0c8d2ff3a3b8ae1077968"
+}

@@ -79,6 +79,7 @@ blob-report/
 /outputs/validator-runtime/
 /outputs/verification-evidence-integrity/
 /outputs/verification-evidence/
+/outputs/platform-runtime-delivery/
 /outputs/real-project-validation/local-matrix.json
 /outputs/real-project-validation/test-fixtures/
 /outputs/real-project-validation/*/workspaces/

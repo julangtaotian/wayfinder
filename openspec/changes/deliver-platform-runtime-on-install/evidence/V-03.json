@@ -1,0 +1,74 @@
+{
+  "artifacts": [],
+  "change": "deliver-platform-runtime-on-install",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-08-28T08:31:49.408Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2fbee998f797000a61007f62219af72ed213ba7a",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 源码外唯一平台 marketplace 成品",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 40201,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260828083121884-88804-ea9c7f03/stdout.log",
+      "sha256": "2a359f47617fffe25c087b066570a4b3dd27d9c4a75343bac9993a32ef0f83c8",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-03/20260828083121884-88804-ea9c7f03/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-03",
+      "A-04",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-04",
+    "sha256": "4871813b2a8dec53416457eea798187773f4534ef98dd67e42f93edd0a1d8f26",
+    "testCaseIds": [
+      "TC-08"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T08:31:21.886Z",
+  "status": "passed",
+  "workspaceFingerprint": "c739e54447b18b4205c88bc163c04557c7ee976f60e0c8d2ff3a3b8ae1077968"
+}

@@ -1,0 +1,64 @@
+{
+  "artifacts": [],
+  "change": "deliver-platform-runtime-on-install",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-04] 平台 marketplace 原子升级与旧包保留",
+      "tests/ui-review-platform-runtime.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-08-28T08:31:06.793Z",
+  "evidenceId": "V-09",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2fbee998f797000a61007f62219af72ed213ba7a",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-04] 平台 marketplace 原子升级与旧包保留",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 284,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260828083106638-88005-e2f3e07d/stdout.log",
+      "sha256": "f4feef75853818e9a4b845ec47ecfb0d1898e20c81082495d08915f6b399fbb4",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-09/20260828083106638-88005-e2f3e07d/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-035-platform-runtime-delivery.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-03"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-06",
+      "D-08",
+      "D-10",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-04",
+    "sha256": "a1ffd1fdf5c22f037bbc8be6d80d8b95eca9ffa9d40d5e1b6481e06a07052c87",
+    "testCaseIds": [
+      "TC-04"
+    ],
+    "verificationId": "V-09",
+    "version": 1
+  },
+  "startedAt": "2026-08-28T08:31:06.639Z",
+  "status": "passed",
+  "workspaceFingerprint": "c739e54447b18b4205c88bc163c04557c7ee976f60e0c8d2ff3a3b8ae1077968"
+}
