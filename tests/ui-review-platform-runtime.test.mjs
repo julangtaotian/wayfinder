@@ -22,15 +22,13 @@ import {
   verifyPlaywrightSharedIntegrity,
   writePlaywrightIntegrity,
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
-import { buildPlaywrightPlatform } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
+import { buildPlaywrightPlatform, copyExternalRuntimeSource } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
 import {
   PLATFORM_PLUGIN_SIZE_BUDGETS,
   PLATFORM_STAGE_RETRY_POLICY,
   packagePluginPlatform,
 } from '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs';
-import {
-  preparePlatformMarketplace,
-} from '../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs';
+import { preparePlatformMarketplace } from '../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs';
 const EXPECTED_PLATFORMS = [
   'darwin-arm64',
   'darwin-x64',
@@ -38,10 +36,7 @@ const EXPECTED_PLATFORMS = [
   'linux-x64',
   'win32-x64',
 ];
-const packagePluginScript = fileURLToPath(new URL(
-  '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs',
-  import.meta.url,
-));
+const packagePluginScript = fileURLToPath(new URL('../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs', import.meta.url));
 const playwrightRuntimeScript = fileURLToPath(new URL(
   '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs',
   import.meta.url,
@@ -905,6 +900,19 @@ test('[TC-03] 源码外唯一平台 marketplace 成品', async (context) => {
     integrityPath: path.join(offlineRuntimeRoot, 'integrity'),
     verifyAllPlatforms: true,
   }).ok, true);
+});
+test('[TC-03] Windows 外部运行时复制排除源码平台资产', (context) => {
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-external-copy-'));
+  context.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  const sourceRuntimeRoot = path.join(fixtureRoot, 'source-runtime'), targetRuntimeRoot = path.join(fixtureRoot, 'target-runtime');
+  for (const relativePath of ['node_modules/playwright/package.json', 'platform-assets/win32-x64/sentinel.txt', 'integrity/shared.json', 'distribution.json']) {
+    const target = path.join(sourceRuntimeRoot, relativePath);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, '{}\n');
+  }
+  copyExternalRuntimeSource({ sourceRuntimeRoot, targetRuntimeRoot });
+  assert.equal(fs.existsSync(path.join(targetRuntimeRoot, 'node_modules', 'playwright', 'package.json')), true);
+  for (const excluded of ['platform-assets', 'integrity', 'distribution.json']) assert.equal(fs.existsSync(path.join(targetRuntimeRoot, excluded)), false);
 });
 test('[TC-04] 平台 marketplace 原子升级与旧包保留', async (context) => {
   const options = packagingOptions(context);

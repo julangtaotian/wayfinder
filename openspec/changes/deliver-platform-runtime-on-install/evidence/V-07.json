@@ -4,19 +4,20 @@
   "command": {
     "args": [
       "--test",
-      "--test-name-pattern=TC-02] 平台下载重试超时与代理脱敏",
+      "--test-name-pattern=TC-02]",
+      "平台下载重试超时与代理脱敏",
       "tests/ui-review-platform-runtime.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-08-28T08:31:06.857Z",
+  "completedAt": "2026-08-31T00:48:52.900Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2fbee998f797000a61007f62219af72ed213ba7a",
+    "commit": "5f0d3fb9b3f08557e38f56d4ece441618c5c1153",
     "dirty": true
   },
   "kind": "local-command",
@@ -25,13 +26,13 @@
   "logs": [
     {
       "bytes": 271,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260828083106628-88003-8c45bc11/stdout.log",
-      "sha256": "ec5d8a0a1a466b558da991653cef35e1931222062c9d0480ced9a45fba5c7acd",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831004852666-4602-2515f91a/stdout.log",
+      "sha256": "fe602a58d356587aab6b6fd2b152bb0c5cc297cdc72a5c8985fc69cd00ef3209",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260828083106628-88003-8c45bc11/stderr.log",
+      "path": "outputs/verification-evidence/deliver-platform-runtime-on-install/V-07/20260831004852666-4602-2515f91a/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -59,7 +60,7 @@
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-08-28T08:31:06.630Z",
+  "startedAt": "2026-08-31T00:48:52.668Z",
   "status": "passed",
-  "workspaceFingerprint": "c739e54447b18b4205c88bc163c04557c7ee976f60e0c8d2ff3a3b8ae1077968"
+  "workspaceFingerprint": "8c38d0276df30d5099dd49f6818f068e4a7a5a901dcdfd734ea9d1f56f88857f"
 }

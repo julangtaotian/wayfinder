@@ -166,16 +166,18 @@ function validateExternalRuntimeRoot(sourceRuntimeRoot, outputRuntimeRoot) {
   return path.resolve(outputRuntimeRoot);
 }
 
-function copyExternalRuntimeSource({ sourceRuntimeRoot, targetRuntimeRoot }) {
-  fs.cpSync(sourceRuntimeRoot, targetRuntimeRoot, {
-    recursive: true,
-    dereference: false,
-    filter: (candidate) => {
-      const relative = path.relative(sourceRuntimeRoot, candidate);
-      const first = relative.split(path.sep)[0];
-      return !['distribution.json', 'integrity', 'platform-assets'].includes(first);
-    },
-  });
+export function copyExternalRuntimeSource({ sourceRuntimeRoot, targetRuntimeRoot }) {
+  const excludedEntries = new Set(['distribution.json', 'integrity', 'platform-assets']);
+  fs.mkdirSync(targetRuntimeRoot, { recursive: true });
+  // 逐个复制允许的顶层条目，避免递归过滤回调在 Windows 上混用路径分隔符。
+  for (const entry of fs.readdirSync(sourceRuntimeRoot, { withFileTypes: true })) {
+    if (excludedEntries.has(entry.name)) continue;
+    fs.cpSync(
+      path.join(sourceRuntimeRoot, entry.name),
+      path.join(targetRuntimeRoot, entry.name),
+      { recursive: true, dereference: false },
+    );
+  }
 }
 
 function inspectReplaceableLfsTree({ runtimeRoot, platformKey, targetRoot }) {
