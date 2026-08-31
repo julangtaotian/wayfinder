@@ -23,7 +23,7 @@
 
 ## 4. 五平台安装门禁与第二阶段 LFS 退役
 
-- [ ] 4.1 增加 `[TC-12]` 隔离安装证据入口与人工 CI 开关，并收集 macOS ARM64/x64、Linux ARM64/x64、Windows x64 的 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用报告；任一平台缺失时保持本组及 A-05 未完成，不删除 LFS 资产。（D-05、D-06、D-09、D-10、D-11、D-12、D-13；A-05）
+- [x] 4.1 增加 `[TC-12]` 隔离安装证据入口与人工 CI 开关，并收集 macOS ARM64/x64、Linux ARM64/x64、Windows x64 的 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用报告；任一平台缺失时保持本组及 A-05 未完成，不删除 LFS 资产。（D-05、D-06、D-09、D-10、D-11、D-12、D-13；A-05）
 - [ ] 4.2 在 `tests/repository-hygiene.test.mjs` 增加 `[TC-06]`，断言共享运行时继续受跟踪、平台二进制/生成清单/LFS 规则退役且本地成品被忽略。（D-02、D-06、D-10；A-06）
 - [ ] 4.3 在 `tests/repository-footprint.test.mjs` 增加 `[TC-07]`，把平台资产目录、生成清单和 LFS 规则作为零上限退役目标，并确认预算不会静默放宽。（D-02、D-06、D-10；A-06）
 - [ ] 4.4 只有 4.1 证据齐全后，从仓库 HEAD 移除 `runtime/playwright/platform-assets/`、对应 `.gitattributes` 规则、旧 `--replace-lfs-pointers` 入口和占位替换回归；不改写 Git 历史、不清理远端 LFS 对象。（D-02、D-06、D-10；A-05、A-06）

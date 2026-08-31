@@ -195,7 +195,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 | V-02 | 自动 | 计划：TC-06 仓库卫生、LFS 退役和受跟踪平台资产聚焦测试 | 待执行 | 计划 | `openspec/changes/<change-name>/evidence/V-02.json` |
 | V-03 | 自动 | 计划：全量测试、结构校验、统一验证和官方 Skill/Plugin validators | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-03.json`；官方 validators 结果见 `openspec/changes/deliver-platform-runtime-on-install/verification.md` |
 | V-04 | 自动 | 计划：Vue 3 + Vite fixture 初始化、重复执行、升级和检查 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-04.json` |
-| V-05 | 人工 | 计划：macOS ARM64/x64、Linux ARM64/x64、Windows x64 本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用复核；macOS ARM64 已记录阶段进展 | 待执行 | 计划 | `openspec/changes/deliver-platform-runtime-on-install/verification.md`；本机运行产物位于被忽略的 `outputs/platform-runtime-delivery/` |
+| V-05 | 人工 | macOS ARM64/x64、Linux ARM64/x64、Windows x64 本地 marketplace 安装、插件加载、真实 Chromium 冒烟和断网使用复核 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/verification.md`；GitHub Actions [run #71](https://github.com/julangtaotian/wayfinder/actions/runs/33352448361) |
 | V-06 | 人工 | 计划：复核同一精确提交的一次共享任务与五个平台任务、报告、可见耗时，确认无大型包上传、无 LFS、无 cache、无 schedule | 待执行 | 计划 | `openspec/changes/<change-name>/verification.md`；外部 CI URL 待执行后记录 |
 | V-07 | 自动 | 计划：TC-02 下载重试、超时、清理和代理凭据保护聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-07.json` |
 | V-08 | 自动 | 计划：TC-03 源码外唯一平台 marketplace 与离线复制聚焦测试 | 2026-08-31 | 通过 | `openspec/changes/deliver-platform-runtime-on-install/evidence/V-08.json` |
@@ -210,7 +210,7 @@ Codex 当前市场源命令支持本地路径或 Git 仓库/ref，现有项目�
 - [ ] [A-02] 经确认的交付入口生成只含当前平台的完整 marketplace 成品，固定 Playwright 版本、许可、共享/平台完整性、体积预算、结构和真实 Chromium 冒烟全部通过，插件使用阶段不联网。
 - [ ] [A-03] 相同版本重复准备不静默覆盖；受控升级使用独占暂存和原子发布；下载按最多三次、单次十分钟执行且代理凭据不落日志，下载、校验或 Windows 目录占用失败时清理本次暂存并保留旧可用成品。
 - [ ] [A-04] 普通 push/PR CI 继续执行一次共享任务和五个平台原生任务，使用外部暂存构建且不依赖 LFS 指针，只上传五份小型报告，不增加 cache、写权限或 schedule；同一精确提交六项任务全部通过。
-- [ ] [A-05] 经确认的交付路径在五个平台均完成 marketplace 安装、插件加载、UI Review 真实 Chromium 冒烟和断网使用复核；已验证的同平台同版本成品可以复制到离线环境安装；证据齐全前仓库 HEAD 保留现有 LFS 平台资产作为回退。
+- [x] [A-05] 经确认的交付路径在五个平台均完成 marketplace 安装、插件加载、UI Review 真实 Chromium 冒烟和断网使用复核；已验证的同平台同版本成品可以复制到离线环境安装；证据齐全前仓库 HEAD 保留现有 LFS 平台资产作为回退。
 - [ ] [A-06] 第二阶段完成后，仓库 HEAD 不再跟踪 `runtime/playwright/platform-assets/` 二进制和对应 LFS 规则，源码完整性与成品完整性边界清晰；README、正式规格、体积门禁和回滚说明同步，且不改写 Git 历史或自动清理远端 LFS 对象。
 
 ## 验收—证据映射
