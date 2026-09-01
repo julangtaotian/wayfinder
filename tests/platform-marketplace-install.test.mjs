@@ -176,7 +176,26 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
   assert.equal(report.offline.chromium.screenshotBytes, 512);
   assert.deepEqual(JSON.parse(fs.readFileSync(fixture.outputPath, 'utf8')), report);
   assert.equal(smokeCalls.length, 1);
-  assert.match(smokeCalls[0].runtimeRoot, /plugins[/\\]cache[/\\].+[/\\]runtime[/\\]playwright$/u);
+  const runtimeRoot = smokeCalls[0].runtimeRoot;
+  const runtimeRelativeToOutputs = path.relative(
+    path.join(fixture.repositoryRoot, 'outputs'),
+    runtimeRoot,
+  );
+  // Windows 通过受控目录联接缩短路径，不能把逻辑运行时位置误判为缓存物理路径。
+  assert.ok(
+    runtimeRelativeToOutputs
+      && runtimeRelativeToOutputs !== '..'
+      && !runtimeRelativeToOutputs.startsWith(`..${path.sep}`)
+      && !path.isAbsolute(runtimeRelativeToOutputs),
+    `断网运行时必须位于隔离 outputs 中：${runtimeRoot}`,
+  );
+  assert.ok(
+    runtimeRoot.endsWith(path.join('runtime', 'playwright')),
+    `断网运行时必须指向已安装插件的 Playwright 目录：${runtimeRoot}`,
+  );
+  if (process.platform !== 'win32') {
+    assert.match(runtimeRoot, /plugins[/\\]cache[/\\].+[/\\]runtime[/\\]playwright$/u);
+  }
   for (const call of calls) {
     assert.equal(call.env.CODEX_API_KEY, undefined);
     assert.equal(call.env.OPENAI_API_KEY, undefined);

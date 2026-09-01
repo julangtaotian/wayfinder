@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T03:39:04.166Z",
+  "completedAt": "2026-09-01T03:48:57.631Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "08f25856060840ad5a33686c353561e7f67428de",
+    "commit": "5bb29f0cf3b4c45303111faeed59b13b89491311",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 4922,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901033903495-12298-5b40b4a3/stdout.log",
-      "sha256": "e40c43eb3a96ef1e1707cecd85211e729e2851fa8a73736785773f052f997ab3",
+      "bytes": 4913,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901034857014-20099-8ea82a97/stdout.log",
+      "sha256": "0db9691d5994cb127ab9c69db9e193919341cdc3a6ffa482bbf06d4133198722",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901033903495-12298-5b40b4a3/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901034857014-20099-8ea82a97/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -48,15 +48,15 @@
       "D-04",
       "D-06"
     ],
-    "revision": "R-04",
-    "sha256": "592b0e36b4f6a579a400f524571c6a336c8945d978ba16fc8dae46f03897536d",
+    "revision": "R-05",
+    "sha256": "6f25613960d579ac52f2247fa98bc571b6ab70ec536c1902ee27993288fb4001",
     "testCaseIds": [
       "TC-06"
     ],
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-09-01T03:39:03.497Z",
+  "startedAt": "2026-09-01T03:48:57.016Z",
   "status": "passed",
-  "workspaceFingerprint": "3e56fd0c84e564b4eabecb8ddf5729fb65e80ffc201565e4b02b66b4520d18e7"
+  "workspaceFingerprint": "b8df411e26767d523641283d1bfb800d630e497f04b1443a5c969c3e02e6c39a"
 }

@@ -5,7 +5,7 @@
 - 状态：已验证
 - 需求：`requirements/REQ-2026-037-reproducible-frontend-test-runtime.md`
 - 变更：reproducible-frontend-test-runtime
-- 需求修订基线：R-04
+- 需求修订基线：R-05
 - 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/ui-review-platform-runtime.test.mjs`
 
 ## 测试上下文
@@ -128,3 +128,20 @@
 - 关联验证：V-07
 - 结果分类：通过
 - 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-07.json`
+
+### TC-12：平台 marketplace 安装后的断网运行时定位
+
+- 状态：待真实 CI 复验
+- 优先级：P1
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-04、D-06
+- 关联验收：A-04、A-05
+- 前置条件：使用隔离 outputs 目录完成平台 marketplace 安装，并在 Windows 保留短路径目录联接策略。
+- 操作：执行 Codex 安装、加载与断网 Chromium 冒烟替身；验证逻辑运行时位于隔离 outputs 并以 `runtime/playwright` 结尾，非 Windows 额外验证缓存物理路径。
+- 可观察断言：Windows 的 `installed-junction` 不会被误判为异常路径，其他平台仍保持已安装缓存路径合同。
+- 目标测试：`tests/platform-marketplace-install.test.mjs`
+- 测试定位：`[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口`
+- 聚焦命令：`node --test tests/platform-marketplace-install.test.mjs`
+- 关联验证：V-08
+- 结果分类：通过 / 失败

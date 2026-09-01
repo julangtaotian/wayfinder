@@ -45,6 +45,7 @@
 - [通用替身误继承 Windows 宿主] → 非 Windows 入口契约测试显式注入 Linux 平台；TC-07 单独保留 Windows JavaScript npm 入口覆盖。
 - [平台 runner 无法离线复用缓存] → CI 先显式预热，再清理安装目录后离线执行；失败任务保留平台、步骤和退出状态供复盘。
 - [源码共享校验与平台成品混用] → 离线共享验证显式清空平台运行时环境，平台成品只在后续专属验证中注入；五平台两次 CI 已分别验证缺少运行时与混用运行时根均会失败。
+- [Windows 短路径联接被测试误判为缓存物理路径] → TC-12 先断言运行时仍在隔离 outputs 中且指向 `runtime/playwright`，再只对非 Windows 校验缓存物理路径；Windows 的 `installed-junction` 策略由专属用例覆盖。
 
 ## Migration Plan
 
