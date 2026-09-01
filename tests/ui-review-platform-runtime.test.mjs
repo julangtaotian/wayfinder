@@ -355,7 +355,7 @@ test('[TC-03] CI 共享验证前置门禁', (context) => {
   assert.match(sharedJob, /run:\s*npm run cleanup:test-runtime/u);
   assert.doesNotMatch(sharedJob, /git lfs pull|UI_REVIEW_EXPECT_PLATFORM/u);
   assert.match(platformJob, /needs:\s*shared/u);
-  assert.equal([...workflow.matchAll(/run:\s*npm run verify:shared/gmu)].length, 1);
+  assert.equal([...workflow.matchAll(/run:\s*npm run verify:shared/gmu)].length, 2);
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
   assert.equal(packageJson.scripts['verify:shared'], 'node scripts/verify.mjs --scope shared');
   assert.equal(packageJson.scripts['verify:platform'], 'node scripts/verify.mjs --scope platform');
@@ -411,6 +411,34 @@ test('[TC-04] CI 五平台专属验证与产物合同', () => {
   assert.match(attributes, /^\* text=auto eol=lf$/mu);
   assert.doesNotMatch(attributes, /platform-assets\/\*\*|filter=lfs/u);
 });
+
+test('[TC-06] CI 平台矩阵验证运行时离线复验', () => {
+  const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
+  const platformStart = workflow.indexOf('\n  platform:');
+  assert.notEqual(platformStart, -1);
+  const platformJob = workflow.slice(platformStart);
+  const setupNode = platformJob.indexOf('actions/setup-node@v6');
+  const warmCache = platformJob.indexOf('Warm frontend test cache');
+  const clearRuntime = platformJob.indexOf('Remove frontend test runtime before offline recheck');
+  const offlineVerify = platformJob.indexOf('Verify frontend test runtime offline');
+  const platformPrepare = platformJob.indexOf('Prepare platform marketplace outside source runtime');
+
+  assert.ok(setupNode < warmCache);
+  assert.ok(warmCache < clearRuntime);
+  assert.ok(clearRuntime < offlineVerify);
+  assert.ok(offlineVerify < platformPrepare);
+  assert.equal([...platformJob.matchAll(/run:\s*npm run prepare:test-runtime/gmu)].length, 1);
+  assert.equal([...platformJob.matchAll(/run:\s*npm run verify:shared -- --offline/gmu)].length, 1);
+  assert.match(
+    platformJob,
+    /name:\s*Clean frontend test runtime\r?\n\s*if:\s*always\(\)\r?\n\s*run:\s*npm run cleanup:test-runtime/u,
+  );
+  assert.match(
+    platformJob,
+    /name:\s*Clean frontend test cache\r?\n\s*if:\s*always\(\)\r?\n\s*run:\s*npm run cleanup:test-cache/u,
+  );
+});
+
 test('[TC-05] CI 同引用在途运行治理', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   assert.match(

@@ -1,0 +1,8 @@
+{
+  "name": "frontend-test-validation-runtime",
+  "private": true,
+  "version": "0.0.0",
+  "devDependencies": {
+    "vitest": "3.2.4"
+  }
+}

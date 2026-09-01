@@ -341,9 +341,10 @@ wayfinder/frontend.md
 npm run prepare:test-runtime
 npm run verify
 npm run cleanup:test-runtime
+npm run cleanup:test-cache
 ```
 
-`prepare:test-runtime` 只把固定版本 Vitest、锁文件和 npm 缓存写入被定向忽略的 `outputs/frontend-test-runtime/`，不在项目根目录创建 `node_modules`。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理；验证结束后运行 `cleanup:test-runtime` 删除 Vitest 运行时。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
+`prepare:test-runtime` 从 `scripts/fixtures/frontend-test-runtime/` 中受版本控制的锁定输入创建固定 Vitest 运行时，并通过 `npm ci` 写入被定向忽略的 `outputs/frontend-test-runtime/`；可复用 npm 缓存独立位于 `outputs/frontend-test-cache/`，不会在项目根目录创建 `node_modules`。首次在线准备会填充缓存；此后可使用 `npm run prepare:test-runtime -- --offline` 或 `npm run verify:shared -- --offline` 强制只使用缓存，缓存缺失或不完整时命令失败关闭。`cleanup:test-runtime` 只删除临时运行时，`cleanup:test-cache` 才删除可复用缓存。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
 
 规范源码只保存 Playwright 共享 JavaScript 运行时、锁文件、许可证、五平台元数据和共享完整性清单，不再保存 Chromium/FFmpeg 二进制或平台生成清单。Validate CI 在各原生 runner 上通过固定 Playwright 1.62.1 CLI，在源码目录之外的有界暂存中只生成当前平台 marketplace；普通 push/PR 只上传小型 `package-report.json`，不上传大型浏览器成品，也不增加 cache、schedule 或写权限。完整性、许可、体积和真实 Chromium 冒烟仍是必需门禁，不能用跳过冒烟代替成功。
 

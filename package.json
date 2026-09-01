@@ -7,6 +7,7 @@
   "scripts": {
     "prepare:test-runtime": "node scripts/prepare-frontend-test-runtime.mjs",
     "cleanup:test-runtime": "node scripts/cleanup-frontend-test-runtime.mjs",
+    "cleanup:test-cache": "node scripts/cleanup-frontend-test-runtime.mjs --cache",
     "test": "node scripts/test-groups.mjs all",
     "test:repository": "node scripts/test-groups.mjs repository",
     "test:workflow": "node scripts/test-groups.mjs workflow",

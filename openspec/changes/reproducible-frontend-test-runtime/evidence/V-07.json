@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "reproducible-frontend-test-runtime",
+  "command": {
+    "args": [
+      "--test",
+      "tests/ui-review-platform-runtime.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-01T01:58:08.658Z",
+  "evidenceId": "V-07",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-06] CI 平台矩阵验证运行时离线复验",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 4914,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901015808148-60345-1ed978fe/stdout.log",
+      "sha256": "a39965fc2c525ad3aa0e663eb45f6d8dc3bd155d8133f64a357b1d35dfe1fdfe",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901015808148-60345-1ed978fe/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-06"
+    ],
+    "revision": "R-02",
+    "sha256": "3b176d9400a5c61119a42c529bee6dd725b0b8b32eaa3e6f765575796c66efa9",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-07",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T01:58:08.149Z",
+  "status": "passed",
+  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+}

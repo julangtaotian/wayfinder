@@ -1,0 +1,64 @@
+{
+  "artifacts": [],
+  "change": "reproducible-frontend-test-runtime",
+  "command": {
+    "args": [
+      "run",
+      "verify:shared",
+      "--",
+      "--offline"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-09-01T01:58:42.277Z",
+  "evidenceId": "V-05",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "统一验证通过：7 个阶段全部完成。",
+  "locatorMatches": 1,
+  "logs": [
+    {
+      "bytes": 31690,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901015815167-60401-05aa8527/stdout.log",
+      "sha256": "1fc1bbef7ae7ce6eb71144a381f29f6e7d3674b61a75a34ebba61407b3946860",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901015815167-60401-05aa8527/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03"
+    ],
+    "revision": "R-02",
+    "sha256": "2ce5826e640ce1ed0b4c3609c7b42c1df3523280c68589d770cb86115833eac2",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-05",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T01:58:15.169Z",
+  "status": "passed",
+  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+}

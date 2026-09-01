@@ -37,8 +37,16 @@ function resolveVerificationScope(scope = 'all') {
 
 export function parseVerificationArgs(argv = []) {
   let scope = 'all';
+  let offline = false;
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
+    if (value === '--offline') {
+      if (offline) {
+        throw verificationArgumentError('verification_offline_duplicate', '参数 --offline 只能出现一次');
+      }
+      offline = true;
+      continue;
+    }
     if (value !== '--scope') {
       throw verificationArgumentError('unknown_verification_argument', `不支持的验证参数：${value}`);
     }
@@ -49,7 +57,7 @@ export function parseVerificationArgs(argv = []) {
     scope = resolveVerificationScope(requested);
     index += 1;
   }
-  return { scope };
+  return offline ? { scope, offline: true } : { scope };
 }
 
 export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, { scope = 'all' } = {}) {
@@ -152,9 +160,10 @@ function executeStep(step, repositoryRoot, tempRoot, environment) {
 export function runVerification({
   repositoryRoot = defaultRepositoryRoot,
   scope = 'all',
+  offline = false,
   execute = executeStep,
   environment = process.env,
-  prepareRuntime = (root) => prepareFrontendTestRuntime({ repositoryRoot: root, environment }),
+  prepareRuntime = (root, options) => prepareFrontendTestRuntime({ repositoryRoot: root, environment, ...options }),
   cleanupRuntime = (root) => cleanupFrontendTestRuntime({ repositoryRoot: root }),
   report = (message) => console.log(message),
   reportError = (message) => console.error(message),
@@ -172,7 +181,7 @@ export function runVerification({
   fs.mkdirSync(tempRoot, { recursive: true });
 
   try {
-    if (managesFrontendTestRuntime) prepareRuntime(root);
+    if (managesFrontendTestRuntime) prepareRuntime(root, { offline });
     for (const [index, step] of steps.entries()) {
       report(`[verify ${index + 1}/${steps.length}] ${step.label}`);
       const result = execute(step, root, tempRoot, environment);
@@ -183,6 +192,7 @@ export function runVerification({
           ok: false,
           code: 'verification_step_failed',
           scope: selectedScope,
+          ...(offline ? { offline: true } : {}),
           completed,
           failedStep: step.id,
           status: result.status ?? 1,
@@ -196,6 +206,7 @@ export function runVerification({
       ok: true,
       code: 'verification_passed',
       scope: selectedScope,
+      ...(offline ? { offline: true } : {}),
       completed,
       failedStep: null,
       status: 0,

@@ -75,6 +75,7 @@ playwright-report/
 blob-report/
 .nyc_output/
 /outputs/frontend-test-runtime/
+/outputs/frontend-test-cache/
 /outputs/verify-runtime/
 /outputs/validator-runtime/
 /outputs/verification-evidence-integrity/

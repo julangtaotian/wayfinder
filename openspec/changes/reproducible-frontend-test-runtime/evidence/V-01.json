@@ -1,0 +1,60 @@
+{
+  "artifacts": [],
+  "change": "reproducible-frontend-test-runtime",
+  "command": {
+    "args": [
+      "--test",
+      "tests/frontend-test-workflow.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-01T01:57:56.955Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 锁定输入与缓存路径",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 3312,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901015754633-59246-c28886a3/stdout.log",
+      "sha256": "9f0c8a116e61a7c8e74c2998ca407f1c6ed08312c4ee869cb342080d0eb40c58",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901015754633-59246-c28886a3/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02"
+    ],
+    "revision": "R-02",
+    "sha256": "595f4df964ae2981a37940713944d6d6dd9de6e9f31d7c70a945ce2e08a55a38",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T01:57:54.635Z",
+  "status": "passed",
+  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+}

@@ -62,6 +62,18 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0
+      - name: Warm frontend test cache
+        run: npm run prepare:test-runtime
+      - name: Remove frontend test runtime before offline recheck
+        run: npm run cleanup:test-runtime
+      - name: Verify frontend test runtime offline
+        run: npm run verify:shared -- --offline
+      - name: Clean frontend test runtime
+        if: always()
+        run: npm run cleanup:test-runtime
+      - name: Clean frontend test cache
+        if: always()
+        run: npm run cleanup:test-cache
       - name: Prepare platform marketplace outside source runtime
         run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
       - run: npm run verify:platform

@@ -1,0 +1,63 @@
+{
+  "artifacts": [],
+  "change": "reproducible-frontend-test-runtime",
+  "command": {
+    "args": [
+      "--test",
+      "tests/frontend-test-workflow.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-01T01:58:02.021Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-04] 统一验证传播离线选项",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 3317,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-04/20260901015800538-60054-4d589641/stdout.log",
+      "sha256": "cff196694e67c050c10a2dd3c82525573ad7ad6151c560694f53a3b18977f784",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-04/20260901015800538-60054-4d589641/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02",
+      "A-04"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04"
+    ],
+    "revision": "R-02",
+    "sha256": "1dcf8e1a3ac17a96c04274df4f83df0aade4f3250ad45ff2b1d45c7d861cc3ac",
+    "testCaseIds": [
+      "TC-04"
+    ],
+    "verificationId": "V-04",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T01:58:00.540Z",
+  "status": "passed",
+  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+}

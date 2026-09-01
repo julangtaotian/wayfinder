@@ -8,9 +8,19 @@ import { inspectTestContext } from '../plugins/frontend-ai-workflow/scripts/insp
 import { validateTestPlan } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
 import { validateDeclaredTestPlan } from '../plugins/frontend-ai-workflow/scripts/check-change.mjs';
 import {
+  parseFrontendTestRuntimeArgs,
   prepareFrontendTestRuntime,
+  resolveFrontendTestRuntimeFixture,
   resolveNpmInvocation,
 } from '../scripts/prepare-frontend-test-runtime.mjs';
+import {
+  cleanupFrontendTestCache,
+  cleanupFrontendTestRuntime,
+} from '../scripts/cleanup-frontend-test-runtime.mjs';
+import {
+  parseVerificationArgs,
+  runVerification,
+} from '../scripts/verify.mjs';
 
 function writeFile(root, relativePath, content) {
   const filePath = path.join(root, relativePath);
@@ -323,10 +333,127 @@ test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
   });
   assert.equal(executed.command, nodePath);
   assert.equal(executed.args[0], npmEntry);
-  assert.equal(executed.args.includes('install'), true);
+  assert.equal(executed.args.includes('ci'), true);
   assert.equal(executed.command.endsWith('npm.cmd'), false);
   assert.equal(prepared.npmSource, 'npm_execpath');
   assert.ok(prepared.runtimeRoot.startsWith(path.join(root, 'outputs')));
+});
+
+test('[TC-01] 锁定输入与缓存路径', (t) => {
+  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-locked-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  let executed = null;
+  const prepared = prepareFrontendTestRuntime({
+    repositoryRoot: root,
+    fileExists: (target) => target.endsWith(path.join('vitest', 'vitest.mjs')),
+    execute: (command, args, options) => {
+      executed = { command, args, options };
+      return { status: 0 };
+    },
+    report: () => {},
+  });
+  const fixture = resolveFrontendTestRuntimeFixture();
+
+  assert.equal(executed.command, 'npm');
+  assert.equal(executed.args.includes('ci'), true);
+  assert.equal(executed.args.includes('install'), false);
+  assert.equal(executed.args.includes('--prefer-offline'), true);
+  assert.equal(executed.options.env.npm_config_cache, prepared.cacheRoot);
+  assert.equal(prepared.cacheRoot, path.join(root, 'outputs', 'frontend-test-cache'));
+  assert.equal(fs.readFileSync(path.join(prepared.runtimeRoot, 'package.json'), 'utf8'), fs.readFileSync(path.join(fixture.root, 'package.json'), 'utf8'));
+  assert.equal(fs.readFileSync(path.join(prepared.runtimeRoot, 'package-lock.json'), 'utf8'), fs.readFileSync(path.join(fixture.root, 'package-lock.json'), 'utf8'));
+  assert.equal(fs.existsSync(path.join(root, 'node_modules')), false);
+});
+
+test('[TC-02] 显式离线模式失败关闭', (t) => {
+  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-offline-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  let args = null;
+  const prepared = prepareFrontendTestRuntime({
+    repositoryRoot: root,
+    offline: true,
+    fileExists: (target) => target.endsWith(path.join('vitest', 'vitest.mjs')),
+    execute: (_command, receivedArgs) => {
+      args = receivedArgs;
+      return { status: 0 };
+    },
+    report: () => {},
+  });
+  assert.equal(prepared.offline, true);
+  assert.equal(args.includes('--offline'), true);
+  assert.deepEqual(parseFrontendTestRuntimeArgs(['--offline']), { offline: true });
+  assert.throws(
+    () => parseFrontendTestRuntimeArgs(['--offline', '--offline']),
+    (error) => error.code === 'frontend_test_runtime_argument_invalid' && error.status === 1,
+  );
+  assert.throws(
+    () => prepareFrontendTestRuntime({
+      repositoryRoot: root,
+      offline: true,
+      execute: () => ({ status: 17 }),
+      report: () => {},
+    }),
+    (error) => error.code === 'frontend_test_runtime_prepare_failed'
+      && error.target === path.join(root, 'outputs', 'frontend-test-runtime')
+      && error.status === 17,
+  );
+});
+
+test('[TC-03] 运行时与缓存的分离清理', (t) => {
+  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-cleanup-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const runtimeRoot = path.join(root, 'outputs', 'frontend-test-runtime');
+  const cacheRoot = path.join(root, 'outputs', 'frontend-test-cache');
+  const persistentEvidence = path.join(root, 'outputs', 'persistent-evidence', 'result.txt');
+  fs.mkdirSync(runtimeRoot, { recursive: true });
+  fs.mkdirSync(cacheRoot, { recursive: true });
+  fs.mkdirSync(path.dirname(persistentEvidence), { recursive: true });
+  fs.writeFileSync(path.join(runtimeRoot, 'runtime.txt'), 'runtime\n', 'utf8');
+  fs.writeFileSync(path.join(cacheRoot, 'cache.txt'), 'cache\n', 'utf8');
+  fs.writeFileSync(persistentEvidence, 'evidence\n', 'utf8');
+
+  cleanupFrontendTestRuntime({ repositoryRoot: root, report: () => {} });
+  assert.equal(fs.existsSync(runtimeRoot), false);
+  assert.equal(fs.existsSync(cacheRoot), true);
+  assert.equal(fs.existsSync(persistentEvidence), true);
+
+  cleanupFrontendTestCache({ repositoryRoot: root, report: () => {} });
+  assert.equal(fs.existsSync(cacheRoot), false);
+  assert.equal(fs.existsSync(persistentEvidence), true);
+});
+
+test('[TC-04] 统一验证传播离线选项', (t) => {
+  const fixturesRoot = path.resolve('outputs', 'frontend-test-runtime-verify');
+  fs.mkdirSync(fixturesRoot, { recursive: true });
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'fixture-')));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
+  for (const name of ['ordinary.test.mjs', 'ui-review-automation.test.mjs', 'ui-review-platform-runtime.test.mjs']) {
+    fs.writeFileSync(path.join(root, 'tests', name), 'export {};\n', 'utf8');
+  }
+  let prepared = null;
+  const result = runVerification({
+    repositoryRoot: root,
+    scope: 'shared',
+    offline: true,
+    prepareRuntime: (_root, options) => {
+      prepared = options;
+    },
+    cleanupRuntime: () => {},
+    execute: () => ({ status: 0 }),
+    environment: {},
+    report: () => {},
+    reportError: () => {},
+  });
+
+  assert.deepEqual(parseVerificationArgs(['--offline', '--scope', 'shared']), { scope: 'shared', offline: true });
+  assert.throws(
+    () => parseVerificationArgs(['--offline', '--offline']),
+    (error) => error.code === 'verification_offline_duplicate' && error.status === 1,
+  );
+  assert.deepEqual(prepared, { offline: true });
+  assert.equal(result.ok, true);
+  assert.equal(result.offline, true);
 });
 
 test('[TC-03] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {
