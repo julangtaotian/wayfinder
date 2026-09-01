@@ -66,6 +66,8 @@ jobs:
         run: npm run prepare:test-runtime
       - name: Remove frontend test runtime before offline recheck
         run: npm run cleanup:test-runtime
+      - name: Prepare platform marketplace outside source runtime
+        run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
       - name: Verify frontend test runtime offline
         run: npm run verify:shared -- --offline
       - name: Clean frontend test runtime
@@ -74,8 +76,6 @@ jobs:
       - name: Clean frontend test cache
         if: always()
         run: npm run cleanup:test-cache
-      - name: Prepare platform marketplace outside source runtime
-        run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
       - run: npm run verify:platform
       - name: Install pinned Codex CLI for platform evidence
         if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence

@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T01:58:08.658Z",
+  "completedAt": "2026-09-01T03:11:01.468Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "commit": "2e649cc7e3814b379d39ebfd56d425909d06b0a6",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,13 +24,13 @@
   "logs": [
     {
       "bytes": 4914,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901015808148-60345-1ed978fe/stdout.log",
-      "sha256": "a39965fc2c525ad3aa0e663eb45f6d8dc3bd155d8133f64a357b1d35dfe1fdfe",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901031100803-82767-3e41850a/stdout.log",
+      "sha256": "a2866e4c5edcf31f92dc9d8a9416a8c730542436a3bae389b03d1b3f7f0e75d4",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901015808148-60345-1ed978fe/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901031100803-82767-3e41850a/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -48,15 +48,15 @@
       "D-04",
       "D-06"
     ],
-    "revision": "R-02",
-    "sha256": "3b176d9400a5c61119a42c529bee6dd725b0b8b32eaa3e6f765575796c66efa9",
+    "revision": "R-03",
+    "sha256": "c98278c8066b03571d0f5d91ed16d60c1b9dee63998e4296c28d9d3585ad2732",
     "testCaseIds": [
       "TC-06"
     ],
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-09-01T01:58:08.149Z",
+  "startedAt": "2026-09-01T03:11:00.807Z",
   "status": "passed",
-  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+  "workspaceFingerprint": "343906fab76a9aea59cfc1f1023dbf60f03a1650fea07d711aaa3ec4e99e8bea"
 }

@@ -420,13 +420,13 @@ test('[TC-06] CI 平台矩阵验证运行时离线复验', () => {
   const setupNode = platformJob.indexOf('actions/setup-node@v6');
   const warmCache = platformJob.indexOf('Warm frontend test cache');
   const clearRuntime = platformJob.indexOf('Remove frontend test runtime before offline recheck');
-  const offlineVerify = platformJob.indexOf('Verify frontend test runtime offline');
   const platformPrepare = platformJob.indexOf('Prepare platform marketplace outside source runtime');
+  const offlineVerify = platformJob.indexOf('Verify frontend test runtime offline');
 
   assert.ok(setupNode < warmCache);
   assert.ok(warmCache < clearRuntime);
-  assert.ok(clearRuntime < offlineVerify);
-  assert.ok(offlineVerify < platformPrepare);
+  assert.ok(clearRuntime < platformPrepare);
+  assert.ok(platformPrepare < offlineVerify);
   assert.equal([...platformJob.matchAll(/run:\s*npm run prepare:test-runtime/gmu)].length, 1);
   assert.equal([...platformJob.matchAll(/run:\s*npm run verify:shared -- --offline/gmu)].length, 1);
   assert.match(
