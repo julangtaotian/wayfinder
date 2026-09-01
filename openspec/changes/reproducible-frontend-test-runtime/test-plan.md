@@ -120,8 +120,8 @@
 - 前置条件：仓库存在五平台 `platform` CI 矩阵与固定 Node.js 准备步骤
 - 测试数据：工作流中的预热、清理和离线共享验证命令
 - 测试替身：不适用
-- 操作：读取平台 job，验证每个矩阵 runner 都先预热缓存、清理运行时、生成平台运行时，再执行离线共享验证；失败时仍执行两类受控清理
-- 可观察断言：平台 job 中的命令顺序稳定，`verify:shared -- --offline` 只出现一次并在平台运行时生成后；运行时与缓存清理均使用 `if: always()`
+- 操作：读取平台 job，验证每个矩阵 runner 都先预热缓存、清理运行时、清空平台运行时环境后执行离线共享验证并清理，再生成平台运行时进行专属验证；失败时仍执行两类受控清理
+- 可观察断言：平台 job 中的命令顺序稳定，`verify:shared -- --offline` 只出现一次且显式清空两个平台环境变量；运行时与缓存清理均使用 `if: always()`
 - 目标测试：`tests/ui-review-platform-runtime.test.mjs`
 - 测试定位：`[TC-06] CI 平台矩阵验证运行时离线复验`
 - 聚焦命令：`node --test tests/ui-review-platform-runtime.test.mjs`

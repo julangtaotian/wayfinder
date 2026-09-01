@@ -74,7 +74,7 @@
 ## 页面与交互
 
 - 入口与操作路径：`npm run prepare:test-runtime [-- --offline]`、`npm run verify:shared [-- --offline]`、`npm run cleanup:test-runtime`、`npm run cleanup:test-cache`。
-- CI 入口：`.github/workflows/validate.yml` 的 `platform` 矩阵在每个平台依次预热缓存、清理运行时、生成平台运行时、执行离线共享验证，并在结束时回收两类临时目录。
+- CI 入口：`.github/workflows/validate.yml` 的 `platform` 矩阵在每个平台依次预热缓存、清理运行时、清空平台运行时环境后执行离线共享验证、回收两类临时目录，再生成平台运行时并执行平台专属验证。
 - 字段、文案与默认值：默认在线模式优先使用缓存；只有显式 `--offline` 禁止网络回退。
 - 加载态、空态、错误态、禁用态：命令行输出稳定 code、target、status 与中文说明；不涉及页面状态。
 - 权限与角色差异：无。
@@ -111,7 +111,7 @@
 | --- | --- | --- | --- | --- |
 | R-01 | 2026-09-01 | D-01、D-02、D-03、D-04、D-05 | A-01、A-02、A-03、A-04 | 首次建立需求，跨平台风险命中临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台为 macOS、Linux、Windows，任务待规划。 |
 | R-02 | 2026-09-01 | D-06 | A-05 | 用户要求真实 Windows/Linux 验证；跨平台高风险新增 CI 工作流，继续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断。影响平台为现有真实矩阵的 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64；原有 V-01 至 V-06 重置待重新取证，新增 CI 证据任务。 |
-| R-03 | 2026-09-01 | D-06 | A-05 | 五平台首次真实 CI 在离线共享验证的结构校验阶段一致失败，原因是平台运行时尚未生成；将平台运行时生成前移至离线验证之前。持续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台保持为 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。 |
+| R-03 | 2026-09-01 | D-06 | A-05 | 五平台首次真实 CI 在离线共享验证的结构校验阶段一致失败，原因是平台运行时尚未生成；第二次将平台成品根注入共享校验后又一致失败，原因是源码结构与平台分发清单混用。现改为离线共享校验显式清空平台运行时环境，随后独立生成并校验平台成品。持续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台保持为 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。 |
 
 ## 兼容性与风险
 
@@ -139,7 +139,7 @@
 | V-05 | 自动 | 离线共享统一验证 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/evidence/V-05.json` |
 | V-06 | 人工 | 本机 macOS；检查根目录、缓存、离线命令与清理边界 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/verification.md` |
 | V-07 | 自动 | TC-06 平台矩阵离线验证工作流合同 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/evidence/V-07.json` |
-| V-08 | 自动 | 同一提交的五平台矩阵真实执行 | 待执行 | 计划 | 首次运行 [#80](https://github.com/julangtaotian/wayfinder/actions/runs/33464540918) 因平台运行时生成顺序失败；修复后待新提交 CI 结果 |
+| V-08 | 自动 | 同一提交的五平台矩阵真实执行 | 待执行 | 计划 | [#80](https://github.com/julangtaotian/wayfinder/actions/runs/33464540918) 缺少平台运行时；[#81](https://github.com/julangtaotian/wayfinder/actions/runs/33465872615) 混用了源码与平台运行时根；修复后待新提交 CI 结果 |
 
 ## 验收标准
 
@@ -147,7 +147,7 @@
 - [x] [A-02] 已缓存依赖可由显式离线模式完成准备和共享验证；缓存缺失或不匹配时失败关闭并提供稳定诊断。
 - [x] [A-03] 运行时与可复用缓存可分别、有界地清理，持久 outputs 资产不受影响。
 - [x] [A-04] Windows、macOS 与 Linux 的 npm JavaScript 入口、路径、环境变量和机器诊断回归均有确定性覆盖。
-- [ ] [A-05] 同一提交的五平台 CI 矩阵均先在线预热、清理运行时、生成平台运行时，再完成离线共享验证和受控清理。
+- [ ] [A-05] 同一提交的五平台 CI 矩阵均先在线预热、清理运行时、在源码共享运行时完成离线验证和受控清理，再生成平台运行时并完成平台专属验证。
 
 ## 验收—证据映射
 

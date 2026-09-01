@@ -425,10 +425,14 @@ test('[TC-06] CI 平台矩阵验证运行时离线复验', () => {
 
   assert.ok(setupNode < warmCache);
   assert.ok(warmCache < clearRuntime);
-  assert.ok(clearRuntime < platformPrepare);
-  assert.ok(platformPrepare < offlineVerify);
+  assert.ok(clearRuntime < offlineVerify);
+  assert.ok(offlineVerify < platformPrepare);
   assert.equal([...platformJob.matchAll(/run:\s*npm run prepare:test-runtime/gmu)].length, 1);
   assert.equal([...platformJob.matchAll(/run:\s*npm run verify:shared -- --offline/gmu)].length, 1);
+  assert.match(
+    platformJob,
+    /name:\s*Verify frontend test runtime offline\r?\n\s*#.*\r?\n\s*env:\r?\n\s*UI_REVIEW_EXPECT_PLATFORM:\s*''\r?\n\s*UI_REVIEW_RUNTIME_ROOT:\s*''\r?\n\s*run:\s*npm run verify:shared -- --offline/u,
+  );
   assert.match(
     platformJob,
     /name:\s*Clean frontend test runtime\r?\n\s*if:\s*always\(\)\r?\n\s*run:\s*npm run cleanup:test-runtime/u,

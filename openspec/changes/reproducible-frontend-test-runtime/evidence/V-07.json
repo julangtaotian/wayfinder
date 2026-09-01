@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T03:11:01.468Z",
+  "completedAt": "2026-09-01T03:29:00.066Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2e649cc7e3814b379d39ebfd56d425909d06b0a6",
+    "commit": "1ac010aff1c9ad647a0af336fe75510ec175434c",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 4914,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901031100803-82767-3e41850a/stdout.log",
-      "sha256": "a2866e4c5edcf31f92dc9d8a9416a8c730542436a3bae389b03d1b3f7f0e75d4",
+      "bytes": 4922,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901032859473-4662-c9112144/stdout.log",
+      "sha256": "6c7c880725dd5de3a6d477377126f8c69f627273750094e401d388d2a987a09f",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901031100803-82767-3e41850a/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901032859473-4662-c9112144/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -49,14 +49,14 @@
       "D-06"
     ],
     "revision": "R-03",
-    "sha256": "c98278c8066b03571d0f5d91ed16d60c1b9dee63998e4296c28d9d3585ad2732",
+    "sha256": "895565b6c50dbb46ce2c3d764221c0a69c42ddd2cea2fc33ce9b76c43b500717",
     "testCaseIds": [
       "TC-06"
     ],
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-09-01T03:11:00.807Z",
+  "startedAt": "2026-09-01T03:28:59.475Z",
   "status": "passed",
-  "workspaceFingerprint": "343906fab76a9aea59cfc1f1023dbf60f03a1650fea07d711aaa3ec4e99e8bea"
+  "workspaceFingerprint": "f114d095476b2824619872fc566d50f5f5b15d25cfd06205c37487ae07803cc7"
 }
