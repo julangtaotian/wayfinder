@@ -112,6 +112,7 @@
 | R-01 | 2026-09-01 | D-01、D-02、D-03、D-04、D-05 | A-01、A-02、A-03、A-04 | 首次建立需求，跨平台风险命中临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台为 macOS、Linux、Windows，任务待规划。 |
 | R-02 | 2026-09-01 | D-06 | A-05 | 用户要求真实 Windows/Linux 验证；跨平台高风险新增 CI 工作流，继续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断。影响平台为现有真实矩阵的 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64；原有 V-01 至 V-06 重置待重新取证，新增 CI 证据任务。 |
 | R-03 | 2026-09-01 | D-06 | A-05 | 五平台首次真实 CI 在离线共享验证的结构校验阶段一致失败，原因是平台运行时尚未生成；第二次将平台成品根注入共享校验后又一致失败，原因是源码结构与平台分发清单混用。现改为离线共享校验显式清空平台运行时环境，随后独立生成并校验平台成品。持续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台保持为 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。 |
+| R-04 | 2026-09-01 | D-04 | A-04、A-05 | 第二次修复后的真实 CI 已通过四个平台，Windows 在离线共享验证的三个通用替身用例失败；原因是这些用例错误继承宿主 Windows 平台，却只模拟了非 Windows npm 入口。现为通用替身显式注入 Linux 平台，保留 TC-07 的真实 Windows 分支覆盖。持续命中路径、临时目录、子进程、包管理器入口、环境变量与机器诊断；影响平台保持为 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。 |
 
 ## 兼容性与风险
 
@@ -122,7 +123,7 @@
 ## 测试与验证
 
 - 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs`；基线证据：文件已受 Git 跟踪；选择理由：该手写专用测试继续覆盖运行时准备、跨平台 npm 调用和离线传播；CI 工作流合同扩展同一变更中已受跟踪的 `tests/ui-review-platform-runtime.test.mjs`。
-- 独立测试方案：需要；触发条件：本变更需跨 D/A/V 追踪离线、缓存、清理、统一验证传播与真实 CI 矩阵；活动变更与目标：`openspec/changes/reproducible-frontend-test-runtime/test-plan.md`；需求修订基线：R-02。
+- 独立测试方案：需要；触发条件：本变更需跨 D/A/V 追踪离线、缓存、清理、统一验证传播与真实 CI 矩阵；活动变更与目标：`openspec/changes/reproducible-frontend-test-runtime/test-plan.md`；需求修订基线：R-04。
 - 验证范围：全量；执行命令：聚焦 Node 测试、`npm test`、`npm run validate`、`npm run verify:shared -- --offline`、五平台 CI 矩阵、官方 Skill/Plugin validator（当前运行环境可用时）；选择理由：临时目录、包管理器、验证入口与跨平台 CI 共享链均受影响。
 - 自动测试：模拟 npm 调用参数、锁文件复制、离线传播、缓存与运行时的有界清理；断言 CI 矩阵的预热、离线验证和总是清理顺序；在线运行真实 Vitest fixture。
 - 人工检查：确认根目录无 `node_modules`，离线模式不含网络回退参数，缓存清理不触及持久 outputs；确认同一提交的五平台 CI 任务均成功。
@@ -139,7 +140,7 @@
 | V-05 | 自动 | 离线共享统一验证 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/evidence/V-05.json` |
 | V-06 | 人工 | 本机 macOS；检查根目录、缓存、离线命令与清理边界 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/verification.md` |
 | V-07 | 自动 | TC-06 平台矩阵离线验证工作流合同 | 2026-09-01 | 通过 | `openspec/changes/reproducible-frontend-test-runtime/evidence/V-07.json` |
-| V-08 | 自动 | 同一提交的五平台矩阵真实执行 | 待执行 | 计划 | [#80](https://github.com/julangtaotian/wayfinder/actions/runs/33464540918) 缺少平台运行时；[#81](https://github.com/julangtaotian/wayfinder/actions/runs/33465872615) 混用了源码与平台运行时根；修复后待新提交 CI 结果 |
+| V-08 | 自动 | 同一提交的五平台矩阵真实执行 | 待执行 | 计划 | [#80](https://github.com/julangtaotian/wayfinder/actions/runs/33464540918) 缺少平台运行时；[#81](https://github.com/julangtaotian/wayfinder/actions/runs/33465872615) 混用了源码与平台运行时根；[#82](https://github.com/julangtaotian/wayfinder/actions/runs/33466535393) 仅 Windows 的替身平台继承错误；修复后待新提交 CI 结果 |
 
 ## 验收标准
 

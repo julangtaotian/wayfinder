@@ -15,6 +15,7 @@
 - `npm run validate`：通过。
 - `npm run verify:shared -- --offline`：7 个阶段全部通过，包含仓库体积、完整测试、结构校验、严格 OpenSpec、历史变更与内置运行时完整性检查。
 - 平台 CI 工作流合同：断言每个矩阵 runner 在固定 Node.js 后预热缓存、清理运行时、清空平台运行时环境后执行离线共享验证并分别清理运行时与缓存，随后生成平台运行时进行专属验证。
+- Windows 复盘：第二次修复后的 Windows 任务只在通用 npm 入口替身测试中失败；通用替身已显式指定 Linux 平台，Windows JavaScript 入口仍由 TC-07 覆盖，待下一次五平台 CI 复验。
 
 ## 未覆盖边界
 

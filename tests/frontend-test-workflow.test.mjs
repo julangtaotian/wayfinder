@@ -345,6 +345,7 @@ test('[TC-01] 锁定输入与缓存路径', (t) => {
   let executed = null;
   const prepared = prepareFrontendTestRuntime({
     repositoryRoot: root,
+    platform: 'linux',
     fileExists: (target) => target.endsWith(path.join('vitest', 'vitest.mjs')),
     execute: (command, args, options) => {
       executed = { command, args, options };
@@ -371,6 +372,7 @@ test('[TC-02] 显式离线模式失败关闭', (t) => {
   let args = null;
   const prepared = prepareFrontendTestRuntime({
     repositoryRoot: root,
+    platform: 'linux',
     offline: true,
     fileExists: (target) => target.endsWith(path.join('vitest', 'vitest.mjs')),
     execute: (_command, receivedArgs) => {
@@ -389,6 +391,7 @@ test('[TC-02] 显式离线模式失败关闭', (t) => {
   assert.throws(
     () => prepareFrontendTestRuntime({
       repositoryRoot: root,
+      platform: 'linux',
       offline: true,
       execute: () => ({ status: 17 }),
       report: () => {},

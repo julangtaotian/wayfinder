@@ -5,7 +5,7 @@
 - 状态：已验证
 - 需求：`requirements/REQ-2026-037-reproducible-frontend-test-runtime.md`
 - 变更：reproducible-frontend-test-runtime
-- 需求修订基线：R-02
+- 需求修订基线：R-04
 - 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/ui-review-platform-runtime.test.mjs`
 
 ## 测试上下文
@@ -32,7 +32,7 @@
 - 前置条件：临时项目根可写入 outputs
 - 测试数据：受版本控制的运行时清单和锁文件
 - 测试替身：模拟 npm 子进程
-- 操作：准备验证运行时并检查复制文件、npm 参数和缓存目录
+- 操作：以显式 Linux 平台替身准备验证运行时并检查复制文件、npm 参数和缓存目录；Windows 分支由 TC-07 单独执行
 - 可观察断言：使用 `npm ci`，缓存不在临时运行时或根目录，运行时入口存在后才返回成功
 - 目标测试：`tests/frontend-test-workflow.test.mjs`
 - 测试定位：`[TC-01] 锁定输入与缓存路径`
@@ -54,7 +54,7 @@
 - 前置条件：受控缓存可用或为空
 - 测试数据：`--offline` 与模拟 npm 失败结果
 - 测试替身：模拟 npm 子进程
-- 操作：以离线模式准备，并分别模拟缓存可用和子进程失败
+- 操作：以显式 Linux 平台替身离线准备，并分别模拟缓存可用和子进程失败
 - 可观察断言：npm 获得离线参数；失败返回稳定 code、target、status，且不会回退网络
 - 目标测试：`tests/frontend-test-workflow.test.mjs`
 - 测试定位：`[TC-02] 显式离线模式失败关闭`

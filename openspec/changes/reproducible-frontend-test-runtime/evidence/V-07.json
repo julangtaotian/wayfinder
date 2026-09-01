@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T03:29:00.066Z",
+  "completedAt": "2026-09-01T03:39:04.166Z",
   "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "1ac010aff1c9ad647a0af336fe75510ec175434c",
+    "commit": "08f25856060840ad5a33686c353561e7f67428de",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,13 +24,13 @@
   "logs": [
     {
       "bytes": 4922,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901032859473-4662-c9112144/stdout.log",
-      "sha256": "6c7c880725dd5de3a6d477377126f8c69f627273750094e401d388d2a987a09f",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901033903495-12298-5b40b4a3/stdout.log",
+      "sha256": "e40c43eb3a96ef1e1707cecd85211e729e2851fa8a73736785773f052f997ab3",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901032859473-4662-c9112144/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-07/20260901033903495-12298-5b40b4a3/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -48,15 +48,15 @@
       "D-04",
       "D-06"
     ],
-    "revision": "R-03",
-    "sha256": "895565b6c50dbb46ce2c3d764221c0a69c42ddd2cea2fc33ce9b76c43b500717",
+    "revision": "R-04",
+    "sha256": "592b0e36b4f6a579a400f524571c6a336c8945d978ba16fc8dae46f03897536d",
     "testCaseIds": [
       "TC-06"
     ],
     "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-09-01T03:28:59.475Z",
+  "startedAt": "2026-09-01T03:39:03.497Z",
   "status": "passed",
-  "workspaceFingerprint": "f114d095476b2824619872fc566d50f5f5b15d25cfd06205c37487ae07803cc7"
+  "workspaceFingerprint": "3e56fd0c84e564b4eabecb8ddf5729fb65e80ffc201565e4b02b66b4520d18e7"
 }
