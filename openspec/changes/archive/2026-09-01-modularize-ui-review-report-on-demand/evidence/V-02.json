@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T07:27:09.626Z",
+  "completedAt": "2026-09-01T09:08:07.209Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "53d1de609eff0003dd709174eb4c581a637fdf82",
+    "commit": "3a9e7ae0e9b7779d06804a32018e1ab63adf693e",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,18 +24,18 @@
   "logs": [
     {
       "bytes": 558,
-      "path": "outputs/verification-evidence/modularize-ui-review-report-on-demand/V-02/20260901072709220-73896-0888d876/stdout.log",
-      "sha256": "ec01871f9e263cb5be4278efa0bbcbffd232306bba589fb1cd132e38e2070ecb",
+      "path": "outputs/verification-evidence/2026-09-01-modularize-ui-review-report-on-demand/V-02/20260901090806861-18206-ad905a39/stdout.log",
+      "sha256": "e535e9847f32ca02f86a01d77bf38f433115897b6356a307e3f20fa232c5ad4e",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/modularize-ui-review-report-on-demand/V-02/20260901072709220-73896-0888d876/stderr.log",
+      "path": "outputs/verification-evidence/2026-09-01-modularize-ui-review-report-on-demand/V-02/20260901090806861-18206-ad905a39/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-038-on-demand-ui-review-report-modularization.md",
+  "requirement": "requirements/archive/2026/REQ-2026-038-on-demand-ui-review-report-modularization.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -58,7 +58,7 @@
     "verificationId": "V-02",
     "version": 1
   },
-  "startedAt": "2026-09-01T07:27:09.222Z",
+  "startedAt": "2026-09-01T09:08:06.862Z",
   "status": "passed",
-  "workspaceFingerprint": "f79e182ab65fea7cc86e43531312f7f71373182ab2615202424a9131c06f6799"
+  "workspaceFingerprint": "fb2d1d790e1ec685d0a61d8ec99887a2bcd009fe5f18321ea642902ba40d898d"
 }

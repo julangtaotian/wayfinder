@@ -333,6 +333,15 @@
       "entryPath": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
       "archivePath": "requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md",
       "change": "reproducible-frontend-test-runtime"
+    },
+    {
+      "id": "REQ-2026-038",
+      "title": "REQ-2026-038：按需拆分 UI 验收报告脚本",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-038-on-demand-ui-review-report-modularization.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-038-on-demand-ui-review-report-modularization.md",
+      "change": "modularize-ui-review-report-on-demand"
     }
   ]
 }

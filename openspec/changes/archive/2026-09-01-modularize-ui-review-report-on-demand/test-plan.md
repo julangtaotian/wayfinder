@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-038-on-demand-ui-review-report-modularization.md`
-- 变更：modularize-ui-review-report-on-demand
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-038-on-demand-ui-review-report-modularization.md`
+- 变更：2026-09-01-modularize-ui-review-report-on-demand
 - 需求修订基线：R-03
 - 默认聚焦命令：`node --test tests/ui-review-report-modularization.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test tests/ui-review-report-modularization.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-01.json`
 
 ### TC-02：受控产物、失败清理与路径边界
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test tests/ui-review-report-modularization.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-02.json`
 
 ### TC-03：相邻调用方与共享验证链
 
@@ -83,11 +83,11 @@
 - 聚焦命令：`node --test tests/ui-review-report-modularization.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-03.json`
 
 ### TC-04：同一提交的五平台 CI 人工复核
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P1
 - 验证类型：人工
 - 测试层级：人工
@@ -96,16 +96,16 @@
 - 关联规格：ui-review-report / 跨平台共享插件链
 - 状态矩阵：初始（已有数据）、用户操作、刷新、空态、错误态、卸载
 - 前置条件：本轮精确提交已推送，并已触发仓库真实五平台 CI 矩阵。
-- 测试数据：提交 SHA、共享校验与 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 平台任务。
+- 测试数据：提交 `3a9e7ae0e9b7779d06804a32018e1ab63adf693e`、共享校验与 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 平台任务。
 - 测试替身：不适用。
-- 操作：人工查看矩阵任务状态、平台报告与失败时的稳定诊断。
+- 操作：由用户人工查看矩阵任务状态、平台报告与失败时的稳定诊断，并确认同一提交已全绿。
 - 可观察断言：共享校验与五个平台任务均成功；任一平台未成功时不把跨平台交付标记为通过。
 - 目标测试：不适用
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-04
-- 结果分类：未执行
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/verification.md`
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/verification.md`
 
 ### TC-05：测试方案拒绝跨平台绝对路径
 
@@ -127,7 +127,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-05
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-05.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-05.json`
 
 ### TC-06：需求交付基线拒绝外平台路径并识别暂存新文件
 
@@ -149,7 +149,7 @@
 - 聚焦命令：`node --test tests/workflow-requirements.test.mjs`
 - 关联验证：V-06
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-06.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-06.json`
 
 ### TC-07：活动 Markdown 禁止裸 D/A 引用标签
 
@@ -171,4 +171,4 @@
 - 聚焦命令：`node --test tests/workflow-context.test.mjs`
 - 关联验证：V-07
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-ui-review-report-on-demand/evidence/V-07.json`
+- 证据：`openspec/changes/archive/2026-09-01-modularize-ui-review-report-on-demand/evidence/V-07.json`
