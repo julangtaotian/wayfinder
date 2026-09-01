@@ -1,0 +1,63 @@
+{
+  "artifacts": [],
+  "change": "reproducible-frontend-test-runtime",
+  "command": {
+    "args": [
+      "--test",
+      "tests/platform-marketplace-install.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-01T05:34:07.501Z",
+  "evidenceId": "V-09",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "1959d05461abefa12cd60969b6d1d5779d5f0a91",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 1089,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-09/20260901053407396-22597-d3f02708/stdout.log",
+      "sha256": "caf841055aed3e26dbc8fe80dc7910c37e17dd3ad598fab2eda02dd6f32797fe",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-09/20260901053407396-22597-d3f02708/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-04",
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-06"
+    ],
+    "revision": "R-05",
+    "sha256": "254da45f3872cca8ef7cea672c340e14aa6b89fb1ef16546f7a206b60f533f59",
+    "testCaseIds": [
+      "TC-12"
+    ],
+    "verificationId": "V-09",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T05:34:07.398Z",
+  "status": "passed",
+  "workspaceFingerprint": "b8df411e26767d523641283d1bfb800d630e497f04b1443a5c969c3e02e6c39a"
+}

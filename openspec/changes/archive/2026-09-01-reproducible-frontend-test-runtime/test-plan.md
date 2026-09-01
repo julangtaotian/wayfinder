@@ -3,10 +3,10 @@
 ## 基本信息
 
 - 状态：已验证
-- 需求：`requirements/REQ-2026-037-reproducible-frontend-test-runtime.md`
-- 变更：reproducible-frontend-test-runtime
+- 需求：`requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md`
+- 变更：2026-09-01-reproducible-frontend-test-runtime
 - 需求修订基线：R-05
-- 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/ui-review-platform-runtime.test.mjs`
+- 默认聚焦命令：`node --test tests/frontend-test-workflow.test.mjs tests/ui-review-platform-runtime.test.mjs tests/platform-marketplace-install.test.mjs`
 
 ## 测试上下文
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-01、V-05
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-01.json`
 
 ### TC-02：显式离线模式失败关闭
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-02.json`
 
 ### TC-03：运行时与缓存的分离清理
 
@@ -83,7 +83,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-03.json`
 
 ### TC-04：统一验证传播离线选项
 
@@ -105,7 +105,7 @@
 - 聚焦命令：`node --test tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-04.json`
 
 ### TC-06：平台矩阵离线验证工作流合同
 
@@ -127,21 +127,48 @@
 - 聚焦命令：`node --test tests/ui-review-platform-runtime.test.mjs`
 - 关联验证：V-07
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-frontend-test-runtime/evidence/V-07.json`
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-07.json`
 
 ### TC-12：平台 marketplace 安装后的断网运行时定位
 
-- 状态：待真实 CI 复验
+- 状态：通过
 - 优先级：P1
 - 验证类型：自动
 - 测试层级：集成
 - 关联决策：D-04、D-06
 - 关联验收：A-04、A-05
+- 关联规格：frontend-test-workflow / 平台 marketplace 安装与隔离运行时定位
+- 状态矩阵：初始（已有数据）、错误态
 - 前置条件：使用隔离 outputs 目录完成平台 marketplace 安装，并在 Windows 保留短路径目录联接策略。
+- 测试数据：隔离 marketplace fixture、已安装插件运行时、Windows `installed-junction` 短路径样本。
+- 测试替身：受控 Codex 命令执行器与断网 Chromium 冒烟回调；Windows 目录联接创建器使用依赖注入。
 - 操作：执行 Codex 安装、加载与断网 Chromium 冒烟替身；验证逻辑运行时位于隔离 outputs 并以 `runtime/playwright` 结尾，非 Windows 额外验证缓存物理路径。
 - 可观察断言：Windows 的 `installed-junction` 不会被误判为异常路径，其他平台仍保持已安装缓存路径合同。
 - 目标测试：`tests/platform-marketplace-install.test.mjs`
 - 测试定位：`[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口`
 - 聚焦命令：`node --test tests/platform-marketplace-install.test.mjs`
+- 关联验证：V-09
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/evidence/V-09.json`
+
+### TC-13：同一提交的五平台 CI 人工复核
+
+- 状态：人工通过
+- 优先级：P1
+- 验证类型：人工
+- 测试层级：人工
+- 关联决策：D-02、D-03、D-04、D-06
+- 关联验收：A-05
+- 关联规格：frontend-test-workflow / 真实平台矩阵离线复验
+- 状态矩阵：初始（已有数据）、用户操作、刷新、错误态、卸载
+- 前置条件：同一精确提交已推送，并已完成五平台 GitHub Actions 矩阵。
+- 测试数据：提交 `1959d05461abefa12cd60969b6d1d5779d5f0a91`、CI [#84](https://github.com/julangtaotian/wayfinder/actions/runs/33467672452)。
+- 测试替身：不适用。
+- 操作：人工查看共享校验与五个矩阵任务的最终状态和平台报告。
+- 可观察断言：共享校验与 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 均为成功，且每个平台均产出平台报告。
+- 目标测试：不适用
+- 测试定位：不适用
+- 聚焦命令：不适用
 - 关联验证：V-08
-- 结果分类：通过 / 失败
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-09-01-reproducible-frontend-test-runtime/verification.md`

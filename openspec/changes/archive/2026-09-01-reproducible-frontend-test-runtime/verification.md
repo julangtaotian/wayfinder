@@ -11,14 +11,15 @@
 ## 自动验证摘要
 
 - `node --test tests/frontend-test-workflow.test.mjs`：19 项通过。
-- `npm test`：192 项通过，0 项失败，8 项因外部平台资产边界跳过。
+- `npm test`：193 项通过，0 项失败，8 项因外部平台资产边界跳过。
 - `npm run validate`：通过。
 - `npm run verify:shared -- --offline`：7 个阶段全部通过，包含仓库体积、完整测试、结构校验、严格 OpenSpec、历史变更与内置运行时完整性检查。
 - 平台 CI 工作流合同：断言每个矩阵 runner 在固定 Node.js 后预热缓存、清理运行时、清空平台运行时环境后执行离线共享验证并分别清理运行时与缓存，随后生成平台运行时进行专属验证。
-- Windows 复盘：第二次修复后的 Windows 任务只在通用 npm 入口替身测试中失败；通用替身已显式指定 Linux 平台，Windows JavaScript 入口仍由 TC-07 覆盖，待下一次五平台 CI 复验。
-- Windows 复盘补充：下一次任务已通过离线共享验证，并进入平台 marketplace 安装断网冒烟；TC-12 将 Windows 的 `installed-junction` 短路径联接误断言为缓存物理路径。现改为校验隔离 outputs 边界和 `runtime/playwright` 逻辑终点，非 Windows 继续校验缓存物理路径，待下一次五平台 CI 复验。
+- Windows 复盘：第二次修复后的 Windows 任务曾在通用 npm 入口替身测试中失败，现已为通用替身显式指定 Linux 平台，Windows JavaScript npm 入口仍由 TC-07 覆盖。
+- Windows 复盘补充：后续任务进入平台 marketplace 安装断网冒烟后，TC-12 曾将 Windows 的 `installed-junction` 短路径联接误断言为缓存物理路径。现校验隔离 outputs 边界和 `runtime/playwright` 逻辑终点，非 Windows 继续校验缓存物理路径。
+- 真实平台 CI：提交 `1959d05461abefa12cd60969b6d1d5779d5f0a91` 的 [#84](https://github.com/julangtaotian/wayfinder/actions/runs/33467672452) 成功，耗时 5 分 37 秒；共享校验与 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 全部通过，并产出五个平台报告。
 
 ## 未覆盖边界
 
-- 当前执行环境为 macOS；Windows 与 Linux 的 npm JavaScript 入口、路径、诊断和 CI 命令顺序已由确定性测试覆盖。首次五平台任务 [#80](https://github.com/julangtaotian/wayfinder/actions/runs/33464540918) 证实平台结构校验必须在运行时生成后执行；修复后的真实五平台结果尚未记录为通过。
+- 当前执行环境为 macOS；Windows 与 Linux 的 npm JavaScript 入口、路径、诊断和 CI 命令顺序已由确定性测试覆盖；五平台真实结果由人工复核的 [#84](https://github.com/julangtaotian/wayfinder/actions/runs/33467672452) 补足。插件不会把外部 CI 自声明为本地机器证据。
 - 当前 Codex CLI 未暴露独立的官方 Skill / Plugin validator 子命令；已由仓库结构校验、内置 OpenSpec 完整性与已安装插件冒烟结果替代，不将其标注为官方校验器通过。

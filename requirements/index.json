@@ -324,6 +324,15 @@
       "entryPath": "requirements/REQ-2026-036-plugin-repository-health-recognition.md",
       "archivePath": "requirements/archive/2026/REQ-2026-036-plugin-repository-health-recognition.md",
       "change": "recognize-plugin-repository-health"
+    },
+    {
+      "id": "REQ-2026-037",
+      "title": "REQ-2026-037：可复现的前端测试验证运行时",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md",
+      "change": "reproducible-frontend-test-runtime"
     }
   ]
 }

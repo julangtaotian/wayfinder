@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-01T01:57:56.955Z",
+  "completedAt": "2026-09-01T05:33:25.630Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "commit": "1959d05461abefa12cd60969b6d1d5779d5f0a91",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,19 +23,19 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 3312,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901015754633-59246-c28886a3/stdout.log",
-      "sha256": "9f0c8a116e61a7c8e74c2998ca407f1c6ed08312c4ee869cb342080d0eb40c58",
+      "bytes": 3314,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901053323258-21527-bc37882c/stdout.log",
+      "sha256": "cbef67bf762bf9b3910b2065f8d0264714b329b0f80f7a3c9be1eafd087549e2",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901015754633-59246-c28886a3/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-01/20260901053323258-21527-bc37882c/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "requirement": "requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -46,15 +46,15 @@
       "D-01",
       "D-02"
     ],
-    "revision": "R-02",
-    "sha256": "595f4df964ae2981a37940713944d6d6dd9de6e9f31d7c70a945ce2e08a55a38",
+    "revision": "R-05",
+    "sha256": "e93e0958ba9d098f03f043212a9b98e1ab8f9585010d9ebe9eb987e809468cc5",
     "testCaseIds": [
       "TC-01"
     ],
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-09-01T01:57:54.635Z",
+  "startedAt": "2026-09-01T05:33:23.261Z",
   "status": "passed",
-  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+  "workspaceFingerprint": "b8df411e26767d523641283d1bfb800d630e497f04b1443a5c969c3e02e6c39a"
 }

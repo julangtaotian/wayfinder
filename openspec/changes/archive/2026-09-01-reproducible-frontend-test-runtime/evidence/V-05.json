@@ -12,12 +12,12 @@
     "executable": "npm",
     "source": "path"
   },
-  "completedAt": "2026-09-01T01:58:42.277Z",
+  "completedAt": "2026-09-01T05:34:06.471Z",
   "evidenceId": "V-05",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "2cc8ad8e4906f6e6dacf1a1ecfd43e88c60c8222",
+    "commit": "1959d05461abefa12cd60969b6d1d5779d5f0a91",
     "dirty": true
   },
   "kind": "local-command",
@@ -25,19 +25,19 @@
   "locatorMatches": 1,
   "logs": [
     {
-      "bytes": 31690,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901015815167-60401-05aa8527/stdout.log",
-      "sha256": "1fc1bbef7ae7ce6eb71144a381f29f6e7d3674b61a75a34ebba61407b3946860",
+      "bytes": 31705,
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901053338928-22598-c35eb7ee/stdout.log",
+      "sha256": "c4d60f75580ea4bbf8e381ceba256318733f8629e58c358a64e34e793328bc06",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901015815167-60401-05aa8527/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-frontend-test-runtime/V-05/20260901053338928-22598-c35eb7ee/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-037-reproducible-frontend-test-runtime.md",
+  "requirement": "requirements/archive/2026/REQ-2026-037-reproducible-frontend-test-runtime.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -50,15 +50,15 @@
       "D-02",
       "D-03"
     ],
-    "revision": "R-02",
-    "sha256": "2ce5826e640ce1ed0b4c3609c7b42c1df3523280c68589d770cb86115833eac2",
+    "revision": "R-05",
+    "sha256": "f6d716dc0dd81ac3fe62617316f9dd2e85483d5ef0d9c54e6e5f96e5765e6331",
     "testCaseIds": [
       "TC-01"
     ],
     "verificationId": "V-05",
     "version": 1
   },
-  "startedAt": "2026-09-01T01:58:15.169Z",
+  "startedAt": "2026-09-01T05:33:38.930Z",
   "status": "passed",
-  "workspaceFingerprint": "36a1e4467e70dbef2f773433b4e44171a8900b2739a53ad20fd2573412d9ef9d"
+  "workspaceFingerprint": "b8df411e26767d523641283d1bfb800d630e497f04b1443a5c969c3e02e6c39a"
 }
