@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { assertSafeProjectRoot } from './collect-project-scope.mjs';
 import { inspectTestContext } from './inspect-test-context.mjs';
+import { ProjectPathError, resolveSafeProjectPath } from './project-path-safety.mjs';
 import { validateVerificationEvidenceRecords } from './verification-evidence.mjs';
 
 const STAGES = new Set(['plan', 'implement', 'complete']);
@@ -107,7 +108,8 @@ function parseRequirement(content) {
     const cells = line.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim());
     if (/^D-\d{2,}$/u.test(cells[0] || '')) decisions.set(cells[0], cells[2]);
   }
-  const acceptanceIds = new Set([...content.matchAll(/\[(A-\d{2,})\]/gu)].map((match) => match[1]));
+  const acceptanceSection = getSection(content, '验收标准') || '';
+  const acceptanceIds = new Set([...acceptanceSection.matchAll(/\b(A-\d{2,})\b/gu)].map((match) => match[1]));
   const revisions = [...content.matchAll(/\|\s*(R-(\d{2,}))\s*\|/gu)]
     .map((match) => ({ id: match[1], number: Number(match[2]) }))
     .sort((left, right) => left.number - right.number);
@@ -151,22 +153,18 @@ function splitReferences(value, pattern) {
 function validateProjectRelativePath(root, value, label, errors, { mustExist = false } = {}) {
   const candidate = stripCode(value);
   if (!candidate || candidate === '不适用') return null;
-  if (path.isAbsolute(candidate) || candidate.split(/[\\/]/u).includes('..')) {
-    errors.push(`${label}必须是安全的项目相对路径：${candidate}`);
-    return null;
+  try {
+    return resolveSafeProjectPath(root, candidate, label, {
+      mustExist,
+      allowDirectory: false,
+    }).absolutePath;
+  } catch (error) {
+    if (error instanceof ProjectPathError) {
+      errors.push(`${error.code}：${label}必须是安全的项目相对路径：${candidate}（${error.message}）`);
+      return null;
+    }
+    throw error;
   }
-  const resolved = path.resolve(root, candidate);
-  if (!isInside(root, resolved)) {
-    errors.push(`${label}越出项目范围：${candidate}`);
-    return null;
-  }
-  if (mustExist && !fs.existsSync(resolved)) {
-    errors.push(`${label}不存在：${candidate}`);
-  } else if (mustExist) {
-    const real = fs.realpathSync(resolved);
-    if (!isInside(root, real)) errors.push(`${label}通过符号链接越出项目范围：${candidate}`);
-  }
-  return resolved;
 }
 
 function validateRequiredFields(testCase, stage, errors) {

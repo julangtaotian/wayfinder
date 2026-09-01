@@ -1,3 +1,5 @@
+// WebStorm 会将需求文档的中文字段和中文诊断逐字符误报；这些字段属于稳定输入契约，必须保留。
+//noinspection NonAsciiCharacters
 import path from 'node:path';
 
 const DECISION_HEADERS = ['ID', '决策项', '状态', '取值', '来源'];
@@ -101,9 +103,10 @@ function parseAcceptanceIds(content, errors) {
     return new Set();
   }
   const ids = new Set();
-  for (const match of section.matchAll(/\[(A-\d{2,})\]/gu)) {
-    if (ids.has(match[1])) errors.push(`验收 ID 重复：${match[1]}`);
-    ids.add(match[1]);
+  // 兼容历史方括号格式，同时允许不触发 Markdown 未定义引用的普通 A-01 编号。
+  for (const id of linkedRequirementIds(section, 'A')) {
+    if (ids.has(id)) errors.push(`验收 ID 重复：${id}`);
+    ids.add(id);
   }
   if (!ids.size) errors.push('“验收标准”缺少 A-01 格式的验收 ID');
   return ids;

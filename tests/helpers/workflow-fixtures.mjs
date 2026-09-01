@@ -48,7 +48,7 @@ export function createVueFixture(t) {
     'src/request/http.js': "export function request(url) { return url; }\n",
     'src/serve/profile.js': "import { request } from '../request/http.js';\nexport const fetchProfile = () => request('/profile');\n",
     'src/common/permission.js': "export const canAccess = (role) => role === 'admin';\n",
-    'src/views/Home.vue': '<template><main>Home</main></template>\n<script setup>\nconst title = \'Home\';\n</script>\n',
+    'src/views/Home.vue': '<template><main>Home</main></template>\n<script>\nexport default { name: \'Home\' };\n</script>\n',
     'vitest.config.js': "export default { test: { environment: 'jsdom' } };\n",
     'vite.config.js': "export default { base: '/sample/' };\n",
     'docs/oversized.md': '用于测试范围限制的文档内容。'.repeat(20),
@@ -171,13 +171,15 @@ export function createMatrixFixture(t, fixture) {
   return root;
 }
 
-// 交付门槛 fixture 用 Git 索引模拟已有测试，避免把本轮新文件误写为复用。
+// 交付门槛 fixture 用 HEAD 固化已有测试，避免暂存的新文件污染“新建/复用”基线。
 export function initializeGitBaseline(root, relativePath = 'tests/existing.spec.js') {
   writeFixtureFile(root, relativePath, "export default 'existing';\n");
   const initialized = spawnSync('git', ['init', '-q', root], { encoding: 'utf8' });
   assert.equal(initialized.status, 0, initialized.stderr);
   const added = spawnSync('git', ['-C', root, 'add', relativePath], { encoding: 'utf8' });
   assert.equal(added.status, 0, added.stderr);
+  const committed = spawnSync('git', ['-C', root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-q', '-m', 'fixture baseline'], { encoding: 'utf8' });
+  assert.equal(committed.status, 0, committed.stderr);
 }
 
 export function renderDeliveryRequirement({

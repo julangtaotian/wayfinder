@@ -11,6 +11,12 @@ node scripts/ui-review-runner.mjs verify --target <项目> --scenario <场景> -
 
 稳定退出码为 `0=passed/有效预览`、`1=needs-fix/failed`、`2=inconclusive`、`3=blocked`。有效预览必须同时返回 `write: false` 与 `readyToWrite: true`；不可执行计划返回 `readyToWrite: false`、`blocked` 和退出码 3，且两者都不创建运行产物。该 JSON 合同可供跨 AI 工具和 CI 消费；统一入口不会启动项目自定义命令、安装业务依赖、自动修改源码、提交或推送。细粒度的 `inspect`、`capture-plan`、`start-*`、`complete-*` 和 `repair-gate` 仍由 `ui-review-workflow.mjs` 提供，用于版本 1 只读兼容、显式修复门禁和 Browser 视觉兜底，不得用于绕过版本 2 受信适配器门禁。
 
+## 报告链维护边界
+
+后续扩展 UI 验收报告时，先将需求定位为以下一种职责：数据解析（截图、输入和基础校验）、业务判断（问题筛选、合并和结论派生）或输出报告（Markdown、标注图片和受控产物发布）。单职责改动直接在所属模块完成；只有需求跨越职责边界，或既有模块确实达到维护边界时，才新增模块，不为拆分而拆分。
+
+这种定位不能削弱既有保护：输入异常、路径安全、暂存发布与清理、FFmpeg 失败、中文诊断以及兼容门面的公开导出和 CLI 语义都必须随所属职责继续失败关闭。若需求改变公开 API、报告语义、权限、路径边界或错误语义，必须先修订需求台账和验收，不能只凭本规则直接修改实现。
+
 ## 版本 2 项目配置
 
 默认文件为 `.frontend-ui-review/config.json`。`autoFix` 可取 `off`、`suggest`、`apply`，省略按 `suggest`。新场景必须声明：

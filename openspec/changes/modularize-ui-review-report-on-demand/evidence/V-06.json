@@ -1,0 +1,59 @@
+{
+  "artifacts": [],
+  "change": "modularize-ui-review-report-on-demand",
+  "command": {
+    "args": [
+      "--test",
+      "tests/workflow-requirements.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-01T07:27:15.823Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "53d1de609eff0003dd709174eb4c581a637fdf82",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-06] 需求交付基线拒绝外平台路径并识别暂存新文件",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 2078,
+      "path": "outputs/verification-evidence/modularize-ui-review-report-on-demand/V-06/20260901072710158-73977-24b8fa7b/stdout.log",
+      "sha256": "86643718e2b7cb180c269e3014a509560cb8b7cccea462132c87336a2dd7fd80",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/modularize-ui-review-report-on-demand/V-06/20260901072710158-73977-24b8fa7b/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-038-on-demand-ui-review-report-modularization.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-07"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-09"
+    ],
+    "revision": "R-03",
+    "sha256": "eb65f8c1a309077004083d47240eec1c8d22158f54d18f2a8229663885b9fda9",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-06",
+    "version": 1
+  },
+  "startedAt": "2026-09-01T07:27:10.160Z",
+  "status": "passed",
+  "workspaceFingerprint": "f79e182ab65fea7cc86e43531312f7f71373182ab2615202424a9131c06f6799"
+}

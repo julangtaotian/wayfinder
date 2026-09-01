@@ -241,6 +241,16 @@ test('[TC-02] 三阶段测试方案校验接受完整 TC，并拒绝非法规划
   });
 });
 
+test('[TC-05] 测试方案拒绝跨平台绝对路径', (t) => {
+  const fixture = createFixture(t);
+  const windowsNodePath = ['D:', 'workspace', 'test.spec.js'].join(String.fromCharCode(92));
+  for (const target of ['/workspace/test.spec.js', 'D:/workspace/test.spec.js', windowsNodePath]) {
+    const result = validate(fixture, writePlan(fixture, { target }), 'plan');
+    assert.equal(result.ok, false, target);
+    assert.match(result.errors.join('\n'), /unsafe_project_path/u, target);
+  }
+});
+
 test('implement 阶段阻止缺失测试命令和过期需求修订', async (t) => {
   await t.test('没有测试命令', () => {
     const fixture = createFixture(t, { testScript: '' });

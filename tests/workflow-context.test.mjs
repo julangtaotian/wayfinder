@@ -1,3 +1,5 @@
+// WebStorm 会将测试中的中文 Markdown 样例逐字符误报；样例用于覆盖真实中文文档场景。
+//noinspection NonAsciiCharacters
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,6 +23,10 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs';
 import { normalizeMachinePath } from '../plugins/frontend-ai-workflow/scripts/real-project-validation.mjs';
 import {
+  findBareDecisionAcceptanceLabels,
+  validateManagedMarkdownReferenceLabels,
+} from '../plugins/frontend-ai-workflow/scripts/markdown-reference-safety.mjs';
+import {
   pluginRoot,
   writeFixtureFile,
   createVueFixture,
@@ -28,6 +34,10 @@ import {
   writeLegacyWorkflow,
   createRuntimeIntegrityFixture,
 } from './helpers/workflow-fixtures.mjs';
+
+function joinFixtureLines(lines) {
+  return lines.join('\n');
+}
 
 test('插件内置规划运行时可独立执行', () => {
   const runtime = inspectBundledOpenSpec();
@@ -133,8 +143,8 @@ test('微信小程序文本源码进入安全范围并参与稳定指纹', (t) =
   const root = createVueFixture(t);
   assert.equal(spawnSync('git', ['init', '-q', root], { encoding: 'utf8' }).status, 0);
   writeFixtureFile(root, '.gitignore', 'ignored/\n');
-  writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{message}}</view>\n');
-  writeFixtureFile(root, 'pages/home/spacing.wxml', [
+  writeFixtureFile(root, 'pages/home/index.wxml', joinFixtureLines(['<view>{{message}}</view>', '']));
+  writeFixtureFile(root, 'pages/home/spacing.wxml', joinFixtureLines([
     '<view class="valid" bindtap="ok"></view>',
     '<view class="broken"bindtap="broken"></view>',
     '<!-- <view class="single-comment"bindtap="ignored"></view> -->',
@@ -143,10 +153,11 @@ test('微信小程序文本源码进入安全范围并参与稳定指纹', (t) =
     '<view class="multi-comment"bindtap="ignored"></view>',
     '-->',
     '<!-- <view class="unclosed-comment"bindtap="ignored"></view>',
-  ].join('\n'));
+    '',
+  ]));
   writeFixtureFile(root, 'pages/home/index.wxss', '.page { color: #333; }\n');
   writeFixtureFile(root, 'pages/home/format.wxs', 'module.exports = {};\n');
-  writeFixtureFile(root, 'ignored/hidden.wxml', '<view class="ignored"bindtap="ignored"></view>\n');
+  writeFixtureFile(root, 'ignored/hidden.wxml', joinFixtureLines(['<view class="ignored"bindtap="ignored"></view>', '']));
   writeFixtureFile(root, 'pages/home/binary.wxs', `\u0000binary\n`);
 
   const first = collectProjectScope(root);
@@ -169,13 +180,13 @@ test('微信小程序文本源码进入安全范围并参与稳定指纹', (t) =
   ]);
   assert.equal(first.summary.observations, 3);
 
-  writeFixtureFile(root, 'pages/home/index.wxml', '<view>{{changed}}</view>\n');
+  writeFixtureFile(root, 'pages/home/index.wxml', joinFixtureLines(['<view>{{changed}}</view>', '']));
   assert.notEqual(collectProjectScope(root).fingerprint, first.fingerprint);
 });
 
 test('健康检查公开验证边界并非阻断报告 WXML 静态观察', (t) => {
   const root = createVueFixture(t);
-  writeFixtureFile(root, 'pages/home/index.wxml', '<view class="page"bindtap="open"></view>\n');
+  writeFixtureFile(root, 'pages/home/index.wxml', joinFixtureLines(['<view class="page"bindtap="open"></view>', '']));
   runBootstrap({ target: root, deep: true, write: true });
 
   const observed = checkProject(root);
@@ -191,7 +202,7 @@ test('健康检查公开验证边界并非阻断报告 WXML 静态观察', (t) =
   assert.match(observed.warnings.join('\n'), /静态发现 1 处 WXML 属性之间可能缺少空白/u);
   assert.match(observed.warnings.join('\n'), /未执行 WXML 语法解析或平台编译/u);
 
-  writeFixtureFile(root, 'pages/home/index.wxml', '<view class="page" bindtap="open"></view>\n');
+  writeFixtureFile(root, 'pages/home/index.wxml', joinFixtureLines(['<view class="page" bindtap="open"></view>', '']));
   const corrected = checkProject(root);
   assert.deepEqual(corrected.deepAnalysis.observations, []);
   assert.doesNotMatch(corrected.warnings.join('\n'), /静态发现.*WXML 属性/u);
@@ -480,4 +491,23 @@ test('[TC-10] 跨平台高风险变更规则合同', () => {
   assert.equal(normalizeMachinePath(gitWindowsPath), normalizeMachinePath(nodeWindowsPath));
   assert.equal(path.win32.normalize('D:/workspace/project'), path.win32.normalize(nodeWindowsPath));
   assert.equal(path.posix.normalize('/workspace/./project'), '/workspace/project');
+});
+
+test('[TC-07] 活动 Markdown 禁止裸 D/A 引用标签', () => {
+  const content = [
+    '裸标签 [D-01] 和 [A-01] 必须被定位。',
+    '反引号代码 `[D-02]` 不应被定位。',
+    '[A-02](https://example.test/acceptance) 与 [D-03]: https://example.test/decision 是有效链接。',
+    '[A-03][decision-reference] 是有效的引用链接形式。',
+    '```md',
+    '[D-04] 位于代码块中。',
+    '```',
+  ].join('\n');
+  assert.deepEqual(findBareDecisionAcceptanceLabels(content), [
+    { label: 'D-01', line: 1 },
+    { label: 'A-01', line: 1 },
+  ]);
+
+  const repositoryRoot = path.resolve(pluginRoot, '..', '..');
+  assert.deepEqual(validateManagedMarkdownReferenceLabels(repositoryRoot), []);
 });

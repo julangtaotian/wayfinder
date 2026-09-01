@@ -67,7 +67,7 @@ function createFixture(context, { evidenceRequired = true } = {}) {
 
 ## 验收标准
 
-- [ ] [A-01] 机器证据必须对应当前测试语义。
+- [ ] A-01：机器证据必须对应当前测试语义。
 
 ## 验收—证据映射
 

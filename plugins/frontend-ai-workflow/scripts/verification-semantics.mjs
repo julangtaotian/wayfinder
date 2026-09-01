@@ -1,3 +1,5 @@
+// WebStorm 会将需求表格的中文列名和诊断逐字符误报；这些名称与 Markdown 表头必须完全一致。
+//noinspection NonAsciiCharacters
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -111,11 +113,13 @@ export function buildVerificationSemanticSnapshot({ requirementPath, changePath,
   }
 
   const acceptances = new Map();
-  for (const match of getSection(requirementContent, '验收标准').matchAll(/^\s*-\s*\[[ xX]\]\s*\[(A-\d{2,})\]\s*(.+?)\s*$/gmu)) {
-    if (acceptances.has(match[1])) {
-      throw new VerificationSemanticError('semantic_acceptance_ambiguous', `验收 ID 重复：${match[1]}`, match[1]);
+  for (const match of getSection(requirementContent, '验收标准').matchAll(/^\s*-\s*\[[ xX]\]\s*(?:\[(A-\d{2,})\]\s+|(A-\d{2,})[：:]\s*)(.+?)\s*$/gmu)) {
+    const id = match[1] || match[2];
+    const text = match[3].trim();
+    if (acceptances.has(id)) {
+      throw new VerificationSemanticError('semantic_acceptance_ambiguous', `验收 ID 重复：${id}`, id);
     }
-    acceptances.set(match[1], match[2].trim());
+    acceptances.set(id, text);
   }
 
   const allCases = parseCases(testPlanContent);

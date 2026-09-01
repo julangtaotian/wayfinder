@@ -1,6 +1,9 @@
+// WebStorm 会将对用户可见的中文诊断逐字符误报；保留中文可确保命令行反馈一致。
+//noinspection NonAsciiCharacters
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { ProjectPathError, resolveSafeProjectPath } from './project-path-safety.mjs';
 import { validateVerificationEvidenceRecords } from './verification-evidence.mjs';
 import { getRequirementSection, linkedRequirementIds } from './requirement-decision-parser.mjs';
 
@@ -121,13 +124,13 @@ function findProjectRoot(requirementPath) {
 function inspectGitBaseline(root) {
   const insideWorkTree = spawnSync('git', ['-C', root, 'rev-parse', '--is-inside-work-tree'], { encoding: 'utf8' });
   if (insideWorkTree.status !== 0 || insideWorkTree.stdout.trim() !== 'true') return { available: false };
-  const files = spawnSync('git', ['-C', root, 'ls-files'], { encoding: 'utf8' });
-  return { available: files.status === 0 && Boolean(files.stdout.trim()) };
+  const head = spawnSync('git', ['-C', root, 'rev-parse', '--verify', 'HEAD'], { encoding: 'utf8' });
+  return { available: head.status === 0 };
 }
 
 function isGitTracked(root, relativePath) {
   const pathspec = normalizedRepositoryPath(relativePath);
-  return spawnSync('git', ['-C', root, 'ls-files', '--error-unmatch', '--', pathspec], { encoding: 'utf8' }).status === 0;
+  return spawnSync('git', ['-C', root, 'cat-file', '-e', `HEAD:${pathspec}`], { encoding: 'utf8' }).status === 0;
 }
 
 function validateVerificationEvidencePaths(requirementPath, changePath, verificationRecords, stage, errors, warnings) {
@@ -192,12 +195,20 @@ function validateTestFileStrategy(requirementPath, content, stage, errors, warni
     return null;
   }
   const root = findProjectRoot(requirementPath);
-  const targetPath = path.resolve(root, strategy.targetPath);
-  const relativePath = path.relative(root, targetPath);
-  if (!relativePath || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-    errors.push(`测试文件策略目标路径越出项目范围：${strategy.targetPath}`);
-    return { ...strategy, root, targetPath, exists: false, baselineAvailable: false };
+  let safeTarget;
+  try {
+    safeTarget = resolveSafeProjectPath(root, strategy.targetPath, '测试文件策略目标路径', {
+      allowDirectory: false,
+    });
+  } catch (error) {
+    if (error instanceof ProjectPathError) {
+      errors.push(`${error.code}：${error.message}`);
+      return { ...strategy, root, targetPath: null, exists: false, baselineAvailable: false };
+    }
+    throw error;
   }
+  const targetPath = safeTarget.absolutePath;
+  const relativePath = safeTarget.projectPath;
   const exists = fs.existsSync(targetPath);
   const baseline = inspectGitBaseline(root);
   if (strategy.strategy === '复用' && !exists) errors.push(`复用测试文件不存在：${strategy.targetPath}`);
@@ -219,10 +230,14 @@ function validateTestFileStrategy(requirementPath, content, stage, errors, warni
 function validateCompletionState(content, changePath, acceptanceIds, stage, errors) {
   if (!DELIVERY_STAGES.has(stage)) return;
   const acceptanceSection = getRequirementSection(content, '验收标准') || '';
-  const unfinished = [...acceptanceSection.matchAll(/^\s*-\s*\[\s\]\s*\[(A-\d{2,})\]/gmu)].map((match) => match[1]);
+  const acceptanceIdsByCheckbox = (statePattern) => (
+    [...acceptanceSection.matchAll(new RegExp(`^\\s*-\\s*\\[${statePattern}\\]\\s*(.+)$`, 'gmu'))]
+      .flatMap((match) => linkedRequirementIds(match[1], 'A'))
+  );
+  const unfinished = acceptanceIdsByCheckbox('\\s');
   for (const id of unfinished) errors.push(`完成阶段存在未勾选验收：${id}`);
   if (stage === 'precomplete') {
-    const checked = new Set([...acceptanceSection.matchAll(/^\s*-\s*\[[xX]\]\s*\[(A-\d{2,})\]/gmu)].map((match) => match[1]));
+    const checked = new Set(acceptanceIdsByCheckbox('[xX]'));
     for (const id of acceptanceIds) {
       if (!checked.has(id)) errors.push(`完成前校验要求验收使用已勾选复选框：${id}`);
     }

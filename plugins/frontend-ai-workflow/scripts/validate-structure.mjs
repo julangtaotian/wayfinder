@@ -11,6 +11,7 @@ import {
   verifyPlaywrightSharedIntegrity,
 } from './playwright-runtime.mjs';
 import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plugin-platform.mjs';
+import { validateManagedMarkdownReferenceLabels } from './markdown-reference-safety.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,7 @@ const DELIVERY_GUARD_ASSETS = [
   'scripts/plugin-repository-health.mjs',
   'scripts/finalize-change.mjs',
   'scripts/project-path-safety.mjs',
+  'scripts/markdown-reference-safety.mjs',
   'scripts/repository-footprint.mjs',
   'references/cross-platform-ci-checklist.md',
 ];
@@ -306,6 +308,12 @@ function validateDeliveryGuardAssets(errors) {
   }
 }
 
+function validateManagedMarkdownReferences(errors) {
+  for (const diagnostic of validateManagedMarkdownReferenceLabels(repositoryRoot)) {
+    errors.push(`${diagnostic.code}：${diagnostic.target}:${diagnostic.line} 包含裸引用标签 ${diagnostic.label}`);
+  }
+}
+
 function validateProjectProfileAssets(errors) {
   for (const file of PROJECT_PROFILE_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少项目画像资产：${file}`);
@@ -436,6 +444,7 @@ export async function validateStructure({ scope = 'all' } = {}) {
     validateRequirementDecisionAssets(errors);
     validateRequirementMigrationAssets(errors);
     validateDeliveryGuardAssets(errors);
+    validateManagedMarkdownReferences(errors);
     validateProjectProfileAssets(errors);
     validateTestWorkflowAssets(errors);
     validateCoreModularAssets(errors);

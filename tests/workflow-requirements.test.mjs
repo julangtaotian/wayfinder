@@ -121,7 +121,7 @@ test('需求模板和工作流要求使用决策台账与验收证据映射', ()
   assert.match(agents, /状态矩阵/);
   assert.match(config, /初始、用户操作、刷新、空态、错误态和卸载/);
   assert.match(changeSkill, /interaction-state matrix/);
-  assert.match(template, /\[A-01]/);
+  assert.match(template, /A-01：/);
   assert.match(agents, /决策台账”是业务事实源/);
   assert.match(config, /已确认或项目默认的 D-\*/);
   assert.match(config, /交付构建命令/);
@@ -230,6 +230,36 @@ test('新版需求状态、变更范围、逐任务引用和持久证据形成�
   const missingEvidence = validateRequirementDecisions(requirementPath, { changePath, stage: 'precomplete' });
   assert.equal(missingEvidence.ok, false);
   assert.match(missingEvidence.errors.join('\n'), /持久证据不存在/);
+});
+
+test('[TC-06] 需求交付基线拒绝外平台路径并识别暂存新文件', (t) => {
+  const root = createVueFixture(t);
+  const requirementPath = path.join(root, 'requirements', 'REQ-2026-009-cross-platform-path.md');
+  initializeGitBaseline(root);
+  writeFixtureFile(root, 'tests/staged-new.test.js', "export default 'staged';\n");
+  const staged = spawnSync('git', ['-C', root, 'add', 'tests/staged-new.test.js'], { encoding: 'utf8' });
+  assert.equal(staged.status, 0, staged.stderr);
+
+  writeFixtureFile(root, 'requirements/REQ-2026-009-cross-platform-path.md', renderGovernedDeliveryRequirement({
+    status: '实施中',
+    testStrategy: '新建',
+    testPath: 'tests/staged-new.test.js',
+  }).replace('[A-01] ', 'A-01：'));
+  const stagedNewFile = validateRequirementDecisions(requirementPath, { stage: 'implement' });
+  assert.equal(stagedNewFile.ok, true, stagedNewFile.errors.join('\n'));
+  assert.equal(stagedNewFile.acceptances, 1);
+
+  const windowsNodePath = ['D:', 'workspace', 'new.test.js'].join(String.fromCharCode(92));
+  for (const testPath of ['D:/workspace/new.test.js', windowsNodePath]) {
+    writeFixtureFile(root, 'requirements/REQ-2026-009-cross-platform-path.md', renderGovernedDeliveryRequirement({
+      status: '实施中',
+      testStrategy: '新建',
+      testPath,
+    }));
+    const result = validateRequirementDecisions(requirementPath, { stage: 'implement' });
+    assert.equal(result.ok, false, testPath);
+    assert.match(result.errors.join('\n'), /unsafe_project_path/u, testPath);
+  }
 });
 
 test('[V-01] 完成流程与需求决策模块化兼容：门禁、写入和归档保持一致', (t) => {
