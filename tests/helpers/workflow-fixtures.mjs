@@ -8,6 +8,7 @@ import { runBootstrap, WORKFLOW_VERSION } from '../../plugins/frontend-ai-workfl
 export const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 export const expectedPublicSkills = [
   'frontend-change',
+  'frontend-fast-change',
   'frontend-requirement-write',
   'frontend-test',
   'frontend-ui-fix',

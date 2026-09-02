@@ -1,0 +1,6 @@
+interface:
+  display_name: "前端快速修改"
+  short_description: "直接完成目标明确、影响局部的前端改动，并运行聚焦验证"
+  default_prompt: "Use $frontend-fast-change to implement this clear local frontend change and run focused verification."
+policy:
+  allow_implicit_invocation: true

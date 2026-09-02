@@ -19,6 +19,7 @@ const pluginRoot = path.resolve(scriptDir, '..');
 const repositoryRoot = path.resolve(pluginRoot, '..', '..');
 const PUBLIC_SKILLS = [
   'frontend-change',
+  'frontend-fast-change',
   'frontend-requirement-write',
   'frontend-test',
   'frontend-ui-fix',
