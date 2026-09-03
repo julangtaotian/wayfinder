@@ -122,7 +122,7 @@ test('快速验证和交付保持真实且不扩大授权', () => {
   assert.match(fastSkill, /never authorizes commits, pushes, releases, messages, deployments/u);
 });
 
-test('原 frontend-change 保持发布版完整生命周期且不含快速分支', () => {
+test('原 frontend-change 保持发布版完整生命周期且不含独立快速分支', () => {
   const originalDescription = 'Drive a frontend change through exploration, planning, plan revision, implementation, specification synchronization, and completion using the plugin\'s internal planning engine. Use when a user wants to start, continue, implement, review, or finish a feature or bug change without operating the underlying engine commands directly.';
   assert.equal(readFrontmatterValue(changeSkill, 'description'), originalDescription);
   assert.doesNotMatch(changeSkill, /Fast Path|fast path|frontend-fast-change|small existing-behavior fix/iu);
@@ -139,6 +139,65 @@ test('原 frontend-change 保持发布版完整生命周期且不含快速分支
   assert.match(changeSkill, /Never invent a second change for work already represented by an active change/u);
   assert.match(changeSkill, /Pause and return to Revise when implementation exposes a material planning conflict/u);
   assert.match(changeSkill, /Preview the hard-gated completion/u);
+});
+
+test('活动变更内部修正与独立快速入口保持互斥', () => {
+  const correctionEntryFacts = [
+    'exactly one matching active change',
+    'confirmed or project-default `D-*` and `A-*`',
+    'the same local behavior',
+    'a focused check can prove the correction',
+    'no observable behavior or material shared or external contract changes',
+  ];
+
+  assert.match(fastSkill, /If a matching active change exists, hand off to `\$frontend-change`/u);
+  assert.match(fastSkill, /No matching active managed change exists/u);
+  assert.match(changeSkill, /#### Correct within an active change/u);
+  for (const fact of correctionEntryFacts) {
+    assert.equal(changeSkill.includes(fact), true, `缺少受管修正准入事实：${fact}`);
+  }
+  assert.match(changeSkill, /do not create another Skill, requirement, change, specification, or design/u);
+  assert.match(changeSkill, /A new request with no matching active change defaults to Plan/u);
+});
+
+test('受管修正恢复真实状态并且同一聚焦命令只执行一次', () => {
+  assert.match(changeSkill, /When it is `待验证`, restore it to `实施中`/u);
+  assert.match(changeSkill, /reopen only the directly affected tasks, `A-\*` items, and `V-\*` records before editing source/u);
+  assert.match(changeSkill, /run the implement-stage requirement validator/u);
+  assert.match(changeSkill, /execute it once through `verification-evidence\.mjs`; otherwise run the focused command once/u);
+  assert.match(changeSkill, /Do not run unrelated full verification for this correction alone/u);
+  assert.match(changeSkill, /identify every invalidated required record and rerun only those records/u);
+  assert.match(changeSkill, /External CI evidence must describe the exact revision now being delivered/u);
+});
+
+test('受管修正遇到实质变化返回 Revise 且不削弱完成门禁', () => {
+  const reviseBoundaries = [
+    'new or changed `D-*` or `A-*`',
+    'changes behavior or scope',
+    'cannot remain bounded',
+    'shared/public contract',
+    'API',
+    'authentication',
+    'permission',
+    'security or sensitive data',
+    'persistence',
+    'dependency',
+    'build',
+    'deployment',
+    'CI',
+    'platform compatibility',
+  ];
+
+  assert.match(changeSkill, /Stop this subflow and return to Revise/u);
+  for (const boundary of reviseBoundaries) {
+    assert.equal(changeSkill.includes(boundary), true, `缺少受管修正退出边界：${boundary}`);
+  }
+  assert.match(changeSkill, /Preserve the safe investigation and verification already completed instead of repeating it/u);
+  assert.match(changeSkill, /Keep the original Complete and finalize gates unchanged/u);
+  assert.match(changeSkill, /Preview the hard-gated completion/u);
+  assert.match(changeSkill, /repeat the same command with `--write`/u);
+  assert.match(changeSkill, /archive_partial_failure/u);
+  assert.doesNotMatch(fastSkill, /Correct within an active change/u);
 });
 
 test('公共文档只负责两个 Skill 的简洁路由', () => {

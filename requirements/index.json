@@ -360,6 +360,15 @@
       "entryPath": "requirements/REQ-2026-040-reproducible-official-validator-runtime.md",
       "archivePath": "requirements/archive/2026/REQ-2026-040-reproducible-official-validator-runtime.md",
       "change": "reproducible-official-validator-runtime"
+    },
+    {
+      "id": "REQ-2026-041",
+      "title": "REQ-2026-041：受管变更局部修正回路",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-041-managed-correction-loop.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-041-managed-correction-loop.md",
+      "change": "add-managed-correction-loop"
     }
   ]
 }

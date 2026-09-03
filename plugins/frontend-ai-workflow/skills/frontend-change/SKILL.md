@@ -73,6 +73,16 @@ Use when planning artifacts are complete and the user asks to start or continue 
 - Follow repository conventions, run focused verification, and mark only genuinely completed tasks.
 - Pause and return to Revise when implementation exposes a material planning conflict.
 
+#### Correct within an active change
+
+Use this Implement subflow only when implementation, static analysis, review, focused verification, or CI exposes an implementation defect in exactly one matching active change. Continue only when the selected change's confirmed or project-default `D-*` and `A-*` already define the expected result, the related source and necessary callers bound the defect to the same local behavior, a focused check can prove the correction, and no observable behavior or material shared or external contract changes.
+
+1. Reuse the selected change and any safe handoff findings. Read only the directly related decisions, acceptances, task, source, necessary callers, and nearest test; do not create another Skill, requirement, change, specification, or design.
+2. Keep a requirement already in `实施中`. When it is `待验证`, restore it to `实施中` and reopen only the directly affected tasks, `A-*` items, and `V-*` records before editing source, then run the implement-stage requirement validator.
+3. Make the smallest sufficient correction. When the focused command is already mapped to required machine evidence, execute it once through `verification-evidence.mjs`; otherwise run the focused command once. Do not run unrelated full verification for this correction alone.
+4. Before returning to Complete, use the existing evidence checks to identify every invalidated required record and rerun only those records or other verification explicitly affected by the correction. External CI evidence must describe the exact revision now being delivered. Keep the original Complete and finalize gates unchanged.
+5. Stop this subflow and return to Revise if the correction needs a new or changed `D-*` or `A-*`, changes behavior or scope, cannot remain bounded, or materially affects a shared/public contract, API, authentication, permission, security or sensitive data, persistence, dependency, build, deployment, CI, or platform compatibility. Preserve the safe investigation and verification already completed instead of repeating it.
+
 ### Complete
 
 Use when implementation is finished and the user asks to finalize the change.
@@ -92,6 +102,7 @@ Use when implementation is finished and the user asks to finalize the change.
 - "先看看"、"分析一下" or unclear intent defaults to Explore.
 - "修改方案"、"补充需求" or changed decisions defaults to Revise.
 - "开始开发"、"继续实现" or incomplete tasks defaults to Implement.
+- A request to correct an implementation, static-analysis, review, focused-test, or CI failure in one matching active change uses the Implement correction subflow only when all of its entry facts hold; otherwise keep the current normal stage or return to Revise.
 - "完成"、"收尾"、"同步并归档" defaults to Complete only after verification.
 - A status question is read-only: run the project checker and, when a requirement/change is selected, `check-change.mjs`; show the active stage, completed artifacts, remaining tasks, blockers, and next safe action.
 - Treat artifact `done` as complete. Treat specs `skipped` as complete only when `.openspec.yaml` and the linked requirement decision authorize it; ready, blocked, unknown and all other skipped states are blockers.
