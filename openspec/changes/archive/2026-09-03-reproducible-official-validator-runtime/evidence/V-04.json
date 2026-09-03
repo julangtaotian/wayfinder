@@ -11,12 +11,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-03T01:59:12.307Z",
+  "completedAt": "2026-09-03T02:10:57.179Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "6423705a028d183b44c9e41f9a0c442cfb0e2dc4",
+    "commit": "b68cdd1c6135723a274926ba221e2cec0bea9dcd",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,19 +24,19 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 277,
-      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903015912196-40400-c2ef883e/stdout.log",
-      "sha256": "765b21c7f08870ba909ed4ee7fd402ac053f709a47c293d9bd3eefcda4fee0c2",
+      "bytes": 281,
+      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903021057070-45733-08415735/stdout.log",
+      "sha256": "df4ec607d1a0acdfcd960ecfa898f29f24e1a790071eb7e95f48e2770d148ac6",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903015912196-40400-c2ef883e/stderr.log",
+      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903021057070-45733-08415735/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-040-reproducible-official-validator-runtime.md",
+  "requirement": "requirements/archive/2026/REQ-2026-040-reproducible-official-validator-runtime.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -59,7 +59,7 @@
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-09-03T01:59:12.197Z",
+  "startedAt": "2026-09-03T02:10:57.072Z",
   "status": "passed",
   "workspaceFingerprint": "24ff0266f3d1908a0b1597d70bf2842dc538b95e72bc660e8e918c45c9075cea"
 }

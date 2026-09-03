@@ -3,8 +3,8 @@
 ## 基本信息
 
 - 状态：已验证
-- 需求：`requirements/REQ-2026-040-reproducible-official-validator-runtime.md`
-- 变更：reproducible-official-validator-runtime
+- 需求：`requirements/archive/2026/REQ-2026-040-reproducible-official-validator-runtime.md`
+- 变更：2026-09-03-reproducible-official-validator-runtime
 - 需求修订基线：R-03
 - 默认聚焦命令：`node --test tests/official-validator-preflight.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern=TC-01 tests/official-validator-preflight.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-official-validator-runtime/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-03-reproducible-official-validator-runtime/evidence/V-01.json`
 
 ### TC-02：官方预检失败关闭并保留真实诊断
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test --test-name-pattern=TC-02 tests/official-validator-preflight.test.mjs`
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-official-validator-runtime/evidence/V-04.json`
+- 证据：`openspec/changes/archive/2026-09-03-reproducible-official-validator-runtime/evidence/V-04.json`
 
 ### TC-03：普通门禁、CI 和发布边界保持不变
 
@@ -83,7 +83,7 @@
 - 聚焦命令：`node --test --test-name-pattern=TC-03 tests/official-validator-preflight.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-official-validator-runtime/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-09-03-reproducible-official-validator-runtime/evidence/V-03.json`
 
 ### TC-04：当前 Codex 环境真实 Creator validators 预检
 
@@ -105,4 +105,4 @@
 - 聚焦命令：不适用
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/reproducible-official-validator-runtime/verification.md`
+- 证据：`openspec/changes/archive/2026-09-03-reproducible-official-validator-runtime/verification.md`

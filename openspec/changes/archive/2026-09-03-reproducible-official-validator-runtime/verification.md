@@ -27,6 +27,12 @@
 - V-03：现有 `scripts/verify.mjs` 完成 7 个阶段；共发现 218 项测试，210 项通过、8 项按既有条件跳过、0 项失败；插件结构通过；34 项活动/主规格严格校验与 53 项归档变更校验通过；OpenSpec 1.9.0 与 76 个运行时包完整性通过。
 - `.github/workflows/validate.yml`、`scripts/verify.mjs` 和插件 manifest 没有因本变更修改；根级预检脚本、启动器和依赖锁位于插件目录之外。
 
+## GitHub Actions 外部证据
+
+- 精确提交：`b68cdd1c6135723a274926ba221e2cec0bea9dcd`；工作流：[Validate run 33706055014](https://github.com/julangtaotian/wayfinder/actions/runs/33706055014)；触发方式：push；最终状态：success。
+- 通过任务：`Shared validation (linux-x64)`、`Validate (darwin-arm64)`、`Validate (darwin-x64)`、`Validate (linux-x64)`、`Validate (linux-arm64)`、`Validate (win32-x64)`，共 6 项，均为 success。
+- `workflow_dispatch` 专用的真实 Codex 安装证据步骤按 push 触发合同跳过；本需求不要求该可选步骤，也不把本次 CI 表述为五平台真实 Creator validators 通过。
+
 ## 未覆盖边界
 
 - 未新增或执行五平台真实 Creator validator 矩阵；既有 CI 只会执行受控替身回归。

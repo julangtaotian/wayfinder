@@ -351,6 +351,15 @@
       "entryPath": "requirements/REQ-2026-039-fast-change-route.md",
       "archivePath": "requirements/archive/2026/REQ-2026-039-fast-change-route.md",
       "change": "add-fast-change-route"
+    },
+    {
+      "id": "REQ-2026-040",
+      "title": "REQ-2026-040：轻量官方 Skill/Plugin 预检入口",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-040-reproducible-official-validator-runtime.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-040-reproducible-official-validator-runtime.md",
+      "change": "reproducible-official-validator-runtime"
     }
   ]
 }
