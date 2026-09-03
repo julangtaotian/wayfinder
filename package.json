@@ -13,6 +13,8 @@
     "test:workflow": "node scripts/test-groups.mjs workflow",
     "test:platform": "node scripts/test-groups.mjs platform",
     "validate": "node plugins/frontend-ai-workflow/scripts/validate-structure.mjs",
+    "validate:official": "node scripts/official-validator-preflight.mjs",
+    "cleanup:official-validator-cache": "node scripts/official-validator-preflight.mjs --cleanup-cache",
     "openspec:version": "node plugins/frontend-ai-workflow/scripts/openspec-cli.mjs --version",
     "verify": "node scripts/verify.mjs",
     "verify:shared": "node scripts/verify.mjs --scope shared",

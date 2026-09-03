@@ -31,6 +31,28 @@
 
 0.18.0 在动态根依赖画像和精简健康检查之上增加持续仓库治理：已验收需求正文按年度归档，根目录只保留轻量入口；统一验证固定执行体积预算门禁；综合测试和核心脚本按职责拆分；蓝湖交付收敛为单一轻量 AI 规范；五平台 CI 从固定 Playwright 官方源只重建当前矩阵平台资产，不依赖仓库 Git LFS 下载额度。AI 默认不展开历史需求正文、无关平台二进制或历史验收资产。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
 
+## 官方 Creator validators 预检
+
+修改插件 Skill、`.codex-plugin/plugin.json`、`.app.json`、`.mcp.json`、`agents/openai.yaml` 或准备发布时，执行：
+
+```bash
+npm run validate:official
+```
+
+该命令从当前 Codex 开发环境读取 Skill/Plugin Creator validators，按稳定顺序校验全部自定义 Skill 和插件根，并记录实际脚本 SHA-256、Python/PyYAML 版本、目标与真实输出。它不会替代项目自定义结构校验。
+
+首次执行会取得锁定的 PyYAML 6.0.2 wheel、核验 PyPI 发布摘要，并只安装到 `outputs/official-validator-cache/`；后续执行复用有效缓存，暖缓存可离线使用。依赖锁覆盖 CPython 3.10–3.13 的 macOS x64/ARM64、Linux x64/ARM64（glibc 与 musl）和 Windows x64 wheel；其他 Python 或架构会明确报告依赖不可用，不自动源码构建。冷缓存无法取得固定依赖、validator 或 Python 不可用、脚本未启动以及内容不合法都会返回非零状态，不会降级为自定义检查。
+
+非标准 Codex 安装可以在命令后显式传入 `--skill-validator`、`--plugin-validator` 和 `--python` 路径；默认情况下无需配置。
+
+缓存不会随每次预检删除，需要回收时显式执行：
+
+```bash
+npm run cleanup:official-validator-cache
+```
+
+普通 `npm run validate`、`npm run verify` 和常规 CI 不会隐式运行该预检。成功只表示“当前本地 Creator validators 预检通过”，不代表最新上游规则、Skill 行为质量或 OpenAI 公共目录最终审核通过；仓库根预检脚本、外部 validators 和缓存均不进入插件发布目录。
+
 ## 安装
 
 前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.18.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。

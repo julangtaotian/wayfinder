@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "reproducible-official-validator-runtime",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-02",
+      "tests/official-validator-preflight.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-03T01:59:12.307Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "6423705a028d183b44c9e41f9a0c442cfb0e2dc4",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 官方预检失败关闭并保留真实诊断",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 277,
+      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903015912196-40400-c2ef883e/stdout.log",
+      "sha256": "765b21c7f08870ba909ed4ee7fd402ac053f709a47c293d9bd3eefcda4fee0c2",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/reproducible-official-validator-runtime/V-04/20260903015912196-40400-c2ef883e/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-040-reproducible-official-validator-runtime.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02",
+      "A-03"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-06",
+      "D-08"
+    ],
+    "revision": "R-03",
+    "sha256": "9ff0551e3fa11da7a3ad430062f0be372239781bdef835f458b95c0e8783e4c2",
+    "testCaseIds": [
+      "TC-02"
+    ],
+    "verificationId": "V-04",
+    "version": 1
+  },
+  "startedAt": "2026-09-03T01:59:12.197Z",
+  "status": "passed",
+  "workspaceFingerprint": "24ff0266f3d1908a0b1597d70bf2842dc538b95e72bc660e8e918c45c9075cea"
+}

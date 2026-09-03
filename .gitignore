@@ -76,6 +76,9 @@ blob-report/
 .nyc_output/
 /outputs/frontend-test-runtime/
 /outputs/frontend-test-cache/
+/outputs/official-validator-runtime/
+/outputs/official-validator-cache/
+/outputs/official-validator-preflight-tests/
 /outputs/verify-runtime/
 /outputs/validator-runtime/
 /outputs/verification-evidence-integrity/
