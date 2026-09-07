@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "add-synthetic-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/v03-runner.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-07T07:42:18.400Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "f0953cdd5c26345accfc4b1838b367f6b4ab1929",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "official_validator_preflight_passed",
+  "locatorMatches": 1,
+  "logs": [
+    {
+      "bytes": 3976,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907074217185-60943-a5aeddc2/stdout.log",
+      "sha256": "4e6a13af385f4461c043de4d4127dfdacedbbbf6d82425b9ab4784badd97e067",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907074217185-60943-a5aeddc2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05",
+      "A-07"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-02",
+    "sha256": "f066be2e25c43458d85669c004d59e94f740a19596f0244e4fc198227378efd1",
+    "testCaseIds": [
+      "TC-09"
+    ],
+    "verificationId": "V-03",
+    "version": 1
+  },
+  "startedAt": "2026-09-07T07:42:17.186Z",
+  "status": "passed",
+  "workspaceFingerprint": "059d97e9451ea15250bef25326c2fcfcd9dba59c75207f60f9c0fe25f83fbc83"
+}

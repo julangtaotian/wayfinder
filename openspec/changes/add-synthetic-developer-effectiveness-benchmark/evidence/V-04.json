@@ -1,0 +1,120 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1491,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/input.json",
+      "sha256": "6c2d31ea2dcd818639e83840567b993a2f58247481dd00dca8ae6cc558dcd696"
+    },
+    {
+      "bytes": 442,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/state.json",
+      "sha256": "560e72503b3e876dc1f65cd786bba36850ec3ba60dd65b945323fbce32ced87e"
+    },
+    {
+      "bytes": 48121,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/cases/frozen-manifest.json",
+      "sha256": "e46b80d2d09e9cad2f15d3a0ba0bd4e4b08073aa50d45719fd980ffcf5f4d704"
+    },
+    {
+      "bytes": 25036,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/cases/preflight.json",
+      "sha256": "ec09aa95f426ecb14f16bda74a207d9e0900640a038ee0f36601f14a334719e3"
+    },
+    {
+      "bytes": 21521,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/pair-metrics.json",
+      "sha256": "b59caa84fc76c12a18118c7f04c614b3e06413f17ca5d2364030337ed93ecf3f"
+    },
+    {
+      "bytes": 44868,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/summary.json",
+      "sha256": "449548a883abdf1b648b69141e886c478178104d5414b3d464efe71637541478"
+    },
+    {
+      "bytes": 581,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/review.md",
+      "sha256": "50fe301bdcb77d0771717a4d8a77746543c0338f5285bab69211fbeb5bd89a66"
+    },
+    {
+      "bytes": 3032,
+      "path": "outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/workbook-import.csv",
+      "sha256": "9525e141c2d8745e089e078f198a2788b118572a402385bde4f5c6444d3e3036"
+    },
+    {
+      "bytes": 35438,
+      "path": "outputs/developer-metrics-pilot/developer-effectiveness-pilot.xlsx",
+      "sha256": "3062d701e6102ee365a0a1ad6d2c9e56ccdc9d263ab57a36e69dc21dbc529cad"
+    }
+  ],
+  "change": "add-synthetic-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/v04-runner.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-07T08:16:21.394Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "f0953cdd5c26345accfc4b1838b367f6b4ab1929",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "synthetic_benchmark_completed",
+  "locatorMatches": 1,
+  "logs": [
+    {
+      "bytes": 108,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907081621199-69126-15948cb9/stdout.log",
+      "sha256": "bbe83ba243bc6aa92adab2e8f53fc86565d4f91cd6cf5431b082b86953d22ac1",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907081621199-69126-15948cb9/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-03",
+      "A-04",
+      "A-05",
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05",
+      "D-06",
+      "D-07",
+      "D-08",
+      "D-09",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-02",
+    "sha256": "f1b74074cfe0bcae3420e503254ad4e256e4387b424c1c867d43ae7761a6268d",
+    "testCaseIds": [
+      "TC-10"
+    ],
+    "verificationId": "V-04",
+    "version": 1
+  },
+  "startedAt": "2026-09-07T08:16:21.201Z",
+  "status": "passed",
+  "workspaceFingerprint": "059d97e9451ea15250bef25326c2fcfcd9dba59c75207f60f9c0fe25f83fbc83"
+}

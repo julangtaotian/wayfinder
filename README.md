@@ -53,6 +53,28 @@ npm run cleanup:official-validator-cache
 
 普通 `npm run validate`、`npm run verify` 和常规 CI 不会隐式运行该预检。成功只表示“当前本地 Creator validators 预检通过”，不代表最新上游规则、Skill 行为质量或 OpenAI 公共目录最终审核通过；仓库根预检脚本、外部 validators 和缓存均不进入插件发布目录。
 
+## 合成开发者交付效果基准
+
+`npm run benchmark:developer-effectiveness --` 提供一个独立的合成任务基准，用同一冻结需求配对比较插件组与直接实现组，并采集首次交付、总周期、澄清、返工、阻断和验收结果。它默认只预览三个项目的已提交 Git 基线、六个需求与十二次运行规模，不创建工作区，也不调用 Codex。
+
+预览时必须显式提供三个独立 Git 项目、运行 ID、模型和推理强度：
+
+```bash
+npm run benchmark:developer-effectiveness -- \
+  --run-id pilot-001 \
+  --model <model> \
+  --reasoning <level> \
+  --project P1=/path/to/project-one \
+  --project P2=/path/to/project-two \
+  --project P3=/path/to/project-three
+```
+
+只有同时追加 `--write --execute-agents` 才会生成用例并启动真实代理；单独使用 `--write` 只固定本轮输入和恢复状态。正式整轮前可用 `--smoke-case <冻结用例ID>` 只为目标项目生成两条候选需求并执行指定用例的插件组，smoke 使用独立 run ID，不能代替完整六用例、十二次配对运行。可用 `--timeout-minutes` 设置每次代理上限，`--author-attempts` 设置候选需求重试次数，显式 `--codex` 指定可执行文件或 JavaScript CLI。默认清理所有隔离工作区；`--keep-workspaces` 只用于故障检查，会增加磁盘占用和源码副本保留时间。
+
+所有运行内容位于 `outputs/developer-effectiveness-benchmark/<run-id>/`，同一运行 ID 会核验不可变输入并从未完成阶段恢复，输入不一致时拒绝覆盖。源项目已有未提交内容不会进入副本，整轮运行要求其分支、提交和状态摘要前后一致。运行事件会脱敏和限长，但仍不应把真实凭据写入需求或项目文件。
+
+本基准会消耗当前账号的 Codex 额度，并可能需要较长时间。`summary.json`、`review.md` 和 `workbook-import.csv` 始终标记为合成样本；只有六个有效配对齐全时才提供描述性比较，结果不能解释为真实开发者效率、团队采用收益或个人绩效。普通 `npm test`、`npm run validate`、`npm run verify` 和默认 CI 只运行确定性测试，不会读取业务项目或启动真实代理。
+
 ## 安装
 
 前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.18.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
