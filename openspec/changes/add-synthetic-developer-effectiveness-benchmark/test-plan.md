@@ -52,10 +52,10 @@
 - 关联规格：synthetic-developer-effectiveness-benchmark / 六个用例通过冻结预检、不可验收候选不能进入运行
 - 状态矩阵：用户操作、空态、错误态
 - 前置条件：作者执行器可注入六个合法候选以及重复 ID、空验收器、外部账号依赖和不可通过参考实现样本。
-- 测试数据：三项目各两个用例、小中大复杂度各两个、seed/evaluator/reference/clarification 内容及 SHA-256。
+- 测试数据：三项目各两个用例、小中大复杂度各两个、seed/evaluator/reference/clarification 内容及 SHA-256，以及 Windows Git 检出的 CRLF 源码样本。
 - 测试替身：假的需求作者、补丁应用器和离线验收器。
 - 操作：生成候选，分别验证 seed + evaluator 必须失败、seed + reference + evaluator 必须通过，再触发各类非法候选。
-- 可观察断言：合法清单恰好六项、每项目两项、复杂度分布正确且内容摘要冻结；非法候选不能进入任何配对运行，不能通过放宽验收继续。
+- 可观察断言：合法清单恰好六项、每项目两项、复杂度分布正确且内容摘要冻结；源码语义比较兼容 LF 与 CRLF；非法候选不能进入任何配对运行，不能通过放宽验收继续。
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-02] 模拟需求通过双向预检后冻结`
 - 聚焦命令：`node --test --test-name-pattern=TC-02 tests/developer-effectiveness-benchmark.test.mjs`
@@ -241,7 +241,7 @@
 
 ### TC-11：真实五平台 CI 证据独立于本机试点
 
-- 状态：计划
+- 状态：失败
 - 优先级：P1
 - 验证类型：人工
 - 测试层级：人工
@@ -258,5 +258,5 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：未执行
-- 证据：待执行
+- 结果分类：测试代码错误
+- 证据：[GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)；提交 `87433d4bced36109de03ecb8470fce91e59d4208`；修复提交的五平台复跑待执行

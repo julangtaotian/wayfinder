@@ -153,15 +153,15 @@
 - 历史数据与兼容策略：现有工作簿和真实项目矩阵保持可读；模拟运行使用独立 schema 与输出目录，不重写历史条目。
 - 上线与回滚注意事项：新入口默认只预览且不进入普通 `npm test` 的真实代理运行；删除新增入口和独立输出即可回滚，业务项目不需要回滚。
 - 跨平台高风险：是。
-- 命中项：路径、临时目录、子进程、环境变量、机器可读诊断；若后续接入 CI 再追加 CI 命中项。
+- 命中项：CI、路径、临时目录、子进程、环境变量、机器可读诊断。
 - 受影响平台：darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。
-- 对应回归：计划新建 `tests/developer-effectiveness-benchmark.test.mjs`，覆盖双侧路径规范化、非 shell 子进程、空格与非 ASCII 路径、环境隔离、退出码、超时、敏感输出、恢复和清理。
-- 外部证据：真实五平台 CI 尚未运行；本机模拟结果不能替代矩阵证据。
+- 对应回归：复用 `tests/developer-effectiveness-benchmark.test.mjs`，覆盖双侧路径规范化、LF/CRLF 源码语义、非 shell 子进程、空格与非 ASCII 路径、环境隔离、退出码、超时、敏感输出、恢复和清理。
+- 外部证据：提交 `87433d4bced36109de03ecb8470fce91e59d4208` 的五平台 CI 已运行，但 win32-x64 因 TC-02 将 CRLF 与 LF 直接严格比较而失败；本机模拟结果不能替代修复提交的矩阵复跑证据。
 - 主要偏差风险：需求生成器与执行代理可能来自同类模型；报告必须保留此限制，不能把结果推广到人类开发者。
 
 ## 测试与验证
 
-- 测试文件策略：新建；目标路径：`tests/developer-effectiveness-benchmark.test.mjs`；基线证据：`git ls-files tests/developer-effectiveness-benchmark.test.mjs` 无输出，当前没有同功能手写测试；选择理由：该功能具有独立 schema、隔离生命周期与子进程边界，不应追加到真实项目矩阵测试。
+- 测试文件策略：复用；目标路径：`tests/developer-effectiveness-benchmark.test.mjs`；基线证据：该文件已由提交 `87433d4bced36109de03ecb8470fce91e59d4208` 纳入 Git，并承载本功能 TC-01～TC-08；选择理由：本次 Windows 换行回归属于同一冻结预检能力，应扩展现有手写专用测试，不新建或混入其他功能测试。
 - 独立测试方案：需要；触发条件：六个模拟需求、十二次执行以及多项 D/A/V 需要持续追踪；活动变更与目标：`openspec/changes/add-synthetic-developer-effectiveness-benchmark/test-plan.md`；需求修订基线：R-02。
 - 验证范围：全量；执行命令：聚焦运行 `node --test tests/developer-effectiveness-benchmark.test.mjs`，本地统一运行 `npm test`、`npm run validate`、官方 Skill/Plugin validator 和既有 Vue 3 + Vite fixture 生命周期；选择理由：新增共享子进程、路径、证据和插件执行入口，属于仓库级工具链变更。
 - 自动测试：配置校验、只读预览、冻结清单、配对公平性、注入执行器、指标计算、脱敏、稳定错误码、恢复、有界清理和 Windows/POSIX 路径样本。
@@ -176,7 +176,7 @@
 | V-02 | 自动 | `npm test` 与 `npm run validate` | 2026-09-07 | 通过 | `openspec/changes/add-synthetic-developer-effectiveness-benchmark/verification.md`；`openspec/changes/add-synthetic-developer-effectiveness-benchmark/evidence/V-02.json` |
 | V-03 | 自动 | 本机官方 Skill/Plugin validators 与 Vue 3 + Vite fixture 生命周期 | 2026-09-07 | 通过 | `openspec/changes/add-synthetic-developer-effectiveness-benchmark/verification.md`；`openspec/changes/add-synthetic-developer-effectiveness-benchmark/evidence/V-03.json` |
 | V-04 | 自动+人工 | 本机第一轮：三个项目、六个冻结需求、十二次隔离执行；人工复核用例、误阻断候选、源仓库状态和工作簿 | 2026-09-07 | 通过 | `openspec/changes/add-synthetic-developer-effectiveness-benchmark/evidence/V-04.json`；`outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/summary.json`；`outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/review.md`；`outputs/developer-metrics-pilot/developer-effectiveness-pilot.xlsx` |
-| V-05 | 自动 | 外部环境：同一提交的五平台 `Validate` 矩阵 | 待执行 | 计划 | GitHub Actions 运行 URL、精确提交 SHA 和五个平台任务状态待补充 |
+| V-05 | 自动 | 外部环境：提交 `87433d4bced36109de03ecb8470fce91e59d4208` 的五平台 `Validate` 矩阵；win32-x64 在离线运行时验证步骤因 CRLF/LF 测试断言失败 | 2026-09-07 | 失败 | [GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)；修复提交的五平台复跑待执行 |
 
 ## 验收标准
 

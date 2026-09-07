@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-07T07:41:12.271Z",
+  "completedAt": "2026-09-07T08:56:16.690Z",
   "evidenceId": "V-01",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "f0953cdd5c26345accfc4b1838b367f6b4ab1929",
+    "commit": "87433d4bced36109de03ecb8470fce91e59d4208",
     "dirty": true
   },
   "kind": "local-command",
@@ -23,14 +23,14 @@
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 1451,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907074100385-42860-7d3eed39/stdout.log",
-      "sha256": "1349884676cd1c4c5f667fac2170e1044b176179720418035ab24d0c70c3e964",
+      "bytes": 1452,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907085603808-76431-9be1f9cf/stdout.log",
+      "sha256": "cc921afad708af146a27aaa20720d58f35636ea4cdaa69a900c5ef6b02d0ee00",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907074100385-42860-7d3eed39/stderr.log",
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907085603808-76431-9be1f9cf/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
@@ -63,7 +63,7 @@
       "D-12"
     ],
     "revision": "R-02",
-    "sha256": "ac317be29686a300b5f0c3712c44d6ad94934637bc4c3649d8793ae979332065",
+    "sha256": "690794f0c60e667bd603d287e0b6602160cdb57517b0930ffb79a2261391b03e",
     "testCaseIds": [
       "TC-01",
       "TC-02",
@@ -76,7 +76,7 @@
     "verificationId": "V-01",
     "version": 1
   },
-  "startedAt": "2026-09-07T07:41:00.386Z",
+  "startedAt": "2026-09-07T08:56:03.810Z",
   "status": "passed",
-  "workspaceFingerprint": "059d97e9451ea15250bef25326c2fcfcd9dba59c75207f60f9c0fe25f83fbc83"
+  "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
 }

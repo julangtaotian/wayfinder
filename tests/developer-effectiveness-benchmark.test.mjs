@@ -49,6 +49,11 @@ function write(target, content) {
   return target;
 }
 
+// Git 在 Windows 检出为 CRLF 时，源码语义比较统一换行为 LF。
+function normalizeLineEndings(content) {
+  return String(content).replace(/\r\n/gu, '\n');
+}
+
 function git(root, args) {
   const result = spawnSync('git', ['-C', root, ...args], { encoding: 'utf8', shell: false });
   assert.equal(result.status, 0, result.stderr || `git ${args.join(' ')} 执行失败`);
@@ -219,6 +224,7 @@ test('[TC-02] 模拟需求通过双向预检后冻结', (context) => {
   );
   assert.equal(verifyFrozenCases(smokeManifest).caseCount, 2);
   assert.deepEqual(smokeManifest.projectIds, ['P1']);
+  assert.equal(normalizeLineEndings('export const value = 0;\r\n'), 'export const value = 0;\n');
 
   const project = fixture.projects[0];
   const baseline = collectSourceBaseline(project);
@@ -229,7 +235,10 @@ test('[TC-02] 模拟需求通过双向预检后冻结', (context) => {
     applyUnifiedPatch(prepared.workspace, candidate.seedPatch, 'seed', { env: prepared.environment });
     if (variant === 'reference') applyUnifiedPatch(prepared.workspace, candidate.referencePatch, 'reference', { env: prepared.environment });
     applyUnifiedPatch(prepared.workspace, candidate.evaluatorPatch, 'evaluator', { env: prepared.environment });
-    assert.equal(fs.readFileSync(path.join(prepared.workspace, 'src/value.js'), 'utf8'), `export const value = ${variant === 'reference' ? 1 : 0};\n`);
+    assert.equal(
+      normalizeLineEndings(fs.readFileSync(path.join(prepared.workspace, 'src/value.js'), 'utf8')),
+      `export const value = ${variant === 'reference' ? 1 : 0};\n`,
+    );
     const result = runAcceptance(prepared.workspace, candidate);
     assert.equal(result.status === 0, variant === 'reference', `${result.stdout}\n${result.stderr}`);
     cleanupBoundedWorkspace({ runRoot, workspace: prepared.workspace });

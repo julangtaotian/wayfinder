@@ -5,7 +5,7 @@
 - 基准实现、确定性回归、仓库统一验证、官方 validators 与 Vue 3 + Vite 生命周期已在本机通过。
 - 真实试点已冻结并重新双向预检六个用例，完成 12/12 条运行和 6/6 个有效配对；V-04 已通过，结论仅为合成任务的描述性比较。
 - 三个业务仓库只读取已提交 `HEAD`，现有未提交内容未进入副本；整轮结束后使用运行器自身算法复核，分支、提交和状态摘要与开跑前一致。
-- 五平台真实 CI 尚未对当前未提交变更运行，V-05 保持待执行，不宣称跨平台发布通过。
+- 提交 `87433d4bced36109de03ecb8470fce91e59d4208` 的五平台真实 CI 已运行，但 win32-x64 失败；V-05 记录为失败，不宣称跨平台发布通过，等待修复提交复跑。
 
 ## 自动验证摘要
 
@@ -34,3 +34,12 @@
 - 当前数据是模型执行的合成任务，不代表真实开发者、团队采用收益或个人绩效；六个配对只允许形成描述性比较。
 - 需求作者与执行代理使用同类模型，存在共同偏差；样本规模小且三个项目的任务类型不同，不能外推团队采用收益。
 - 本机只提供 macOS Apple Silicon 证据；Windows、Linux 与另一个 macOS 架构仍需同一提交的真实五平台 CI。
+
+## Validate #94 Windows 失败复盘
+
+- 失败平台与步骤：win32-x64，`Verify frontend test runtime offline`。
+- 稳定定位：`[TC-02] 模拟需求通过双向预检后冻结`，Node 断言 `ERR_ASSERTION`。
+- 根因：测试把补丁后的源码严格比较为 LF 文本；Windows Git 正常检出 CRLF，导致语义相同但字节换行不同。
+- 本地未发现原因：macOS fixture 使用 LF，既有跨平台用例覆盖路径与子进程，但没有向该源码断言注入 CRLF 样本。
+- 补充回归：`tests/developer-effectiveness-benchmark.test.mjs` 的 TC-02 显式校验 CRLF 规范化，并在源码语义比较前统一为 LF。
+- 失败证据：[GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)，精确提交 `87433d4bced36109de03ecb8470fce91e59d4208`；复跑 URL 待修复提交产生后补充。
