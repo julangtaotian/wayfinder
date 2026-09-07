@@ -369,6 +369,15 @@
       "entryPath": "requirements/REQ-2026-041-managed-correction-loop.md",
       "archivePath": "requirements/archive/2026/REQ-2026-041-managed-correction-loop.md",
       "change": "add-managed-correction-loop"
+    },
+    {
+      "id": "REQ-2026-042",
+      "title": "REQ-2026-042：自动化模拟需求与开发者交付效果基准",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+      "change": "add-synthetic-developer-effectiveness-benchmark"
     }
   ]
 }

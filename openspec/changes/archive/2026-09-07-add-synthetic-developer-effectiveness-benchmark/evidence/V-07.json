@@ -4,79 +4,64 @@
   "command": {
     "args": [
       "--test",
+      "--test-name-pattern=TC-03",
       "tests/developer-effectiveness-benchmark.test.mjs"
     ],
     "cwd": ".",
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-07T08:56:16.690Z",
-  "evidenceId": "V-01",
+  "completedAt": "2026-09-07T09:23:42.171Z",
+  "evidenceId": "V-07",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "87433d4bced36109de03ecb8470fce91e59d4208",
+    "commit": "82eb4e9e58cc450507c4b920730af24ab27da8af",
     "dirty": true
   },
   "kind": "local-command",
-  "locator": "[TC-01]",
+  "locator": "[TC-03] 插件组和对照组保持配对公平与隔离",
   "locatorMatches": 2,
   "logs": [
     {
-      "bytes": 1452,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907085603808-76431-9be1f9cf/stdout.log",
-      "sha256": "cc921afad708af146a27aaa20720d58f35636ea4cdaa69a900c5ef6b02d0ee00",
+      "bytes": 291,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-07/20260907092340276-37942-06e1861e/stdout.log",
+      "sha256": "6e3046baed11502e11b7d8211300133b7a2b91abd88b1d198297f452f91b8646",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-01/20260907085603808-76431-9be1f9cf/stderr.log",
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-07/20260907092340276-37942-06e1861e/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "requirement": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
-      "A-01",
-      "A-02",
       "A-03",
-      "A-04",
-      "A-05",
-      "A-06",
-      "A-07"
+      "A-05"
     ],
     "algorithm": "sha256",
     "decisionIds": [
-      "D-01",
-      "D-02",
       "D-03",
       "D-04",
       "D-05",
       "D-06",
-      "D-07",
-      "D-08",
-      "D-09",
       "D-10",
       "D-11",
       "D-12"
     ],
     "revision": "R-02",
-    "sha256": "690794f0c60e667bd603d287e0b6602160cdb57517b0930ffb79a2261391b03e",
+    "sha256": "6b3780dc3df819b68bc1ae1876b2a1a34ebaafb99c18e7ccb7f91989e8b1a58c",
     "testCaseIds": [
-      "TC-01",
-      "TC-02",
-      "TC-03",
-      "TC-04",
-      "TC-05",
-      "TC-06",
-      "TC-07"
+      "TC-03"
     ],
-    "verificationId": "V-01",
+    "verificationId": "V-07",
     "version": 1
   },
-  "startedAt": "2026-09-07T08:56:03.810Z",
+  "startedAt": "2026-09-07T09:23:40.278Z",
   "status": "passed",
   "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
 }

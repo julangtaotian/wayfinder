@@ -5,11 +5,11 @@
 - 基准实现、确定性回归、仓库统一验证、官方 validators 与 Vue 3 + Vite 生命周期已在本机通过。
 - 真实试点已冻结并重新双向预检六个用例，完成 12/12 条运行和 6/6 个有效配对；V-04 已通过，结论仅为合成任务的描述性比较。
 - 三个业务仓库只读取已提交 `HEAD`，现有未提交内容未进入副本；整轮结束后使用运行器自身算法复核，分支、提交和状态摘要与开跑前一致。
-- 提交 `87433d4bced36109de03ecb8470fce91e59d4208` 的五平台真实 CI 已运行，但 win32-x64 失败；V-05 记录为失败，不宣称跨平台发布通过，等待修复提交复跑。
+- 修复提交 `82eb4e9e58cc450507c4b920730af24ab27da8af` 的共享验证与五平台真实 CI 全部成功；V-05 已通过人工复核，跨平台发布证据闭合。
 
 ## 自动验证摘要
 
-- `node --test tests/developer-effectiveness-benchmark.test.mjs`：TC-01～TC-08 全部通过；覆盖安全预览、冻结预检、配对隔离、同会话返工、指标语义、脱敏恢复、跨平台子进程与普通验证零代理门禁。
+- TC-01～TC-07 分别通过精确定位的聚焦命令并形成 V-01、V-06～V-11；TC-08 由本地统一验证 V-02 覆盖。全部用例通过，覆盖安全预览、冻结预检、配对隔离、同会话返工、指标语义、脱敏恢复、跨平台子进程与普通验证零代理门禁。
 - `npm test`：229 项，221 通过、0 失败、8 项按外部平台资产和真实项目矩阵条件跳过。
 - `npm run validate`：通过。
 - `npm run footprint`：通过；新增主运行器保持不超过 800 行预算。
@@ -42,4 +42,5 @@
 - 根因：测试把补丁后的源码严格比较为 LF 文本；Windows Git 正常检出 CRLF，导致语义相同但字节换行不同。
 - 本地未发现原因：macOS fixture 使用 LF，既有跨平台用例覆盖路径与子进程，但没有向该源码断言注入 CRLF 样本。
 - 补充回归：`tests/developer-effectiveness-benchmark.test.mjs` 的 TC-02 显式校验 CRLF 规范化，并在源码语义比较前统一为 LF。
-- 失败证据：[GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)，精确提交 `87433d4bced36109de03ecb8470fce91e59d4208`；复跑 URL 待修复提交产生后补充。
+- 失败证据：[GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)，精确提交 `87433d4bced36109de03ecb8470fce91e59d4208`。
+- 修复复跑：[GitHub Actions Validate 运行 34104043648](https://github.com/julangtaotian/wayfinder/actions/runs/34104043648)，精确提交 `82eb4e9e58cc450507c4b920730af24ab27da8af`；共享验证及五个平台任务均为 `success`。

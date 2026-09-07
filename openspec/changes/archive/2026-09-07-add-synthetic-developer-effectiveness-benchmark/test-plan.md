@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md`
-- 变更：add-synthetic-developer-effectiveness-benchmark
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md`
+- 变更：2026-09-07-add-synthetic-developer-effectiveness-benchmark
 - 需求修订基线：R-02
 - 默认聚焦命令：`node --test tests/developer-effectiveness-benchmark.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern=TC-01 tests/developer-effectiveness-benchmark.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-01.json`
 
 ### TC-02：模拟需求通过双向预检后冻结
 
@@ -59,9 +59,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-02] 模拟需求通过双向预检后冻结`
 - 聚焦命令：`node --test --test-name-pattern=TC-02 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-06
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-06.json`
 
 ### TC-03：插件组和对照组保持配对公平与隔离
 
@@ -81,9 +81,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-03] 插件组和对照组保持配对公平与隔离`
 - 聚焦命令：`node --test --test-name-pattern=TC-03 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-07
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-07.json`
 
 ### TC-04：澄清、首次交付和返工在同一会话闭环
 
@@ -103,9 +103,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-04] 澄清首次交付和返工在同一会话闭环`
 - 聚焦命令：`node --test --test-name-pattern=TC-04 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-08
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-08.json`
 
 ### TC-05：指标保留未知语义并只汇总有效配对
 
@@ -125,9 +125,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-05] 指标保留未知语义并只汇总有效配对`
 - 聚焦命令：`node --test --test-name-pattern=TC-05 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-09
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-09.json`
 
 ### TC-06：证据脱敏、原子恢复和有界清理
 
@@ -147,9 +147,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-06] 证据脱敏原子恢复和有界清理`
 - 聚焦命令：`node --test --test-name-pattern=TC-06 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-10
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-10.json`
 
 ### TC-07：跨平台路径和无 shell 子进程保持稳定诊断
 
@@ -169,9 +169,9 @@
 - 目标测试：`tests/developer-effectiveness-benchmark.test.mjs`
 - 测试定位：`[TC-07] 跨平台路径和无 shell 子进程保持稳定诊断`
 - 聚焦命令：`node --test --test-name-pattern=TC-07 tests/developer-effectiveness-benchmark.test.mjs`
-- 关联验证：V-01
+- 关联验证：V-11
 - 结果分类：通过
-- 证据：`evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-11.json`
 
 ### TC-08：普通仓库验证不启动真实代理
 
@@ -193,11 +193,11 @@
 - 聚焦命令：`node --test --test-name-pattern=TC-08 tests/developer-effectiveness-benchmark.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/evidence/V-02.json`
 
 ### TC-09：官方 validators 和 Vue 3 生命周期保持通过
 
-- 状态：通过
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：集成
@@ -215,11 +215,11 @@
 - 聚焦命令：不适用
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/verification.md`
 
 ### TC-10：三个项目完成六需求十二运行本机试点
 
-- 状态：通过
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：端到端
@@ -237,11 +237,11 @@
 - 聚焦命令：不适用
 - 关联验证：V-04
 - 结果分类：通过
-- 证据：`evidence/V-04.json`、`outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/summary.json`、`outputs/developer-effectiveness-benchmark/synthetic-pilot-frozen-20260907/review.md` 与 `outputs/developer-metrics-pilot/developer-effectiveness-pilot.xlsx`
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/verification.md`
 
 ### TC-11：真实五平台 CI 证据独立于本机试点
 
-- 状态：失败
+- 状态：人工通过
 - 优先级：P1
 - 验证类型：人工
 - 测试层级：人工
@@ -258,5 +258,5 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-05
-- 结果分类：测试代码错误
-- 证据：[GitHub Actions Validate #94 / win32-x64](https://github.com/julangtaotian/wayfinder/actions/runs/34101545332/job/101677126650)；提交 `87433d4bced36109de03ecb8470fce91e59d4208`；修复提交的五平台复跑待执行
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-09-07-add-synthetic-developer-effectiveness-benchmark/verification.md`

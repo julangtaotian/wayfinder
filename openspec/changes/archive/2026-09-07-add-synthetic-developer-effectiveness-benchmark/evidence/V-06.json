@@ -1,0 +1,63 @@
+{
+  "artifacts": [],
+  "change": "add-synthetic-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-02",
+      "tests/developer-effectiveness-benchmark.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-07T09:23:47.186Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "82eb4e9e58cc450507c4b920730af24ab27da8af",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 模拟需求通过双向预检后冻结",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 270,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-06/20260907092340270-37941-327626c7/stdout.log",
+      "sha256": "8ed87e21e124bcad68cba53443a9c79399ffe3e68408cb357707b214162533d3",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-06/20260907092340270-37941-327626c7/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-02"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-06",
+      "D-11"
+    ],
+    "revision": "R-02",
+    "sha256": "60ae07505446e2fd00b3cde9089889621bbe01e20a50c681ce1367434853a3de",
+    "testCaseIds": [
+      "TC-02"
+    ],
+    "verificationId": "V-06",
+    "version": 1
+  },
+  "startedAt": "2026-09-07T09:23:40.271Z",
+  "status": "passed",
+  "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
+}

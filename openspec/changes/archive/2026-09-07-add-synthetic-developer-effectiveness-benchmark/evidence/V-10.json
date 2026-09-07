@@ -1,0 +1,65 @@
+{
+  "artifacts": [],
+  "change": "add-synthetic-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=TC-06",
+      "tests/developer-effectiveness-benchmark.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-07T09:23:40.411Z",
+  "evidenceId": "V-10",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "82eb4e9e58cc450507c4b920730af24ab27da8af",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-06] 证据脱敏原子恢复和有界清理",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 269,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-10/20260907092340281-37943-2e6cadff/stdout.log",
+      "sha256": "bbed7ebcd3581fed3901b7f651670402e8a9c4d6eb8fe63b31162e7d2bc1f7f9",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-10/20260907092340281-37943-2e6cadff/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-04",
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-07",
+      "D-08",
+      "D-10",
+      "D-11",
+      "D-12"
+    ],
+    "revision": "R-02",
+    "sha256": "a5b9b75717836bd44a1b0c002e4465ce01910d209b1c0904750090b3725a2867",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-10",
+    "version": 1
+  },
+  "startedAt": "2026-09-07T09:23:40.283Z",
+  "status": "passed",
+  "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
+}

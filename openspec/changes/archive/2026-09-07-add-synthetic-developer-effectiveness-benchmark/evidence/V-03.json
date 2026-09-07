@@ -9,12 +9,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-07T09:02:14.493Z",
+  "completedAt": "2026-09-07T09:25:28.312Z",
   "evidenceId": "V-03",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "87433d4bced36109de03ecb8470fce91e59d4208",
+    "commit": "82eb4e9e58cc450507c4b920730af24ab27da8af",
     "dirty": true
   },
   "kind": "local-command",
@@ -22,19 +22,19 @@
   "locatorMatches": 1,
   "logs": [
     {
-      "bytes": 3975,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907090210142-36363-b2381aea/stdout.log",
-      "sha256": "f90198f04bc6873973aaf8872d1c2f5c194e2f0cbfb581bdc541564e94c5e425",
+      "bytes": 3978,
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907092525180-54437-68693d15/stdout.log",
+      "sha256": "782897ec060eb52416f612cf59fc786ca9a06dec7db12fa26d45f58da633b325",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907090210142-36363-b2381aea/stderr.log",
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-03/20260907092525180-54437-68693d15/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "requirement": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -49,14 +49,14 @@
       "D-12"
     ],
     "revision": "R-02",
-    "sha256": "f066be2e25c43458d85669c004d59e94f740a19596f0244e4fc198227378efd1",
+    "sha256": "62415cbb1737c91e07c02488d46a1a1c22b71454f9e43de5a8f2dff4074263da",
     "testCaseIds": [
       "TC-09"
     ],
     "verificationId": "V-03",
     "version": 1
   },
-  "startedAt": "2026-09-07T09:02:10.145Z",
+  "startedAt": "2026-09-07T09:25:25.182Z",
   "status": "passed",
   "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
 }

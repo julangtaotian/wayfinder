@@ -55,12 +55,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-07T09:02:33.968Z",
+  "completedAt": "2026-09-07T09:25:25.393Z",
   "evidenceId": "V-04",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "87433d4bced36109de03ecb8470fce91e59d4208",
+    "commit": "82eb4e9e58cc450507c4b920730af24ab27da8af",
     "dirty": true
   },
   "kind": "local-command",
@@ -69,18 +69,18 @@
   "logs": [
     {
       "bytes": 108,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907090233760-36565-13318c41/stdout.log",
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907092525184-54438-4e0a1fdf/stdout.log",
       "sha256": "bbe83ba243bc6aa92adab2e8f53fc86565d4f91cd6cf5431b082b86953d22ac1",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907090233760-36565-13318c41/stderr.log",
+      "path": "outputs/verification-evidence/add-synthetic-developer-effectiveness-benchmark/V-04/20260907092525184-54438-4e0a1fdf/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
+  "requirement": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -107,14 +107,14 @@
       "D-12"
     ],
     "revision": "R-02",
-    "sha256": "f1b74074cfe0bcae3420e503254ad4e256e4387b424c1c867d43ae7761a6268d",
+    "sha256": "c6605053b52aa7cc280fabeca247e8e1a7e46417b77f23acc03a66b30ecddbb6",
     "testCaseIds": [
       "TC-10"
     ],
     "verificationId": "V-04",
     "version": 1
   },
-  "startedAt": "2026-09-07T09:02:33.762Z",
+  "startedAt": "2026-09-07T09:25:25.186Z",
   "status": "passed",
   "workspaceFingerprint": "1a20531742e9fbd48fabffa632a0ee3073c646372f07c41bc72feec8f86e5f8d"
 }
