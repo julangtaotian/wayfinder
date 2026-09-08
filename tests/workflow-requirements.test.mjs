@@ -22,7 +22,7 @@ import {
 test('新功能测试策略保护生成基线并要求专用测试决策', () => {
   const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
-  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
   const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
   const requirementTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md'), 'utf8');
 
@@ -44,7 +44,7 @@ test('新功能测试策略保护生成基线并要求专用测试决策', () =>
 test('局部需求默认聚焦验证且最终交付不自动触发覆盖率', () => {
   const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
-  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
   const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
   const requirementTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md'), 'utf8');
   const openSpecTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'openspec', 'config.yaml'), 'utf8');
@@ -111,7 +111,7 @@ test('需求模板和工作流要求使用决策台账与验收证据映射', ()
   const agents = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
   const config = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'openspec', 'config.yaml'), 'utf8');
   const requirementSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
-  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
 
   assert.match(template, /## 决策台账/);
   assert.match(template, /## 验收—证据映射/);

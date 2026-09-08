@@ -1,0 +1,29 @@
+{
+  "pluginId": "frontend-ai-workflow@frontend-ai-workflow-darwin-arm64",
+  "version": "0.18.0+codex.20260907095840",
+  "installed": true,
+  "enabled": true,
+  "listedVersion": "0.18.0+codex.20260907095840",
+  "comparedFiles": 101,
+  "differentFiles": [],
+  "newTaskLoadsInstalledPath": true,
+  "visibleSkills": [
+    "frontend-change",
+    "frontend-fast-change",
+    "frontend-requirement-write",
+    "frontend-test",
+    "frontend-ui-review",
+    "frontend-ui-verify",
+    "frontend-workflow-bootstrap",
+    "frontend-workflow-check",
+    "frontend-workflow-upgrade"
+  ],
+  "managedCorrectionIncluded": true,
+  "integrity": true,
+  "smoke": {
+    "ok": true,
+    "skipped": false,
+    "platformKey": "darwin-arm64",
+    "screenshotBytes": 3509
+  }
+}

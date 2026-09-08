@@ -305,7 +305,7 @@ test('[TC-03] 相邻调用方与共享验证链', () => {
     const source = fs.readFileSync(path.join(scriptsRoot, caller), 'utf8');
     assert.match(source, /from ['"]\.\/ui-review-report\.mjs['"]/u);
   }
-  const reference = fs.readFileSync(path.join(scriptsRoot, '..', 'references', 'ui-review-workflow.md'), 'utf8');
+  const reference = fs.readFileSync(path.join(scriptsRoot, '..', 'references', 'ui-review-maintenance.md'), 'utf8');
   for (const phrase of [
     '数据解析',
     '业务判断',

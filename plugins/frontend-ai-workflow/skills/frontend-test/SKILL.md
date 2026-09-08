@@ -1,6 +1,6 @@
 ---
 name: frontend-test
-description: Analyze frontend test coverage, create a traceable test plan for an active change, implement project-native tests when explicitly requested, and run focused verification with auditable evidence. Use when a user asks to analyze, generate, implement, verify, or recheck frontend test cases.
+description: Analyze frontend test coverage, create a traceable test plan for an active change, implement project-native tests when explicitly requested, and run focused verification with auditable evidence. Use for read-only coverage analysis or managed test-case planning, implementation and verification tied to an active change.
 ---
 
 # Frontend Test
@@ -9,7 +9,7 @@ Provide one entry point for frontend test analysis, test-case planning, test imp
 
 ## Runtime
 
-Resolve `<plugin-root>` as the directory two levels above this skill folder. Read `../../references/test-case-guidelines.md` completely before acting. Use only these plugin scripts for deterministic inspection and validation:
+Resolve `<plugin-root>` as the directory two levels above this skill folder. Select intent first. Read `../../references/test-case-guidelines.md` before managed Plan, Implement or Verify; simple read-only coverage analysis reads only the relevant guidance. Use only these plugin scripts for deterministic inspection and validation:
 
 ```bash
 node "<plugin-root>/scripts/inspect-test-context.mjs" --target <repository-root>
@@ -29,9 +29,9 @@ The inspector and validators are read-only. The evidence command defaults to a z
 
 ## Analyze
 
-1. Read applicable `AGENTS.md`, `wayfinder/frontend.md` when present, the selected requirement, active change artifacts, affected source, existing handwritten tests, and generated baselines.
+1. Read applicable `AGENTS.md`, affected source and nearest handwritten tests. Read relevant Wayfinder sections, the selected requirement, active artifacts and generated baselines only when they exist and matter to the requested coverage analysis.
 2. Run the test-context inspector and report only observed command, runner, configuration, test-directory, file, Git, and compatibility evidence.
-3. Map confirmed or project-default `D-*`, applicable `A-*`, specification scenarios, and the interaction-state matrix to coverage and gaps.
+3. When a managed requirement exists, map its confirmed or project-default `D-*`, applicable `A-*`, scenarios and state matrix to gaps. Otherwise report observed coverage without inventing requirement IDs.
 4. Do not create or modify files. Without a matching active change, stop after the read-only analysis and explain that persistent plans and test code require a managed change.
 
 ## Plan

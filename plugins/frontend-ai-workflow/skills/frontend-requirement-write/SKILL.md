@@ -5,7 +5,7 @@ description: Convert a natural-language frontend feature or bug description into
 
 # Write Frontend Requirement
 
-Create or update requirement documentation only. Do not implement application code.
+Review, revise or create requirement documentation according to the requested intent. Do not implement application code.
 
 ## Runtime
 
@@ -15,14 +15,21 @@ Resolve `<plugin-root>` as the directory two levels above this skill folder. Run
 node "<plugin-root>/scripts/validate-requirement-decisions.mjs" <requirement-path> [--change <change-path>] [--json]
 ```
 
-Do not replace this validation with an informal self-check. Resolve every reported error before presenting a requirement or starting a managed change.
+Do not replace this validation with an informal self-check. Report validation findings during read-only review. For writing modes, resolve structural errors and keep unresolved decisions in a draft; never claim a draft is implementation-ready.
 
-## Workflow
+## Intent Routing
 
-1. Read the repository's `AGENTS.md`, `wayfinder/frontend.md` when present (otherwise the legacy frontend context), the full dynamic dependency profile when available, existing requirement template, related routes, pages, services, components, and tests. Use the profile to discover declared packages, but use configuration, imports, call sites and tests to establish their actual role.
+- **Review**: read the selected requirement and only the repository evidence needed to assess it. Run the validator read-only, report contradictions and proposed corrections; do not allocate an ID, write files or change status unless revision is also requested.
+- **Revise**: update the selected document in place, preserving its REQ identifier and unrelated content. Apply revision and evidence-invalidation rules below.
+- **Create**: use a supplied unused identifier or select the next unused ID. If a supplied ID already exists, inspect it and resolve whether this is a revision rather than overwriting it.
+- A review followed by an explicitly requested revision can continue within the same authorization.
+
+## Writing Workflow
+
+1. Read applicable `AGENTS.md`, the selected requirement or template, relevant Wayfinder sections and the directly affected source and tests. Read the full dynamic dependency profile only when dependency roles matter to the requirement. Use the profile to discover declared packages, but use configuration, imports, call sites and tests to establish their actual role.
 2. Read `../../references/requirement-guidelines.md` relative to this skill.
 3. Use `requirements/_template.md` when present; otherwise use `../../assets/templates/requirements/_template.md`.
-4. Select the next unused `REQ-YYYY-NNN` identifier unless the user supplied one.
+4. Follow the selected writing mode: preserve the ID for Revise; allocate an unused ID only for Create.
 5. Before writing the narrative, create the requirement's decision ledger. Give every business decision a stable `D-*` ID, state, value, and source. Only user-confirmed facts or traceable project defaults may be `已确认` or `项目默认`; user-visible unknowns must remain `待确认` or sourced `暂定`.
 6. Separate content into:
 
@@ -37,23 +44,10 @@ Do not replace this validation with an informal self-check. Resolve every report
 
 ## Guardrails
 
-- Do not turn an unknown API, permission, or product rule into a confirmed fact.
-- Do not write implementation code or create a managed change unless the user also asks.
-- Preserve existing requirement content when revising; make scope changes explicit.
-- Behavior, interface, permission, security, data, or compatibility changes revise the requirement fact source before planning artifacts. A technical-only change may skip requirement revision only when no `D-*` semantics change.
-- Authorize `skip_specs: true` only in a confirmed or project-default decision whose value explicitly states that the selected change does not alter observable behavior. Otherwise require delta specs; never let implementation convenience or dynamic guidance supply this authorization.
-- Keep the complete active change name in the change-scope table, including numeric or date prefixes. Date stripping is only an archive-directory compatibility fallback after exact matching.
-- Prefer concrete scenarios over implementation prescriptions.
-- Reuse existing test patterns, stubs, mocks, and assertions independently from choosing the test file.
-- Treat files whose names contain `.generated.spec.` as generated baselines: inspect them for evidence, but do not assign new feature scenarios to them by default.
-- Extend an existing handwritten feature-specific test when it covers the same behavior; otherwise create a clearly named feature-specific test in the repository's real test directory.
-- If project-owned rules explicitly require a generated-test exception, record the rule source and rationale in the test-file strategy; when Git baseline is available, record whether the target is already tracked. If the test location or baseline cannot be determined, mark it as unresolved instead of guessing.
-- Default local page, component, form, and isolated interaction changes to focused tests plus necessary build verification. Treat a coverage command that runs every test as full verification, not as a default test command.
-- Assign full verification only for shared request, authentication, routing, build, shared component, or shared state changes; unavailable focused tests; explicit user request; or a documented release-level rationale. Final delivery alone is not a full-verification reason.
-- Record the verification scope, commands, rationale and planned `V-*` records in the requirement. When full verification exposes unrelated historical failures or network noise, report them separately from the affected verification result.
-- Select state-matrix rows from the actual impact: data rendering normally evaluates initial existing data, empty, and error; filters, forms, and explicit controls evaluate user action and refresh; subscriptions, timers, cancellable requests, route changes, or component teardown evaluate unmount. Do not mark a state inapplicable merely because it has not been tested.
-- For a manual visual acceptance, record its viewport or device, observable checks, and screenshot or recording destination in a `V-*` record; do not mark the acceptance complete until that evidence exists.
-- Do not place a `暂定` or `待确认` decision in a specification, design, task, acceptance criterion, or implementation instruction. Ask for confirmation or keep it in the requirement's open questions instead.
-- Do not invent a business decision in a later document. Use the requirement's `D-*` ID and revise the ledger first when new information arrives.
-- Treat preset, target and platform profiles as limited compatibility signals, not a complete framework or third-party inventory. A root dependency declaration is not proof that the package is installed, used, compatible, secure or validated; keep unsupported conclusions unresolved.
-- When the requirement affects workspaces, sub-applications, transitive packages, vulnerabilities, licenses or registry metadata, state that scope explicitly and obtain separate evidence because the dynamic profile covers only root direct declarations.
+- Preserve the selected mode and user-owned content. Review is read-only; writing documentation never authorizes product implementation or a managed change by itself.
+- The decision ledger is the only business fact source. Do not place a `暂定` or `待确认` decision into specifications, design, tasks, acceptance criteria or implementation instructions. Revise the requirement before changing behavior, interface, permission, security, data or compatibility semantics.
+- Authorize `skip_specs: true` only through an executable decision explicitly confirming no observable behavior change. Keep the complete change name in the change-scope table; date stripping is only an archive-directory fallback after exact matching.
+- Use the test-file strategy in `../../references/requirement-guidelines.md`: extend the same handwritten feature-specific test or create a dedicated one. `.generated.spec.` files remain read-only baselines unless project rules explicitly require an exception, recorded with its Git baseline and rationale.
+- Default local changes to focused tests and necessary build checks. Full or coverage verification requires the shared-chain, unavailable-focused-test, user-authorization or release rationale recorded in the requirement. Final delivery alone is not a full-verification reason.
+- Select interaction states from actual impact, not from which cases already passed. Record manual environment, observable checks and evidence paths before marking visual acceptance complete.
+- Preset, target and platform profiles are limited signals. A root dependency declaration does not prove installation, usage, compatibility, safety or validation; workspace, transitive, vulnerability, license and registry questions need separate evidence.

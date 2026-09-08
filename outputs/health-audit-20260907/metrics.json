@@ -1,0 +1,46 @@
+{
+  "check": [
+    {
+      "ms": 315,
+      "status": 0,
+      "bytes": 4230
+    },
+    {
+      "ms": 307,
+      "status": 0,
+      "bytes": 4230
+    },
+    {
+      "ms": 310,
+      "status": 0,
+      "bytes": 4230
+    },
+    {
+      "ms": 307,
+      "status": 0,
+      "bytes": 4230
+    },
+    {
+      "ms": 307,
+      "status": 0,
+      "bytes": 4230
+    }
+  ],
+  "checkMedianMs": 307,
+  "firstDeliveryOverheadPercent": 15.062056498277144,
+  "cycleOverheadPercent": 26.441434508234572,
+  "sourceScriptLines": [
+    {
+      "name": "developer-effectiveness-benchmark.mjs",
+      "lines": 800
+    },
+    {
+      "name": "developer-effectiveness-benchmark-foundation.mjs",
+      "lines": 776
+    },
+    {
+      "name": "playwright-runtime.mjs",
+      "lines": 663
+    }
+  ]
+}

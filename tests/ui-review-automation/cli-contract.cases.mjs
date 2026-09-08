@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { sha256 } from '../../plugins/frontend-ai-workflow/scripts/ui-review-contract.mjs';
 import {
   assert,
   fs,
@@ -18,10 +19,10 @@ const platformRuntimeOnly = bundledRuntime.available
   : { skip: '共享源码不携带当前平台 Chromium；该用例由平台成品验证执行' };
 
 test('统一入口完成预览、验收、同上下文复验并映射稳定退出码', platformRuntimeOnly, async (context) => {
-  let fixed = false;
+  let projectRoot;
   const server = http.createServer((_request, response) => {
     response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    response.end(`<!doctype html><main>${fixed ? '已修复' : '待修复'}</main>`);
+    response.end(`<!doctype html><style>${fs.readFileSync(path.join(projectRoot, 'src/main.css'), 'utf8')}</style><main>源码样式验收</main>`);
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   context.after(() => new Promise((resolve) => server.close(resolve)));
@@ -38,10 +39,11 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
     interactions: [],
     comparison: {
       mode: 'dom',
-      dom: [{ selector: 'main', property: 'text', expected: '已修复', exact: true }],
+      scope: 'visual',
+      dom: [{ selector: 'main', property: 'style.color', expected: 'rgb(255, 0, 0)', exact: true }],
     },
   };
-  const projectRoot = createProject(context, { schemaVersion: 2, scenarios: [scenario] });
+  projectRoot = createProject(context, { schemaVersion: 2, scenarios: [scenario] });
   fs.copyFileSync(
     path.resolve('plugins/frontend-ai-workflow/assets/templates/ui-review/playwright-adapter.mjs'),
     path.join(projectRoot, '.frontend-ui-review', 'playwright-adapter.mjs'),
@@ -75,7 +77,35 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   assert.equal(fs.existsSync(path.join(projectRoot, '.frontend-ui-review', 'runs', 'runner-mismatched-preview')), false);
   fs.writeFileSync(path.join(projectRoot, 'design', 'home.png'), 'design-v1');
 
-  fixed = true;
+  const sourcePath = path.join(projectRoot, 'src/main.css');
+  const originalFindings = review.findings;
+  const proposal = {
+    runId: review.runId,
+    scenarioFingerprint: JSON.parse(fs.readFileSync(path.join(projectRoot, review.artifacts.state), 'utf8')).scenarioFingerprint,
+    candidates: [{
+      findingId: originalFindings[0].id,
+      findingFingerprint: originalFindings[0].fingerprint,
+      sourceSha256: sha256(fs.readFileSync(sourcePath)),
+      sourceTarget: { file: 'src/main.css', anchor: 'main {' },
+      changeScope: '仅修改 main 颜色',
+      forbiddenChanges: '不修改其他样式或业务行为',
+      verification: { workingDirectory: 'src', commands: ['node --test'], page: '/', assertions: ['main 颜色为 rgb(255, 0, 0)'] },
+    }],
+  };
+  fs.writeFileSync(path.join(projectRoot, 'repair-proposal.json'), JSON.stringify(proposal));
+  const workflow = (...args) => {
+    const output = spawnSync(process.execPath, [workflowScript, ...args, '--target', projectRoot, '--state', review.artifacts.state], { encoding: 'utf8' });
+    assert.equal(output.status, 0, output.stderr);
+    return JSON.parse(output.stdout);
+  };
+  workflow('prepare-repair', '--result', 'repair-proposal.json');
+  const prepared = workflow('prepare-repair', '--result', 'repair-proposal.json', '--write');
+  assert.deepEqual(prepared.state.findings, originalFindings);
+  assert.equal(workflow('repair-gate', '--explicit-approval').decision, 'apply');
+  // 页面直接读取 fixture 源码，修复不是切换响应开关或注入样式。
+  fs.writeFileSync(sourcePath, 'main { color: red; }\n');
+  assert.equal(fs.readFileSync(sourcePath, 'utf8'), 'main { color: red; }\n');
+  workflow('complete-repair', '--finding-ids', originalFindings[0].id, '--write');
   const verifyPreview = await runUiReview({
     target: projectRoot,
     mode: 'verify',
@@ -232,9 +262,11 @@ test('三个 Skill 的职责、显式修复门禁和共享合同随插件发布'
   assert.match(verifySkill, /相同.*页面.*视口/u);
   assert.match(verifySkill, /不得切换/u);
   assert.match(sharedReference, /业务项目不安装 Playwright/u);
-  assert.match(sharedReference, /Playwright 1\.62\.1/u);
-  assert.match(sharedReference, /darwin-arm64/u);
-  assert.match(sharedReference, /linux-x64/u);
+  const maintenance = fs.readFileSync(path.join(pluginRoot, 'references/ui-review-maintenance.md'), 'utf8');
+  assert.match(sharedReference, /ui-review-maintenance\.md/u);
+  assert.match(maintenance, /Playwright 1\.62\.1/u);
+  assert.match(maintenance, /darwin-arm64/u);
+  assert.match(maintenance, /linux-x64/u);
   assert.match(reviewSkill, /bundled-adapter/u);
   assert.match(reviewSkill, /readyToWrite: true/u);
   assert.match(reviewSkill, /project-adapter/u);

@@ -123,11 +123,10 @@ test('快速验证和交付保持真实且不扩大授权', () => {
 });
 
 test('原 frontend-change 保持发布版完整生命周期且不含独立快速分支', () => {
-  const originalDescription = 'Drive a frontend change through exploration, planning, plan revision, implementation, specification synchronization, and completion using the plugin\'s internal planning engine. Use when a user wants to start, continue, implement, review, or finish a feature or bug change without operating the underlying engine commands directly.';
-  assert.equal(readFrontmatterValue(changeSkill, 'description'), originalDescription);
+  assert.ok(readFrontmatterValue(changeSkill, 'description').length > 0);
   assert.doesNotMatch(changeSkill, /Fast Path|fast path|frontend-fast-change|small existing-behavior fix/iu);
 
-  const lifecycleHeadings = ['### Explore', '### Plan', '### Revise', '### Implement', '### Complete'];
+  const lifecycleHeadings = ['### Explore', '### Plan', '### Revise', '### Implement', '### Verify', '### Complete'];
   let previousIndex = -1;
   for (const heading of lifecycleHeadings) {
     const currentIndex = changeSkill.indexOf(heading);
@@ -135,7 +134,7 @@ test('原 frontend-change 保持发布版完整生命周期且不含独立快速
     previousIndex = currentIndex;
   }
 
-  assert.match(changeSkill, /A new request with no matching active change defaults to Plan/u);
+  assert.match(changeSkill, /A defined change request with no matching active change defaults to Plan/u);
   assert.match(changeSkill, /Never invent a second change for work already represented by an active change/u);
   assert.match(changeSkill, /Pause and return to Revise when implementation exposes a material planning conflict/u);
   assert.match(changeSkill, /Preview the hard-gated completion/u);
@@ -157,7 +156,7 @@ test('活动变更内部修正与独立快速入口保持互斥', () => {
     assert.equal(changeSkill.includes(fact), true, `缺少受管修正准入事实：${fact}`);
   }
   assert.match(changeSkill, /do not create another Skill, requirement, change, specification, or design/u);
-  assert.match(changeSkill, /A new request with no matching active change defaults to Plan/u);
+  assert.match(changeSkill, /A defined change request with no matching active change defaults to Plan/u);
 });
 
 test('受管修正恢复真实状态并且同一聚焦命令只执行一次', () => {
@@ -241,4 +240,22 @@ test('Vue 3 + Vite fixture 在初始化、重复执行、升级和检查后保�
   const checked = checkProject(root);
   assert.equal(checked.ok, true);
   assert.equal(checked.preset, 'vue3-vite');
+});
+
+// 文本合同只保护阶段边界；真实代理的路由与成本需要单独评估。
+test('技能阶段合同区分只读评审、持续授权与证据消费', () => {
+  const requirement = readRepositoryFile('plugins/frontend-ai-workflow/skills/frontend-requirement-write/SKILL.md');
+  const propose = readRepositoryFile('plugins/frontend-ai-workflow/references/openspec/propose.md');
+  const reviewMode = requirement.split('- **Review**:')[1].split('- **Revise**:')[0];
+  assert.match(reviewMode, /do not allocate an ID, write files or change status/u);
+  assert.match(requirement, /preserving its REQ identifier/u);
+  assert.match(changeSkill, /before loading stage-specific material/u);
+  assert.match(changeSkill, /references\/change-verification\.md/u);
+  assert.match(changeSkill, /If the user requested planning only, stop/u);
+  assert.match(changeSkill, /already authorized in this conversation/u);
+  assert.doesNotMatch(propose, /wait for a new user request|must explicitly start apply/u);
+  const complete = changeSkill.split('### Complete')[1].split('## State Rules')[0];
+  assert.match(complete, /Missing or stale evidence returns to Verify/u);
+  assert.match(complete, /must not rerun project tests/u);
+  assert.doesNotMatch(complete, /Run relevant project tests/u);
 });

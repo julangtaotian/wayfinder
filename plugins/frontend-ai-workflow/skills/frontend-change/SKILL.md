@@ -21,11 +21,10 @@ For local project work, inspect `root` in planning JSON. `root.source=global_def
 
 ## Start
 
-1. Read applicable `AGENTS.md`, `wayfinder/frontend.md` when present (otherwise the legacy frontend context), the selected `requirements/REQ-*.md`, the complete dynamic dependency profile when relevant, related source code, current tests, the interaction-state matrix, and the test-file strategy in `../../references/requirement-guidelines.md`. Treat preset, target and platform profiles as limited compatibility signals; establish a dependency's actual role from configuration, imports, call sites and tests rather than its name alone. Validate the selected requirement with `node "<plugin-root>/scripts/validate-requirement-decisions.mjs" <requirement-path> --stage plan --json` before planning or implementation.
-   When the affected chain includes CI configuration, filesystem paths, temporary directories, child processes, package-manager entrypoints, environment variables, or machine-readable diagnostics, classify it as a cross-platform risk, read `../../references/cross-platform-ci-checklist.md`, and record the matched triggers and affected platforms in the requirement or change artifacts.
-2. Run the internal engine's list command with JSON output to discover active changes.
-3. Infer the requested stage from the user's intent and repository state. Ask only when multiple active changes remain plausible or a decision changes observable behavior.
-4. Use the selected change name consistently. Never invent a second change for work already represented by an active change.
+1. Read applicable `AGENTS.md` and current worktree status. Run the internal engine's list command with JSON output when a local planning root exists; do not initialize one for exploration or a status question.
+2. Infer the requested stage from intent and active changes before loading stage-specific material. Ask only when multiple changes remain plausible or a material decision is unresolved. Never invent a second change for work already represented by an active change.
+3. Explore and status requests read only evidence needed for the question. For Plan, Revise or Implement, read the selected requirement, relevant Wayfinder sections, related source/callers/tests, interaction-state matrix and test-file strategy in `../../references/requirement-guidelines.md`. Read the complete dependency profile only when the affected dependency chain needs it; declarations alone do not prove usage or compatibility.
+4. Validate the selected requirement at plan stage before planning, and at implement stage before editing. When the affected chain includes CI, filesystem paths, temporary directories, child processes, package-manager entrypoints, environment variables or machine-readable diagnostics, classify it as a cross-platform risk, read `../../references/cross-platform-ci-checklist.md` and record triggers and affected platforms.
 
 ## Stage Routing
 
@@ -48,7 +47,7 @@ Use when the user wants to start a defined change and no matching active change 
 - When the requirement marks an independent test plan as required, create or update `<change-root>/test-plan.md`, preserve `test_plan: required` in metadata, and run the test-plan validator at `plan` stage before calling the change implementation-ready.
 - Create the change, proposal, specifications, design, and task list through the bundled runtime.
 - Use `skip_specs: true` only when an applicable confirmed requirement decision explicitly states that this change does not alter observable behavior. Never expose it as a convenience flag or infer it from missing delta specs.
-- Stop when the change is ready for implementation and summarize the acceptance boundary.
+- Summarize the acceptance boundary when the plan is ready. If the user requested planning only, stop. If implementation is already authorized in this conversation, continue to Implement without requiring another start request; unresolved material decisions still block dependent work.
 
 ### Revise
 
@@ -83,14 +82,21 @@ Use this Implement subflow only when implementation, static analysis, review, fo
 4. Before returning to Complete, use the existing evidence checks to identify every invalidated required record and rerun only those records or other verification explicitly affected by the correction. External CI evidence must describe the exact revision now being delivered. Keep the original Complete and finalize gates unchanged.
 5. Stop this subflow and return to Revise if the correction needs a new or changed `D-*` or `A-*`, changes behavior or scope, cannot remain bounded, or materially affects a shared/public contract, API, authentication, permission, security or sensitive data, persistence, dependency, build, deployment, CI, or platform compatibility. Preserve the safe investigation and verification already completed instead of repeating it.
 
+### Verify
+
+Use when implementation needs validation or the user asks to verify. Read `../../references/change-verification.md` if not already loaded, then only the selected verification plan and affected evidence.
+
+1. Check which required records remain valid for the current source, requirement and test-plan semantics. Reuse valid results; execute only missing, stale or explicitly affected checks, through `verification-evidence.mjs` when machine evidence is required. Keep focused, full, manual and external results distinct.
+2. Record actual results in `V-*`; check acceptance boxes only when their mapped assertions passed, then set the requirement to `待验证`. For `test_plan: required`, update the plan to `已验证` only after its cases passed and run its complete validator.
+3. For `verification_evidence: required`, generate automatic passing V-* schema v2 manifests here and reference the same-ID JSON. External references without an independent remote receipt stay `external-recorded` and cannot satisfy a trusted automatic pass.
+4. If validation finds an implementation defect, use the correction subflow or Revise according to its boundary. Continue to Complete when finalization is authorized and all required evidence is valid.
+
 ### Complete
 
-Use when implementation is finished and the user asks to finalize the change.
+Use when verified implementation is ready and finalization is within the user's request.
 
-1. Confirm required tasks and acceptance scenarios are complete.
-2. Run relevant project tests and inspect implementation evidence; update the related `V-*` records only with actual results, check the acceptance boxes, and set the requirement status to `待验证`.
-   When `test_plan: required` is declared, require the plan to be `已验证` and pass the `complete` validator before updating completion evidence.
-   When `verification_evidence: required` is declared, generate each automatic passing V-* schema v2 manifest during the Verify stage and reference the same-ID JSON. Completion only reads and recomputes identity, requirement/test-plan semantics, workspace freshness, and persisted log/artifact integrity; it must not rerun project tests, builds, browsers or external CI. External references without an independent remote receipt stay `external-recorded` and cannot satisfy a trusted automatic pass.
+1. Confirm required tasks, acceptance scenarios and verification records are complete. Missing or stale evidence returns to Verify; unresolved behavior returns to Revise.
+2. Completion only reads and recomputes evidence identity, requirement/test-plan semantics, workspace freshness and persisted log/artifact integrity; it must not rerun project tests, builds, browsers or external CI. Preserve the existing test-plan and verification-evidence completion gates.
 3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isPlanningComplete=true` (with `isComplete` only as a legacy response fallback), and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
 4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags. It then rewrites active evidence references to the engine's actual archive name, atomically updates the requirement, and runs a read-only complete audit from the archived path.
    If archive movement succeeds but requirement writing or the post-archive audit fails, report `archive_partial_failure`, its actual archive target and recovery arguments. A recovery run must not add another date, move the archive again or rerun project commands.
@@ -98,12 +104,12 @@ Use when implementation is finished and the user asks to finalize the change.
 
 ## State Rules
 
-- A new request with no matching active change defaults to Plan.
+- A defined change request with no matching active change defaults to Plan; read-only analysis takes precedence over this default.
 - "先看看"、"分析一下" or unclear intent defaults to Explore.
 - "修改方案"、"补充需求" or changed decisions defaults to Revise.
 - "开始开发"、"继续实现" or incomplete tasks defaults to Implement.
 - A request to correct an implementation, static-analysis, review, focused-test, or CI failure in one matching active change uses the Implement correction subflow only when all of its entry facts hold; otherwise keep the current normal stage or return to Revise.
-- "完成"、"收尾"、"同步并归档" defaults to Complete only after verification.
+- "验证"、"复验" defaults to Verify. "完成"、"收尾"、"同步并归档" routes through Verify only for missing or stale evidence, then Complete.
 - A status question is read-only: run the project checker and, when a requirement/change is selected, `check-change.mjs`; show the active stage, completed artifacts, remaining tasks, blockers, and next safe action.
 - Treat artifact `done` as complete. Treat specs `skipped` as complete only when `.openspec.yaml` and the linked requirement decision authorize it; ready, blocked, unknown and all other skipped states are blockers.
 
@@ -114,17 +120,4 @@ Use when implementation is finished and the user asks to finalize the change.
 - Never overwrite project-owned rules, requirements, specifications, or source code outside the selected change scope.
 - Do not expose internal skill names or require users to understand the underlying engine command set.
 - Report only commands and checks that actually ran.
-- Before verification, state the affected files and chains, then choose the narrowest existing tests that cover them. If no focused test exists, state the matching manual checks instead of immediately running the full suite.
-- For a recorded cross-platform risk, implement the applicable deterministic regressions from `../../references/cross-platform-ci-checklist.md`. Prefer stable `code`, `target`, or `status` assertions over complete human messages, normalize platform paths or cover both separators, and keep local simulation separate from actual CI-matrix evidence.
-- Do not mark cross-platform delivery evidence complete until every platform declared by the repository's real CI matrix has succeeded for the exact revision being reported. If external CI has not run, keep that evidence pending and report the local checks separately.
-- Read managed platform command status, targets, summary, and evidence when the selected requirement affects a mini-program or H5 target. Treat every detected candidate as `executed=false` until that exact command succeeds in the current verification; when candidates are missing, record the required manual developer tool or external CI environment instead of inventing, installing, selecting, or running a platform command.
-- Run the full project test command only for shared request, authentication, routing, build/deploy, shared component/state changes; when focused verification is unavailable; when the user explicitly asks; or when the requirement records a release-level rationale. Final delivery alone is not a full-test reason. Report focused, related, full and manual verification separately.
-- Treat a coverage command that runs every test as full verification even when it is the project-detected test command. For local page, component, form, and isolated interaction changes, run the focused feature test and necessary build verification by default.
-- Before running full verification, record the affected shared chain or explicit authorization in the requirement or change plan. If full verification emits unrelated historical failures or network noise, report those separately and do not use them to invalidate focused verification.
-- Before planning or writing tests, state the test-file strategy: extend the handwritten test for the same feature, or create a clearly named feature-specific test in the repository's real test directory.
-- Do not treat reuse of test patterns, mocks, or stubs as a reason to append a new feature to a different test file.
-- Treat filenames containing `.generated.spec.` as generated baselines. Inspect them for evidence but do not append new feature scenarios unless a project-owned rule explicitly requires that exception; record the rule source and rationale in the requirement or change plan.
-- If an existing requirement points a new feature at a generated test or an invalid test location, revise its test-file strategy before implementation rather than silently following it.
-- Treat the requirement decision ledger as the only business fact source. A later specification, design, task, or implementation may add a technical choice, but it must not change user-visible behavior, security, data, permission, or compatibility semantics without first revising the relevant `D-*` decision.
-- Every acceptance item must have an `A-*` reference and an evidence mapping. Before delivery, confirm the reported test or manual result matches the mapping's observable assertion rather than merely showing that the main flow did not fail.
-- The dynamic profile covers root direct dependency declarations only. Do not claim workspace orchestration, transitive dependency coverage, compatibility, security, vulnerability, license or upgrade status without corresponding evidence.
+- Before selecting tests or planning test files, read `../../references/change-verification.md`; use it again in Verify only when the policy is not already loaded. Complete consumes evidence and does not reload implementation context.

@@ -1,0 +1,59 @@
+{
+  "ok": false,
+  "stage": "plan",
+  "requirementPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/requirements/REQ-2026-043-skill-workflow-repair.md",
+  "changePath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff",
+  "decisions": 4,
+  "acceptances": 4,
+  "requirementStatus": "待验证",
+  "interactionStateMatrix": {
+    "present": true,
+    "rows": 6
+  },
+  "verificationRecords": 4,
+  "evidenceFormat": "enhanced",
+  "selectedChangeScope": {
+    "name": "repair-skill-workflow-and-ui-handoff",
+    "decisions": 4,
+    "acceptances": 4
+  },
+  "evidenceFiles": {
+    "recorded": 4,
+    "verifiedFiles": 3,
+    "required": false,
+    "executed": false,
+    "diagnostics": [
+      {
+        "code": "legacy_markdown_evidence",
+        "status": "warning",
+        "target": "V-01",
+        "evidenceId": "V-01",
+        "fresh": null,
+        "trust": "legacy",
+        "message": "历史验证记录 V-01 只有 Markdown 或其他非机器证据"
+      },
+      {
+        "code": "legacy_markdown_evidence",
+        "status": "warning",
+        "target": "V-02",
+        "evidenceId": "V-02",
+        "fresh": null,
+        "trust": "legacy",
+        "message": "历史验证记录 V-02 只有 Markdown 或其他非机器证据"
+      }
+    ]
+  },
+  "testFileStrategy": null,
+  "taskReferences": {
+    "taskPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/tasks.md",
+    "decisionCount": 4,
+    "acceptanceCount": 4
+  },
+  "errors": [
+    "规划阶段要求需求状态为“已确认”，当前为“待验证”"
+  ],
+  "warnings": [
+    "legacy_markdown_evidence：历史验证记录 V-01 只有 Markdown 或其他非机器证据",
+    "legacy_markdown_evidence：历史验证记录 V-02 只有 Markdown 或其他非机器证据"
+  ]
+}

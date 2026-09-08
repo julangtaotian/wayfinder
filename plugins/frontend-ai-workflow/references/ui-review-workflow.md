@@ -11,12 +11,6 @@ node scripts/ui-review-runner.mjs verify --target <项目> --scenario <场景> -
 
 稳定退出码为 `0=passed/有效预览`、`1=needs-fix/failed`、`2=inconclusive`、`3=blocked`。有效预览必须同时返回 `write: false` 与 `readyToWrite: true`；不可执行计划返回 `readyToWrite: false`、`blocked` 和退出码 3，且两者都不创建运行产物。该 JSON 合同可供跨 AI 工具和 CI 消费；统一入口不会启动项目自定义命令、安装业务依赖、自动修改源码、提交或推送。细粒度的 `inspect`、`capture-plan`、`start-*`、`complete-*` 和 `repair-gate` 仍由 `ui-review-workflow.mjs` 提供，用于版本 1 只读兼容、显式修复门禁和 Browser 视觉兜底，不得用于绕过版本 2 受信适配器门禁。
 
-## 报告链维护边界
-
-后续扩展 UI 验收报告时，先将需求定位为以下一种职责：数据解析（截图、输入和基础校验）、业务判断（问题筛选、合并和结论派生）或输出报告（Markdown、标注图片和受控产物发布）。单职责改动直接在所属模块完成；只有需求跨越职责边界，或既有模块确实达到维护边界时，才新增模块，不为拆分而拆分。
-
-这种定位不能削弱既有保护：输入异常、路径安全、暂存发布与清理、FFmpeg 失败、中文诊断以及兼容门面的公开导出和 CLI 语义都必须随所属职责继续失败关闭。若需求改变公开 API、报告语义、权限、路径边界或错误语义，必须先修订需求台账和验收，不能只凭本规则直接修改实现。
-
 ## 版本 2 项目配置
 
 默认文件为 `.frontend-ui-review/config.json`。`autoFix` 可取 `off`、`suggest`、`apply`，省略按 `suggest`。新场景必须声明：
@@ -63,7 +57,7 @@ DOM、几何与图片比较都产生可追溯 `observations`。几何比较读�
 
 首次验收与复验的 Markdown 报告必须从完成状态投影同一份上下文，并展示 `schemaVersion`、`runId`、`scenarioFingerprint`、实际 `capture`、可空 `baselineRunId`、`statePath`、证据路径及观察/问题摘要。缺少必需身份字段时拒绝生成报告；Markdown 不得自行猜测或覆盖状态 JSON。
 
-确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。
+确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。用户要求修复时，按 `ui-repair-context.md` 使用 `prepare-repair` 补齐，默认预览，显式写入仅更新候选并保留原始发现。
 
 Browser 或同类视觉能力只在结论为 `inconclusive`、配置已经声明 Browser 兜底且当前 AI 工具具备能力时使用。统一入口只返回 `fallbackRequired: true`，不会自行控制某个 AI 工具。兜底必须使用新运行 ID，不能在原运行或复验中静默切换采集器。
 
@@ -83,15 +77,11 @@ UI Review 作为严格 V-* 机器证据时，schema v2 清单必须绑定状态�
 
 运行目录固定为 `<artifactsRoot>/<runId>/<scenarioId>`，只允许状态、实际截图、交互截图、结构化输入和报告目录。发现未知文件、既有状态或路径冲突时拒绝覆盖。
 
-## 跨平台发布合同
-
-Playwright 1.62.1、PNGJS 7.0.0 和 pixelmatch 7.1.0 固定在插件共享运行时。浏览器资产按 `platform-arch` 独立发布，支持 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64` 与 `win32-x64`；每个平台分别包含 Chromium headless shell、FFmpeg、许可、元数据和 SHA-256 清单。
-
-`prepare-platform-marketplace.mjs` 只供插件维护、验证和发布阶段使用，默认预览，显式 `--write` 才在源码外有界暂存中下载当前原生平台资产、生成完整性清单并组装 marketplace。失败只清理本次暂存，不修改共享源码。普通检查、冒烟、已安装插件和业务验收没有下载代码路径。GitHub Actions 必须在五个原生平台实际启动成品 Chromium 并得到 `skipped: false`；受支持平台缺包或跳过都失败，视觉兜底不能作为平台支持证据。经验证的单平台 marketplace 可以复制到离线环境安装，回滚使用上一份已验证成品或提交，不改写 Git 历史。
-
 ## 权限边界
 
 - 自动修复只受 `repairCandidates`、配置与当前任务显式授权共同控制，不隐含修改主分支、第三方依赖或未声明源码。
 - 统一入口不启动开发服务器；页面必须由用户或项目既有流程准备好。页面不可访问以结构化阻塞返回。
 - 不读取或发送认证数据，不调用外部服务，不创建常驻进程、数据库或独立 UI 平台。
 - 自动修复不隐含提交、推送、PR 或远程状态回写；不提交、不推送、不创建 PR，这些动作需要用户另行授权。
+
+插件内部报告实现和平台发布维护另见 `ui-review-maintenance.md`，普通页面验收不需要读取。

@@ -1,0 +1,8 @@
+{
+  "pluginId": "frontend-ai-workflow@frontend-ai-workflow-darwin-arm64",
+  "name": "frontend-ai-workflow",
+  "marketplaceName": "frontend-ai-workflow-darwin-arm64",
+  "version": "0.18.0+codex.20260907095840",
+  "installedPath": "/Users/lvshuai/.codex/plugins/cache/frontend-ai-workflow-darwin-arm64/frontend-ai-workflow/0.18.0+codex.20260907095840",
+  "authPolicy": "ON_INSTALL"
+}

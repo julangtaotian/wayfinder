@@ -30,7 +30,7 @@ Implement tasks from an OpenSpec change.
    - Auto-select if only one active change exists
    - If ambiguous, run `openspec list --json` to get available changes and ask the user to select one
 
-   Always announce: "Using change: <name>" and how to override (e.g., `$openspec-apply-change <other>`).
+   Briefly name the selected change in ordinary language. The user can select another change by name; do not expose internal skill invocations.
 
 2. **Check status to understand the schema**
    ```bash
@@ -56,7 +56,7 @@ Implement tasks from an OpenSpec change.
    - Optional `operationGuidance`: current advisory guidance for apply
 
    **Handle states:**
-   - If `state: "blocked"` (missing artifacts): show message, suggest using openspec-continue-change (if it is not installed, run `openspec status --change "<name>" --json` to see the next artifact and `openspec instructions <artifact-id> --change "<name>" --json` for how to create it)
+   - If `state: "blocked"` (missing artifacts): show the missing artifact and continue authorized planning with `openspec status --change "<name>" --json` to see the next artifact and `openspec instructions <artifact-id> --change "<name>" --json` for how to create it
    - If `state: "all_done"`: congratulate, suggest archive
    - Otherwise: proceed to implementation
 

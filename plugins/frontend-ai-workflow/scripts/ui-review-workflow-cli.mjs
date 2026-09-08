@@ -1,5 +1,6 @@
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
+import { prepareRepairContext, assertRepairContextFresh } from './ui-review-repair-context.mjs';
 import {
   DEFAULT_UI_REVIEW_CONFIG,
   fail,
@@ -73,7 +74,7 @@ export function persistOrPreview(projectRoot, state, write, allowExistingState =
 
 export async function runUiReviewWorkflowCli(argv = process.argv.slice(2)) {
   const [command, ...rest] = argv;
-  if (!command) fail('缺少命令：inspect、capture-plan、start-review、complete-review、repair-gate、complete-repair、start-verify 或 complete-verify');
+  if (!command) fail('缺少命令：inspect、capture-plan、start-review、complete-review、prepare-repair、repair-gate、complete-repair、start-verify 或 complete-verify');
   const options = cliOptions(rest);
   const { projectRoot, config } = cliContext(options);
   let output;
@@ -99,8 +100,14 @@ export async function runUiReviewWorkflowCli(argv = process.argv.slice(2)) {
     assertCompletedArtifacts(projectRoot, state);
     const next = completeReviewRun(state, resultFromPath(projectRoot, options.resultPath));
     output = persistOrPreview(projectRoot, next, options.write, true);
+  } else if (command === 'prepare-repair') {
+    const state = readRunState(projectRoot, options.statePath);
+    assertCompletedArtifacts(projectRoot, state);
+    const next = prepareRepairContext(projectRoot, state, config, resultFromPath(projectRoot, options.resultPath));
+    output = persistOrPreview(projectRoot, next, options.write, true);
   } else if (command === 'repair-gate') {
     const state = readRunState(projectRoot, options.statePath);
+    assertRepairContextFresh(projectRoot, state, config);
     output = { write: false, ...evaluateRepairGate(state, config, { explicitApproval: options.explicitApproval }) };
   } else if (command === 'complete-repair') {
     const state = readRunState(projectRoot, options.statePath);

@@ -10,10 +10,10 @@ description: Apply explicitly authorized frontend source fixes from a completed 
 ## 强制门禁
 
 1. 定位本 Skill 所在目录，并读取 `../../references/ui-review-workflow.md`。
-2. 读取用户指定的版本 2 review `state.json`，确认状态为 `needs-fix` 且 `repairCandidates` 非空，再用 `repair-gate` 检查当前配置与场景指纹。仅报告的图片差异或缺少源码上下文的问题不能进入修复。
+2. 读取用户指定的版本 2 review `state.json`，确认状态为 `needs-fix`。缺少候选时，按 `../../references/ui-repair-context.md` 定位源码并执行 `prepare-repair` 预览；完整上下文校验通过后才追加 `--write`。无法补齐的问题保留原因，不自动改成可修复。随后用 `repair-gate` 复核场景与源码摘要。
 3. `blocked` 时停止；`suggest` 时只交付建议。只有 `apply` 才能继续。默认 `suggest` 模式必须由用户在当前任务明确要求应用修复，并向命令传入 `--explicit-approval`。
 4. 检查 Git 当前分支与工作区：
-   - 当前分支为 `main` 或 `master` 时停止，要求切换到工作分支。
+   - 当前分支为 `main` 或 `master` 时，按用户授权和仓库规则创建工作分支；无法安全切换时停止。
    - 报告目标文件包含用户未提交改动且会与修复范围重叠时停止并请求方向。
    - 不清理、不覆盖、不回退用户已有改动。
 5. 对每个问题确认高置信度、仓库相对源码文件、稳定锚点、允许修改范围、禁止修改范围和至少一条复验断言均存在。缺一项就停止该问题。
@@ -22,7 +22,7 @@ description: Apply explicitly authorized frontend source fixes from a completed 
 
 ## 应用修改
 
-1. 只读取报告列出的目标源码和必要上下文；确认稳定锚点仍唯一可定位。
+1. 若存在匹配的受管变更，复用该变更并按 `$frontend-change` 的局部修正规则恢复任务、验收与验证状态；不得绕过需求门禁。只读取候选列出的目标源码和必要上下文；确认稳定锚点仍唯一可定位。
 2. 只修改 `changeScope` 允许的最小连续范围，遵守 `forbiddenChanges`，并保留项目原有风格和中文维护注释要求。
 3. 每完成一个问题就检查实际 diff，确认没有触碰未声明文件或相邻业务行为。
 4. 运行报告中安全、局部且与当前项目一致的验证命令。命令缺失、失效或需要新依赖时停止，不擅自安装。

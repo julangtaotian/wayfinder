@@ -4,3 +4,4 @@ import './ui-review-automation/state.cases.mjs';
 import './ui-review-automation/comparison.cases.mjs';
 import './ui-review-automation/runtime-capture.cases.mjs';
 import './ui-review-automation/cli-contract.cases.mjs';
+import './ui-review-automation/repair-context.cases.mjs';

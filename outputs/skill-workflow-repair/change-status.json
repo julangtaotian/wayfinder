@@ -1,0 +1,105 @@
+{
+  "changeName": "repair-skill-workflow-and-ui-handoff",
+  "schemaName": "spec-driven",
+  "planningHome": {
+    "kind": "repo",
+    "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow",
+    "changesDir": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff",
+  "artifactPaths": {
+    "proposal": {
+      "outputPath": "proposal.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/proposal.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/proposal.md"
+      ]
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/specs/**/*.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/specs/fast-change-routing/spec.md",
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/specs/plugin-ui-review-automation/spec.md"
+      ]
+    },
+    "design": {
+      "outputPath": "design.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/design.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/design.md"
+      ]
+    },
+    "tasks": {
+      "outputPath": "tasks.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/tasks.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/tasks.md"
+      ]
+    }
+  },
+  "isPlanningComplete": true,
+  "isComplete": true,
+  "applyRequires": [
+    "tasks"
+  ],
+  "nextSteps": [
+    "All planning artifacts are complete. Run openspec instructions apply --change \"repair-skill-workflow-and-ui-handoff\" --json to inspect implementation progress."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "proposal",
+      "specs",
+      "design",
+      "tasks"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "/Users/lvshuai/Desktop/learn/frontend-ai-workflow"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "proposal",
+      "outputPath": "proposal.md",
+      "status": "done",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "design",
+      "outputPath": "design.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "tasks",
+      "outputPath": "tasks.md",
+      "status": "done",
+      "requires": [
+        "specs",
+        "design"
+      ]
+    }
+  ],
+  "root": {
+    "path": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow",
+    "source": "nearest"
+  }
+}

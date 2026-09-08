@@ -416,15 +416,17 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(reference, /数据、状态与安全边界/);
   assert.match(reference, /Service Worker/);
   assert.match(reference, /Feature Flag/);
-  assert.match(skill, /includedFiles/);
-  assert.match(skill, /validationEvidence/);
-  assert.match(skill, /do not prove syntax parsing, platform compilation, Lint or tests/);
-  assert.match(skill, /never upgrade a heuristic observation/);
+  assert.match(skill, /deep-initialization-workflow\.md/);
+  const deepWorkflow = fs.readFileSync(path.join(pluginRoot, 'references/deep-initialization-workflow.md'), 'utf8');
+  assert.match(deepWorkflow, /includedFiles/);
+  assert.match(deepWorkflow, /validationEvidence/);
+  assert.match(deepWorkflow, /do not prove syntax parsing, platform compilation, Lint or tests/);
+  assert.match(deepWorkflow, /never upgrade a heuristic observation/);
   assert.match(checkSkill, /deepAnalysis\.validationEvidence/);
   assert.match(checkSkill, /not as a confirmed WXML syntax or platform compilation failure/);
-  assert.match(skill, /Never create `project-scan\.md`/);
-  assert.match(skill, /do not describe the result as complete/);
-  assert.match(skill, /analysisCoveredFiles/);
+  assert.match(deepWorkflow, /Never create `project-scan\.md`/);
+  assert.match(deepWorkflow, /do not describe the result as complete/);
+  assert.match(deepWorkflow, /analysisCoveredFiles/);
   assert.match(checkSkill, /deepAnalysis\.analysis\.status/);
 });
 
@@ -438,7 +440,7 @@ test('需求模板仅作为插件资产按需使用', () => {
 });
 
 test('变更验证规则优先选择当前需求影响面的测试', () => {
-  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
 
   assert.match(skill, /affected files and chains/);
   assert.match(skill, /narrowest existing tests/);
@@ -449,7 +451,7 @@ test('变更验证规则优先选择当前需求影响面的测试', () => {
 test('[TC-10] 跨平台高风险变更规则合同', () => {
   const repositoryRules = fs.readFileSync('AGENTS.md', 'utf8');
   const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
-  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
   const checklist = fs.readFileSync(path.join(pluginRoot, 'references', 'cross-platform-ci-checklist.md'), 'utf8');
   const structureValidator = fs.readFileSync(path.join(pluginRoot, 'scripts', 'validate-structure.mjs'), 'utf8');
 

@@ -1,0 +1,51 @@
+[
+  {
+    "id": "prepare-runtime",
+    "status": 0,
+    "seconds": 0.5,
+    "error": null,
+    "log": "outputs/health-audit-20260907/prepare-runtime.log"
+  },
+  {
+    "id": "tests",
+    "status": 0,
+    "seconds": 45.64,
+    "error": null,
+    "log": "outputs/health-audit-20260907/tests.log"
+  },
+  {
+    "id": "validate",
+    "status": 0,
+    "seconds": 0.34,
+    "error": null,
+    "log": "outputs/health-audit-20260907/validate.log"
+  },
+  {
+    "id": "official-validators",
+    "status": 0,
+    "seconds": 0.69,
+    "error": null,
+    "log": "outputs/health-audit-20260907/official-validators.log"
+  },
+  {
+    "id": "openspec-strict",
+    "status": 0,
+    "seconds": 0.19,
+    "error": null,
+    "log": "outputs/health-audit-20260907/openspec-strict.log"
+  },
+  {
+    "id": "openspec-archive",
+    "status": 0,
+    "seconds": 0.21,
+    "error": null,
+    "log": "outputs/health-audit-20260907/openspec-archive.log"
+  },
+  {
+    "id": "runtime-integrity",
+    "status": 0,
+    "seconds": 0.12,
+    "error": null,
+    "log": "outputs/health-audit-20260907/runtime-integrity.log"
+  }
+]

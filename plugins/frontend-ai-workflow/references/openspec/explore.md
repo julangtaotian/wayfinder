@@ -131,8 +131,8 @@ If the user mentions a change or you detect one is relevant:
 
     | Insight Type               | Where to Capture               |
     |----------------------------|--------------------------------|
-    | New requirement discovered | `specs/<capability>/spec.md` |
-    | Requirement changed        | `specs/<capability>/spec.md` |
+    | New requirement discovered | Requirement D-* ledger first, then related delta spec |
+    | Requirement changed        | Requirement D-* ledger first, then related delta spec |
     | Design decision made       | `design.md`                  |
     | Scope changed              | `proposal.md`                |
     | New work identified        | `tasks.md`                   |
@@ -140,7 +140,7 @@ If the user mentions a change or you detect one is relevant:
 
    Example offers:
    - "That's a design decision. Capture it in design.md?"
-   - "This is a new requirement. Add it to specs?"
+   - "This is a new requirement. Record the decision in the requirement first?"
    - "This changes scope. Update the proposal?"
 
 4. **The user decides** - Offer and move on. Don't pressure. Don't auto-capture.

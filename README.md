@@ -88,7 +88,7 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 
 ## 使用
 
-对外提供以下 9 个团队命令。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
+对外提供以下 10 个团队命令（9 个支持隐式选择，UI 修复仅显式调用）。OpenSpec 已经作为内部规划引擎内置，使用者不需要全局安装 OpenSpec，也不需要直接接触 `openspec-*` 命令。
 
 使用前请通过 Codex 打开目标前端仓库。安装或更新插件后，建议新建 Codex 任务，以加载最新版命令。调用时输入 `$命令名`，后面直接跟自然语言要求即可。
 

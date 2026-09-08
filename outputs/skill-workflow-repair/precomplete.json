@@ -1,0 +1,70 @@
+{
+  "ok": false,
+  "stage": "precomplete",
+  "requirementPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/requirements/REQ-2026-043-skill-workflow-repair.md",
+  "changePath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff",
+  "decisions": 4,
+  "acceptances": 4,
+  "requirementStatus": "待验证",
+  "interactionStateMatrix": {
+    "present": true,
+    "rows": 6
+  },
+  "verificationRecords": 4,
+  "evidenceFormat": "enhanced",
+  "selectedChangeScope": {
+    "name": "repair-skill-workflow-and-ui-handoff",
+    "decisions": 4,
+    "acceptances": 4
+  },
+  "evidenceFiles": {
+    "recorded": 4,
+    "verifiedFiles": 3,
+    "required": false,
+    "executed": false,
+    "diagnostics": [
+      {
+        "code": "legacy_markdown_evidence",
+        "status": "warning",
+        "target": "V-01",
+        "evidenceId": "V-01",
+        "fresh": null,
+        "trust": "legacy",
+        "message": "历史验证记录 V-01 只有 Markdown 或其他非机器证据"
+      },
+      {
+        "code": "legacy_markdown_evidence",
+        "status": "warning",
+        "target": "V-02",
+        "evidenceId": "V-02",
+        "fresh": null,
+        "trust": "legacy",
+        "message": "历史验证记录 V-02 只有 Markdown 或其他非机器证据"
+      }
+    ]
+  },
+  "testFileStrategy": {
+    "strategy": "复用",
+    "targetPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/tests/ui-review-automation.test.mjs",
+    "baselineEvidence": "Git ea71d1646ba294bdf26515c756836d8060f73459 已跟踪",
+    "reason": "保留既有领域入口并扩展默认 UI 修复链回归。",
+    "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow",
+    "exists": true,
+    "baselineAvailable": true
+  },
+  "taskReferences": {
+    "taskPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/repair-skill-workflow-and-ui-handoff/tasks.md",
+    "decisionCount": 4,
+    "acceptanceCount": 4
+  },
+  "errors": [
+    "验收映射 A-04 存在未通过的验证记录",
+    "完成阶段存在未勾选验收：A-04",
+    "完成前校验要求验收使用已勾选复选框：A-04",
+    "完成阶段存在未完成任务：3.3 D-04 / A-04：精确交付提交的五平台 CI，未执行保持待办。"
+  ],
+  "warnings": [
+    "legacy_markdown_evidence：历史验证记录 V-01 只有 Markdown 或其他非机器证据",
+    "legacy_markdown_evidence：历史验证记录 V-02 只有 Markdown 或其他非机器证据"
+  ]
+}

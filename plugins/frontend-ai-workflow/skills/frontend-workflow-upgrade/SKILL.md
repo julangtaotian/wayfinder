@@ -1,6 +1,6 @@
 ---
 name: frontend-workflow-upgrade
-description: Upgrade managed frontend AI workflow sections to the plugin's current version while preserving repository-specific guidance and business artifacts. Use when a user updates this plugin, wants to synchronize shared rules across projects, or needs to migrate an older initialized repository safely.
+description: Upgrade managed frontend AI workflow sections to the plugin's current version while preserving repository-specific guidance and business artifacts. Use when a user wants to synchronize managed workflow rules in a business repository after a plugin update or migrate an older initialized repository; installing or updating the plugin itself is outside this skill.
 ---
 
 # Upgrade Frontend AI Workflow

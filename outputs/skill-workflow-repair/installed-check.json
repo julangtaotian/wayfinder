@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "version": "0.18.0+codex.20260908020112",
+  "filesCompared": 106,
+  "implicitSkills": [
+    "frontend-change",
+    "frontend-fast-change",
+    "frontend-requirement-write",
+    "frontend-test",
+    "frontend-ui-review",
+    "frontend-ui-verify",
+    "frontend-workflow-bootstrap",
+    "frontend-workflow-check",
+    "frontend-workflow-upgrade"
+  ],
+  "explicitFixPresent": true,
+  "modelInvoked": false,
+  "integrity": true,
+  "smoke": {
+    "ok": true,
+    "skipped": false,
+    "platformKey": "darwin-arm64",
+    "screenshotBytes": 3509
+  }
+}

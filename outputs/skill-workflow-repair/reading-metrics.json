@@ -1,0 +1,31 @@
+{
+  "baseline": "ea71d1646ba294bdf26515c756836d8060f73459",
+  "kind": "static-entry-bytes",
+  "agentBehaviorMeasured": false,
+  "metrics": [
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-change/SKILL.md",
+      "beforeBytes": 16979,
+      "afterBytes": 14439,
+      "reductionPercent": 15
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-workflow-bootstrap/SKILL.md",
+      "beforeBytes": 8509,
+      "afterBytes": 4540,
+      "reductionPercent": 46.6
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-requirement-write/SKILL.md",
+      "beforeBytes": 8108,
+      "afterBytes": 6740,
+      "reductionPercent": 16.9
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/references/ui-review-workflow.md",
+      "beforeBytes": 12937,
+      "afterBytes": 11348,
+      "reductionPercent": 12.3
+    }
+  ]
+}

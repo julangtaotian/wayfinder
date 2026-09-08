@@ -35,6 +35,9 @@ export { runUiReviewWorkflowCli };
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 if (isDirectRun) {
   runUiReviewWorkflowCli().catch((error) => {
+    if (error.code || ['prepare-repair', 'repair-gate'].includes(process.argv[2])) {
+      process.stdout.write(`${JSON.stringify({ status: 'blocked', code: error.code || 'UI_REPAIR_CONTEXT_INVALID', target: error.target ?? null, message: error.message })}\n`);
+    }
     process.stderr.write(`UI 验收流程失败：${error.message}\n`);
     process.exitCode = 1;
   });

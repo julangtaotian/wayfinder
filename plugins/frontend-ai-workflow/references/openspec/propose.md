@@ -17,7 +17,7 @@ For a plugin-managed local project, inspect `root` in every JSON response. If `r
 
 Propose a new change - create the change and generate all artifacts in one step.
 
-**Planning boundary:** This workflow only creates planning artifacts. Even if the initial request also asks for implementation, stop after presenting the completed plan and wait for a new user request before entering apply.
+**Planning boundary:** Create planning artifacts first. Stop after the plan when the user requested planning only. When the conversation already authorizes implementation, continue through frontend-change once its implementation gates pass; do not require a repeated start request.
 
 I'll create a change with the artifacts your schema defines. With the default spec-driven schema that is:
 - proposal.md (what & why)
@@ -25,7 +25,7 @@ I'll create a change with the artifacts your schema defines. With the default sp
 - design.md (how)
 - tasks.md (implementation steps)
 
-`<capability-path>` is relative to `specs/`; preserve an existing capability's full nested path. When ready to implement, the user must explicitly start apply.
+`<capability-path>` is relative to `specs/`; preserve an existing capability's full nested path. Implementation requires user authorization, including authorization already given in the conversation.
 
 ---
 
@@ -111,7 +111,7 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions, plus any conditional artifact you skipped and why
 - What's ready: "All artifacts needed for implementation are ready."
-- Prompt: "Run `$openspec-apply-change` or ask me to implement to start working on the tasks."
+- State the next authorized stage in ordinary language; never ask the user to invoke an internal skill.
 
 **Artifact Creation Guidelines**
 
@@ -125,7 +125,7 @@ After completing all artifacts, summarize:
   - These guide what you write, but should never appear in the output
 
 **Guardrails**
-- The request that invoked this workflow authorizes planning only; do not edit project code or start apply before a new user request
+- Respect the actual request: planning alone does not authorize source edits; existing implementation authorization remains valid after planning
 - Create every artifact the apply phase transitively depends on, not just the ids listed in `apply.requires`
 - Set `skip_specs: true` only when the linked requirement decision ledger explicitly confirms no observable behavior change; never infer it from missing deltas, technical convenience, or dynamic guidance
 - Accept `skipped` only when status reports it for specs and the authorized metadata is present; ready, blocked, unknown, or other skipped artifacts remain incomplete
