@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-deep-project-analysis. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: 显式的 AI 深度初始化预览
 初始化流程 SHALL 提供显式深度模式。在未确认写入前，系统 SHALL 仅输出范围摘要、覆盖计划、AI 将执行的阅读阶段、已知限制和计划的文档操作；默认初始化 SHALL 保持既有浅层识别行为，且不要求 AI 遍历全部源码。
 
@@ -74,3 +76,14 @@ TBD - created by archiving change add-deep-project-analysis. Update Purpose afte
 - **WHEN** 现有旧上下文或 `wayfinder/frontend.md` 缺少有效受管标记
 - **THEN** 系统 SHALL 保留该文件并报告无法自动迁移的原因；不得插入标记、覆盖或推测该文档是否包含人工内容。
 
+### Requirement: 局部理解与完整项目地图必须分流
+
+技能 MUST 对模块、调用链和普通项目理解先执行范围相关的只读分析，不自动承诺完整地图或读取全仓。用户明确要求完整、高置信项目地图或深度初始化时 MUST 继续执行原有覆盖与受管写入合同。写入 MUST 具有初始化或更新意图。（D-03、D-04；A-03、A-04）
+
+#### Scenario: 理解局部模块
+- **WHEN** 用户仅要求理解某个模块或调用链
+- **THEN** 只读取相关证据并说明范围，不执行完整覆盖或写入初始化资料
+
+#### Scenario: 请求完整项目地图
+- **WHEN** 用户明确要求完整地图或深度初始化
+- **THEN** 继续按范围清单验证完整阅读，未覆盖内容不得表述为已完成

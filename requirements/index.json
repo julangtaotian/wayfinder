@@ -387,6 +387,15 @@
       "entryPath": "requirements/REQ-2026-043-skill-workflow-repair.md",
       "archivePath": "requirements/archive/2026/REQ-2026-043-skill-workflow-repair.md",
       "change": "repair-skill-workflow-and-ui-handoff"
+    },
+    {
+      "id": "REQ-2026-044",
+      "title": "REQ-2026-044：保留现有成果并优化技能效率与完整性",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-044-skill-efficiency-and-integrity.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-044-skill-efficiency-and-integrity.md",
+      "change": "optimize-skill-efficiency-and-integrity"
     }
   ]
 }

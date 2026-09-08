@@ -36,7 +36,14 @@
   },
   "extraModelRuns": 0,
   "behaviorEvaluation": "static-review-only",
-  "platformCI": "pending",
+  "platformCI": {
+    "status": "passed",
+    "headSha": "96212787691ce33bf3261a078f292b521bd18560",
+    "runId": 34198798976,
+    "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34198798976",
+    "receipt": "outputs/skill-optimization/ci-receipt.json",
+    "optionalInstallVerification": "not-run"
+  },
   "installedCacheUpdated": false,
   "skippedTests": [
     "ok 82 - [TC-04] 六项目基线与只读识别 # SKIP 未提供本机真实项目矩阵，常规仓库回归不读取外部业务项目",

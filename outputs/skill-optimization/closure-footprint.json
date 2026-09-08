@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "code": "repository_footprint_ok",
+  "status": "passed",
+  "target": ".",
+  "budgets": {
+    "trackedOutputFiles": 200,
+    "trackedOutputBytes": 10485760,
+    "activeFullRequirements": 5,
+    "rootTestFileLines": 1000,
+    "pluginScriptFileLines": 800
+  },
+  "retirementLimits": {
+    "platformAssetFiles": 0,
+    "platformIntegrityManifests": 0,
+    "platformLfsRules": 0
+  },
+  "counts": {
+    "trackedOutputFiles": 78,
+    "trackedOutputBytes": 699672,
+    "activeFullRequirements": 0,
+    "rootTestFiles": 29,
+    "pluginScriptFiles": 64,
+    "platformAssetFiles": 0,
+    "platformIntegrityManifests": 0,
+    "platformLfsRules": 0
+  },
+  "diagnostics": []
+}

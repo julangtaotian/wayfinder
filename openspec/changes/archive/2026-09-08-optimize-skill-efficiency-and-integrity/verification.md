@@ -29,12 +29,16 @@
 
 ## 验证证据与边界
 
-实际命令、结果和跳过原因记录在 `outputs/skill-optimization/verification.md` 与 `outputs/skill-optimization/validation-results.json`。当前修订的五平台 CI 尚未运行，V-04 和对应任务保持待执行，因此本轮变更仍活动，不归档、不标记整体已验收。
+实际命令、结果和跳过原因记录在 `outputs/skill-optimization/verification.md` 与 `outputs/skill-optimization/validation-results.json`。已通过 GitHub Actions API 核对提交 96212787691ce33bf3261a078f292b521bd18560 的 [Validate 运行](https://github.com/julangtaotian/wayfinder/actions/runs/34198798976)：共享验证及 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 全部成功。原始任务与步骤回执保存在 `outputs/skill-optimization/ci-receipt.json`；V-04 和对应任务已完成，硬门禁入口已同步三项能力规格并完成归档，归档后审计通过。
 
 本地 Vue 3 + Vite fixture 覆盖初始化预览、显式写入、重复执行、受管升级和检查；真实 Vitest 运行时从已有缓存离线准备。其他框架的既有静态识别 fixture 通过不等于真实业务运行认证。未配置的六项目矩阵及当前共享源码不携带的 Chromium 回归不冒充通过。
 
 ## 成本与兼容
 
 - 入口字节基线 60047，当前 62207，增加 2160 字节（约 3.6%）。增加来自范围、新鲜度和报告边界；减少的是不必要的完整地图触发、无关材料读取和无变化写入，不宣称 token 或耗时已下降。
-- 没有额外模型评测、新依赖、平台发布、提交、推送或安装缓存同步。
+- 没有额外模型评测、新依赖、平台发布或安装缓存同步。实现已由用户提交；本次收口不提交或推送。
 - Node.js 标准库、静态导入；Markdown 相对路径与宿主路径分离；Windows 样本显式使用 path.win32；新测试目录在 outputs 内并用生命周期清理。
+
+## CI 收口范围
+
+本次为 push 运行，可选的 Codex CLI 安装和真实安装/加载/离线运行步骤按条件跳过；平台验证成功不代表这些安装步骤已经运行。复算 21 个已验证源码、技能与测试文件的 SHA-256 全部一致，因此复用既有本地验证，不重跑测试或额外模型评测。后续收口仅修改验证资料、规格和归档位置，不改变已验证实现。

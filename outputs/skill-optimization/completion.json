@@ -1,0 +1,26 @@
+{
+  "code": "finalized",
+  "requirementStatus": "已验收",
+  "archiveTarget": "openspec/changes/archive/2026-09-08-optimize-skill-efficiency-and-integrity",
+  "requirementEntry": "requirements/REQ-2026-044-skill-efficiency-and-integrity.md",
+  "requirementArchive": "requirements/archive/2026/REQ-2026-044-skill-efficiency-and-integrity.md",
+  "postArchiveAudit": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "legacy_markdown_evidence：历史验证记录 V-01 只有 Markdown 或其他非机器证据",
+      "legacy_markdown_evidence：历史验证记录 V-02 只有 Markdown 或其他非机器证据",
+      "legacy_markdown_evidence：历史验证记录 V-04 只有 Markdown 或其他非机器证据"
+    ]
+  },
+  "specsUpdated": true,
+  "specTotals": {
+    "added": 4,
+    "modified": 0,
+    "removed": 0,
+    "renamed": 0
+  },
+  "projectTestsRerun": false,
+  "extraModelRuns": 0,
+  "installedCacheUpdated": false
+}
