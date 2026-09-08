@@ -378,6 +378,15 @@
       "entryPath": "requirements/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
       "archivePath": "requirements/archive/2026/REQ-2026-042-synthetic-developer-effectiveness-benchmark.md",
       "change": "add-synthetic-developer-effectiveness-benchmark"
+    },
+    {
+      "id": "REQ-2026-043",
+      "title": "REQ-2026-043：技能流程与 UI 修复接续",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-043-skill-workflow-repair.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-043-skill-workflow-repair.md",
+      "change": "repair-skill-workflow-and-ui-handoff"
     }
   ]
 }

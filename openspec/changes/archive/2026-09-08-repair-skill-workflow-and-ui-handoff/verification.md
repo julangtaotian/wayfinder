@@ -1,6 +1,6 @@
 # 验证记录
 
-本次本地实现与验证基于 ea71d1646ba294bdf26515c756836d8060f73459 之后的未提交工作区。外部 CI 未执行，不能引用旧提交的通过结果作为本次证据。
+实现提交为 a6f7dcce839827d15189e05f699bbedc0864f3f0。已通过 GitHub REST API 独立核对该提交的共享检查和五平台 CI；本轮只补证据与收口资料，不改变已验证的插件源码。
 
 ## 实际验证
 
@@ -10,7 +10,7 @@
 - Vue 3 + Vite fixture 初始化、重复执行、升级及检查通过，用户自定义内容保持；这是 fixture 证据，不代表外部业务项目认证。
 - 全量通过后，针对无效候选 JSON 补齐稳定诊断并聚焦复跑 4 项全部通过（repair-context-final.log）；该两行错误分支修正没有触发无关全量重跑，结构校验再次通过。
 - 当前 OpenSpec 变更 strict 校验通过。临时 Vitest 运行目录已通过标准 cleanup 移除，复用缓存保留。
-- V-04：待执行。真实 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 CI 必须绑定最终交付提交；本次没有提交、推送或触发远程任务。
+- V-04：通过。[GitHub Actions #34179305660](https://github.com/julangtaotian/wayfinder/actions/runs/34179305660) 的 head_sha 与实现提交一致，run attempt 1、event push；共享检查及 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 均 success，各平台 npm run verify:platform 步骤实际成功。原始响应：outputs/skill-workflow-repair/ci-run-verified.json、ci-jobs-verified.json；精简记录：ci-receipt.json。
 
 ## V-03：技能意图人工审查
 
@@ -43,7 +43,7 @@
 - 首次平台回归未声明目标平台而默认检查 linux-x64；使用与原生运行包一致的 UI_REVIEW_EXPECT_PLATFORM 后 34 项全部通过。
 - 源码摘要绑定原始字节，锚点兼容 CRLF；Windows 盘符、反斜杠、越界、目录 junction/符号链接、空候选、重复、陈旧源码、失效身份及无写入预览均有确定性回归。
 - 新候选补齐为内部模块与 CLI，原公开函数集合、v1 只读和旧 v2 候选门禁保持。允许/禁止范围的业务语义与用户改动重叠仍由修复技能审查，未声称机器能自动证明任意 diff 安全。
-- 未验证真实外部业务仓库、其他框架、其他原生平台和独立模型任务效果。
+- 未验证真实外部业务仓库、其他框架和独立模型任务效果。五个原生平台的常规 CI 已通过；本次 push 未触发可选的 Codex 安装、加载与离线专项，不将其描述为通过。
 
 ## 安装同步
 
@@ -51,4 +51,4 @@
 
 安装核对通过：106 个脚本、技能、参考与模板文件与源码一致；新任务加载 9 个隐式技能，显式 UI 修复文件存在；安装运行时完整性与 Chromium 冒烟通过。核对使用本地上下文预览，没有调用模型。仅清理本次创建的成品备份与临时目录，保留日志、既有 outputs 和复用缓存。
 
-最终 precomplete 只剩 A-04 / 任务 3.3 的外部五平台 CI 待办。健康摘要无错误；2 项 legacy_markdown_evidence 提示对应本次保存的原生测试日志，本变更未启用严格机器证据合同，日志与模型行为验证不混为一谈。
+A-04 / 任务 3.3 的外部五平台 CI 证据已补齐。本次 V-01、V-02、V-04 仍按非严格机器证据合同记录，legacy_markdown_evidence 提示对应原生测试日志和 GitHub 响应快照，本变更未启用严格机器证据合同，日志与模型行为验证不混为一谈。

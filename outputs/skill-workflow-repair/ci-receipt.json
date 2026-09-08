@@ -1,0 +1,69 @@
+{
+  "source": "GitHub REST API",
+  "runId": 34179305660,
+  "headSha": "a6f7dcce839827d15189e05f699bbedc0864f3f0",
+  "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660",
+  "status": "completed",
+  "conclusion": "success",
+  "runAttempt": 1,
+  "event": "push",
+  "jobs": [
+    {
+      "id": 101914936338,
+      "name": "Shared validation (linux-x64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101914936338",
+      "skippedSteps": []
+    },
+    {
+      "id": 101915082233,
+      "name": "Validate (linux-arm64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101915082233",
+      "skippedSteps": [
+        "Install pinned Codex CLI for platform evidence",
+        "Verify real Codex install, load, and offline runtime"
+      ]
+    },
+    {
+      "id": 101915082239,
+      "name": "Validate (darwin-x64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101915082239",
+      "skippedSteps": [
+        "Install pinned Codex CLI for platform evidence",
+        "Verify real Codex install, load, and offline runtime"
+      ]
+    },
+    {
+      "id": 101915082269,
+      "name": "Validate (win32-x64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101915082269",
+      "skippedSteps": [
+        "Install pinned Codex CLI for platform evidence",
+        "Verify real Codex install, load, and offline runtime"
+      ]
+    },
+    {
+      "id": 101915082283,
+      "name": "Validate (darwin-arm64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101915082283",
+      "skippedSteps": [
+        "Install pinned Codex CLI for platform evidence",
+        "Verify real Codex install, load, and offline runtime"
+      ]
+    },
+    {
+      "id": 101915082339,
+      "name": "Validate (linux-x64)",
+      "conclusion": "success",
+      "url": "https://github.com/julangtaotian/wayfinder/actions/runs/34179305660/job/101915082339",
+      "skippedSteps": [
+        "Install pinned Codex CLI for platform evidence",
+        "Verify real Codex install, load, and offline runtime"
+      ]
+    }
+  ]
+}
