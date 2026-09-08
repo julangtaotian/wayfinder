@@ -20,7 +20,7 @@ Do not replace this validation with an informal self-check. Report validation fi
 ## Intent Routing
 
 - **Review**: read the selected requirement and only the repository evidence needed to assess it. Run the validator read-only, report contradictions and proposed corrections; do not allocate an ID, write files or change status unless revision is also requested.
-- **Revise**: update the selected document in place, preserving its REQ identifier and unrelated content. Apply revision and evidence-invalidation rules below.
+- **Revise**: update the selected document in place, preserving its REQ identifier and unrelated content. Locate affected D/A/V items first, update their dependent sections, and apply revision and evidence-invalidation rules below; do not regenerate the whole document for a local correction.
 - **Create**: use a supplied unused identifier or select the next unused ID. If a supplied ID already exists, inspect it and resolve whether this is a revision rather than overwriting it.
 - A review followed by an explicitly requested revision can continue within the same authorization.
 
@@ -30,17 +30,13 @@ Do not replace this validation with an informal self-check. Report validation fi
 2. Read `../../references/requirement-guidelines.md` relative to this skill.
 3. Use `requirements/_template.md` when present; otherwise use `../../assets/templates/requirements/_template.md`.
 4. Follow the selected writing mode: preserve the ID for Revise; allocate an unused ID only for Create.
-5. Before writing the narrative, create the requirement's decision ledger. Give every business decision a stable `D-*` ID, state, value, and source. Only user-confirmed facts or traceable project defaults may be `已确认` or `项目默认`; user-visible unknowns must remain `待确认` or sourced `暂定`.
-6. Separate content into:
-
-   - confirmed requirements from the user;
-   - provisional decisions grounded in existing project conventions;
-   - unresolved questions that could change behavior.
+5. Before writing narrative, create or revise the decision ledger. Preserve existing `D-*` IDs and record each decision’s state, value and source. Only user-confirmed facts or traceable project defaults may be `已确认` or `项目默认`; unknown behavior remains `待确认` or sourced `暂定`.
+6. Describe observable behavior from those decisions. Include only applicable UI, interface, permission and compatibility details; distinguish non-applicability from missing facts instead of filling generic sections with invented requirements.
 
 7. Cover scope, current behavior, verifiable scenarios, UI states, validation, security, interfaces, permissions, risks, tests, and acceptance criteria. Give every acceptance criterion an `A-*` ID and fill the acceptance-evidence mapping with related decisions, verification method, evidence location, and observable assertion. Complete the interaction-state matrix for initial existing data, user action, refresh, empty, error, and unmount: choose `覆盖` or `不适用` for every row, link covered rows to `A-*`, and record a specific reason for every inapplicable row. For automatic tests, record the test-file strategy (create or extend, target path, Git baseline evidence, and rationale), verification scope (focused or full, commands, and rationale), and whether an independent test plan is required. Require an active-change `test-plan.md` when the user asks to form, implement, or repeatedly verify multiple traceable test cases; do not put unconfirmed behavior into `TC-*`. When revising an existing requirement, append an `R-*` revision record, invalidate affected `V-*` results, name the tasks that must reopen, and treat an older test-plan revision baseline as stale. Keep the change-scope table empty until a managed change actually exists.
 8. Save the document under `requirements/REQ-*.md` with a descriptive kebab-case suffix.
 9. Run `node "<plugin-root>/scripts/validate-requirement-decisions.mjs" <requirement-path> --stage plan --json`. Record the controlled requirement status, `V-*` verification plan, test-file Git baseline and any manual visual environment before presenting the requirement. Fix every structural, ID, reference, mapping, and evidence error before presenting the requirement. If the only blocking errors come from intentionally retained `暂定` or `待确认` decisions, keep the document as a draft, state the exact confirmation questions, and do not start a managed change or describe it as implementation-ready.
-10. Re-read the completed document for contradictions, hidden assumptions, and unverifiable wording.
+10. Check the final document for contradictions, hidden assumptions and unverifiable wording. Report substantive gaps or changes first, link the document, and list only material unresolved questions; validator success proves structure, not business correctness.
 
 ## Guardrails
 

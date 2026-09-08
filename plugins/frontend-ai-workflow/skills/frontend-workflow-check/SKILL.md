@@ -16,7 +16,7 @@ Perform a read-only audit of the target repository.
    node <plugin-root>/scripts/check-project.mjs --target <repository-root> --summary
    ```
 
-3. Parse the summary into errors, warnings, the full dynamic root dependency profile, detected commands, command evidence, platform command candidates, workflow layout/version, plugin repository category, migration state, analysis freshness, validation evidence, historical verification-evidence counts, sampled static observations, completed-but-active changes, and planning-engine status.
+3. Start with overall status, errors/warnings and the facts relevant to the question. Retain the summary’s dependency, command, platform, layout, analysis and evidence fields for interpretation below; do not expand every field into the user report.
 4. Only when a non-zero historical count and the user's question require exact targets, query that code without loading unrelated diagnostics:
 
    ```bash
@@ -33,7 +33,7 @@ Perform a read-only audit of the target repository.
 
 7. For a delivery-readiness question, use `--stage precomplete` instead. This remains read-only and checks requirement state, acceptance/task completion, persistent evidence, strict OpenSpec validity, and archive-target availability.
 8. Inspect reported files directly when an error is ambiguous.
-9. Report the smallest corrective action for each error. Do not apply fixes unless the user asks.
+9. Report scope, conclusion, blockers and the smallest corrective action. State whether archived bodies were included, how many evidence records were inspected and whether any project command actually ran. Zero warnings in a limited audit do not prove complete historical or delivery health. Do not apply fixes unless the user asks.
 
 ## Interpretation
 

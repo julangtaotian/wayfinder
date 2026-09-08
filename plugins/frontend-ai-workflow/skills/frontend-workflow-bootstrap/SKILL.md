@@ -9,8 +9,9 @@ Initialize only the repository the user placed in scope. Resolve the plugin root
 
 ## Mode Selection
 
-- Use ordinary initialization only when the user asks to initialize or onboard the workflow without requesting project understanding. State before writing that it creates a traceable identification baseline and leaves the deep project map pending.
-- Use deep initialization when the user asks to inspect or understand an established project, wants useful project-specific context or a complete/high-confidence project map, or says an ordinary generated result is too generic. Do not substitute a shallow file inventory for this mode.
+- **Scoped understanding**: for a module, call chain or general project question, read applicable repository guidance and the source needed to answer it. Report the inspected scope, facts and unknowns, then stop. Do not run initialization, enumerate the entire repository or promise a complete map. Use the inspector only when project identification is needed.
+- **Ordinary initialization**: initialize or onboard the workflow with the steps below. Explain that this creates an identification baseline and leaves the deep project map pending; accompanying local questions do not require full analysis.
+- **Deep initialization or complete analysis**: use only for an explicit deep scan, complete/high-confidence project map or full project-specific onboarding. Follow the original coverage procedure; a shallow inventory cannot satisfy it. A request for more useful detail alone expands the relevant chain, not automatically the entire project.
 
 If the user only asks to inspect or understand the project, perform read-only analysis and report it. Writing workflow files requires initialization or update intent; existing authorization does not need repeating.
 
@@ -30,7 +31,7 @@ If the user only asks to inspect or understand the project, perform read-only an
    node <plugin-root>/scripts/bootstrap-project.mjs --target <repository-root>
    ```
 
-5. Show the full root dependency count, dynamic dependency summary and truncation status, then the detected preset, real project commands, default and delivery build candidates, test and lint semantic status, files to create, files to skip, and warnings. Treat preset, target and platform profiles as limited compatibility signals, not as the complete technology stack. When the summary is truncated, use `dependencyProfile.packages` for complete analysis. Do not describe a `placeholder` test script as an available test entry or an `unverified` lint script as an available static check. For a native WeChat mini program without platform scripts, state that WeChat DevTools or an external CI environment must be recorded for preview, upload and device verification.
+5. Lead with preview readiness, files to create or skip, conflicts and the next action. Keep dependency counts, summary truncation, command/build candidates and platform evidence in the inspection result; expand those relevant to a decision or requested detail. Use `dependencyProfile.packages` when complete dependency analysis is needed. Presets are limited signals; `placeholder` tests are unavailable and `unverified` lint is not proven coverage. For native WeChat projects without platform scripts, record WeChat DevTools or external CI as the preview, upload and device-verification boundary.
 6. When initialization is within the user's request, apply the previewed plan:
 
    ```bash

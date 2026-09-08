@@ -7,6 +7,7 @@ import {
 } from './project-path-safety.mjs';
 import { computeVerificationSemanticBinding } from './verification-semantics.mjs';
 import { listRequirementEntries } from './requirement-archive.mjs';
+import { findMarkdownFileReferences } from './markdown-file-references.mjs';
 
 export { computeVerificationSemanticBinding };
 
@@ -122,16 +123,25 @@ export function extractEvidenceReferences(value) {
   const urls = [];
   const addPath = (candidate) => {
     const normalized = normalizedRepositoryPath(candidate.trim());
-    if (!normalized || !normalized.includes('/') || /\s/u.test(normalized)) return;
+    if (!normalized || !normalized.includes('/') || /[\r\n]/u.test(normalized)) return;
     if (!paths.includes(normalized)) paths.push(normalized);
   };
   const addUrl = (candidate) => {
     const normalized = candidate.replace(/[），。、；;,]+$/u, '');
     if (!urls.includes(normalized)) urls.push(normalized);
   };
-  for (const match of text.matchAll(/`([^`]+)`/gu)) {
-    if (/^https?:\/\//iu.test(match[1])) addUrl(match[1]);
-    else addPath(match[1]);
+  for (const reference of findMarkdownFileReferences(text, { barePrefixes: ['openspec/', 'outputs/'] })) {
+    // Markdown 链接中的片段属于页面定位，不属于磁盘文件名；代码路径保持原样。
+    let candidate = reference.path;
+    if (!['code', 'bare'].includes(reference.kind)) {
+      candidate = candidate.split('#', 1)[0];
+      try {
+        candidate = decodeURIComponent(candidate);
+      } catch {
+        // 非法编码保留为不可解析的原路径，由后续证据检查报告，不静默丢弃。
+      }
+    }
+    addPath(candidate);
   }
   for (const match of text.matchAll(/https?:\/\/[^\s`]+/giu)) addUrl(match[0]);
   if (!paths.length && !urls.length && !/[\s：；，、]/u.test(text)) addPath(text);

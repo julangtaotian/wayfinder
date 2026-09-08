@@ -1,6 +1,6 @@
 # UI 验收内部维护与发布
 
-仅修改插件报告实现或平台发布时读取；日常验收使用 `ui-review-workflow.md`。
+仅修改插件报告实现或平台发布时读取；日常验收使用 [ui-review-workflow.md](ui-review-workflow.md)。
 
 ## 报告链维护边界
 

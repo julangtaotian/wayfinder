@@ -23,8 +23,10 @@ For local project work, inspect `root` in planning JSON. `root.source=global_def
 
 1. Read applicable `AGENTS.md` and current worktree status. Run the internal engine's list command with JSON output when a local planning root exists; do not initialize one for exploration or a status question.
 2. Infer the requested stage from intent and active changes before loading stage-specific material. Ask only when multiple changes remain plausible or a material decision is unresolved. Never invent a second change for work already represented by an active change.
-3. Explore and status requests read only evidence needed for the question. For Plan, Revise or Implement, read the selected requirement, relevant Wayfinder sections, related source/callers/tests, interaction-state matrix and test-file strategy in `../../references/requirement-guidelines.md`. Read the complete dependency profile only when the affected dependency chain needs it; declarations alone do not prove usage or compatibility.
+3. Explore and status requests read only evidence needed for the question. For Plan, Revise or Implement, read the selected requirement and the relevant Wayfinder, source/callers/tests. Use the interaction-state matrix and test-file strategy in `../../references/requirement-guidelines.md` when planning affected behavior or tests. Read the complete dependency profile only when the affected dependency chain needs it; declarations alone do not prove usage or compatibility.
 4. Validate the selected requirement at plan stage before planning, and at implement stage before editing. When the affected chain includes CI, filesystem paths, temporary directories, child processes, package-manager entrypoints, environment variables or machine-readable diagnostics, classify it as a cross-platform risk, read `../../references/cross-platform-ci-checklist.md` and record triggers and affected platforms.
+
+Already-read policy need not be loaded again within the same task. Reuse project findings only for the same root and selected change after checking relevant files for changes; reread affected content after user edits, revisions or uncertain freshness. This does not skip runtime-required context, stage validators, evidence integrity checks or verification the user explicitly asks to rerun.
 
 ## Stage Routing
 
@@ -66,7 +68,7 @@ Use when planning artifacts are complete and the user asks to start or continue 
 - Read the runtime-provided status, instructions, context files, incomplete tasks, optional context and operationGuidance before editing. Treat context as a project constraint and guidance as additive advice; neither is completion evidence or permission to bypass a blocked state, requirement decision, user choice, repository rule or root boundary.
 - Re-run the requirement validator with `--change <change-root> --stage implement` before implementation. Resolve unknown, pending, conflicting, or test-baseline references by revising the requirement and plan first.
 - Set a confirmed requirement to `实施中` when implementation begins; do not implement a requirement already in `待验证` or `已验收`.
-- Re-read the interaction-state matrix before selecting tests. Implement the covered initial, user-action, refresh, empty, error, and lifecycle cases that apply to the change; revise the requirement when the matrix no longer matches actual impact.
+- Use the current interaction-state matrix when selecting tests, rereading it after relevant revisions. Implement covered initial, user-action, refresh, empty, error and lifecycle cases; revise the requirement when actual impact differs.
 - If `.openspec.yaml` declares `test_plan: required`, read the same `test-plan.md` and run its `implement` validator before changing source or tests. Use `$frontend-test` for explicit test-code implementation; product implementation remains owned by this change workflow.
 - Implement tasks in order unless dependencies justify a different sequence.
 - Follow repository conventions, run focused verification, and mark only genuinely completed tasks.
@@ -86,7 +88,7 @@ Use this Implement subflow only when implementation, static analysis, review, fo
 
 Use when implementation needs validation or the user asks to verify. Read `../../references/change-verification.md` if not already loaded, then only the selected verification plan and affected evidence.
 
-1. Check which required records remain valid for the current source, requirement and test-plan semantics. Reuse valid results; execute only missing, stale or explicitly affected checks, through `verification-evidence.mjs` when machine evidence is required. Keep focused, full, manual and external results distinct.
+1. Check required records against current source, requirement and test-plan semantics. Reuse valid results; execute missing, stale, affected or explicitly requested rechecks through `verification-evidence.mjs` when machine evidence is required. Keep focused, full, manual and external results distinct.
 2. Record actual results in `V-*`; check acceptance boxes only when their mapped assertions passed, then set the requirement to `待验证`. For `test_plan: required`, update the plan to `已验证` only after its cases passed and run its complete validator.
 3. For `verification_evidence: required`, generate automatic passing V-* schema v2 manifests here and reference the same-ID JSON. External references without an independent remote receipt stay `external-recorded` and cannot satisfy a trusted automatic pass.
 4. If validation finds an implementation defect, use the correction subflow or Revise according to its boundary. Continue to Complete when finalization is authorized and all required evidence is valid.
@@ -100,7 +102,7 @@ Use when verified implementation is ready and finalization is within the user's 
 3. Preview the hard-gated completion with `node "<plugin-root>/scripts/finalize-change.mjs" --target <repository-root> --requirement <requirement-path> --change <change-name>`. The preview reads archive context/guidance, checks the planning root, requires `isPlanningComplete=true` (with `isComplete` only as a legacy response fallback), and accepts only done artifacts or a requirement-authorized specs skipped state. If it fails, stop: do not synchronize specifications or archive the change.
 4. When completion and archiving are within the user's request, repeat the same command with `--write`. The wrapper performs precomplete validation, strict OpenSpec validation, spec synchronization and archive movement without exposing skip flags. It then rewrites active evidence references to the engine's actual archive name, atomically updates the requirement, and runs a read-only complete audit from the archived path.
    If archive movement succeeds but requirement writing or the post-archive audit fails, report `archive_partial_failure`, its actual archive target and recovery arguments. A recovery run must not add another date, move the archive again or rerun project commands.
-5. Report verification results, synchronized capabilities, archive location, final requirement status, and any residual risk.
+5. Lead with completion or recovery status and any blocker. Link the requirement, archive and verification evidence; summarize synchronized capabilities and material residual risk without replaying the full execution history.
 
 ## State Rules
 

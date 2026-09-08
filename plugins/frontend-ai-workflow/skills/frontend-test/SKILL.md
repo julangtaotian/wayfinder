@@ -30,9 +30,9 @@ The inspector and validators are read-only. The evidence command defaults to a z
 ## Analyze
 
 1. Read applicable `AGENTS.md`, affected source and nearest handwritten tests. Read relevant Wayfinder sections, the selected requirement, active artifacts and generated baselines only when they exist and matter to the requested coverage analysis.
-2. Run the test-context inspector and report only observed command, runner, configuration, test-directory, file, Git, and compatibility evidence.
+2. Run the test-context inspector when command, runner, directory or Git evidence is needed; reuse an already inspected result only if its inputs are unchanged. For a question about one existing assertion, inspect that test and source directly. Report observed coverage separately from tests actually executed.
 3. When a managed requirement exists, map its confirmed or project-default `D-*`, applicable `A-*`, scenarios and state matrix to gaps. Otherwise report observed coverage without inventing requirement IDs.
-4. Do not create or modify files. Without a matching active change, stop after the read-only analysis and explain that persistent plans and test code require a managed change.
+4. Do not create or modify files. Lead with covered behavior, consequential gaps and the smallest useful verification. A matching active change is not required for analysis; explain the managed-change prerequisite only when persistent planning or test implementation is requested.
 
 ## Plan
 

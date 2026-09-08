@@ -13,6 +13,7 @@ import {
 import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plugin-platform.mjs';
 import { validateManagedMarkdownReferenceLabels } from './markdown-reference-safety.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
+import { validatePluginDocumentReferences } from './plugin-document-references.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(scriptDir, '..');
@@ -251,6 +252,9 @@ function validateMarketplace(errors) {
 }
 
 function validateSkills(errors) {
+  for (const diagnostic of validatePluginDocumentReferences(pluginRoot)) {
+    errors.push(`${diagnostic.code}：${diagnostic.target}:${diagnostic.line} 引用 ${diagnostic.reference}`);
+  }
   const skillsRoot = path.join(pluginRoot, 'skills');
   const skillDirs = fs.readdirSync(skillsRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory());
   if (!skillDirs.length) errors.push('插件没有技能');

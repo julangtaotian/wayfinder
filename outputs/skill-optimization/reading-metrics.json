@@ -1,0 +1,67 @@
+{
+  "scope": "SKILL.md entry bytes only; not token or runtime measurements",
+  "files": [
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-change/SKILL.md",
+      "beforeBytes": 14439,
+      "afterBytes": 14949,
+      "deltaBytes": 510
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-fast-change/SKILL.md",
+      "beforeBytes": 3810,
+      "afterBytes": 3810,
+      "deltaBytes": 0
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-requirement-write/SKILL.md",
+      "beforeBytes": 6740,
+      "afterBytes": 7076,
+      "deltaBytes": 336
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md",
+      "beforeBytes": 8128,
+      "afterBytes": 8398,
+      "deltaBytes": 270
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-ui-fix/SKILL.md",
+      "beforeBytes": 3457,
+      "afterBytes": 3743,
+      "deltaBytes": 286
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-ui-review/SKILL.md",
+      "beforeBytes": 4942,
+      "afterBytes": 5264,
+      "deltaBytes": 322
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-ui-verify/SKILL.md",
+      "beforeBytes": 3354,
+      "afterBytes": 3624,
+      "deltaBytes": 270
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-workflow-bootstrap/SKILL.md",
+      "beforeBytes": 4540,
+      "afterBytes": 4782,
+      "deltaBytes": 242
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-workflow-check/SKILL.md",
+      "beforeBytes": 7346,
+      "afterBytes": 7441,
+      "deltaBytes": 95
+    },
+    {
+      "file": "plugins/frontend-ai-workflow/skills/frontend-workflow-upgrade/SKILL.md",
+      "beforeBytes": 3291,
+      "afterBytes": 3120,
+      "deltaBytes": -171
+    }
+  ],
+  "beforeBytes": 60047,
+  "afterBytes": 62207
+}

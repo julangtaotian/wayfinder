@@ -9,6 +9,7 @@ import {
 } from './project-path-safety.mjs';
 import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
 import { migrateArchivedRequirementReferences } from './finalize-change-references.mjs';
+import { findMarkdownFileReferences } from './markdown-file-references.mjs';
 
 const REQUIREMENT_STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
 
@@ -16,17 +17,23 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// 只改写 Markdown 行内代码中的所选活动变更路径，URL、其他变更和普通文字保持原样。
+// 按引用位置替换，保留 Markdown 写法与换行；只迁移所选变更，不扩大到 URL 或其他目录。
 export function buildEvidenceReferenceRewrites(content, changeName, archiveName) {
   const sourcePrefix = `openspec/changes/${changeName}/`;
   const targetPrefix = `openspec/changes/archive/${archiveName}/`;
   const rewrites = [];
-  const rewritten = String(content).replace(/`([^`]+)`/gu, (match, candidate) => {
-    if (!candidate.startsWith(sourcePrefix)) return match;
+  const text = String(content);
+  let rewritten = '';
+  let cursor = 0;
+  for (const reference of findMarkdownFileReferences(text, { barePrefixes: [sourcePrefix] })) {
+    const candidate = reference.path;
+    if (!candidate.startsWith(sourcePrefix)) continue;
     const target = `${targetPrefix}${candidate.slice(sourcePrefix.length)}`;
     rewrites.push({ from: candidate, to: target });
-    return `\`${target}\``;
-  });
+    rewritten += text.slice(cursor, reference.index) + target;
+    cursor = reference.index + reference.length;
+  }
+  rewritten += text.slice(cursor);
   return {
     content: rewritten,
     rewrites: [...new Map(rewrites.map((item) => [item.from, item])).values()],
@@ -217,6 +224,12 @@ export function postArchiveAudit({ requirementPath, changePath }) {
     stage: 'precomplete',
   });
   const errors = [...requirementValidation.errors, ...testPlan.errors];
+  // 本次归档与恢复不能继承历史只读审计的断链宽容，其他 legacy 提醒仍保留。
+  for (const diagnostic of requirementValidation.evidenceFiles?.diagnostics || []) {
+    if (diagnostic.status === 'warning' && ['evidence_file_missing', 'unsafe_evidence_path'].includes(diagnostic.code)) {
+      errors.push(`${diagnostic.code}：${diagnostic.target || diagnostic.message}`);
+    }
+  }
   return {
     ok: errors.length === 0,
     requirementValidation,

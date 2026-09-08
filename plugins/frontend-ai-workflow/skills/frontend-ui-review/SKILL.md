@@ -9,9 +9,9 @@ description: Inspect a configured frontend page with structured interactions and
 
 ## 开始前
 
-1. 定位本 Skill 所在目录，并读取 `../../references/ui-review-workflow.md`。
+1. 定位本 Skill 所在目录，按当前任务读取 `../../references/ui-review-workflow.md` 的统一入口、当前配置版本、页面环境、结构化采集、确定性判断、证据来源与权限边界；同一任务已读且未变化的规则可复用，版本 1 与迁移细则只在命中时读取。
 2. 版本 2 配置优先使用插件根目录下的 `scripts/ui-review-runner.mjs`；`ui-review-workflow.mjs` 只用于版本 1 兼容、修复门禁或视觉兜底等细粒度操作，不要复制脚本到业务项目。
-3. 读取 `.frontend-ui-review/config.json`。若文件缺失，同时参考 `../../assets/templates/ui-review/config.json` 和 `../../assets/templates/ui-review/playwright-adapter.mjs` 创建项目草案；版本 2 项目适配器必须完整复制当前模板，不得加入自定义执行逻辑，也不得给业务项目安装 Playwright。页面、设计依据、目标节点和交互步骤必须来自项目事实或用户确认，不能猜测。
+3. 读取 `.frontend-ui-review/config.json`。若文件缺失，先从用户指定页面和项目配置收集必要事实，再参考 `../../assets/templates/ui-review/config.json` 和 `../../assets/templates/ui-review/playwright-adapter.mjs` 创建项目草案；版本 2 项目适配器必须完整复制当前模板，不得加入自定义执行逻辑，也不得给业务项目安装 Playwright。页面、设计依据、目标节点和交互步骤必须来自项目事实或用户确认，不能猜测。
 4. 先执行统一入口的 `review` 预览，确认平台、结构化交互、`structure/visual` 范围、几何或图片证据、区域、掩码、阈值、兜底和预计产物。只有 `readyToWrite: true`、`capture.configured: bundled-adapter`、`capture.portable: true` 且 `platform` 非空才可进入正式验收；视觉验收不能只声明文本、显隐或值断言。
 5. 若预览把既有版本 2 适配器标记为 `project-adapter`，保留原配置和适配器并停止。按共享合同列出适配器承担的假登录、接口模拟和固定数据职责，要求项目自有本地页面环境在受信适配器之外准备这些非敏感事实；没有用户对配置迁移的明确授权时，只交付迁移清单，不覆盖文件、不追加 `--write`、不自动降级到版本 1。
 
@@ -29,5 +29,5 @@ description: Inspect a configured frontend page with structured interactions and
 - 零问题仅表示声明页面、视口、交互和节点范围内通过，不代表整个产品通过；报告需明确标注结构范围或视觉范围。
 - 计算样式必须精确匹配；图片区域被掩码完全覆盖时属于证据不足，不能报告为通过。
 - 确定性图片或 DOM 问题默认保留为不可修复发现；用户要求修复时，交给 `$frontend-ui-fix` 按 `../../references/ui-repair-context.md` 补齐上下文。普通验收不修改源码或自动准备候选。
-- 最终交付业务项目根、实际执行目标、页面环境类型、受信适配器摘要、运行 ID、有限范围结论、实际截图、标注截图、Markdown 报告和 `state.json` 路径。若使用外部代理、样式注入或固定响应复现问题，明确标记为“受控故障”，并另外报告真实源码当前态独立验收；不得用受控结果冒充真实源码修复证据。
+- 先交付声明范围内的结论、关键问题、实际截图和报告/状态链接。业务项目根、实际目标、页面环境、适配器摘要、运行 ID 和全部产物留在报告中，存在环境或身份问题时展开。若使用外部代理、样式注入或固定响应复现问题，明确标记为“受控故障”，并另外报告真实源码当前态独立验收；不得用受控结果冒充真实源码修复证据。
 - 不提交、不推送、不创建 PR，也不读取登录凭据。

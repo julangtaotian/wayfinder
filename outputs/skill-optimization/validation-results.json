@@ -1,0 +1,137 @@
+{
+  "full": {
+    "command": "npm test",
+    "exitCode": 0,
+    "tests": 241,
+    "pass": 233,
+    "fail": 0,
+    "skipped": 8
+  },
+  "focused": {
+    "command": "node --test tests/workflow-archive-integrity.test.mjs tests/plugin-document-references.test.mjs",
+    "exitCode": 0,
+    "tests": 7,
+    "pass": 7,
+    "fail": 0,
+    "skipped": 0
+  },
+  "structure": {
+    "command": "npm run validate",
+    "exitCode": 0
+  },
+  "official": {
+    "command": "npm run validate:official",
+    "exitCode": 0,
+    "skillCount": 10,
+    "manifest": "passed",
+    "cacheStatus": "reused",
+    "validatorSha256": {
+      "skill": "ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c",
+      "plugin": "f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944"
+    }
+  },
+  "footprint": {
+    "command": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs --target .",
+    "code": "repository_footprint_ok"
+  },
+  "extraModelRuns": 0,
+  "behaviorEvaluation": "static-review-only",
+  "platformCI": "pending",
+  "installedCacheUpdated": false,
+  "skippedTests": [
+    "ok 82 - [TC-04] 六项目基线与只读识别 # SKIP 未提供本机真实项目矩阵，常规仓库回归不读取外部业务项目",
+    "ok 83 - [TC-05] 六项目隔离生命周期 # SKIP 未提供本机真实项目矩阵，常规仓库回归不读取外部业务项目",
+    "ok 84 - [TC-06] 多运行器真实执行与缺链阻断 # SKIP 未提供本机真实项目矩阵，常规仓库回归不读取外部业务项目",
+    "ok 121 - 内置 Playwright 固定版本、完整性、平台和 Chromium 启动均有效 # SKIP 规范源码只包含共享运行时；真实浏览器回归在准备后的平台成品中执行",
+    "ok 125 - 默认适配器在真实 Chromium 中完成弹窗、下拉、悬停和表单综合交互 # SKIP 规范源码只包含共享运行时；真实浏览器回归在准备后的平台成品中执行",
+    "ok 126 - 结构化交互等待弹窗过渡结束后再保存截图 # SKIP 规范源码只包含共享运行时；真实浏览器回归在准备后的平台成品中执行",
+    "ok 129 - 统一入口完成预览、验收、同上下文复验并映射稳定退出码 # SKIP 共享源码不携带当前平台 Chromium；该用例由平台成品验证执行",
+    "ok 130 - 统一入口对不确定、非内置适配器和产物冲突失败关闭 # SKIP 共享源码不携带当前平台 Chromium；该用例由平台成品验证执行"
+  ],
+  "validatedFiles": [
+    {
+      "path": "plugins/frontend-ai-workflow/references/change-verification.md",
+      "sha256": "e8cca958041e1af0068efa969703046447ad506672eb2e5be7eb3b3e1cafd31b"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/references/deep-initialization-workflow.md",
+      "sha256": "a825db88c8ad34adbd98298cb5c7decb6404e2581a02cf6f1ee2d5a09a69d299"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/references/requirement-guidelines.md",
+      "sha256": "7f3e9f99c02cb43c3b3a4e7ad833f7da5bce96c8a55f4ced2140b0ba8ed1e6fc"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/references/ui-review-maintenance.md",
+      "sha256": "7cca6f44c13a6c74841e10c50cf5146da07445ed98389b4901920033db90dee6"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/references/ui-review-workflow.md",
+      "sha256": "b78646c8a20463dc308e8034ff8ddd7aeeae3bbc1e8285ebf20f8d1aec168d25"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs",
+      "sha256": "7d1323d43444f1010d4c52ae32dffdbfeda6e3532f3997ffcb72dd36a2aa1138"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/scripts/markdown-file-references.mjs",
+      "sha256": "4336ed5ad5b00414d1ed250c66d388f4debb905c9d50378c36e6309db2e093e9"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/scripts/plugin-document-references.mjs",
+      "sha256": "47c8a9d6add47519243eeaaec7ac88e3509c450c1236dbaca7cd28c0d90c1e22"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/scripts/validate-structure.mjs",
+      "sha256": "b10b2421bf2a23d04ecd1df11d72a9c83d4db1a1d661886c23405e569d168d96"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/scripts/verification-evidence-foundation.mjs",
+      "sha256": "5b90f2f60feb64d9a2fc5670bd447d592d9947d41069ae00df4afa7d5ac42eb9"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-change/SKILL.md",
+      "sha256": "c060f75b65a8041cc355519dd8136d7ed1b82eee85bbe2d5de14944b3afff1cc"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-requirement-write/SKILL.md",
+      "sha256": "fca6feac5dfa7785050ac04705a4c705f7655eff22b601094410f636279a8b73"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md",
+      "sha256": "89bc06ed8c839536c84ba2ad6e65d8b4442f0590d6627280b8788fc34fe95f38"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-ui-fix/SKILL.md",
+      "sha256": "fcb97311828faf690dd0bee99e010aafbbc653275b62f359a61839cacbe592b2"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-ui-review/SKILL.md",
+      "sha256": "0b6cb7812c6cfbea87c5c136335750d08149dc22b7b645f7b5d1cfb0319f480e"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-ui-verify/SKILL.md",
+      "sha256": "a55242060a72cb4f183ef5164fb5abdfcfe5db78d1c666e1a6d154ba85264291"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-workflow-bootstrap/SKILL.md",
+      "sha256": "4923c35ee1a82bdec7af02644a95703671478a7056ad56c460cdc801be5912b2"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-workflow-check/SKILL.md",
+      "sha256": "4e7b90800025523fd67d659b5120155e568ff40d75041174fc35a2ad93cea4b1"
+    },
+    {
+      "path": "plugins/frontend-ai-workflow/skills/frontend-workflow-upgrade/SKILL.md",
+      "sha256": "534dd07929b4ee8b364789912193bbc145d42908e63a1899ebbb646d6b47b21d"
+    },
+    {
+      "path": "tests/plugin-document-references.test.mjs",
+      "sha256": "d47ec9fa7eab9491c997980fdfc53b9a372ce16f523a6a2b9fada50be79a1a16"
+    },
+    {
+      "path": "tests/workflow-archive-integrity.test.mjs",
+      "sha256": "3bc7d88a9f77dd4b80736a1bbd406ae879f494184d210695c5b6d8e9bf8bfbbb"
+    }
+  ]
+}

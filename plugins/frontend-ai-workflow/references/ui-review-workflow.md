@@ -57,7 +57,7 @@ DOM、几何与图片比较都产生可追溯 `observations`。几何比较读�
 
 首次验收与复验的 Markdown 报告必须从完成状态投影同一份上下文，并展示 `schemaVersion`、`runId`、`scenarioFingerprint`、实际 `capture`、可空 `baselineRunId`、`statePath`、证据路径及观察/问题摘要。缺少必需身份字段时拒绝生成报告；Markdown 不得自行猜测或覆盖状态 JSON。
 
-确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。用户要求修复时，按 `ui-repair-context.md` 使用 `prepare-repair` 补齐，默认预览，显式写入仅更新候选并保留原始发现。
+确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。用户要求修复时，按 [ui-repair-context.md](ui-repair-context.md) 使用 `prepare-repair` 补齐，默认预览，显式写入仅更新候选并保留原始发现。
 
 Browser 或同类视觉能力只在结论为 `inconclusive`、配置已经声明 Browser 兜底且当前 AI 工具具备能力时使用。统一入口只返回 `fallbackRequired: true`，不会自行控制某个 AI 工具。兜底必须使用新运行 ID，不能在原运行或复验中静默切换采集器。
 
@@ -84,4 +84,4 @@ UI Review 作为严格 V-* 机器证据时，schema v2 清单必须绑定状态�
 - 不读取或发送认证数据，不调用外部服务，不创建常驻进程、数据库或独立 UI 平台。
 - 自动修复不隐含提交、推送、PR 或远程状态回写；不提交、不推送、不创建 PR，这些动作需要用户另行授权。
 
-插件内部报告实现和平台发布维护另见 `ui-review-maintenance.md`，普通页面验收不需要读取。
+插件内部报告实现和平台发布维护另见 [ui-review-maintenance.md](ui-review-maintenance.md)，普通页面验收不需要读取。

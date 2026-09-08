@@ -18,7 +18,7 @@ Update managed workflow sections only. Resolve the plugin root as the directory 
    node <plugin-root>/scripts/preview-requirement-upgrade.mjs --target <repository-root> --json
    ```
 
-4. Show the current layout and target workflow version, bundled OpenSpec version, managed files to update, skipped files, migration reminders, old active requirement gaps and conflicts. Also report that the managed context now refreshes a root direct-dependency profile and may truncate only its human summary; it does not install dependencies or prove usage, compatibility or safety. The requirement preview is read-only: it never creates, completes or rewrites a business requirement. For a deep-analysis project, ordinary upgrade must preserve the recorded scan time, Git state and scope fingerprint; only explicit `--deep` refreshes them.
+4. Lead with actual managed differences, preserved/skipped files and conflicts. Report layout/version, dependency and old-requirement details when they explain a change or require action. The requirement preview is read-only and never rewrites business facts. Ordinary upgrade preserves the recorded deep scan time, Git state and scope fingerprint; only explicit `--deep` refreshes them. If the preview has no content changes, proceed to the checker without a write pass.
 5. When the upgrade is within the user's request and no conflicts remain, apply it:
 
    ```bash
