@@ -91,6 +91,11 @@ blob-report/
 /outputs/real-project-validation/*/tmp/
 /outputs/developer-effectiveness-benchmark/
 
+# 评测实时副本只供执行中观察，正式事件记录保留为 *.events.jsonl。
+/outputs/*/*.live.jsonl
+# 本次行为评测的隔离项目及其嵌套 Git 仅保留在本地供审计。
+/outputs/complex-mode-20260909/workspaces/
+
 # 运行日志与进程临时状态
 *.log
 *.pid
