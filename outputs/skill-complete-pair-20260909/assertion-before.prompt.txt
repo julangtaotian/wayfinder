@@ -1,0 +1,3 @@
+请使用 [repository]/outputs/skill-paired-20260909/packages/before/skills/frontend-test/SKILL.md 中的技能完成下面的用户任务，并以该技能所在目录解析引用和插件脚本。
+用户任务：帮我看看 tests/order-filter.test.mjs 中“空关键词保留全部订单”这个断言：它实际覆盖了什么，还遗漏了哪些重要边界？
+工作目录就是待分析的项目。请直接完成这项只读任务，不联网、不安装依赖、不修改任何文件，不启动其他模型或子代理。

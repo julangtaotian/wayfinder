@@ -737,8 +737,11 @@ test('[TC-06] 跨平台证据执行与发布边界', () => {
   const frontendTestSkill = fs.readFileSync(path.join(repositoryRoot, 'plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md'), 'utf8');
   const frontendChangeSkill = fs.readFileSync(path.join(repositoryRoot, 'plugins/frontend-ai-workflow/skills/frontend-change/SKILL.md'), 'utf8');
   const structure = fs.readFileSync(path.join(repositoryRoot, 'plugins/frontend-ai-workflow/scripts/validate-structure.mjs'), 'utf8');
-  assert.match(frontendTestSkill, /verification-evidence\.mjs/u);
-  assert.match(frontendTestSkill, /zero-locator run must not overwrite an existing passed manifest/u);
+  // 入口负责路由，证据保护规则仍在可达的受管流程中校验。
+  assert.match(frontendTestSkill, /\]\(\.\.\/\.\.\/references\/managed-test-workflow\.md\)/u);
+  const frontendTestWorkflow = fs.readFileSync(path.join(repositoryRoot, 'plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
+  assert.match(frontendTestWorkflow, /verification-evidence\.mjs/u);
+  assert.match(frontendTestWorkflow, /zero-locator run must not overwrite an existing passed manifest/u);
   assert.match(frontendChangeSkill, /must not rerun project tests, builds, browsers or external CI/u);
   assert.match(frontendChangeSkill, /archive_partial_failure/u);
   assert.match(structure, /scripts\/verification-evidence\.mjs/u);

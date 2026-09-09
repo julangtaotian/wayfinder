@@ -1,0 +1,365 @@
+{
+  "ok": true,
+  "write": false,
+  "version": "0.18.0",
+  "layout": "wayfinder",
+  "inspection": {
+    "root": "[repository]/outputs/complex-mode-20260909/workspaces/deep-after",
+    "name": "order-console-eval",
+    "preset": "vue3-vite",
+    "packageManager": "npm",
+    "techStack": [
+      "vite [devDependencies=\"6.1.0\"]",
+      "vue [dependencies=\"3.5.13\"]"
+    ],
+    "dependencyProfile": {
+      "schemaVersion": "1.0.0",
+      "source": "root-package-json",
+      "totalPackages": 2,
+      "groupCounts": {
+        "dependencies": 1,
+        "devDependencies": 1,
+        "peerDependencies": 0,
+        "optionalDependencies": 0
+      },
+      "packages": [
+        {
+          "name": "vite",
+          "declarations": [
+            {
+              "group": "devDependencies",
+              "specifier": "6.1.0"
+            }
+          ]
+        },
+        {
+          "name": "vue",
+          "declarations": [
+            {
+              "group": "dependencies",
+              "specifier": "3.5.13"
+            }
+          ]
+        }
+      ],
+      "diagnostics": [],
+      "summary": {
+        "status": "complete",
+        "totalPackages": 2,
+        "displayedPackages": 2,
+        "omittedPackages": 0,
+        "text": "根 package 共 2 项直接依赖，展示 2 项，遗漏 0 项：vite [devDependencies=\"6.1.0\"]、vue [dependencies=\"3.5.13\"]（完整事实：dependencyProfile.packages 或根 package.json）。"
+      }
+    },
+    "targetProfile": {
+      "formFactor": "unknown",
+      "source": "unknown",
+      "evidence": [],
+      "platform": {
+        "kind": "unknown",
+        "frameworks": [],
+        "source": "unknown",
+        "evidence": []
+      }
+    },
+    "scriptNames": {
+      "dev": "dev",
+      "build": "build",
+      "test": "test",
+      "lint": null,
+      "typecheck": null
+    },
+    "commands": {
+      "dev": "npm run dev",
+      "build": "npm run build",
+      "test": "npm run test",
+      "lint": "未配置",
+      "typecheck": "未配置"
+    },
+    "commandSemantics": {
+      "defaultBuild": {
+        "scriptName": "build",
+        "command": "npm run build",
+        "source": "explicit-default"
+      },
+      "releaseBuild": {
+        "scriptName": "build",
+        "command": "npm run build",
+        "source": "default-fallback"
+      },
+      "lint": {
+        "scriptName": null,
+        "command": "未配置",
+        "source": "missing",
+        "status": "missing"
+      },
+      "test": {
+        "scriptName": "test",
+        "command": "npm run test",
+        "source": "detected",
+        "status": "detected"
+      }
+    },
+    "platformCommands": {
+      "status": "missing",
+      "source": "unknown",
+      "targets": [],
+      "evidence": []
+    },
+    "paths": {
+      "views": "src/pages",
+      "components": "未识别",
+      "request": "未识别",
+      "router": "未识别",
+      "store": "未识别",
+      "tests": "tests"
+    },
+    "existingWorkflowFiles": [
+      "AGENTS.md",
+      "openspec/config.yaml",
+      "wayfinder/frontend.md"
+    ]
+  },
+  "scope": {
+    "version": "2.2.0",
+    "root": "[repository]/outputs/complex-mode-20260909/workspaces/deep-after",
+    "rules": {
+      "textExtensions": [
+        ".cjs",
+        ".css",
+        ".env",
+        ".gql",
+        ".graphql",
+        ".html",
+        ".js",
+        ".json",
+        ".jsx",
+        ".less",
+        ".md",
+        ".mdx",
+        ".mjs",
+        ".sass",
+        ".scss",
+        ".sh",
+        ".svelte",
+        ".svg",
+        ".toml",
+        ".ts",
+        ".tsx",
+        ".txt",
+        ".vue",
+        ".wxml",
+        ".wxs",
+        ".wxss",
+        ".yaml",
+        ".yml"
+      ],
+      "textFilenames": [
+        ".gitignore",
+        ".npmignore",
+        ".prettierignore",
+        "dockerfile",
+        "makefile"
+      ],
+      "excludedDirectories": [
+        ".git",
+        ".next",
+        ".nuxt",
+        ".turbo",
+        ".yarn",
+        "build",
+        "coverage",
+        "dist",
+        "node_modules",
+        "out",
+        "storybook-static",
+        "temp",
+        "tmp"
+      ],
+      "limits": {
+        "maxFileBytes": 1048576,
+        "maxTotalBytes": 20971520
+      }
+    },
+    "fingerprint": "7b96346690a671c191056afd970ecec197da6f3ce23bab116852d91a55c93912",
+    "git": {
+      "available": true,
+      "commit": "9c7a34031da22f2b61576c8ea5911d7a7f0c5f31",
+      "dirty": false
+    },
+    "validationEvidence": {
+      "fileEnumeration": {
+        "executed": true,
+        "status": "performed",
+        "description": "已完成安全路径枚举与范围过滤。"
+      },
+      "contentRead": {
+        "executed": true,
+        "status": "performed",
+        "description": "已读取纳入范围的文本内容。"
+      },
+      "contentHash": {
+        "executed": true,
+        "status": "performed",
+        "description": "已计算纳入文件的 SHA-256。"
+      },
+      "syntaxParse": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行源码语法解析。"
+      },
+      "platformCompile": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行平台编译。"
+      },
+      "lint": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行 Lint。"
+      },
+      "test": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行测试。"
+      }
+    },
+    "observations": [],
+    "includedFiles": [
+      {
+        "path": ".gitignore",
+        "category": "other",
+        "bytes": 34,
+        "lines": 4,
+        "sha256": "bfc38a46dbc794fc37f0135ba92d3b6a9fad9d8935f5a743d0e2851dc100128e"
+      },
+      {
+        "path": "AGENTS.md",
+        "category": "other",
+        "bytes": 9045,
+        "lines": 86,
+        "sha256": "e2fd7683c6dc66f4dbc5ecd072aa033f15ad69523c9da92df7b3980b600eef63"
+      },
+      {
+        "path": "docs/operations.md",
+        "category": "documentation",
+        "bytes": 113,
+        "lines": 4,
+        "sha256": "c167ceb1665a3fadad77baa599c570b5d58c710466a560368a04d5176bcbfbdb"
+      },
+      {
+        "path": "index.html",
+        "category": "other",
+        "bytes": 153,
+        "lines": 2,
+        "sha256": "3b87d4375bb5b2e70f90ccd352f46fe268bc3fbacc4fa9bc3f38c7ca7f82f15e"
+      },
+      {
+        "path": "openspec/config.yaml",
+        "category": "other",
+        "bytes": 4866,
+        "lines": 70,
+        "sha256": "64850519d8c21662566648347e7792a13a00298aadd137c55e9405d3f79fe821"
+      },
+      {
+        "path": "package.json",
+        "category": "configuration",
+        "bytes": 275,
+        "lines": 16,
+        "sha256": "91334ab4f2808a32f4c5e56e1b8313d0220b4e22b4204c4d5be26063654c08a9"
+      },
+      {
+        "path": "README.md",
+        "category": "documentation",
+        "bytes": 146,
+        "lines": 3,
+        "sha256": "4aebcb54e4e6fa679eea33678a777ecc42eb103332fcaaf2545687d6faae41bd"
+      },
+      {
+        "path": "src/App.vue",
+        "category": "source",
+        "bytes": 107,
+        "lines": 5,
+        "sha256": "1329479a366a2340c13d323f9391cfc71c982418ca0f63e7c1a9dede3d6e65ca"
+      },
+      {
+        "path": "src/data/orders.mjs",
+        "category": "source",
+        "bytes": 134,
+        "lines": 2,
+        "sha256": "9c59198767acc5245cdc9e2e07d1f43de7e4a68c91fa4516e25041252fe02d5b"
+      },
+      {
+        "path": "src/main.mjs",
+        "category": "source",
+        "bytes": 92,
+        "lines": 4,
+        "sha256": "fc77d6694de55892ab09e6957b93c62c0c1b1e0d99803099f4d16755f2540810"
+      },
+      {
+        "path": "src/order-filter.mjs",
+        "category": "source",
+        "bytes": 362,
+        "lines": 6,
+        "sha256": "eb55158e5148c87eab4dccf94f9c6ae7574a1fc95d2117bfe600741d4481d801"
+      },
+      {
+        "path": "src/pages/OrderList.vue",
+        "category": "source",
+        "bytes": 646,
+        "lines": 10,
+        "sha256": "1e2196d8564ac4a78a20832beffc2365e054c05a1ceb6201e8e0f996d7ce4877"
+      },
+      {
+        "path": "src/settings.mjs",
+        "category": "source",
+        "bytes": 114,
+        "lines": 3,
+        "sha256": "9313feb903209c639f53b1bb224670482edd31edca795b7b0691bf12b9ff3631"
+      },
+      {
+        "path": "tests/order-filter.test.mjs",
+        "category": "test",
+        "bytes": 363,
+        "lines": 8,
+        "sha256": "0c605a4bf486506159087928dfb26b3092cb3d6aefbdcd903bd95c5ce23746da"
+      },
+      {
+        "path": "wayfinder/frontend.md",
+        "category": "other",
+        "bytes": 6759,
+        "lines": 134,
+        "sha256": "0ad8540130fe0935cc36e0f4189511bbf8bbe84ea33ae2251820d2e170789944"
+      }
+    ],
+    "excludedFiles": [
+      {
+        "path": ".git",
+        "kind": "directory",
+        "reason": "排除目录：.git"
+      }
+    ],
+    "summary": {
+      "discoveredFiles": 15,
+      "includedFiles": 15,
+      "includedBytes": 23209,
+      "excludedFiles": 1,
+      "observations": 0
+    }
+  },
+  "actions": [
+    {
+      "file": "AGENTS.md",
+      "action": "unchanged",
+      "reason": "受管区块已是最新"
+    },
+    {
+      "file": "wayfinder/frontend.md",
+      "action": "update"
+    },
+    {
+      "file": "openspec/config.yaml",
+      "action": "update"
+    }
+  ]
+}

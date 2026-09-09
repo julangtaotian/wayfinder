@@ -1,0 +1,43 @@
+{
+  "baseline": "226d7a4cd98b124ac3050c8fc8e9aa35ac46aa23",
+  "current": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "source": "existing user configuration",
+  "maxRuns": 6,
+  "timeoutMs": 180000,
+  "aggregateInputStop": 250000,
+  "order": [
+    "assertion-before",
+    "assertion-after",
+    "understanding-after",
+    "understanding-before",
+    "health-before",
+    "health-after"
+  ],
+  "metrics": [
+    "CLI usage.input_tokens / cached_input_tokens / output_tokens",
+    "wall clock",
+    "completed command count",
+    "tool result UTF-8 bytes",
+    "frozen criteria manual adjudication"
+  ],
+  "limits": [
+    "每场景每版本一次，探索性配对，不是统计显著性结论",
+    "显式选择技能，不能衡量自然触发准确率",
+    "统一只读沙箱，不能证明写操作保护能力",
+    "小型合成 Vue fixture，不代表真实大仓库",
+    "使用实际模型工具事件，工具输出字节不是磁盘读取字节"
+  ],
+  "platformRisk": {
+    "high": true,
+    "items": [
+      "路径",
+      "子进程",
+      "临时fixture",
+      "机器诊断"
+    ],
+    "platform": "darwin-arm64",
+    "scope": "仅评测脚本与隔离项目，不修改产品或 CI，未声称新五平台证据"
+  }
+}

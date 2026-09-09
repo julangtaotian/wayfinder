@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "status": "passed",
+  "code": "platform_marketplace_prepared",
+  "write": true,
+  "upgrade": true,
+  "platformKey": "darwin-arm64",
+  "nativePlatformKey": "darwin-arm64",
+  "playwrightVersion": "1.62.1",
+  "output": "dist/frontend-ai-workflow-darwin-arm64",
+  "budgetBytes": 272629760,
+  "downloadsAtRuntime": false,
+  "downloadPolicy": {
+    "maxAttempts": 3,
+    "timeoutMilliseconds": 600000
+  },
+  "proxyConfigured": false,
+  "steps": [
+    "validate-output",
+    "build-runtime",
+    "package-marketplace",
+    "verify-package",
+    "publish-atomically"
+  ],
+  "build": {
+    "code": "existing_platform_runtime_reused",
+    "attempts": 0,
+    "supplementalLicenseSource": null
+  },
+  "sizeBytes": 237732005,
+  "headroomBytes": 34897755,
+  "pluginRoot": "dist/frontend-ai-workflow-darwin-arm64/plugins/frontend-ai-workflow",
+  "marketplacePath": "dist/frontend-ai-workflow-darwin-arm64/.agents/plugins/marketplace.json",
+  "reportPath": "dist/frontend-ai-workflow-darwin-arm64/package-report.json",
+  "cleanupErrors": []
+}

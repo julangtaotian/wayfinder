@@ -1,0 +1,343 @@
+{
+  "warmupPerVariant": 1,
+  "rows": [
+    {
+      "round": 0,
+      "variant": "before",
+      "elapsedMs": 313.707458,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 0,
+      "variant": "after",
+      "elapsedMs": 329.9124579999999,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 1,
+      "variant": "after",
+      "elapsedMs": 330.0846670000001,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 1,
+      "variant": "before",
+      "elapsedMs": 364.890709,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 2,
+      "variant": "before",
+      "elapsedMs": 362.54166699999996,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 2,
+      "variant": "after",
+      "elapsedMs": 319.50083399999994,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 3,
+      "variant": "after",
+      "elapsedMs": 318.6221250000003,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 3,
+      "variant": "before",
+      "elapsedMs": 315.8432499999999,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 4,
+      "variant": "before",
+      "elapsedMs": 312.1343340000003,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 4,
+      "variant": "after",
+      "elapsedMs": 315.3884589999998,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 5,
+      "variant": "after",
+      "elapsedMs": 316.7245419999995,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 5,
+      "variant": "before",
+      "elapsedMs": 315.0103330000002,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 6,
+      "variant": "before",
+      "elapsedMs": 321.8829999999998,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 6,
+      "variant": "after",
+      "elapsedMs": 319.41758299999947,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 7,
+      "variant": "after",
+      "elapsedMs": 320.89891700000044,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 7,
+      "variant": "before",
+      "elapsedMs": 319.43466700000045,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 8,
+      "variant": "before",
+      "elapsedMs": 320.4989170000008,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 8,
+      "variant": "after",
+      "elapsedMs": 315.64958299999944,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 9,
+      "variant": "after",
+      "elapsedMs": 315.2692910000005,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 9,
+      "variant": "before",
+      "elapsedMs": 314.10499999999956,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 10,
+      "variant": "before",
+      "elapsedMs": 316.5227500000001,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 10,
+      "variant": "after",
+      "elapsedMs": 317.0136249999996,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 11,
+      "variant": "after",
+      "elapsedMs": 319.63966600000003,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 11,
+      "variant": "before",
+      "elapsedMs": 320.2908750000006,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 12,
+      "variant": "before",
+      "elapsedMs": 317.4763750000002,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 12,
+      "variant": "after",
+      "elapsedMs": 319.0305410000001,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 13,
+      "variant": "after",
+      "elapsedMs": 318.94258400000035,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 13,
+      "variant": "before",
+      "elapsedMs": 317.76554100000067,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 14,
+      "variant": "before",
+      "elapsedMs": 320.0490000000009,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 14,
+      "variant": "after",
+      "elapsedMs": 314.37112499999967,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 15,
+      "variant": "after",
+      "elapsedMs": 331.3881249999995,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 15,
+      "variant": "before",
+      "elapsedMs": 347.9226660000004,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 16,
+      "variant": "before",
+      "elapsedMs": 351.23020800000086,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 16,
+      "variant": "after",
+      "elapsedMs": 355.4688750000005,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 17,
+      "variant": "after",
+      "elapsedMs": 351.11070800000016,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 17,
+      "variant": "before",
+      "elapsedMs": 331.39316600000166,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 18,
+      "variant": "before",
+      "elapsedMs": 324.7273329999989,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 18,
+      "variant": "after",
+      "elapsedMs": 323.3165829999998,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 19,
+      "variant": "after",
+      "elapsedMs": 343.12066699999923,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    },
+    {
+      "round": 19,
+      "variant": "before",
+      "elapsedMs": 337.50566699999945,
+      "exitCode": 1,
+      "ok": false,
+      "outputBytes": 4087
+    }
+  ],
+  "summary": {
+    "before": {
+      "count": 20,
+      "medianMs": 320.16993750000074,
+      "minMs": 312.1343340000003,
+      "maxMs": 364.890709,
+      "resultStable": true
+    },
+    "after": {
+      "count": 20,
+      "medianMs": 319.4592084999997,
+      "minMs": 314.37112499999967,
+      "maxMs": 355.4688750000005,
+      "resultStable": true
+    }
+  },
+  "platform": "darwin-arm64",
+  "scope": "同一小型 fixture 的进程启动和健康摘要，不是模型响应延迟"
+}

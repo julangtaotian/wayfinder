@@ -1,0 +1,103 @@
+{
+  "status": "passed_single_case",
+  "case": "局部订单筛选调用链理解",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "baseline": "ca472ca3",
+  "candidate": "protocol.json hashes",
+  "completedRuns": 2,
+  "retries": 0,
+  "timeLimit": null,
+  "quality": {
+    "before": 4,
+    "after": 4,
+    "total": 4,
+    "method": "主评测者按运行前冻结的四项条件人工核对，不是独立盲评"
+  },
+  "gates": {
+    "factsPreserved": true,
+    "afterInitializationGuideReads": 0,
+    "inputReductionAtLeast20Percent": true
+  },
+  "verificationDepth": {
+    "before": "1项现有Node测试、6个额外筛选案例通过；无浏览器验证",
+    "after": "静态阅读，未执行测试或应用"
+  },
+  "measures": [
+    {
+      "metric": "输入 token（含缓存）",
+      "before": 138853,
+      "after": 100500,
+      "reductionPercent": 27.62
+    },
+    {
+      "metric": "缓存输入 token",
+      "before": 114304,
+      "after": 86400,
+      "reductionPercent": 24.41
+    },
+    {
+      "metric": "未缓存输入 token",
+      "before": 24549,
+      "after": 14100,
+      "reductionPercent": 42.56
+    },
+    {
+      "metric": "输出 token",
+      "before": 2780,
+      "after": 2130,
+      "reductionPercent": 23.38
+    },
+    {
+      "metric": "输入＋输出 token",
+      "before": 141633,
+      "after": 102630,
+      "reductionPercent": 27.54
+    },
+    {
+      "metric": "工具返回字节",
+      "before": 26116,
+      "after": 10187,
+      "reductionPercent": 60.99
+    },
+    {
+      "metric": "工具命令数",
+      "before": 12,
+      "after": 6,
+      "reductionPercent": 50
+    },
+    {
+      "metric": "耗时（毫秒）",
+      "before": 117218,
+      "after": 82748,
+      "reductionPercent": 29.41
+    }
+  ],
+  "workspaceUnchanged": true,
+  "accountSnapshots": [
+    {
+      "stage": "start",
+      "fiveHourUsed": 56,
+      "weekUsed": 38
+    },
+    {
+      "stage": "after-baseline",
+      "fiveHourUsed": 81,
+      "weekUsed": 42
+    },
+    {
+      "stage": "after-candidate",
+      "fiveHourUsed": 96,
+      "weekUsed": 45
+    }
+  ],
+  "limitations": [
+    "一个小型Vue fixture、一个显式技能问题，不代表所有仓库或完整深度地图",
+    "两版执行验证深度不同，不能把全部成本下降归因于同等工作提速",
+    "固定先旧后新，未随机重复；缓存、服务排队与采样可影响结果",
+    "账户是共享统计，不能把差值归因于本轮独占消耗或据token比例推算套餐节省"
+  ],
+  "installed": false,
+  "committed": false,
+  "pushed": false
+}

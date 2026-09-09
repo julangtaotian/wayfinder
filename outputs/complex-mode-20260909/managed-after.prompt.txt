@@ -1,0 +1,3 @@
+请使用 [repository]/outputs/complex-mode-20260909/packages/after/skills/frontend-test/SKILL.md 中的技能完成下面的用户任务，并以该技能所在目录解析引用和插件脚本。
+用户任务：复验活动变更 add-fixture-test 的已实现测试用例，关联需求 requirements/REQ-2026-001-fixture.md。按实际结果更新测试方案和需求中的验证记录，提供可追溯证据；不要修改业务源码或既有测试。
+工作目录就是待分析的项目。只操作当前隔离项目；不联网、不安装依赖、不启动其他模型或子代理。遵守用户任务的写入范围。

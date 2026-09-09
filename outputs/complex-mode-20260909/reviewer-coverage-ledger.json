@@ -1,0 +1,81 @@
+{
+  "author": "评测方独立补充，不能算作被测模型已交付账本",
+  "evidence": "deep-resume-after.events.jsonl 内 item_4 与 item_7 的 cat 输出；item_19 和 item_30 的逐文件 content/hash 输出作交叉核对",
+  "files": [
+    {
+      "file": ".gitignore",
+      "classification": "依赖、输出和环境文件忽略规则",
+      "readObserved": true
+    },
+    {
+      "file": "AGENTS.md",
+      "classification": "项目专属规则和受管边界",
+      "readObserved": true
+    },
+    {
+      "file": "README.md",
+      "classification": "项目说明与历史状态差异",
+      "readObserved": true
+    },
+    {
+      "file": "docs/operations.md",
+      "classification": "运营和发布边界",
+      "readObserved": true
+    },
+    {
+      "file": "index.html",
+      "classification": "挂载与模块入口",
+      "readObserved": true
+    },
+    {
+      "file": "openspec/config.yaml",
+      "classification": "规划与工作流状态",
+      "readObserved": true
+    },
+    {
+      "file": "package.json",
+      "classification": "完整依赖与运行命令",
+      "readObserved": true
+    },
+    {
+      "file": "src/App.vue",
+      "classification": "根组件组合",
+      "readObserved": true
+    },
+    {
+      "file": "src/data/orders.mjs",
+      "classification": "本地订单来源",
+      "readObserved": true
+    },
+    {
+      "file": "src/main.mjs",
+      "classification": "应用挂载",
+      "readObserved": true
+    },
+    {
+      "file": "src/order-filter.mjs",
+      "classification": "筛选规则",
+      "readObserved": true
+    },
+    {
+      "file": "src/pages/OrderList.vue",
+      "classification": "页面状态与调用链",
+      "readObserved": true
+    },
+    {
+      "file": "src/settings.mjs",
+      "classification": "未接入的预留设置",
+      "readObserved": true
+    },
+    {
+      "file": "tests/order-filter.test.mjs",
+      "classification": "已有测试及覆盖限制",
+      "readObserved": true
+    },
+    {
+      "file": "wayfinder/frontend.md",
+      "classification": "范围快照与地图",
+      "readObserved": true
+    }
+  ]
+}

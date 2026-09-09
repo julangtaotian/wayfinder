@@ -1,0 +1,45 @@
+{
+  "version": "0.18.0+codex.20260908074555",
+  "baselineCommit": "226d7a4",
+  "runtime": "Both use the same unchanged installed runtime; baseline daily files exported from Git",
+  "migration": [
+    {
+      "kind": "inline",
+      "before": true,
+      "after": true
+    },
+    {
+      "kind": "plain",
+      "before": false,
+      "after": true
+    },
+    {
+      "kind": "markdown",
+      "before": false,
+      "after": true
+    }
+  ],
+  "missingEvidenceRejected": {
+    "before": false,
+    "after": true
+  },
+  "summaryTimingMs": {
+    "before": [
+      415,
+      325,
+      354
+    ],
+    "after": [
+      315,
+      323,
+      313
+    ],
+    "note": "Three interleaved local CLI samples, not model latency or token measurements"
+  },
+  "health": {
+    "ok": true,
+    "errors": [],
+    "warnings": []
+  },
+  "extraModelRuns": 0
+}

@@ -1,0 +1,25 @@
+{
+  "completed": true,
+  "fullGuideRead": true,
+  "changes": [
+    "openspec/changes/add-fixture-test/test-plan.md",
+    "requirements/REQ-2026-001-fixture.md",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/execution.json",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/focused.stderr.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/focused.stdout.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/git-diff-check.stderr.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/git-diff-check.stdout.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/git-status.txt",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/integrity-check.json",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/plan-validation.stderr.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/plan-validation.stdout.json",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/plugin-preview.stderr.log",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/plugin-preview.stdout.json",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/review.md",
+    "outputs/verification-evidence/add-fixture-test/2026-09-09T03-00-35-910Z/tracked-files-before.json"
+  ],
+  "immutablePreserved": true,
+  "strictManifestWritten": false,
+  "classification": "测试执行成功，但证据路径规则冲突使严格验收阻塞；不是正常成功路径通过",
+  "preflightMistake": "样例AGENTS验证产物路径限制过宽；未预先模拟完整写证据，属评测设置问题"
+}

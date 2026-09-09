@@ -1,0 +1,112 @@
+{
+  "scope": "候选复杂行为验证；不是新旧效率对照",
+  "rows": [
+    {
+      "id": "managed-after",
+      "completed": true,
+      "seconds": 307.727,
+      "input": 262124,
+      "cached": 221952,
+      "uncached": 40172,
+      "output": 8949,
+      "commands": 14,
+      "toolOutputBytes": 49152
+    },
+    {
+      "id": "managed-valid-after",
+      "completed": true,
+      "seconds": 172.655,
+      "input": 224095,
+      "cached": 192256,
+      "uncached": 31839,
+      "output": 4829,
+      "commands": 15,
+      "toolOutputBytes": 34192
+    },
+    {
+      "id": "deep-after",
+      "completed": false,
+      "seconds": 95.625,
+      "input": null,
+      "cached": null,
+      "uncached": null,
+      "output": null,
+      "commands": 18,
+      "toolOutputBytes": 153195
+    },
+    {
+      "id": "deep-resume-after",
+      "completed": true,
+      "seconds": 379.78,
+      "input": 651488,
+      "cached": 594432,
+      "uncached": 57056,
+      "output": 10680,
+      "commands": 29,
+      "toolOutputBytes": 204680
+    }
+  ],
+  "knownTotals": {
+    "input": 1137707,
+    "cached": 1008640,
+    "uncached": 129067,
+    "output": 24458,
+    "commands": 76,
+    "toolOutputBytes": 441219,
+    "seconds": 955.7869999999999
+  },
+  "unknownCost": "deep-after 被服务额度拒绝，缺少 turn.completed usage；不能记零，也不能计算完整总token或扣费。",
+  "candidateHashes": {
+    "skills/frontend-test/SKILL.md": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+    "skills/frontend-workflow-bootstrap/SKILL.md": "3c2015c531a726f7952eb5130b2c5a290c058374bef5bc16a6c6b4b59eab3505",
+    "references/managed-test-workflow.md": "2064aed5179df84b472823a18da4b7ca5901e4bb1efdb7d0aef21da2392ca35d",
+    "references/workflow-initialization.md": "b12b7cfeb1fd9cce98e835745ce9ec93bcac327a146610e5095d803392450803"
+  },
+  "candidateUnchanged": true,
+  "managed": {
+    "finalPass": true,
+    "firstPass": false,
+    "protectedFilesPreserved": true
+  },
+  "deep": {
+    "corePass": true,
+    "covered": 15,
+    "total": 15,
+    "modelDeliveredPerFileLedger": false,
+    "recoveredAfterInterruption": true
+  },
+  "localRegression": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "skip": 0
+  },
+  "limitations": [
+    "仅受管Verify及小型Vue/Vite完整地图；未验证模型从零Plan/Implement",
+    "没有业务构建、浏览器、跨平台CI证据",
+    "仅候选源码快照；已安装缓存未更新",
+    "Node测试runner为项目证据，不能提升为全面框架认证"
+  ],
+  "observedIssues": [
+    "正常复验首轮将机器字段与解释混写，门禁拒绝后自修复",
+    "深度输出承诺逐文件账本但未交付，评测方补审计账本不代替模型交付",
+    "恢复深度流程重复输出全文件正文、读取检查器实现及重复健康检查，效率仍差"
+  ],
+  "evaluationMistakes": [
+    "最初受管fixture的outputs规则与固定机器证据路径冲突，导致追加正常样例",
+    "启动本地Vitest聚焦门禁前漏准备运行时，准备后10项通过并清理",
+    "恢复目录映射首次遗漏，在模型启动前失败，修正后才启动恢复样本"
+  ],
+  "automaticResetUsed": false,
+  "accountResumeSnapshot": {
+    "before": {
+      "fiveHourUsed": 1,
+      "weekUsed": 46
+    },
+    "after": {
+      "fiveHourUsed": 42,
+      "weekUsed": 52
+    },
+    "sharedAccount": true
+  }
+}

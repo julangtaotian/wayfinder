@@ -1,0 +1,67 @@
+{
+  "ok": true,
+  "stage": "implement",
+  "root": "[repository]/outputs/complex-mode-20260909/workspaces/managed-after",
+  "planPath": "[repository]/outputs/complex-mode-20260909/workspaces/managed-after/openspec/changes/add-fixture-test/test-plan.md",
+  "requirementPath": "[repository]/outputs/complex-mode-20260909/workspaces/managed-after/requirements/REQ-2026-001-fixture.md",
+  "changePath": "[repository]/outputs/complex-mode-20260909/workspaces/managed-after/openspec/changes/add-fixture-test",
+  "planStatus": "已实现",
+  "revisionBaseline": "R-01",
+  "latestRevision": "R-01",
+  "stale": false,
+  "caseCount": 1,
+  "automaticCases": 1,
+  "visualCases": 0,
+  "manualCases": 0,
+  "testContext": {
+    "root": "[repository]/outputs/complex-mode-20260909/workspaces/managed-after",
+    "preset": "vue3-vite",
+    "packageManager": "npm",
+    "testCommand": {
+      "status": "detected",
+      "scriptName": "test",
+      "command": "npm run test",
+      "executed": false
+    },
+    "runner": {
+      "name": "Node Test Runner",
+      "source": "script",
+      "certification": "project-evidence-only"
+    },
+    "configFiles": [],
+    "testDirectories": [
+      "tests"
+    ],
+    "testFiles": [
+      "tests/math.test.mjs"
+    ],
+    "handwrittenTests": [
+      "tests/math.test.mjs"
+    ],
+    "generatedBaselines": [],
+    "git": {
+      "available": true,
+      "trackedTests": [
+        "tests/math.test.mjs"
+      ],
+      "commit": "8ebe835793a097b67f4f02b08ceb1fe2ab5d7b03",
+      "dirty": false
+    },
+    "scan": {
+      "bounded": true,
+      "discoveredFiles": 8,
+      "limit": 10000,
+      "sourceContentRead": false
+    },
+    "warnings": []
+  },
+  "evidenceValidation": {
+    "ok": true,
+    "required": true,
+    "executed": false,
+    "verifiedFiles": 0,
+    "diagnostics": []
+  },
+  "errors": [],
+  "warnings": []
+}

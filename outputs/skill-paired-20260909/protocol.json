@@ -1,0 +1,58 @@
+{
+  "baseline": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "current": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "source": "existing user configuration",
+  "maxRuns": 4,
+  "timeoutMs": 75000,
+  "aggregateInputStop": 250000,
+  "order": [
+    "assertion-after",
+    "assertion-before"
+  ],
+  "metrics": [
+    "CLI usage.input_tokens / cached_input_tokens / output_tokens",
+    "wall clock",
+    "completed command count",
+    "tool result UTF-8 bytes",
+    "frozen criteria manual adjudication"
+  ],
+  "limits": [
+    "每场景每版本一次，探索性配对，不是统计显著性结论",
+    "显式选择技能，不能衡量自然触发准确率",
+    "统一只读沙箱，不能证明写操作保护能力",
+    "小型合成 Vue fixture，不代表真实大仓库",
+    "使用实际模型工具事件，工具输出字节不是磁盘读取字节"
+  ],
+  "platformRisk": {
+    "high": true,
+    "items": [
+      "路径",
+      "子进程",
+      "临时fixture",
+      "机器诊断"
+    ],
+    "platform": "darwin-arm64",
+    "scope": "仅评测脚本与隔离项目，不修改产品或 CI，未声称新五平台证据"
+  },
+  "date": "2026-09-09",
+  "candidate": "working-tree",
+  "hashes": {
+    "skills/frontend-test/SKILL.md": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+    "skills/frontend-workflow-bootstrap/SKILL.md": "3c2015c531a726f7952eb5130b2c5a290c058374bef5bc16a6c6b4b59eab3505",
+    "references/managed-test-workflow.md": "2064aed5179df84b472823a18da4b7ca5901e4bb1efdb7d0aef21da2392ca35d",
+    "references/workflow-initialization.md": "b12b7cfeb1fd9cce98e835745ce9ec93bcac327a146610e5095d803392450803"
+  },
+  "policy": "一次启动一个样本；每次结束核实额度；第一组不满足质量、无关读取和输入减少20%三项时不扩展",
+  "stopFiveHourUsedPercent": 22,
+  "maxIncreaseFromStartPercentagePoints": 20,
+  "initialFiveHourUsedPercent": 2,
+  "initialWeekUsedPercent": 30,
+  "criteria": {
+    "qualityChecks": 4,
+    "inputReductionPercent": 20,
+    "irrelevantGuideReads": 0
+  },
+  "comparison": "同日同模型新旧显式技能配对，小型fixture，不代表自然路由和整体额度"
+}

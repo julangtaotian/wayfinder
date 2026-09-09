@@ -1,0 +1,205 @@
+{
+  "rows": [
+    {
+      "category": "migration",
+      "label": "行内代码",
+      "input": "`openspec/changes/delivery/verification.md`",
+      "expected": "`openspec/changes/archive/2026-09-08-delivery/verification.md`",
+      "before": true,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "行内代码中文空格",
+      "input": "`openspec/changes/delivery/验证 结果.md`",
+      "expected": "`openspec/changes/archive/2026-09-08-delivery/验证 结果.md`",
+      "before": true,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "普通文本",
+      "input": "证据：openspec/changes/delivery/verification.md。",
+      "expected": "证据：openspec/changes/archive/2026-09-08-delivery/verification.md。",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "Markdown链接",
+      "input": "[报告](openspec/changes/delivery/verification.md)",
+      "expected": "[报告](openspec/changes/archive/2026-09-08-delivery/verification.md)",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "Markdown标题和锚点",
+      "input": "[报告](openspec/changes/delivery/verification.md#结果 \"说明\")",
+      "expected": "[报告](openspec/changes/archive/2026-09-08-delivery/verification.md#结果 \"说明\")",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "尖括号空格路径",
+      "input": "[报告](<openspec/changes/delivery/验证 结果.md>)",
+      "expected": "[报告](<openspec/changes/archive/2026-09-08-delivery/验证 结果.md>)",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "链接引用定义",
+      "input": "[证据]: openspec/changes/delivery/verification.md",
+      "expected": "[证据]: openspec/changes/archive/2026-09-08-delivery/verification.md",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "migration",
+      "label": "CRLF混合引用",
+      "input": "`openspec/changes/delivery/a.md`\r\nopenspec/changes/delivery/b.md\r\n[报告](openspec/changes/delivery/c.md)",
+      "expected": "`openspec/changes/archive/2026-09-08-delivery/a.md`\r\nopenspec/changes/archive/2026-09-08-delivery/b.md\r\n[报告](openspec/changes/archive/2026-09-08-delivery/c.md)",
+      "before": false,
+      "after": true,
+      "afterIdempotent": true
+    },
+    {
+      "category": "preservation",
+      "input": "https://example.test/openspec/changes/delivery/verification.md",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "[远程](https://example.test/openspec/changes/delivery/verification.md)",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "https://example.test/?path=openspec/changes/delivery/verification.md",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "`https://example.test/openspec/changes/delivery/verification.md`",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "`other/openspec/changes/delivery/verification.md`",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "openspec/changes/delivery-next/verification.md",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "preservation",
+      "input": "文字openspec/changes/delivery/verification.md",
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "extraction",
+      "input": "[报告](outputs/验证%20结果.md#结果)",
+      "expected": [
+        "outputs/验证 结果.md"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "category": "extraction",
+      "input": "`D:\\workspace\\proof\\summary.md`",
+      "expected": [
+        "D:/workspace/proof/summary.md"
+      ],
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "extraction",
+      "input": "`//server/share/proof.md`",
+      "expected": [
+        "//server/share/proof.md"
+      ],
+      "before": true,
+      "after": true
+    },
+    {
+      "category": "extraction",
+      "input": "[报告](<openspec/changes/delivery/验证 结果.md#结果>)",
+      "expected": [
+        "openspec/changes/delivery/验证 结果.md"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "category": "missing-evidence",
+      "label": "行内代码",
+      "before": false,
+      "after": true
+    },
+    {
+      "category": "missing-evidence",
+      "label": "普通文本",
+      "before": false,
+      "after": true
+    },
+    {
+      "category": "missing-evidence",
+      "label": "Markdown",
+      "before": false,
+      "after": true
+    },
+    {
+      "category": "restored-evidence",
+      "before": true,
+      "after": true
+    }
+  ],
+  "summary": {
+    "migration": {
+      "total": 8,
+      "beforePassed": 2,
+      "afterPassed": 8
+    },
+    "preservation": {
+      "total": 7,
+      "beforePassed": 7,
+      "afterPassed": 7
+    },
+    "extraction": {
+      "total": 4,
+      "beforePassed": 2,
+      "afterPassed": 4
+    },
+    "missing-evidence": {
+      "total": 3,
+      "beforePassed": 0,
+      "afterPassed": 3
+    },
+    "restored-evidence": {
+      "total": 1,
+      "beforePassed": 1,
+      "afterPassed": 1
+    }
+  },
+  "note": "定向回归样本，不能外推真实故障概率"
+}

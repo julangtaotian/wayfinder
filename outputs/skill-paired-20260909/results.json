@@ -1,0 +1,73 @@
+{
+  "date": "2026-09-09",
+  "status": "inconclusive",
+  "started": 2,
+  "completed": 1,
+  "timedOut": 1,
+  "expanded": false,
+  "quality": {
+    "candidatePassed": 4,
+    "total": 4,
+    "baseline": "not-graded-incomplete",
+    "method": "主评测者核对运行前冻结 criteria，无独立盲评"
+  },
+  "candidateIrrelevantGuideReads": 0,
+  "pairedInputReductionPercent": null,
+  "twentyPercentTarget": "unverified",
+  "historyComparison": {
+    "source": "outputs/skill-benefit-evaluation/runs.json assertion-after",
+    "sameModelSettings": true,
+    "paired": false,
+    "metrics": {
+      "inputTokens": {
+        "historical": 68215,
+        "current": 45307,
+        "reductionPercent": 33.58
+      },
+      "uncachedInputTokens": {
+        "historical": 33783,
+        "current": 16123,
+        "reductionPercent": 52.27
+      },
+      "toolOutputBytes": {
+        "historical": 15219,
+        "current": 3283,
+        "reductionPercent": 78.43
+      },
+      "elapsedMs": {
+        "historical": 78193,
+        "current": 55303,
+        "reductionPercent": 29.27
+      }
+    },
+    "caveat": "跨日期历史参照，非当日完整配对，不足以验收20%目标或声称稳定额度收益"
+  },
+  "account": {
+    "before": {
+      "fiveHourUsed": 2,
+      "weekUsed": 30
+    },
+    "afterCandidate": {
+      "fiveHourUsed": 13,
+      "weekUsed": 32
+    },
+    "afterBaseline": {
+      "fiveHourUsed": 25,
+      "weekUsed": 34
+    },
+    "stopThreshold": 22,
+    "limitType": "两次调用之间的停止线，不是服务侧硬额度上限",
+    "exclusiveEvaluationUsage": false
+  },
+  "limitations": [
+    "75秒上限低于历史旧版约78秒耗时，易截断基线；本次设计偏紧",
+    "旧版超时未返回usage，不能当作零成本",
+    "新版只验证一个显式技能任务，不能代表bootstrap或其他技能",
+    "质量和读取行为通过，不等于整体效率验收通过"
+  ],
+  "sourceChanged": false,
+  "installed": false,
+  "committed": false,
+  "pushed": false,
+  "ci": "当前修订未提交，无对应新矩阵"
+}

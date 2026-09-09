@@ -1,0 +1,39 @@
+{
+  "sameFixture": true,
+  "fileHashes": {
+    "AGENTS.md": "ca3f07e01efe6630ef269fa3420450153c478f80b4fe8fffd4cb3fc50ba3dd28",
+    "README.md": "4aebcb54e4e6fa679eea33678a777ecc42eb103332fcaaf2545687d6faae41bd",
+    "index.html": "3b87d4375bb5b2e70f90ccd352f46fe268bc3fbacc4fa9bc3f38c7ca7f82f15e",
+    "package.json": "91334ab4f2808a32f4c5e56e1b8313d0220b4e22b4204c4d5be26063654c08a9",
+    "src/App.vue": "1329479a366a2340c13d323f9391cfc71c982418ca0f63e7c1a9dede3d6e65ca",
+    "src/data/orders.mjs": "9c59198767acc5245cdc9e2e07d1f43de7e4a68c91fa4516e25041252fe02d5b",
+    "src/main.mjs": "fc77d6694de55892ab09e6957b93c62c0c1b1e0d99803099f4d16755f2540810",
+    "src/order-filter.mjs": "eb55158e5148c87eab4dccf94f9c6ae7574a1fc95d2117bfe600741d4481d801",
+    "src/pages/OrderList.vue": "1e2196d8564ac4a78a20832beffc2365e054c05a1ceb6201e8e0f996d7ce4877",
+    "src/settings.mjs": "9313feb903209c639f53b1bb224670482edd31edca795b7b0691bf12b9ff3631",
+    "tests/order-filter.test.mjs": "0c605a4bf486506159087928dfb26b3092cb3d6aefbdcd903bd95c5ce23746da"
+  },
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "sandbox": "read-only",
+  "samePromptExceptVersionPaths": true,
+  "adjudication": "主评测者按运行前冻结的四项条件人工核对，不是独立盲评",
+  "accountSnapshots": [
+    {
+      "stage": "start",
+      "fiveHourUsed": 2,
+      "weekUsed": 30
+    },
+    {
+      "stage": "after-candidate",
+      "fiveHourUsed": 13,
+      "weekUsed": 32
+    },
+    {
+      "stage": "after-baseline",
+      "fiveHourUsed": 25,
+      "weekUsed": 34
+    }
+  ],
+  "limit": "达到22%后不启动下一调用；不是服务侧硬额度上限"
+}

@@ -1,0 +1,113 @@
+{
+  "status": "passed_single_case",
+  "baselineCommit": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "candidateSource": "outputs/skill-paired-20260909/protocol.json hashes",
+  "samples": {
+    "before": "outputs/skill-complete-pair-20260909/runs.json assertion-before",
+    "after": "outputs/skill-paired-20260909/runs.json assertion-after"
+  },
+  "controls": "same day, same model/reasoning, identical 11-file fixture and user task, explicit skills, read-only sandbox",
+  "comparisonComplete": true,
+  "additionalModelRunsThisTurn": 1,
+  "pairedCases": 1,
+  "quality": {
+    "criteria": [
+      "识别只测空字符串、不能覆盖纯空格或非空搜索",
+      "正确说明源码 trim 与大小写归一化",
+      "指出状态筛选/组合筛选等重要遗漏",
+      "不把未运行测试说成通过，不因无受管变更拒绝分析"
+    ],
+    "before": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "after": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "adjudicator": "主评测者人工依据冻结条目与源码核对，不是盲评"
+  },
+  "gates": {
+    "qualityPreserved": true,
+    "afterIrrelevantGuideReadsZero": true,
+    "inputReductionAtLeast20Percent": true
+  },
+  "rows": [
+    {
+      "metric": "inputTokens",
+      "before": 67296,
+      "after": 45307,
+      "reductionPercent": 32.68
+    },
+    {
+      "metric": "cachedInputTokens",
+      "before": 49536,
+      "after": 29184,
+      "reductionPercent": 41.09
+    },
+    {
+      "metric": "uncachedInputTokens",
+      "before": 17760,
+      "after": 16123,
+      "reductionPercent": 9.22
+    },
+    {
+      "metric": "outputTokens",
+      "before": 1749,
+      "after": 1357,
+      "reductionPercent": 22.41
+    },
+    {
+      "metric": "totalTokens",
+      "before": 69045,
+      "after": 46664,
+      "reductionPercent": 32.42
+    },
+    {
+      "metric": "toolOutputBytes",
+      "before": 14235,
+      "after": 3283,
+      "reductionPercent": 76.94
+    },
+    {
+      "metric": "commandCount",
+      "before": 6,
+      "after": 5,
+      "reductionPercent": 16.67
+    },
+    {
+      "metric": "elapsedMs",
+      "before": 69997,
+      "after": 55303,
+      "reductionPercent": 20.99
+    }
+  ],
+  "previousAbortedRun": {
+    "source": "outputs/skill-paired-20260909/runs.json assertion-before",
+    "includedInBenefitMetrics": false,
+    "usage": "unavailable, not zero",
+    "retained": true
+  },
+  "account": {
+    "before": {
+      "fiveHourUsed": 32,
+      "weekUsed": 35
+    },
+    "after": {
+      "fiveHourUsed": 44,
+      "weekUsed": 36
+    },
+    "sharedNotExclusive": true
+  },
+  "limitations": [
+    "只有一组完整配对，未估计置信区间",
+    "新版复用今天已完成记录，旧版在用户授权后重跑完成；不是随机交错重复实验",
+    "旧版此前超时产生的损耗单独保留，不拿来夸大收益",
+    "缓存、排队和采样波动仍可能影响用量/耗时，不能外推全部技能或套餐省32.7%",
+    "未评测bootstrap；未提交、推送或重新安装"
+  ]
+}

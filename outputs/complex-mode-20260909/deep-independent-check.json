@@ -1,0 +1,217 @@
+{
+  "ok": true,
+  "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/deep-after",
+  "layout": "wayfinder",
+  "migrationRequired": false,
+  "version": "0.18.0",
+  "preset": "vue3-vite",
+  "dependencyProfile": {
+    "schemaVersion": "1.0.0",
+    "source": "root-package-json",
+    "totalPackages": 2,
+    "groupCounts": {
+      "dependencies": 1,
+      "devDependencies": 1,
+      "peerDependencies": 0,
+      "optionalDependencies": 0
+    },
+    "packages": [
+      {
+        "name": "vite",
+        "declarations": [
+          {
+            "group": "devDependencies",
+            "specifier": "6.1.0"
+          }
+        ]
+      },
+      {
+        "name": "vue",
+        "declarations": [
+          {
+            "group": "dependencies",
+            "specifier": "3.5.13"
+          }
+        ]
+      }
+    ],
+    "diagnostics": [],
+    "summary": {
+      "status": "complete",
+      "totalPackages": 2,
+      "displayedPackages": 2,
+      "omittedPackages": 0,
+      "text": "根 package 共 2 项直接依赖，展示 2 项，遗漏 0 项：vite [devDependencies=\"6.1.0\"]、vue [dependencies=\"3.5.13\"]（完整事实：dependencyProfile.packages 或根 package.json）。"
+    }
+  },
+  "targetProfile": {
+    "formFactor": "unknown",
+    "source": "unknown",
+    "evidence": [],
+    "platform": {
+      "kind": "unknown",
+      "frameworks": [],
+      "source": "unknown",
+      "evidence": []
+    }
+  },
+  "commands": {
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "test": "npm run test",
+    "lint": "未配置",
+    "typecheck": "未配置"
+  },
+  "commandEvidence": {
+    "dev": {
+      "command": "npm run dev",
+      "status": "detected",
+      "executed": false
+    },
+    "build": {
+      "command": "npm run build",
+      "status": "detected",
+      "executed": false
+    },
+    "test": {
+      "command": "npm run test",
+      "status": "detected",
+      "executed": false
+    },
+    "lint": {
+      "command": "未配置",
+      "status": "missing",
+      "executed": false
+    },
+    "typecheck": {
+      "command": "未配置",
+      "status": "missing",
+      "executed": false
+    }
+  },
+  "commandSemantics": {
+    "defaultBuild": {
+      "scriptName": "build",
+      "command": "npm run build",
+      "source": "explicit-default"
+    },
+    "releaseBuild": {
+      "scriptName": "build",
+      "command": "npm run build",
+      "source": "default-fallback"
+    },
+    "lint": {
+      "scriptName": null,
+      "command": "未配置",
+      "source": "missing",
+      "status": "missing"
+    },
+    "test": {
+      "scriptName": "test",
+      "command": "npm run test",
+      "source": "detected",
+      "status": "detected"
+    }
+  },
+  "platformCommands": {
+    "status": "missing",
+    "source": "unknown",
+    "targets": [],
+    "evidence": []
+  },
+  "planningEngine": {
+    "available": true,
+    "healthy": true,
+    "source": "bundled",
+    "version": "1.9.0"
+  },
+  "activeChanges": {
+    "available": true,
+    "total": 0,
+    "completedNotArchived": []
+  },
+  "verificationEvidenceAudit": {
+    "checked": false,
+    "executed": false,
+    "requirements": 0,
+    "records": 0,
+    "counts": {},
+    "availableCodes": [],
+    "diagnosticsIncluded": false
+  },
+  "managedContentFreshness": {
+    "checked": true,
+    "stale": false,
+    "files": []
+  },
+  "deepAnalysis": {
+    "enabled": true,
+    "scopeVersion": "2.2.0",
+    "scopeFingerprint": "7b96346690a671c191056afd970ecec197da6f3ce23bab116852d91a55c93912",
+    "scopeScannedAt": "2026-09-09T03:22:57.710Z",
+    "scopeGitCommit": "9c7a34031da22f2b61576c8ea5911d7a7f0c5f31",
+    "scopeGitDirty": "false",
+    "contextPath": "wayfinder/frontend.md",
+    "version": "0.18.0",
+    "analysis": {
+      "status": "complete",
+      "coveredFiles": 15,
+      "totalFiles": 15,
+      "updatedAt": "2026-09-09T05:46:44Z",
+      "complete": true
+    },
+    "freshness": {
+      "checked": true,
+      "stale": false,
+      "currentFingerprint": "7b96346690a671c191056afd970ecec197da6f3ce23bab116852d91a55c93912"
+    },
+    "validationEvidence": {
+      "fileEnumeration": {
+        "executed": true,
+        "status": "performed",
+        "description": "已完成安全路径枚举与范围过滤。"
+      },
+      "contentRead": {
+        "executed": true,
+        "status": "performed",
+        "description": "已读取纳入范围的文本内容。"
+      },
+      "contentHash": {
+        "executed": true,
+        "status": "performed",
+        "description": "已计算纳入文件的 SHA-256。"
+      },
+      "syntaxParse": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行源码语法解析。"
+      },
+      "platformCompile": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行平台编译。"
+      },
+      "lint": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行 Lint。"
+      },
+      "test": {
+        "executed": false,
+        "status": "not-run",
+        "description": "范围工具未执行测试。"
+      }
+    },
+    "observations": [],
+    "totalObservations": 0,
+    "observationCounts": {},
+    "omittedObservations": 0
+  },
+  "errors": [],
+  "warnings": [
+    "package.json 未配置 lint 脚本",
+    "package.json 未配置类型检查脚本"
+  ],
+  "schemaVersion": "1.0.0",
+  "mode": "summary"
+}

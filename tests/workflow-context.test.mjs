@@ -416,7 +416,10 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(reference, /数据、状态与安全边界/);
   assert.match(reference, /Service Worker/);
   assert.match(reference, /Feature Flag/);
-  assert.match(skill, /deep-initialization-workflow\.md/);
+  // 跟踪入口到初始化指南，再校验深度分析流程仍可达。
+  assert.match(skill, /\]\(\.\.\/\.\.\/references\/workflow-initialization\.md\)/u);
+  const initialization = fs.readFileSync(path.join(pluginRoot, 'references/workflow-initialization.md'), 'utf8');
+  assert.match(initialization, /deep-initialization-workflow\.md/);
   const deepWorkflow = fs.readFileSync(path.join(pluginRoot, 'references/deep-initialization-workflow.md'), 'utf8');
   assert.match(deepWorkflow, /includedFiles/);
   assert.match(deepWorkflow, /validationEvidence/);

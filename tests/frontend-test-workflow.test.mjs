@@ -303,12 +303,16 @@ test('[TC-05] frontend-test Skill 合同声明四类意图、测试专属写入�
     path.resolve('plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md'),
     'utf8',
   );
+  // 完整操作合同已按需外置，先确认入口仍能发现它。
+  assert.match(skill, /\]\(\.\.\/\.\.\/references\/managed-test-workflow\.md\)/u);
+  const workflow = fs.readFileSync(path.resolve('plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
+  const contract = `${skill}\n${workflow}`;
   for (const expected of ['Analyze', 'Plan', 'Implement', 'Verify', 'test_plan: required', '$frontend-ui-review']) {
-    assert.match(skill, new RegExp(expected.replace('$', '\\$'), 'u'));
+    assert.match(contract, new RegExp(expected.replace('$', '\\$'), 'u'));
   }
-  assert.match(skill, /Never modify business source/u);
-  assert.match(skill, /zero-test result is blocked/u);
-  assert.match(skill, /updates the same case rather than appending a duplicate/u);
+  assert.match(contract, /Never modify business source/u);
+  assert.match(contract, /zero-test result is blocked/u);
+  assert.match(contract, /updates the same case rather than appending a duplicate/u);
 });
 
 test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {

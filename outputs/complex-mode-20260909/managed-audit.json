@@ -1,0 +1,44 @@
+{
+  "completed": true,
+  "protectedFiles": [
+    "AGENTS.md",
+    "openspec/changes/add-fixture-test/.openspec.yaml",
+    "openspec/config.yaml",
+    "package.json",
+    "src/math.mjs",
+    "tests/math.test.mjs"
+  ],
+  "protectedFilesPreserved": true,
+  "changedExisting": [
+    "openspec/changes/add-fixture-test/test-plan.md",
+    "requirements/REQ-2026-001-fixture.md"
+  ],
+  "independentComplete": {
+    "ok": true,
+    "planStatus": "已验证",
+    "stale": false,
+    "evidenceValidation": {
+      "ok": true,
+      "required": true,
+      "executed": false,
+      "verifiedFiles": 1,
+      "diagnostics": [
+        {
+          "code": "evidence_valid",
+          "status": "passed",
+          "target": "openspec/changes/add-fixture-test/evidence/V-01.json",
+          "evidenceId": "V-01",
+          "kind": "local-command",
+          "locator": "[TC-01] 两数相加",
+          "locatorMatches": 2,
+          "fresh": true,
+          "trust": "local-captured",
+          "message": null
+        }
+      ]
+    }
+  },
+  "firstPass": false,
+  "recovery": "第一次完成校验拒绝了混入说明的证据路径及非精确状态；模型修正为结构化单值后再次校验通过。",
+  "failedCommandCount": 2
+}

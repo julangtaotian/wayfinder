@@ -1,0 +1,159 @@
+{
+  "scope": "限额探索性评测",
+  "actual": {
+    "started": 4,
+    "completed": 3,
+    "interrupted": 1,
+    "completePairs": 1,
+    "unstarted": [
+      "health-before",
+      "health-after"
+    ]
+  },
+  "stoppedBecause": "账户共享 5 小时已用量从 7% 升至 37% 时主动中止；最后快照 39%，未兑换重置额度。账户差值含本任务分析与其他账户活动，不能归因给这些模型试验。",
+  "accountSnapshots": {
+    "before": {
+      "fiveHourUsedPercent": 7,
+      "weekUsedPercent": 17
+    },
+    "stopDecision": {
+      "fiveHourUsedPercent": 37,
+      "weekUsedPercent": 22
+    },
+    "after": {
+      "fiveHourUsedPercent": 39,
+      "weekUsedPercent": 22
+    }
+  },
+  "measuredCompletedRunUsage": {
+    "input_tokens": 231263,
+    "cached_input_tokens": 154112,
+    "output_tokens": 5134,
+    "reasoning_output_tokens": 1330
+  },
+  "interruptedRunUsage": "unavailable，不按零消耗计算",
+  "metrics": {
+    "inputTokens": {
+      "before": 72948,
+      "after": 68215,
+      "reductionPercent": 6.49
+    },
+    "outputTokens": {
+      "before": 1936,
+      "after": 1695,
+      "reductionPercent": 12.45
+    },
+    "totalTokens": {
+      "before": 74884,
+      "after": 69910,
+      "reductionPercent": 6.64
+    },
+    "uncachedInputTokens": {
+      "before": 22132,
+      "after": 33783,
+      "reductionPercent": -52.64
+    },
+    "toolOutputBytes": {
+      "before": 23608,
+      "after": 15219,
+      "reductionPercent": 35.53
+    },
+    "commandCount": {
+      "before": 6,
+      "after": 5,
+      "reductionPercent": 16.67
+    },
+    "elapsedMs": {
+      "before": 94829,
+      "after": 78193,
+      "reductionPercent": 17.54
+    }
+  },
+  "grades": [
+    {
+      "id": "assertion-before",
+      "criteria": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "conclusion": "准确区分空字符串与空白/非空搜索，解释状态与关键词交集，未虚报执行；额外读取检查器及工作流资料。"
+    },
+    {
+      "id": "assertion-after",
+      "criteria": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "conclusion": "保留全部关键结论与无副作用断言盲点；未运行检查器，但仍读了通用测试指南和额外页面。"
+    },
+    {
+      "id": "understanding-after",
+      "criteria": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "conclusion": "正确描述本地数据、computed/v-model 与组合筛选；未运行深度扫描，但仍读 project-detection 和 managed-files。"
+    }
+  ],
+  "adjudication": "主评测者依据运行前冻结的 cases.json 对源码与完整回答逐项人工核对，无独立评委或盲评。",
+  "reliability": {
+    "migration": {
+      "total": 8,
+      "beforePassed": 2,
+      "afterPassed": 8
+    },
+    "preservation": {
+      "total": 7,
+      "beforePassed": 7,
+      "afterPassed": 7
+    },
+    "extraction": {
+      "total": 4,
+      "beforePassed": 2,
+      "afterPassed": 4
+    },
+    "missing-evidence": {
+      "total": 3,
+      "beforePassed": 0,
+      "afterPassed": 3
+    },
+    "restored-evidence": {
+      "total": 1,
+      "beforePassed": 1,
+      "afterPassed": 1
+    }
+  },
+  "timing": {
+    "before": {
+      "count": 20,
+      "medianMs": 320.16993750000074,
+      "minMs": 312.1343340000003,
+      "maxMs": 364.890709,
+      "resultStable": true
+    },
+    "after": {
+      "count": 20,
+      "medianMs": 319.4592084999997,
+      "minMs": 314.37112499999967,
+      "maxMs": 355.4688750000005,
+      "resultStable": true
+    }
+  },
+  "limitations": [
+    "每场景每版本仅一次；无置信区间，不能推断统计显著性",
+    "只有一组完整配对，不能代表十个技能",
+    "显式指定技能文件，不衡量隐式路由或安装体验",
+    "隔离小项目，共享同一固定运行时；未修改用户插件安装状态",
+    "缓存命中、服务排队、模型采样与本机并发活动影响结果",
+    "统一只读沙箱，未测试真实写入、归档完整交付或 UI 截图流程",
+    "源码观察不能替代运行 Vue 页面；fixture 的 Node 测试由评测者另行执行并通过",
+    "未缓存 token 增加不能直接换算套餐额度或金钱",
+    "定向回归集合覆盖优化目标，不代表真实生产故障率"
+  ]
+}

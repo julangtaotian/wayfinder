@@ -1,0 +1,17 @@
+{
+  "version": "0.18.0+codex.20260908074555",
+  "implicitSkills": [
+    "frontend-change",
+    "frontend-fast-change",
+    "frontend-requirement-write",
+    "frontend-test",
+    "frontend-ui-review",
+    "frontend-ui-verify",
+    "frontend-workflow-bootstrap",
+    "frontend-workflow-check",
+    "frontend-workflow-upgrade"
+  ],
+  "explicitUiFixPresent": true,
+  "newVersionInPrompt": true,
+  "modelInvoked": false
+}

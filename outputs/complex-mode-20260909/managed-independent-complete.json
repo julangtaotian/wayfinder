@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "stage": "complete",
+  "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/managed-valid-after",
+  "planPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/managed-valid-after/openspec/changes/add-fixture-test/test-plan.md",
+  "requirementPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/managed-valid-after/requirements/REQ-2026-001-fixture.md",
+  "changePath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/managed-valid-after/openspec/changes/add-fixture-test",
+  "planStatus": "已验证",
+  "revisionBaseline": "R-01",
+  "latestRevision": "R-01",
+  "stale": false,
+  "caseCount": 1,
+  "automaticCases": 1,
+  "visualCases": 0,
+  "manualCases": 0,
+  "testContext": {
+    "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/outputs/complex-mode-20260909/workspaces/managed-valid-after",
+    "preset": "vue3-vite",
+    "packageManager": "npm",
+    "testCommand": {
+      "status": "detected",
+      "scriptName": "test",
+      "command": "npm run test",
+      "executed": false
+    },
+    "runner": {
+      "name": "Node Test Runner",
+      "source": "script",
+      "certification": "project-evidence-only"
+    },
+    "configFiles": [],
+    "testDirectories": [
+      "tests"
+    ],
+    "testFiles": [
+      "tests/math.test.mjs"
+    ],
+    "handwrittenTests": [
+      "tests/math.test.mjs"
+    ],
+    "generatedBaselines": [],
+    "git": {
+      "available": true,
+      "trackedTests": [
+        "tests/math.test.mjs"
+      ],
+      "commit": "3ba0e58f79b11d4740121b600008851993249a5a",
+      "dirty": true
+    },
+    "scan": {
+      "bounded": true,
+      "discoveredFiles": 20,
+      "limit": 10000,
+      "sourceContentRead": false
+    },
+    "warnings": []
+  },
+  "evidenceValidation": {
+    "ok": true,
+    "required": true,
+    "executed": false,
+    "verifiedFiles": 1,
+    "diagnostics": [
+      {
+        "code": "evidence_valid",
+        "status": "passed",
+        "target": "openspec/changes/add-fixture-test/evidence/V-01.json",
+        "evidenceId": "V-01",
+        "kind": "local-command",
+        "locator": "[TC-01] 两数相加",
+        "locatorMatches": 2,
+        "fresh": true,
+        "trust": "local-captured",
+        "message": null
+      }
+    ]
+  },
+  "errors": [],
+  "warnings": []
+}

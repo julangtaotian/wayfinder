@@ -1,0 +1,102 @@
+{
+  "changeName": "reduce-skill-read-amplification",
+  "schemaName": "spec-driven",
+  "planningHome": {
+    "kind": "repo",
+    "root": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow",
+    "changesDir": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes",
+    "defaultSchema": "spec-driven"
+  },
+  "changeRoot": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification",
+  "artifactPaths": {
+    "proposal": {
+      "outputPath": "proposal.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/proposal.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/proposal.md"
+      ]
+    },
+    "specs": {
+      "outputPath": "specs/**/*.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/specs/**/*.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/specs/ai-context-efficiency/spec.md"
+      ]
+    },
+    "design": {
+      "outputPath": "design.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/design.md",
+      "existingOutputPaths": [
+        "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/design.md"
+      ]
+    },
+    "tasks": {
+      "outputPath": "tasks.md",
+      "resolvedOutputPath": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow/openspec/changes/reduce-skill-read-amplification/tasks.md",
+      "existingOutputPaths": []
+    }
+  },
+  "isPlanningComplete": false,
+  "isComplete": false,
+  "applyRequires": [
+    "tasks"
+  ],
+  "nextSteps": [
+    "Run openspec instructions tasks --change \"reduce-skill-read-amplification\" --json before writing that artifact."
+  ],
+  "actionContext": {
+    "mode": "repo-local",
+    "sourceOfTruth": "repo",
+    "planningArtifacts": [
+      "proposal",
+      "specs",
+      "design",
+      "tasks"
+    ],
+    "linkedContext": [],
+    "allowedEditRoots": [
+      "/Users/lvshuai/Desktop/learn/frontend-ai-workflow"
+    ],
+    "requiresAffectedAreaSelection": false,
+    "constraints": [
+      "Repo-local change artifacts and implementation edits are scoped to this project."
+    ]
+  },
+  "artifacts": [
+    {
+      "id": "proposal",
+      "outputPath": "proposal.md",
+      "status": "done",
+      "requires": []
+    },
+    {
+      "id": "specs",
+      "outputPath": "specs/**/*.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "design",
+      "outputPath": "design.md",
+      "status": "done",
+      "requires": [
+        "proposal"
+      ]
+    },
+    {
+      "id": "tasks",
+      "outputPath": "tasks.md",
+      "status": "ready",
+      "requires": [
+        "specs",
+        "design"
+      ]
+    }
+  ],
+  "root": {
+    "path": "/Users/lvshuai/Desktop/learn/frontend-ai-workflow",
+    "source": "nearest"
+  }
+}

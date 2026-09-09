@@ -1,0 +1,74 @@
+{
+  "baseline": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "current": "ca472ca3ec6857f10af92364142dda377cd657c0",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "source": "existing user configuration",
+  "maxRuns": 2,
+  "timeoutMs": null,
+  "aggregateInputStop": 250000,
+  "order": [
+    "understanding-before",
+    "understanding-after"
+  ],
+  "metrics": [
+    "CLI usage.input_tokens / cached_input_tokens / output_tokens",
+    "wall clock",
+    "completed command count",
+    "tool result UTF-8 bytes",
+    "frozen criteria manual adjudication"
+  ],
+  "limits": [
+    "每场景每版本一次，探索性配对，不是统计显著性结论",
+    "显式选择技能，不能衡量自然触发准确率",
+    "统一只读沙箱，不能证明写操作保护能力",
+    "小型合成 Vue fixture，不代表真实大仓库",
+    "使用实际模型工具事件，工具输出字节不是磁盘读取字节"
+  ],
+  "platformRisk": {
+    "high": true,
+    "items": [
+      "路径",
+      "子进程",
+      "临时fixture",
+      "机器诊断"
+    ],
+    "platform": "darwin-arm64",
+    "scope": "仅评测脚本与隔离项目，不修改产品或 CI，未声称新五平台证据"
+  },
+  "scope": "one complete understanding pair",
+  "candidate": "working-tree",
+  "hashes": {
+    "skills/frontend-test/SKILL.md": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+    "skills/frontend-workflow-bootstrap/SKILL.md": "3c2015c531a726f7952eb5130b2c5a290c058374bef5bc16a6c6b4b59eab3505",
+    "references/managed-test-workflow.md": "2064aed5179df84b472823a18da4b7ca5901e4bb1efdb7d0aef21da2392ca35d",
+    "references/workflow-initialization.md": "b12b7cfeb1fd9cce98e835745ce9ec93bcac327a146610e5095d803392450803"
+  },
+  "fixtureHashes": {
+    "AGENTS.md": "ca3f07e01efe6630ef269fa3420450153c478f80b4fe8fffd4cb3fc50ba3dd28",
+    "README.md": "4aebcb54e4e6fa679eea33678a777ecc42eb103332fcaaf2545687d6faae41bd",
+    "index.html": "3b87d4375bb5b2e70f90ccd352f46fe268bc3fbacc4fa9bc3f38c7ca7f82f15e",
+    "package.json": "91334ab4f2808a32f4c5e56e1b8313d0220b4e22b4204c4d5be26063654c08a9",
+    "src/App.vue": "1329479a366a2340c13d323f9391cfc71c982418ca0f63e7c1a9dede3d6e65ca",
+    "src/data/orders.mjs": "9c59198767acc5245cdc9e2e07d1f43de7e4a68c91fa4516e25041252fe02d5b",
+    "src/main.mjs": "fc77d6694de55892ab09e6957b93c62c0c1b1e0d99803099f4d16755f2540810",
+    "src/order-filter.mjs": "eb55158e5148c87eab4dccf94f9c6ae7574a1fc95d2117bfe600741d4481d801",
+    "src/pages/OrderList.vue": "1e2196d8564ac4a78a20832beffc2365e054c05a1ceb6201e8e0f996d7ce4877",
+    "src/settings.mjs": "9313feb903209c639f53b1bb224670482edd31edca795b7b0691bf12b9ff3631",
+    "tests/order-filter.test.mjs": "0c605a4bf486506159087928dfb26b3092cb3d6aefbdcd903bd95c5ce23746da"
+  },
+  "initialAccount": {
+    "fiveHourUsedPercent": 56,
+    "weekUsedPercent": 38
+  },
+  "authorization": "用户明确授权完整项目理解新旧对照，两版各一次自然完成，无自动重试或额外场景",
+  "gates": {
+    "quality": 4,
+    "unrelatedInitializationGuideReadsAfter": 0,
+    "inputReductionTargetPercent": 20
+  },
+  "limitations": [
+    "一个小型Vue项目的显式技能样本，不代表完整深度分析或所有仓库",
+    "顺序先旧后新，无随机重复，缓存与服务时间不完全可控"
+  ]
+}

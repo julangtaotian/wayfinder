@@ -1,0 +1,35 @@
+{
+  "checks": {
+    "managedPlanImplementVerifyAndGuardrailsPreserved": true,
+    "managedRuntimePreserved": true,
+    "initializationMigrationAndGuardrailsPreserved": true
+  },
+  "metrics": {
+    "test": {
+      "beforeBytes": 8398,
+      "afterBytes": 2137,
+      "reductionPercent": 74.55,
+      "within2400Bytes": true
+    },
+    "bootstrap": {
+      "beforeBytes": 4782,
+      "afterBytes": 2047,
+      "reductionPercent": 57.19,
+      "within2400Bytes": true
+    }
+  },
+  "hashes": {
+    "skills/frontend-test/SKILL.md": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+    "skills/frontend-workflow-bootstrap/SKILL.md": "3c2015c531a726f7952eb5130b2c5a290c058374bef5bc16a6c6b4b59eab3505",
+    "references/managed-test-workflow.md": "2064aed5179df84b472823a18da4b7ca5901e4bb1efdb7d0aef21da2392ca35d",
+    "references/workflow-initialization.md": "b12b7cfeb1fd9cce98e835745ce9ec93bcac327a146610e5095d803392450803"
+  },
+  "modelTrial": {
+    "started": false,
+    "status": "budget_stopped_before_start",
+    "fiveHourUsedPercent": 65,
+    "stopThresholdPercent": 55,
+    "extraModelRuns": 0
+  },
+  "scope": "移动后的复杂流程段落与原文逐字核对，仅规范相对引用和插件根解析说明；不是独立模型行为测试"
+}
