@@ -396,6 +396,15 @@
       "entryPath": "requirements/REQ-2026-044-skill-efficiency-and-integrity.md",
       "archivePath": "requirements/archive/2026/REQ-2026-044-skill-efficiency-and-integrity.md",
       "change": "optimize-skill-efficiency-and-integrity"
+    },
+    {
+      "id": "REQ-2026-045",
+      "title": "REQ-2026-045：以执行轨迹修正技能读取成本",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-045-skill-read-efficiency.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-045-skill-read-efficiency.md",
+      "change": "reduce-skill-read-amplification"
     }
   ]
 }
