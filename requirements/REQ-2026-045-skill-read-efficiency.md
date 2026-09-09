@@ -20,6 +20,7 @@
 | D-01 | 优化目标 | 已确认 | 针对评测暴露的成本问题实施更有效的技能优化，保留已有成果并注意额度 | 本次及前序用户指令 |
 | D-02 | 兼容边界 | 项目默认 | 保留技能名称、隐式策略、受管测试门禁、深度分析完整性和预览写入边界；只重组两个技能及其文档，并维护对应既有合同测试 | 现有 SKILL.md、AGENTS.md |
 | D-03 | 证据口径 | 项目默认 | 本地结构收益与模型实测分开；按用户 2026-09-09 授权先运行一组同题新旧对照；达标后最多再运行一组局部理解对照，超时或额度达到停止线即停，不重置额度，不以截断结果计算收益 | outputs/skill-benefit-evaluation/report.md、用户额度约束 |
+| D-04 | 复杂模式修正 | 已确认 | 修正复杂验证中暴露的机器字段混写、逐文件账本遗漏和重复读取/检查；多轮本地修改共用最终交付 CI 门禁，中间轮保持待执行；保持现有门禁、保护边界及已取得的局部模式收益 | 用户 2026-09-09 指令、`outputs/complex-mode-20260909/report.md` |
 
 ## 范围
 
@@ -27,10 +28,12 @@
 
 - 短入口与条件参考拆分；只读回答后的终止边界；现有指南相对引用保持有效。
 - 保留旧执行轨迹，运行本地回归、官方验证以及有界候选试验。
+- 受管验证字段示例、深度逐文件账本合同，以及复杂模式的有界读取和单次收尾检查。
+- 多轮本地修改共用最终候选的外部 CI 门禁，中间轮保持待执行。
 
 ### 不包含
 
-- 更换模型、运行时、CI、依赖、安装版本，改写其他八个技能或归档算法。
+- 更换模型、运行时、CI 工作流、依赖、安装版本，改写其余七个技能或归档算法。
 
 ## 当前行为
 
@@ -38,24 +41,24 @@ frontend-test 入口包含完整 Plan/Implement/Verify；bootstrap 的局部理�
 
 ## 期望行为
 
-局部断言与调用链问题只读取可回答问题的源码和适用项目规则，回答后结束。请求受管测试或初始化时才加载对应完整流程，保留原门禁。未知事实可定向补读，不能用固定读文件次数牺牲正确性。
+局部断言与调用链问题只读取可回答问题的源码和适用项目规则，回答后结束。请求受管测试或初始化时才加载对应完整流程，保留原门禁。受管验证使用单值机器字段，深度初始化交付可审计的逐文件分类账本；复杂流程复用已有检查结果，避免无事实变化的全文回传和重复检查。未知事实可定向补读，不能用固定读文件次数牺牲正确性。
 
 ## 交互状态矩阵
 
 | 状态 | 覆盖决定 | 触发或前置条件 | 期望结果 | 验证方式 | 关联验收 | 不适用理由 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 初始（已有数据） | 覆盖 | 传入局部源码问题 | 选择短入口 | 人工 | A-01 | — |
-| 用户操作 | 覆盖 | 请求受管测试或初始化 | 加载完整流程并遵守门禁 | 人工 | A-02 | — |
+| 用户操作 | 覆盖 | 请求受管测试或初始化 | 加载完整流程、使用合法机器字段并交付逐文件账本 | 自动+人工 | A-02、A-04 | — |
 | 刷新 | 覆盖 | 用户修改所选源文件 | 重读受影响证据 | 人工 | A-02 | — |
 | 空态 | 覆盖 | 无活动变更 | 局部分析不阻塞，受管操作仍校验 | 人工 | A-02 | — |
-| 错误态 | 覆盖 | 工具失败或关键事实不足 | 定向补查并说明限制 | 人工 | A-02 | — |
+| 错误态 | 覆盖 | 字段无效、文件未处理、工具失败或关键事实不足 | 门禁阻塞；定向补查并说明限制，不以自述替代证据 | 自动+人工 | A-02、A-04 | — |
 | 卸载 | 不适用 | 无运行中的 UI 或订阅变更 | — | — | — | 本次只有技能文档重组 |
 
 ## 关联变更范围
 
 | 变更 | 决策范围 | 验收范围 |
 | --- | --- | --- |
-| reduce-skill-read-amplification | D-01、D-02、D-03 | A-01、A-02、A-03 |
+| reduce-skill-read-amplification | D-01、D-02、D-03、D-04 | A-01、A-02、A-03、A-04 |
 
 ## 修订记录
 
@@ -71,13 +74,15 @@ frontend-test 入口包含完整 Plan/Implement/Verify；bootstrap 的局部理�
 
 | R-05 | 2026-09-09 | D-02、D-03 | A-02、A-03 | 用户授权复杂模式及额度中断后恢复；受管复验和深度地图核心结果经独立校验通过，但机器字段需自修复、逐文件账本缺失、重复读取开销仍待优化；保留中断及评测设置失误成本，不宣称复杂模式全面通过或效率收益 |
 
+| R-06 | 2026-09-09 | D-04 | A-02、A-04 | 用户授权开启下一批修改；恢复需求为实施中，新增机器字段单值示例、逐文件账本交付、复杂流程去重和最终候选 CI 规则；V-01、V-02 恢复并完成本地验证，新增 V-04，V-05 保留真实矩阵待执行，原 R-03/R-04 模型对照证据保持历史事实 |
+
 ## 兼容性与风险
 
 跨平台高风险：是；既有合同测试增加参考文件路径读取，沿用 path.resolve/path.join 和标准 UTF-8 读取；影响 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64。没有改动产品路径算法、运行时或 CI；真实新矩阵仍待用户提交后执行。临时评测涉及子进程和隔离 fixture，按已有跨平台清单约束，仅取得本机证据。模型可能仍多读，静态体积不能证明行为或额度收益。
 
 ## 测试与验证
 
-- 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs`；基线证据：Git ca472ca3 受跟踪手写测试；选择理由：维护同一技能的现有合同，另复用 workflow-context、verification-evidence-integrity、plugin-document-references 与 workflow-archive-integrity 回归，不新增匹配措辞的测试。
+- 测试文件策略：复用；目标路径：`tests/frontend-test-workflow.test.mjs`；基线证据：Git ca472ca3 受跟踪手写测试；选择理由：维护同一技能的现有合同，另复用 workflow-context、verification-evidence-integrity、fast-change-routing、plugin-document-references 与 workflow-archive-integrity 回归，不新增匹配措辞的测试。
 - 独立测试方案：不需要；触发条件：本次只重组 Markdown，使用既有回归与人工模式核对。
 - 验证范围：全量；执行命令：`npm test`、`npm run validate`、`npm run validate:official`；选择理由：AGENTS.md 要求插件提交前统一验证。
 - 人工检查：两条短路由和受管流程保存性、六类模式边界、实际读取入口体积、有限模型轨迹。
@@ -86,23 +91,27 @@ frontend-test 入口包含完整 Plan/Implement/Verify；bootstrap 的局部理�
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | npm test、npm run validate、npm run validate:official | 2026-09-08 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
-| V-02 | 人工 | 核对两技能路由与原复杂流程条款；检查入口字节与引用 | 2026-09-08 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
+| V-01 | 自动 | npm test、npm run validate、npm run validate:official | 2026-09-09 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
+| V-02 | 人工 | 核对技能路由、复杂流程条款、单值字段、逐文件账本和最终候选 CI 合同 | 2026-09-09 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
 | V-03 | 人工 | R-03人工核对完整回答与用量事件；仅补跑旧版自然完成，与同日新版构成完整样本，质量均4/4、无关指南0、输入降低32.68%；不外推整体额度 | 2026-09-09 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
+| V-04 | 自动+人工 | 聚焦合同验证机器字段、逐文件账本、去重与 CI 时机规则；核对复杂流程不删除门禁 | 2026-09-09 | 通过 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
+| V-05 | 自动 | 仓库真实五平台 CI 矩阵 | 待执行 | 计划 | `openspec/changes/reduce-skill-read-amplification/verification.md` |
 
 ## 验收标准
 
 - [x] A-01：两个只读入口各不超过 2400 UTF-8 字节，复杂模式详情按意图加载，静态收益不冒充模型收益。
-- [x] A-02：受管测试、初始化、深度地图、用户内容保护及证据门禁没有遗漏，现有回归通过。
+- [ ] A-02：受管测试、初始化、深度地图、用户内容保护及证据门禁没有遗漏，现有回归通过。
 - [x] A-03：报告真实读取、质量、时间和可得用量；每次 75 秒上限，总计最多四次模型运行；每次结束检查额度，账户 5 小时已用达到 22% 时停止；不保证统计收益。
+- [x] A-04：复杂受管验证提供合法单值字段示例；深度初始化交付逐文件分类账本；无事实变化时不重复全文回传或相同健康检查；多轮本地修改只在最终候选提交后执行交付 CI。
 
 ## 验收—证据映射
 
 | 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
 | --- | --- | --- | --- | --- | --- | --- |
 | A-01 | 入口读取面收窄 | D-01 | 自动+人工 | `openspec/changes/reduce-skill-read-amplification/verification.md` | 两入口满足约束并分流 | V-02 |
-| A-02 | 原功能与保护保留 | D-02 | 自动+人工 | `openspec/changes/reduce-skill-read-amplification/verification.md` | 回归通过且模式核对无遗漏 | V-01、V-02 |
+| A-02 | 原功能与保护保留 | D-02、D-04 | 自动+人工 | `openspec/changes/reduce-skill-read-amplification/verification.md` | 本地回归通过；真实五平台矩阵待提交后执行 | V-01、V-02、V-04、V-05 |
 | A-03 | 实测与预算诚实 | D-03 | 人工 | `openspec/changes/reduce-skill-read-amplification/verification.md` | 有界执行，明确成功、失败和未知 | V-03 |
+| A-04 | 复杂模式可审计且避免重复工作 | D-04 | 自动+人工 | `openspec/changes/reduce-skill-read-amplification/verification.md` | 字段、账本和检查去重合同均可达 | V-04 |
 
 ## 待确认问题
 

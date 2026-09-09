@@ -405,7 +405,9 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   const checkSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-workflow-check', 'SKILL.md'), 'utf8');
 
   assert.match(reference, /每个纳入文件分批读取/);
-  assert.match(reference, /扫描报告/);
+  assert.match(reference, /字段固定为 `path`、`status`、`classification`、`evidence\/reason`/u);
+  assert.match(reference, /逐文件处理账本属于本次扫描的必要交付/u);
+  assert.match(reference, /只执行一次 `check-project\.mjs --summary`/u);
   assert.match(reference, /frontend\.md/);
   assert.match(reference, /已确认事实/);
   assert.match(reference, /待确认项/);
@@ -430,6 +432,14 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(deepWorkflow, /Never create `project-scan\.md`/);
   assert.match(deepWorkflow, /do not describe the result as complete/);
   assert.match(deepWorkflow, /analysisCoveredFiles/);
+  assert.match(deepWorkflow, /exactly one row per included path/u);
+  assert.match(deepWorkflow, /`path`, `status` \(`read` or `unprocessed`\), `classification`, and `evidence\/reason`/u);
+  assert.match(deepWorkflow, /A bare file list, hash map or `complete` statement is not a classified ledger/u);
+  assert.match(deepWorkflow, /check-project\.mjs --summary` once as the final health check/u);
+  assert.match(deepWorkflow, /do not repeat full-file dumps or identical health checks/u);
+  assert.match(initialization, /do not read the inspector, bootstrap, update or checker implementation/u);
+  assert.match(initialization, /Re-run it only when a later write changed managed state/u);
+  assert.match(initialization, /do not emit every protected file's full content again/u);
   assert.match(checkSkill, /deepAnalysis\.analysis\.status/);
 });
 

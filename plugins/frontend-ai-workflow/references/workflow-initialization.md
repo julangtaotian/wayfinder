@@ -4,9 +4,9 @@ Read only for ordinary initialization, explicit deep initialization or a complet
 
 ## Workflow
 
-1. Read the repository's existing `AGENTS.md` files and run `git status --short`.
+1. Read the repository's existing `AGENTS.md` files and run `git status --short` once. Keep the root, initial status and relevant-file state as the current initialization snapshot; reuse it until a write or external change invalidates it.
 2. Read `./project-detection.md` and `./managed-files.md` relative to this reference. For explicit deep initialization or a complete project map, also read `./deep-project-analysis.md`.
-3. Run the inspector without changing the repository:
+3. Run the inspector without changing the repository. Use its structured output directly; do not read the inspector, bootstrap, update or checker implementation unless a concrete command failure or missing stable field requires diagnosis:
 
    ```bash
    node <plugin-root>/scripts/inspect-project.mjs --target <repository-root>
@@ -26,8 +26,14 @@ Read only for ordinary initialization, explicit deep initialization or a complet
    ```
 
 7. For deep initialization, read `./deep-initialization-workflow.md` and follow its coverage and managed-write procedure instead of steps 4–6.
-8. Run the workflow checker and report any bundled OpenSpec runtime failure separately from project failures.
-9. Re-run `git status --short` and summarize only files created by the workflow.
+8. After all authorized writes and status synchronization, run the workflow checker once in summary mode and report any bundled OpenSpec runtime failure separately from project failures:
+
+   ```bash
+   node <plugin-root>/scripts/check-project.mjs --target <repository-root> --summary
+   ```
+
+   Re-run it only when a later write changed managed state or the first result exposed a resolvable diagnostic. Do not run a full check before the map is complete merely to rediscover a known pending state.
+9. Re-run `git status --short` once after writing and summarize only workflow-created or workflow-updated files. For content protection, report changed paths and hash mismatches; do not emit every protected file's full content again after it was already read.
 
 ## Legacy Migration
 

@@ -742,6 +742,10 @@ test('[TC-06] 跨平台证据执行与发布边界', () => {
   const frontendTestWorkflow = fs.readFileSync(path.join(repositoryRoot, 'plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
   assert.match(frontendTestWorkflow, /verification-evidence\.mjs/u);
   assert.match(frontendTestWorkflow, /zero-locator run must not overwrite an existing passed manifest/u);
+  assert.match(frontendTestWorkflow, /result value is exactly one allowed status/u);
+  assert.match(frontendTestWorkflow, /evidence value contains only one or more backtick-wrapped, safe project-relative paths/u);
+  assert.match(frontendTestWorkflow, /never append them to the result or evidence value/u);
+  assert.match(frontendTestWorkflow, /openspec\/changes\/add-math\/evidence\/V-01\.json/u);
   assert.match(frontendChangeSkill, /must not rerun project tests, builds, browsers or external CI/u);
   assert.match(frontendChangeSkill, /archive_partial_failure/u);
   assert.match(structure, /scripts\/verification-evidence\.mjs/u);

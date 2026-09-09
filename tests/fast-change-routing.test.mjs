@@ -167,6 +167,8 @@ test('受管修正恢复真实状态并且同一聚焦命令只执行一次', ()
   assert.match(changeSkill, /Do not run unrelated full verification for this correction alone/u);
   assert.match(changeSkill, /identify every invalidated required record and rerun only those records/u);
   assert.match(changeSkill, /External CI evidence must describe the exact revision now being delivered/u);
+  assert.match(changeSkill, /do not require a commit or CI run after each round/u);
+  assert.match(changeSkill, /any later relevant edit invalidates that result/u);
 });
 
 test('受管修正遇到实质变化返回 Revise 且不削弱完成门禁', () => {

@@ -37,7 +37,13 @@ The inspector and validators are read-only. The evidence command defaults to a z
 1. Preview the narrowest recorded focused command with `verification-evidence.mjs`, inspect its normalized executable, working directory, V-* target and outputs target, then repeat with `--write` when execution is authorized. Do not promote a coverage or full-suite command to focused verification.
 2. Require exit code 0 and at least one exact planned test-locator match. A zero-test result is blocked even when the process exits successfully, and a failed or zero-locator run must not overwrite an existing passed manifest.
 3. Classify the actual outcome as one of: `通过`, `产品实现缺陷`, `测试设计错误`, `测试代码错误`, `需求歧义`, `环境阻塞`, or `历史无关失败`. Keep focused, related, full, visual, and manual evidence distinct.
-4. Update a case and its `V-*` record to pass only after a real successful execution generated `openspec/changes/<change>/evidence/<V-ID>.json`; reference that JSON alongside any human-readable summary. Failed or unexecuted work remains explicit.
+4. Update a case and its `V-*` record to pass only after a real successful execution generated `openspec/changes/<change>/evidence/<V-ID>.json`. Keep machine fields atomic: the result value is exactly one allowed status, and the evidence value contains only one or more backtick-wrapped, safe project-relative paths. Put command summaries, locator counts and explanations in the execution-content field or a separate verification summary; never append them to the result or evidence value. For example:
+
+   ```markdown
+   | V-01 | 自动 | `node --test tests/math.test.mjs`；命中 TC-01 | 2026-09-09 | 通过 | `openspec/changes/add-math/evidence/V-01.json` |
+   ```
+
+   A passed test-plan case follows the same contract: `结果分类：通过` and `证据：` followed only by the backtick-wrapped V-* path. Failed or unexecuted work remains explicit.
 5. For visual cases, delegate browser capture and comparison to `$frontend-ui-review` and reference its page, viewport, scenario, run, and persisted artifacts. For other manual cases, record device or environment, operations, observable checks, and evidence paths.
 6. Run the complete validator only after all applicable cases and verification records have valid passing evidence. The validator recalculates the selected requirement/test-plan semantic binding, workspace freshness, and every persisted log or artifact descriptor; it never reruns the recorded command.
 
