@@ -2,9 +2,9 @@
 
 ## 基本信息
 
-- 状态：已实现
-- 需求：`requirements/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md`
-- 变更：modularize-developer-effectiveness-benchmark
+- 状态：已验证
+- 需求：`requirements/archive/2026/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md`
+- 变更：2026-09-10-modularize-developer-effectiveness-benchmark
 - 需求修订基线：R-01
 - 默认聚焦命令：`node --test tests/developer-effectiveness-benchmark.test.mjs tests/static-check.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test tests/developer-effectiveness-benchmark.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-developer-effectiveness-benchmark/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-10-modularize-developer-effectiveness-benchmark/evidence/V-01.json`
 
 ### TC-02：最小静态检查范围与诊断
 
@@ -61,7 +61,7 @@
 - 聚焦命令：`node --test tests/static-check.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-developer-effectiveness-benchmark/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-09-10-modularize-developer-effectiveness-benchmark/evidence/V-02.json`
 
 ### TC-03：统一验证集成与失败停止
 
@@ -83,11 +83,11 @@
 - 聚焦命令：`node --test tests/static-check.test.mjs`
 - 关联验证：V-03
 - 结果分类：通过
-- 证据：`openspec/changes/modularize-developer-effectiveness-benchmark/evidence/V-03.json`
+- 证据：`openspec/changes/archive/2026-09-10-modularize-developer-effectiveness-benchmark/evidence/V-03.json`
 
 ### TC-04：五平台 CI 外部证据分层
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P1
 - 验证类型：人工
 - 测试层级：人工
@@ -104,5 +104,5 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-04
-- 结果分类：未执行
-- 证据：待最终提交后写入 `openspec/changes/modularize-developer-effectiveness-benchmark/verification.md`
+- 结果分类：通过
+- 证据：`openspec/changes/archive/2026-09-10-modularize-developer-effectiveness-benchmark/verification.md`

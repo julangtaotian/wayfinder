@@ -35,7 +35,7 @@
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
+  "requirement": "requirements/archive/2026/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [

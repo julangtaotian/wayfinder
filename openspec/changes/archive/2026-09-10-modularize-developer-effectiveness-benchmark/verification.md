@@ -25,5 +25,6 @@ V-03 首次执行暴露的是统一验证测试中对新增 `static` 步骤的�
 
 ## 外部边界
 
-- V-04 保持计划状态：尚未形成最终候选提交，也未取得同一提交的共享任务与 darwin-arm64、darwin-x64、linux-x64、linux-arm64、win32-x64 全绿证据。
-- 因此本记录只确认本地实现与门禁完成，不宣称跨平台发布已经通过。
+- V-04 已人工复核通过：GitHub Actions [Validate #108](https://github.com/julangtaotian/wayfinder/actions/runs/34462465363) 对应精确提交 `09be07c869b49ae298d8d491afbc0a055013cf72`，由 push 触发，总状态为 Success，总耗时 4 分 21 秒。
+- `Shared validation (linux-x64)`、`Validate (darwin-arm64)`、`Validate (darwin-x64)`、`Validate (linux-x64)`、`Validate (linux-arm64)`、`Validate (win32-x64)` 六个任务全部成功。
+- darwin-arm64、darwin-x64、linux-arm64、linux-x64、win32-x64 五个平台报告均已产出；本次外部事实通过已登录 GitHub Actions 页面核对，不冒充本地命令证据。

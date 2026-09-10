@@ -10,12 +10,12 @@
     "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
     "source": "node"
   },
-  "completedAt": "2026-09-10T09:24:55.357Z",
+  "completedAt": "2026-09-10T09:56:13.297Z",
   "evidenceId": "V-02",
   "exitCode": 0,
   "git": {
     "available": true,
-    "commit": "692a863fc6959e8487c0be44272325bf0beabe97",
+    "commit": "09be07c869b49ae298d8d491afbc0a055013cf72",
     "dirty": true
   },
   "kind": "local-command",
@@ -24,18 +24,18 @@
   "logs": [
     {
       "bytes": 469,
-      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-02/20260910092453063-89395-fccf00b5/stdout.log",
-      "sha256": "0ff467ce2f9578939e0ea4b8225d6b361e59cfac8ef43f2547a030ee9258f222",
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-02/20260910095612916-10283-0e45ab1e/stdout.log",
+      "sha256": "5a12424760378a0517f6b55963c7e3a92a2c32179159fe1759cc264f9c8b19b6",
       "stream": "stdout"
     },
     {
       "bytes": 0,
-      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-02/20260910092453063-89395-fccf00b5/stderr.log",
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-02/20260910095612916-10283-0e45ab1e/stderr.log",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
+  "requirement": "requirements/archive/2026/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [
@@ -49,14 +49,14 @@
       "D-06"
     ],
     "revision": "R-01",
-    "sha256": "f76e0c174929279c376960f8fcefe1acdeee8b943edb1d4bc9b02a23f1d8348f",
+    "sha256": "e826332dd9fb7ed781156adfd7b32d72a149b8c5bc308bae4d70e9b774b1658b",
     "testCaseIds": [
       "TC-02"
     ],
     "verificationId": "V-02",
     "version": 2
   },
-  "startedAt": "2026-09-10T09:24:53.064Z",
+  "startedAt": "2026-09-10T09:56:12.918Z",
   "status": "passed",
   "workspaceFingerprint": "b097b3d7638ac46a3e6b94e6cb0e9fc9d48fbead011e4bbf95d90b1c86022f79"
 }
