@@ -66,6 +66,11 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
   const testCommand = buildTestCommand({ root: repositoryRoot, group: selectedScope });
   const steps = [
     {
+      id: 'static',
+      label: 'JavaScript 静态语法',
+      args: [path.join(repositoryRoot, 'scripts', 'static-check.mjs')],
+    },
+    {
       id: 'footprint',
       label: '仓库体积与生命周期预算',
       args: [path.join(pluginScripts, 'repository-footprint.mjs'), '--target', repositoryRoot],

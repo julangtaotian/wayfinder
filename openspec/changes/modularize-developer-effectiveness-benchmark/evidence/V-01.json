@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "modularize-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "--test",
+      "tests/developer-effectiveness-benchmark.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-10T09:36:01.530Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "692a863fc6959e8487c0be44272325bf0beabe97",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 基准兼容入口保持单向模块边界",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 1613,
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-01/20260910092453058-89394-897d7d88/stdout.log",
+      "sha256": "2046a6ccd526c05d1687009f7ad9053023852b5eb92fc0d11233c86a11d61f7d",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-01/20260910092453058-89394-897d7d88/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03"
+    ],
+    "revision": "R-01",
+    "sha256": "0ea0bf537b9cddf14740bd894e849775fb1c1c372f6ce1bb232f3ef6f56efa9e",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 2
+  },
+  "startedAt": "2026-09-10T09:24:53.059Z",
+  "status": "passed",
+  "workspaceFingerprint": "b097b3d7638ac46a3e6b94e6cb0e9fc9d48fbead011e4bbf95d90b1c86022f79"
+}

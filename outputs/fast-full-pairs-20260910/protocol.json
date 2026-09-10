@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-09-10",
+  "purpose": "对当前安装版插件执行三组快速流程与完整流程配对评测",
+  "pluginBuild": "0.18.0+codex.20260910061812",
+  "model": "gpt-5.6-terra",
+  "reasoning": "medium",
+  "pairCount": 3,
+  "runCount": 6,
+  "order": [
+    "search-fast",
+    "search-full",
+    "status-full",
+    "status-fast",
+    "pagination-fast",
+    "pagination-full"
+  ],
+  "timeoutSeconds": {
+    "fast": 300,
+    "full": 600
+  },
+  "maxExternalReworksPerRun": 1,
+  "qualityScore": {
+    "hiddenAcceptance": 5,
+    "visibleVerification": 1,
+    "writeScope": 1.5,
+    "protectedFiles": 1,
+    "routeContract": 1,
+    "truthfulReport": 0.5,
+    "passThreshold": 8
+  },
+  "stoppingRule": "每组结束检查共享额度；周窗口达到 92% 或 5 小时窗口达到 75% 时不启动下一组，不自动使用重置额度。",
+  "retainedArtifacts": "协议、用例、六份事件、运行汇总、结果与报告；临时工作区和运行脚本在汇总后删除。",
+  "amendments": [
+    {
+      "afterRun": "search-full",
+      "reason": "首组冻结需求名 REQ-2026-SEARCH 不符合完整流程要求的数字编号，功能验收有效但归档证据无效；未运行样本改用合法数字编号。",
+      "affectedFutureRuns": [
+        "status-full",
+        "status-fast",
+        "pagination-fast",
+        "pagination-full"
+      ],
+      "scoringImpact": "search-full 的完整生命周期完成项单独标记为未通过；不改变隐藏功能断言、成本或返工统计。"
+    }
+  ]
+}

@@ -330,6 +330,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
 
   const allSteps = buildVerificationSteps(verificationRoot);
   assert.deepEqual(allSteps.map((step) => step.id), [
+    'static',
     'footprint',
     'tests',
     'structure',
@@ -340,6 +341,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   ]);
   const sharedSteps = buildVerificationSteps(verificationRoot, { scope: 'shared' });
   assert.deepEqual(sharedSteps.map((step) => step.id), [
+    'static',
     'footprint',
     'tests',
     'structure',
@@ -407,8 +409,8 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.equal(failed.code, 'verification_step_failed');
   assert.equal(failed.scope, 'all');
   assert.equal(failed.failedStep, 'openspec');
-  assert.deepEqual(failed.completed, ['footprint', 'tests', 'structure']);
-  assert.deepEqual(executed, ['footprint', 'tests', 'structure', 'openspec']);
+  assert.deepEqual(failed.completed, ['static', 'footprint', 'tests', 'structure']);
+  assert.deepEqual(executed, ['static', 'footprint', 'tests', 'structure', 'openspec']);
   assert.deepEqual(lifecycle, ['prepare', 'cleanup']);
   const expectedTempRoot = path.join(verificationRoot, 'outputs', 'verify-runtime', 'tmp');
   assert.ok(tempRoots.every((tempRoot) => tempRoot === expectedTempRoot));

@@ -12,6 +12,7 @@
     "test:repository": "node scripts/test-groups.mjs repository",
     "test:workflow": "node scripts/test-groups.mjs workflow",
     "test:platform": "node scripts/test-groups.mjs platform",
+    "check:static": "node scripts/static-check.mjs",
     "validate": "node plugins/frontend-ai-workflow/scripts/validate-structure.mjs",
     "validate:official": "node scripts/official-validator-preflight.mjs",
     "cleanup:official-validator-cache": "node scripts/official-validator-preflight.mjs --cleanup-cache",

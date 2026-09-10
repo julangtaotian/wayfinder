@@ -1,0 +1,40 @@
+[
+  {
+    "id": "search",
+    "title": "搜索关键词归一化",
+    "changeName": "normalize-search-query",
+    "modulePath": "src/search.js",
+    "testPath": "tests/search.test.mjs",
+    "functionName": "matchesQuery",
+    "requirement": "修复 matchesQuery：关键词先去除首尾空白并按不区分大小写匹配 name 或 code；空关键词匹配全部项目；缺少 name 或 code 时按空字符串处理。保持函数名称、参数和布尔返回值不变，不增加依赖。",
+    "initialSource": "export function matchesQuery(item, query) {\n  return item.name.includes(query);\n}\n",
+    "visibleTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { matchesQuery } from '../src/search.js';\n\ntest('[TC-01] 名称精确匹配', () => {\n  assert.equal(matchesQuery({ name: 'Alpha', code: 'A-01' }, 'Alpha'), true);\n});\n",
+    "evaluatorTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { matchesQuery } from '../src/search.js';\n\ntest('搜索关键词归一化隐藏验收', () => {\n  assert.equal(matchesQuery({ name: 'Alpha Team', code: 'A-01' }, ' alpha '), true);\n  assert.equal(matchesQuery({ name: 'Alpha Team', code: 'A-01' }, 'a-01'), true);\n  assert.equal(matchesQuery({ name: 'Alpha Team', code: 'A-01' }, 'BETA'), false);\n  assert.equal(matchesQuery({ name: 'Alpha Team', code: 'A-01' }, '   '), true);\n  assert.equal(matchesQuery({ name: null }, 'alpha'), false);\n});\n"
+  },
+  {
+    "id": "status",
+    "title": "状态文案与未知值兜底",
+    "changeName": "normalize-status-label",
+    "requirementFile": "requirements/REQ-2026-102.md",
+    "modulePath": "src/status.js",
+    "testPath": "tests/status.test.mjs",
+    "functionName": "statusLabel",
+    "requirement": "修复 statusLabel：active、pending、archived 分别显示“进行中”“待处理”“已归档”；输入先去除首尾空白并忽略大小写；空值或未知值统一显示“未知状态”。保持同步函数和字符串返回值，不增加依赖。",
+    "initialSource": "export function statusLabel(status) {\n  if (status === 'active') return '进行中';\n  return status;\n}\n",
+    "visibleTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { statusLabel } from '../src/status.js';\n\ntest('[TC-01] active 状态显示中文', () => {\n  assert.equal(statusLabel('active'), '进行中');\n});\n",
+    "evaluatorTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { statusLabel } from '../src/status.js';\n\ntest('状态文案隐藏验收', () => {\n  assert.equal(statusLabel(' pending '), '待处理');\n  assert.equal(statusLabel('ARCHIVED'), '已归档');\n  assert.equal(statusLabel('active'), '进行中');\n  assert.equal(statusLabel('paused'), '未知状态');\n  assert.equal(statusLabel(null), '未知状态');\n});\n"
+  },
+  {
+    "id": "pagination",
+    "title": "分页窗口边界",
+    "changeName": "clamp-pagination-window",
+    "requirementFile": "requirements/REQ-2026-103.md",
+    "modulePath": "src/pagination.js",
+    "testPath": "tests/pagination.test.mjs",
+    "functionName": "pageWindow",
+    "requirement": "修复 pageWindow(total, page, pageSize)：total 按不小于 0 的整数处理，pageSize 至少为 1，total 为 0 时返回 page=1、totalPages=0、start=0、end=0；有数据时把 page 限制在 1..totalPages，并返回从 1 开始且包含两端的 start/end。保持返回字段 page、totalPages、start、end，不增加依赖。",
+    "initialSource": "export function pageWindow(total, page, pageSize) {\n  return {\n    page,\n    totalPages: Math.ceil(total / pageSize),\n    start: (page - 1) * pageSize + 1,\n    end: Math.min(page * pageSize, total),\n  };\n}\n",
+    "visibleTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { pageWindow } from '../src/pagination.js';\n\ntest('[TC-01] 正常分页窗口', () => {\n  assert.deepEqual(pageWindow(25, 2, 10), { page: 2, totalPages: 3, start: 11, end: 20 });\n});\n",
+    "evaluatorTest": "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport { pageWindow } from '../src/pagination.js';\n\ntest('分页窗口隐藏验收', () => {\n  assert.deepEqual(pageWindow(0, 9, 0), { page: 1, totalPages: 0, start: 0, end: 0 });\n  assert.deepEqual(pageWindow(25, 99, 10), { page: 3, totalPages: 3, start: 21, end: 25 });\n  assert.deepEqual(pageWindow(25, -2, 10), { page: 1, totalPages: 3, start: 1, end: 10 });\n  assert.deepEqual(pageWindow(3.9, 1.8, 2.7), { page: 1, totalPages: 2, start: 1, end: 2 });\n  assert.deepEqual(pageWindow(-5, 1, 10), { page: 1, totalPages: 0, start: 0, end: 0 });\n});\n"
+  }
+]

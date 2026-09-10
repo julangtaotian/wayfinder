@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-09-10",
+  "pluginBuild": "0.18.0+codex.20260910061812",
+  "model": "gpt-5.6-terra",
+  "reasoning": "medium",
+  "pairs": [
+    {
+      "id": "search",
+      "quality": {
+        "fast": 10,
+        "full": 10,
+        "hiddenAcceptancePassed": true,
+        "fullLifecycleStatus": "invalid-fixture-excluded"
+      },
+      "rework": {
+        "fastExternal": 0,
+        "fullExternal": 0,
+        "fastFailedVerificationCommands": 0,
+        "fullFailedVerificationCommands": 5,
+        "fullRepairEpisodes": 3,
+        "note": "完整流程包含测试设计修正、语义证据修正和非法需求编号导致的归档恢复；最后一项属于评测夹具问题。"
+      },
+      "uncachedInputTokens": {
+        "fast": 16584,
+        "full": 112504,
+        "fullOverFast": 6.78
+      },
+      "elapsedMs": {
+        "fast": 54525,
+        "full": 335139,
+        "fullOverFast": 6.15
+      }
+    },
+    {
+      "id": "status",
+      "quality": {
+        "fast": 10,
+        "full": 10,
+        "hiddenAcceptancePassed": true,
+        "fullLifecycleStatus": "passed"
+      },
+      "rework": {
+        "fastExternal": 0,
+        "fullExternal": 0,
+        "fastFailedVerificationCommands": 0,
+        "fullFailedVerificationCommands": 0,
+        "fullRepairEpisodes": 0
+      },
+      "uncachedInputTokens": {
+        "fast": 12676,
+        "full": 82735,
+        "fullOverFast": 6.53
+      },
+      "elapsedMs": {
+        "fast": 62716,
+        "full": 202358,
+        "fullOverFast": 3.23
+      }
+    },
+    {
+      "id": "pagination",
+      "quality": {
+        "fast": 10,
+        "full": 10,
+        "hiddenAcceptancePassed": true,
+        "fullLifecycleStatus": "passed"
+      },
+      "rework": {
+        "fastExternal": 0,
+        "fullExternal": 0,
+        "fastFailedVerificationCommands": 0,
+        "fullFailedVerificationCommands": 2,
+        "fullRepairEpisodes": 2,
+        "note": "完整流程修正一次规格追踪缺口，并在不支持 --help 后读取实现源码恢复；快速流程无失败但重复执行了一次聚焦测试。"
+      },
+      "uncachedInputTokens": {
+        "fast": 32816,
+        "full": 94661,
+        "fullOverFast": 2.88
+      },
+      "elapsedMs": {
+        "fast": 78463,
+        "full": 289750,
+        "fullOverFast": 3.69
+      }
+    }
+  ],
+  "aggregate": {
+    "quality": {
+      "fastMean": 10,
+      "fullMean": 10,
+      "hiddenAcceptancePasses": "6/6",
+      "visibleVerificationPasses": "6/6",
+      "scopeAndProtectedBoundaryPasses": "6/6",
+      "fastRouteContractPasses": "3/3",
+      "fullValidLifecyclePasses": "2/2",
+      "excludedLifecycleSamples": [
+        "search-full"
+      ]
+    },
+    "rework": {
+      "fastExternalReworks": 0,
+      "fullExternalReworks": 0,
+      "fastFailedVerificationCommands": 0,
+      "fullFailedVerificationCommands": 7,
+      "fastRepairEpisodes": 0,
+      "fullRepairEpisodes": 5,
+      "fullRepairEpisodesExcludingFixtureIssue": 4
+    },
+    "uncachedInputTokens": {
+      "fastTotal": 62076,
+      "fastMean": 20692,
+      "fullTotal": 289900,
+      "fullMean": 96633.33,
+      "fullOverFast": 4.67
+    },
+    "elapsedMs": {
+      "fastTotal": 195704,
+      "fastMean": 65234.67,
+      "fullTotal": 827247,
+      "fullMean": 275749,
+      "fullOverFast": 4.23
+    },
+    "supportingEfficiency": {
+      "fastCommands": 10,
+      "fullCommands": 56,
+      "fullOverFastCommands": 5.6,
+      "fastToolOutputBytes": 26907,
+      "fullToolOutputBytes": 595164,
+      "fullOverFastToolOutput": 22.12
+    }
+  },
+  "assessment": {
+    "quality": "在三个明确、局部、可聚焦验证的任务上，两条路径功能质量持平，均为 10/10；快速流程没有牺牲隐藏边界正确性。",
+    "rework": "六个样本均不需要隐藏验收后的外部返工；内部过程上快速流程为 0，完整流程有 5 个修正事件，其中 1 个由非法评测需求编号造成。",
+    "efficiency": "完整流程平均未缓存输入约为快速流程 4.67 倍，平均耗时约为 4.23 倍；这种成本换来了需求、规格、任务、验证记录和归档追踪。",
+    "routeRecommendation": "当前快速流程应继续作为明确局部改动的默认路径；完整流程用于存在活动变更、决策/验收治理、共享边界或需要长期追踪的任务。"
+  },
+  "usageWindow": {
+    "before": {
+      "fiveHourUsedPercent": 1,
+      "weeklyUsedPercent": 74
+    },
+    "after": {
+      "fiveHourUsedPercent": 61,
+      "weeklyUsedPercent": 84
+    },
+    "automaticResetUsed": false,
+    "sharedAccount": true
+  },
+  "limitations": [
+    "只有三组小型纯函数任务，不能外推到共享组件、接口、权限、依赖、构建或跨平台变更。",
+    "首组完整流程使用非法字母需求编号，功能、成本与返工数据保留，但生命周期完成率排除该样本；后两组已在运行前修正夹具。",
+    "Token 与耗时受服务负载和缓存影响；配对能减少差异，但三组样本不足以证明稳定比例。",
+    "质量分数来自冻结需求、可见聚焦测试、隐藏边界验收、写入范围和报告真实性，不代表通用代码审查满分。"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "artifacts": [],
+  "change": "modularize-developer-effectiveness-benchmark",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-09-10T09:37:10.556Z",
+  "evidenceId": "V-03",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "692a863fc6959e8487c0be44272325bf0beabe97",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-03] 静态检查进入统一验证并在失败时停止",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 52294,
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-03/20260910093612893-93615-863fb1c7/stdout.log",
+      "sha256": "4d2f9ec0988e470750f3e30e9d700bf670c85e5c838898c2c4323bf7cdd51247",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/modularize-developer-effectiveness-benchmark/V-03/20260910093612893-93615-863fb1c7/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-047-developer-effectiveness-benchmark-maintainability.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-04"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-05",
+      "D-06"
+    ],
+    "revision": "R-01",
+    "sha256": "bbf76b5bc6269870aecdc091581312e03e3d76d85cc8c0512dcabde159049989",
+    "testCaseIds": [
+      "TC-03"
+    ],
+    "verificationId": "V-03",
+    "version": 2
+  },
+  "startedAt": "2026-09-10T09:36:12.895Z",
+  "status": "passed",
+  "workspaceFingerprint": "b097b3d7638ac46a3e6b94e6cb0e9fc9d48fbead011e4bbf95d90b1c86022f79"
+}

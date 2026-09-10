@@ -552,3 +552,26 @@ test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   assert.equal(fs.existsSync(path.join(executionRoot, 'runs', 'SYN-P1-L01', 'plugin', 'failures', '01', 'failure.json')), true);
   assert.equal(JSON.parse(fs.readFileSync(path.join(executionRoot, 'state.json'), 'utf8')).stage, 'cleaned');
 });
+
+test('[TC-01] 基准兼容入口保持单向模块边界', () => {
+  const limits = new Map([
+    ['developer-effectiveness-benchmark.mjs', 500],
+    ['developer-effectiveness-benchmark-execution.mjs', 500],
+    ['developer-effectiveness-benchmark-foundation.mjs', 600],
+    ['developer-effectiveness-benchmark-cases.mjs', 350],
+    ['developer-effectiveness-benchmark-contract.mjs', 220],
+  ]);
+  const sources = new Map();
+  for (const [file, limit] of limits) {
+    const source = fs.readFileSync(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts', file), 'utf8');
+    sources.set(file, source);
+    assert.equal(source.trimEnd().split(/\r?\n/u).length <= limit, true, `${file} 超过 ${limit} 行`);
+  }
+
+  assert.match(sources.get('developer-effectiveness-benchmark.mjs'), /from '\.\/developer-effectiveness-benchmark-execution\.mjs'/u);
+  assert.match(sources.get('developer-effectiveness-benchmark-foundation.mjs'), /from '\.\/developer-effectiveness-benchmark-cases\.mjs'/u);
+  assert.match(sources.get('developer-effectiveness-benchmark-foundation.mjs'), /from '\.\/developer-effectiveness-benchmark-contract\.mjs'/u);
+  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-execution.mjs'), /from '\.\/developer-effectiveness-benchmark\.mjs'/u);
+  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-cases.mjs'), /from '\.\/developer-effectiveness-benchmark-foundation\.mjs'/u);
+  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-contract.mjs'), /developer-effectiveness-benchmark-(?:foundation|cases|execution)\.mjs/u);
+});
