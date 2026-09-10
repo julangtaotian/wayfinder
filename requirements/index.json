@@ -405,6 +405,15 @@
       "entryPath": "requirements/REQ-2026-045-skill-read-efficiency.md",
       "archivePath": "requirements/archive/2026/REQ-2026-045-skill-read-efficiency.md",
       "change": "reduce-skill-read-amplification"
+    },
+    {
+      "id": "REQ-2026-046",
+      "title": "REQ-2026-046：受管 Verify 一次通过与语义绑定稳定性",
+      "status": "已验收",
+      "year": "2026",
+      "entryPath": "requirements/REQ-2026-046-managed-verify-stability.md",
+      "archivePath": "requirements/archive/2026/REQ-2026-046-managed-verify-stability.md",
+      "change": "stabilize-managed-verify"
     }
   ]
 }

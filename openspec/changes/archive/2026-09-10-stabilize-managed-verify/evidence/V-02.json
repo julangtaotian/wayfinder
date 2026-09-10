@@ -36,7 +36,7 @@
       "stream": "stderr"
     }
   ],
-  "requirement": "requirements/REQ-2026-046-managed-verify-stability.md",
+  "requirement": "requirements/archive/2026/REQ-2026-046-managed-verify-stability.md",
   "schemaVersion": 2,
   "semanticBinding": {
     "acceptanceIds": [

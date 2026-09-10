@@ -3,8 +3,8 @@
 ## 基本信息
 
 - 状态：已验证
-- 需求：`requirements/REQ-2026-046-managed-verify-stability.md`
-- 变更：stabilize-managed-verify
+- 需求：`requirements/archive/2026/REQ-2026-046-managed-verify-stability.md`
+- 变更：2026-09-10-stabilize-managed-verify
 - 需求修订基线：R-01
 - 默认聚焦命令：`node --test tests/verification-evidence-integrity.test.mjs tests/frontend-test-workflow.test.mjs`
 
@@ -39,7 +39,7 @@
 - 聚焦命令：`node --test --test-name-pattern="受管 Verify 结果补写与语义版本兼容" tests/verification-evidence-integrity.test.mjs`
 - 关联验证：V-01
 - 结果分类：通过
-- 证据：`openspec/changes/stabilize-managed-verify/evidence/V-01.json`
+- 证据：`openspec/changes/archive/2026-09-10-stabilize-managed-verify/evidence/V-01.json`
 
 ### TC-02：受管 Verify 一次通过公开合同
 
@@ -61,4 +61,4 @@
 - 聚焦命令：`node --test --test-name-pattern="受管 Verify 一次通过公开合同" tests/frontend-test-workflow.test.mjs`
 - 关联验证：V-02
 - 结果分类：通过
-- 证据：`openspec/changes/stabilize-managed-verify/evidence/V-02.json`
+- 证据：`openspec/changes/archive/2026-09-10-stabilize-managed-verify/evidence/V-02.json`
