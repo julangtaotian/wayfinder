@@ -1,0 +1,44 @@
+{
+  "plugin": "frontend-ai-workflow",
+  "marketplace": "frontend-ai-workflow-darwin-arm64",
+  "previousBuild": "0.18.0+codex.20260909095907",
+  "installedBuild": "0.18.0+codex.20260910061812",
+  "installedStatus": "installed, enabled",
+  "installedRoot": "[home]/.codex/plugins/cache/frontend-ai-workflow-darwin-arm64/frontend-ai-workflow/0.18.0+codex.20260910061812",
+  "package": {
+    "platform": "darwin-arm64",
+    "playwrightVersion": "1.62.1",
+    "sizeBytes": 237739140,
+    "budgetBytes": 272629760,
+    "headroomBytes": 34890620,
+    "browserSmokePassed": true
+  },
+  "sourceCacheMatches": [
+    {
+      "file": "scripts/verification-semantics.mjs",
+      "sha256": "c9e0d392b3bb5844c43fdb15a6275982cc05eebeb8d8c525cc60b2d37ad926c5",
+      "matched": true
+    },
+    {
+      "file": "scripts/verification-evidence-validation.mjs",
+      "sha256": "7ea0ab53ede4798e3b821090738bc4d2d0e4ea1bfad2d2f12d92670f4baeb40f",
+      "matched": true
+    },
+    {
+      "file": "references/managed-test-workflow.md",
+      "sha256": "49d0a7678504aa2c80816b97057023e39e9ede334581eab1496be0173ab666a5",
+      "matched": true
+    },
+    {
+      "file": "skills/frontend-test/SKILL.md",
+      "sha256": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+      "matched": true
+    }
+  ],
+  "repositoryStructureValidation": "passed",
+  "officialValidation": {
+    "skillsPassed": 10,
+    "pluginManifestPassed": true,
+    "cacheStatus": "reused"
+  }
+}

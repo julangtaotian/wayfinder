@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "code": "ready",
+  "status": "ready",
+  "write": false,
+  "readyToWrite": true,
+  "root": "[repository]/outputs/post-reinstall-managed-verify-20260910/workspace",
+  "evidenceId": "V-01",
+  "locator": "[TC-01] 两数相加",
+  "command": {
+    "command": "[home]/.nvm/versions/node/v22.12.0/bin/node",
+    "args": [
+      "--test",
+      "tests/math.test.mjs"
+    ],
+    "source": "node",
+    "shell": false
+  },
+  "target": "openspec/changes/add-fixture-test/evidence/V-01.json",
+  "logTarget": "outputs/verification-evidence/add-fixture-test/V-01"
+}

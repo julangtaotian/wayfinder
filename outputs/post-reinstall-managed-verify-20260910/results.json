@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-09-10",
+  "pluginBuild": "0.18.0+codex.20260910061812",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "managedVerify": {
+    "completed": true,
+    "exitCode": 0,
+    "elapsedMs": 148839,
+    "usage": {
+      "inputTokens": 231867,
+      "cachedInputTokens": 201216,
+      "uncachedInputTokens": 30651,
+      "outputTokens": 3540,
+      "reasoningOutputTokens": 815
+    },
+    "commands": 13,
+    "toolOutputBytes": 29649,
+    "installedBuildObserved": true,
+    "test": {
+      "command": "node --test tests/math.test.mjs",
+      "writeExecutions": 1,
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "locatorMatches": 2
+    },
+    "completeGate": {
+      "executions": 1,
+      "firstExecutionPassed": true,
+      "independentRecalculationPassed": true,
+      "evidenceFresh": true,
+      "evidenceTrust": "local-captured",
+      "errors": 0,
+      "warnings": 0
+    },
+    "semanticBindingVersion": 2,
+    "implementationSourceReadForRecovery": false,
+    "selfRepairCount": 0,
+    "businessSourceModified": false,
+    "existingTestModified": false,
+    "dependencyOrWorkflowConfigurationModified": false,
+    "assessment": "重装后的新会话一次自然完成；首次 complete 即通过，无校验器源码回读或自修复，受管 Verify 的真实行为缺口已关闭。"
+  },
+  "comparisonToPreviousRun": {
+    "previousBuild": "0.18.0+codex.20260909095907",
+    "elapsedMs": {
+      "before": 222318,
+      "after": 148839,
+      "reductionPercent": 33.05
+    },
+    "inputTokens": {
+      "before": 331345,
+      "after": 231867,
+      "reductionPercent": 30.02
+    },
+    "uncachedInputTokens": {
+      "before": 53841,
+      "after": 30651,
+      "reductionPercent": 43.07
+    },
+    "outputTokens": {
+      "before": 6020,
+      "after": 3540,
+      "reductionPercent": 41.2
+    },
+    "commands": {
+      "before": 14,
+      "after": 13,
+      "reductionPercent": 7.14
+    },
+    "toolOutputBytes": {
+      "before": 55070,
+      "after": 29649,
+      "reductionPercent": 46.16
+    },
+    "firstCompleteGatePassed": {
+      "before": false,
+      "after": true
+    },
+    "selfRepairCount": {
+      "before": 1,
+      "after": 0
+    },
+    "implementationSourceReadForRecovery": {
+      "before": true,
+      "after": false
+    }
+  },
+  "finalConfirmation": {
+    "managedVerifyAchieved": true,
+    "deepInitializationPreviouslyAchieved": true,
+    "releaseBlockingFailureObserved": false,
+    "automaticRetryUsed": false,
+    "automaticUsageResetUsed": false
+  },
+  "limitations": [
+    "本轮是同一小型隔离 fixture 的一个新会话样本，能确认目标失败路径已消失，但不能证明所有仓库规模和测试框架下的统计稳定性。",
+    "本轮只补齐此前缺失的受管 Verify 重装后真实行为证据；深度初始化沿用上一轮已经通过的 15/15 复验证据，没有重复消耗模型调用。",
+    "Codex 启动与关闭日志包含其他插件图标、远程插件同步和 MCP 关闭警告，但本任务退出码、技能加载和验证结果均未受影响。"
+  ]
+}
