@@ -3,6 +3,7 @@ import path from 'node:path';
 import { ProjectPathError } from './project-path-safety.mjs';
 import {
   VerificationSemanticError,
+  VERIFICATION_SEMANTIC_BINDING_VERSIONS,
   computeVerificationSemanticBinding,
 } from './verification-semantics.mjs';
 import { UI_REVIEW_STATE_VERSION } from './ui-review-contract.mjs';
@@ -167,9 +168,28 @@ export function validateEvidenceManifest({
     }
     resolveSafePath(projectRoot, path.join(changePath, 'test-plan.md'), '机器证据测试方案', { mustExist: true });
 
+    const recordedSemanticBinding = data.semanticBinding;
+    const recordedSemanticVersion = recordedSemanticBinding?.version;
+    if (
+      !recordedSemanticBinding || typeof recordedSemanticBinding !== 'object' || Array.isArray(recordedSemanticBinding)
+      || !VERIFICATION_SEMANTIC_BINDING_VERSIONS.includes(recordedSemanticVersion)
+    ) {
+      return invalidManifest(
+        'unsupported_semantic_binding_version',
+        `机器证据语义绑定版本不受支持：${String(recordedSemanticVersion)}`,
+        target,
+        expectedId,
+        { fresh: false, semanticFresh: false, recordedSemanticBinding: recordedSemanticBinding || null },
+      );
+    }
     let currentSemanticBinding;
     try {
-      currentSemanticBinding = computeVerificationSemanticBinding({ requirementPath: recordedRequirement, changePath, evidenceId: expectedId });
+      currentSemanticBinding = computeVerificationSemanticBinding({
+        requirementPath: recordedRequirement,
+        changePath,
+        evidenceId: expectedId,
+        semanticBindingVersion: recordedSemanticVersion,
+      });
     } catch (error) {
       const normalized = error instanceof VerificationSemanticError
         ? error
@@ -184,7 +204,7 @@ export function validateEvidenceManifest({
         fresh: false,
         semanticFresh: false,
         actualSemanticBinding: currentSemanticBinding,
-        recordedSemanticBinding: data.semanticBinding || null,
+        recordedSemanticBinding: recordedSemanticBinding || null,
       });
     }
 

@@ -315,6 +315,16 @@ test('[TC-05] frontend-test Skill 合同声明四类意图、测试专属写入�
   assert.match(contract, /updates the same case rather than appending a duplicate/u);
 });
 
+test('[TC-02] 受管 Verify 一次通过公开合同', () => {
+  const workflow = fs.readFileSync(path.resolve('plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
+  assert.match(workflow, /preview → one explicit execution → completion-fact updates → one complete validation/u);
+  assert.match(workflow, /semantic binding v2/u);
+  assert.match(workflow, /dates, result statuses, evidence paths, acceptance checkboxes, case statuses, result classifications and separate run summaries/u);
+  assert.match(workflow, /must not read validator implementation/u);
+  assert.match(workflow, /unknown code, missing fields or contradictory fields/u);
+  assert.match(workflow, /must not change D-\*, A-\*, R-\*, mapped assertions, test operations, target tests, locators, focused commands or their relationships/u);
+});
+
 test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
   const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-prepare-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

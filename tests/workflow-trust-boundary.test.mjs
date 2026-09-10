@@ -405,21 +405,33 @@ test('[V-02] 验证证据模块化兼容：机器证据语义完整性与信任�
   assert.equal(semanticChanged.evidenceId, 'V-01');
   fs.writeFileSync(fixture.requirementPath, originalRequirement, 'utf8');
 
-  for (const changedRequirement of [
+  fs.writeFileSync(
+    fixture.requirementPath,
     originalRequirement.replace('使用 schema v2 并失败关闭', '使用新的 schema v2 失败关闭规则'),
+    'utf8',
+  );
+  const decisionChanged = validateEvidenceManifest({
+    root: fixture.root,
+    changePath: fixture.changePath,
+    evidencePath,
+    expectedId: 'V-01',
+    expectedRequirement: fixture.requirementPath,
+  });
+  assert.equal(decisionChanged.ok, false);
+  assert.equal(decisionChanged.code, 'stale_semantic_evidence');
+
+  fs.writeFileSync(
+    fixture.requirementPath,
     originalRequirement.replace('执行本地聚焦测试', '执行修改后的本地聚焦测试'),
-  ]) {
-    fs.writeFileSync(fixture.requirementPath, changedRequirement, 'utf8');
-    const changed = validateEvidenceManifest({
-      root: fixture.root,
-      changePath: fixture.changePath,
-      evidencePath,
-      expectedId: 'V-01',
-      expectedRequirement: fixture.requirementPath,
-    });
-    assert.equal(changed.ok, false);
-    assert.equal(changed.code, 'stale_semantic_evidence');
-  }
+    'utf8',
+  );
+  assert.equal(validateEvidenceManifest({
+    root: fixture.root,
+    changePath: fixture.changePath,
+    evidencePath,
+    expectedId: 'V-01',
+    expectedRequirement: fixture.requirementPath,
+  }).ok, true);
   fs.writeFileSync(fixture.requirementPath, originalRequirement, 'utf8');
 
   const originalTestPlan = fs.readFileSync(path.join(fixture.changePath, 'test-plan.md'), 'utf8');

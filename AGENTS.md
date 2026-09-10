@@ -52,6 +52,8 @@
 ## 验证
 
 - 本地验证产生的日志、截图、临时 fixture、下载内容、缓存和仅用于验证的依赖必须写入仓库 `outputs/<验证主题>/`，不得散落在项目根目录或系统临时目录。
+- `outputs` 只长期跟踪最终报告、机器可读结论和被需求或 OpenSpec 明确引用的必要证据；一次性准备脚本、原始接口快照、重复提示词、可由最终结果重建的中间状态默认保持本地忽略。新增持久主题前先检查文件数预算，原则上保留至少 20 个文件余量。
+- 清理历史 `outputs` 前先反向检查仓库引用；不得删除仍被需求、变更、验证记录或正式报告引用的证据，已有最终报告和结构化结论优先保留。
 - 仓库级 Vitest 验证运行时固定使用 `outputs/frontend-test-runtime/`，可复用 npm 缓存固定使用 `outputs/frontend-test-cache/`；需要真实 Vitest 证据时先运行 `npm run prepare:test-runtime`，验证结束后运行 `npm run cleanup:test-runtime`，仅在需要回收缓存时运行 `npm run cleanup:test-cache`，不在根目录保留 `node_modules`。
 - `outputs` 内已有的持久设计与验收资产属于项目内容，禁止为了清理临时验证环境而整体删除；只清理本次验证明确创建的子目录。
 - 运行 `npm test`。

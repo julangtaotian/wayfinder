@@ -141,6 +141,7 @@ test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁�
   assert.match(pluginManifest.version, /^0\.18\.0\+codex\.\d{14}$/u);
   assert.match(verifyScript, /id:\s*'footprint'/u);
   assert.match(repositoryRules, /不再依赖定期人工瘦身/u);
+  assert.match(repositoryRules, /只长期跟踪最终报告、机器可读结论和被需求或 OpenSpec 明确引用的必要证据/u);
   assert.match(readme, /预算调整必须先形成正式需求和设计决策/u);
 });
 

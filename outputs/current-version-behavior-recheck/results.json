@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-09-10",
+  "pluginBuild": "0.18.0+codex.20260909095907",
+  "model": "gpt-6-astra",
+  "reasoning": "xhigh",
+  "managedVerify": {
+    "completed": true,
+    "exitCode": 0,
+    "elapsedMs": 222318,
+    "usage": {
+      "inputTokens": 331345,
+      "cachedInputTokens": 277504,
+      "uncachedInputTokens": 53841,
+      "outputTokens": 6020,
+      "reasoningOutputTokens": 2075
+    },
+    "commands": 14,
+    "toolOutputBytes": 55070,
+    "test": {
+      "command": "node --test tests/math.test.mjs",
+      "executed": 1,
+      "passed": 1,
+      "failed": 0
+    },
+    "finalGate": {
+      "ok": true,
+      "stage": "complete",
+      "planStatus": "已验证",
+      "caseCount": 1,
+      "evidenceFiles": 1,
+      "evidenceFresh": true,
+      "evidenceTrust": "local-captured",
+      "errors": 0,
+      "warnings": 0
+    },
+    "protectedFilesPreserved": true,
+    "businessSourceModified": false,
+    "existingTestModified": false,
+    "firstCompleteGatePassed": false,
+    "selfRepairCount": 1,
+    "implementationSourceReadForRecovery": true,
+    "assessment": "最终正确且可追溯，但首轮语义绑定失败并读取校验器实现后自修复，效率和路径稳定性仍不理想。"
+  },
+  "deepInitialization": {
+    "completed": true,
+    "exitCode": 0,
+    "elapsedMs": 419514,
+    "usage": {
+      "inputTokens": 538033,
+      "cachedInputTokens": 480384,
+      "uncachedInputTokens": 57649,
+      "outputTokens": 12563,
+      "reasoningOutputTokens": 2399
+    },
+    "commands": 21,
+    "toolOutputBytes": 122339,
+    "finalCheck": {
+      "ok": true,
+      "analysisStatus": "complete",
+      "coveredFiles": 15,
+      "totalFiles": 15,
+      "fresh": true,
+      "planningEngineHealthy": true,
+      "errors": 0,
+      "warnings": [
+        "package.json 未配置 lint 脚本",
+        "package.json 未配置类型检查脚本"
+      ]
+    },
+    "perFileLedger": {
+      "rows": 15,
+      "includedFiles": 15,
+      "allRead": true,
+      "missing": [],
+      "extra": [],
+      "duplicates": [],
+      "complete": true
+    },
+    "requiredAnalysisDimensions": {
+      "run-delivery": true,
+      "functional-dependencies": true,
+      "data-state-security": true,
+      "verification-risks": true,
+      "facts-inferences-questions": true
+    },
+    "changedFiles": [
+      "AGENTS.md",
+      "openspec/config.yaml",
+      "wayfinder/frontend.md"
+    ],
+    "protectedBusinessFilesPreserved": true,
+    "managedBlockOuterContentPreserved": true,
+    "projectRuleSentinelPreserved": true,
+    "checkerImplementationRead": false,
+    "finalHealthCheckCount": 1,
+    "buildExecuted": false,
+    "businessTestsExecuted": false,
+    "browserVerificationExecuted": false,
+    "assessment": "自然完成 15/15 深度初始化，逐文件账本和保护边界完整，较上一轮在完成性与执行效率上均有实质改善。"
+  },
+  "comparisonToPrevious": {
+    "managedVerify": {
+      "baseline": "managed-valid-after",
+      "elapsedPercent": 28.76,
+      "inputTokensPercent": 47.86,
+      "cachedInputTokensPercent": 44.34,
+      "outputTokensPercent": 24.66,
+      "commandsPercent": -6.67,
+      "toolOutputBytesPercent": 61.06,
+      "interpretation": "命令数略降，但时长、输入、输出和工具回传均上升；两轮都需要一次自修复，不能认定 Verify 效率改善。"
+    },
+    "deepInitialization": {
+      "baseline": "deep-after 与 deep-resume-after 合并",
+      "elapsedPercent": -11.76,
+      "commandsPercent": -55.32,
+      "toolOutputBytesPercent": -65.82,
+      "inputTokensVersusResumeOnlyPercent": -17.41,
+      "outputTokensVersusResumeOnlyPercent": 17.63,
+      "interpretation": "在一次自然完成并交付完整账本的前提下，时长、命令数和工具回传显著下降；上一轮中断段缺少 token 统计，因此不能计算完整 token 降幅。"
+    }
+  },
+  "overall": {
+    "managedVerify": "通过但仍需治理",
+    "deepInitialization": "通过且改善明确",
+    "releaseBlockingFailureObserved": false,
+    "automaticUsageResetUsed": false
+  },
+  "repositoryValidation": {
+    "npmTest": {
+      "passed": true,
+      "tests": 241,
+      "pass": 233,
+      "fail": 0,
+      "skip": 8,
+      "runtimePreparedBeforeFinalRun": true,
+      "runtimeCleanedAfterFinalRun": true
+    },
+    "structureValidation": "passed",
+    "officialValidators": {
+      "skillsPassed": 10,
+      "pluginManifestPassed": true
+    },
+    "footprint": {
+      "passed": true,
+      "trackedOutputFilesBeforeAddingCurrentEvidence": 158,
+      "currentEvidenceFiles": 9,
+      "projectedTrackedOutputFiles": 167,
+      "trackedOutputFileBudget": 200,
+      "trackedOutputBytesBeforeAddingCurrentEvidence": 1570167,
+      "currentEvidenceBytes": 280423,
+      "projectedTrackedOutputBytes": 1850590,
+      "trackedOutputByteBudget": 10485760
+    },
+    "evaluationNote": "首次全量测试未先准备固定 Vitest 运行时，TC-03 按合同失败；准备运行时后完整重跑为 0 失败。该项是评测执行前置遗漏，不是插件行为回归。"
+  },
+  "usageWindow": {
+    "before": {
+      "fiveHourUsedPercent": 26,
+      "weeklyUsedPercent": 56
+    },
+    "after": {
+      "fiveHourUsedPercent": 84,
+      "weeklyUsedPercent": 65
+    },
+    "sharedAccount": true,
+    "attribution": "窗口为账号共享数据，只能作为本轮期间快照，不能全部归因于本次复验。"
+  },
+  "limitations": [
+    "每个场景只有一个当前样本，跨日对比只能识别方向，不能证明稳定回归或稳定提升。",
+    "样本是小型 Vue 3 + Vite 隔离项目，未覆盖大型仓库、其他框架或真实五平台 CI。",
+    "深度初始化按任务边界未运行构建、业务测试或浏览器验证；这些缺口已被如实写入地图。",
+    "受管 Verify 只覆盖已有单个 Node Test Runner 用例，不能提升为完整测试框架认证。"
+  ]
+}

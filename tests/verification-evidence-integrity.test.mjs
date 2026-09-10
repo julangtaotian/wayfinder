@@ -15,6 +15,7 @@ import {
   validateEvidenceManifest,
   validateVerificationEvidenceRecords,
 } from '../plugins/frontend-ai-workflow/scripts/verification-evidence.mjs';
+import { validateTestPlan } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
 import { changeScopeCandidates } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
 import {
@@ -135,6 +136,97 @@ function createFixture(context, { evidenceRequired = true } = {}) {
   };
 }
 
+function writeManagedVerifyFixture(fixture, { completed = false } = {}) {
+  const locator = '[TC-01] 受管 Verify 结果补写与语义版本兼容';
+  write(fixture.root, 'tests/settlement.test.mjs', `// ${locator}\nexport const covered = true;\n`);
+  write(fixture.root, 'requirements/REQ-2026-001-evidence.md', `# fixture
+
+## 基本信息
+
+- 状态：${completed ? '待验证' : '实施中'}
+
+## 决策台账
+
+| ID | 决策项 | 状态 | 取值 | 来源 |
+| --- | --- | --- | --- | --- |
+| D-01 | 证据合同 | 已确认 | 受控执行与可信聚合 | fixture |
+
+## 关联变更范围
+
+| 变更 | 决策范围 | 验收范围 |
+| --- | --- | --- |
+| evidence-change | D-01 | A-01 |
+
+## 修订记录
+
+| 修订 | 日期 | 影响决策 | 影响验收 | 验证与任务处理 |
+| --- | --- | --- | --- | --- |
+| R-01 | 2026-09-10 | D-01 | A-01 | 建立 fixture。 |
+
+## 验证记录
+
+| 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
+| --- | --- | --- | --- | --- | --- |
+| V-01 | 自动 | node --test tests/settlement.test.mjs${completed ? '；命中 TC-01，共 1 项' : ''} | ${completed ? '2026-09-10' : '待执行'} | ${completed ? '通过' : '计划'} | \`openspec/changes/evidence-change/evidence/V-01.json\` |
+
+## 验收标准
+
+- [${completed ? 'x' : ' '}] A-01：机器证据必须对应当前测试语义。
+
+## 验收—证据映射
+
+| 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 | 验证记录 |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-01 | 证据完整性 | D-01 | 自动 | \`openspec/changes/evidence-change/evidence/V-01.json\` | 退出成功且定位命中 | V-01 |
+
+${completed ? '## 复验记录\n\n实际执行 1 项测试，通过 1 项，定位命中 1 次。\n' : ''}`);
+  write(fixture.root, 'openspec/changes/evidence-change/test-plan.md', `# fixture plan
+
+## 基本信息
+
+- 状态：${completed ? '已验证' : '已实现'}
+- 需求：\`requirements/REQ-2026-001-evidence.md\`
+- 变更：evidence-change
+- 需求修订基线：R-01
+- 默认聚焦命令：\`node --test tests/settlement.test.mjs\`
+
+## 测试上下文
+
+- 测试命令状态：detected
+- 测试命令：\`npm run test\`
+- 测试运行器：Node Test Runner
+- 测试目录：\`tests\`
+- Git 基线：unavailable
+- 兼容说明：fixture 仅验证受管证据合同。
+
+## 测试用例
+
+### TC-01：受管 Verify 结果补写与语义版本兼容
+
+- 状态：${completed ? '通过' : '已实现'}
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-01
+- 关联验收：A-01
+- 关联规格：verification-evidence-integrity / 结果补写
+- 状态矩阵：用户操作、刷新、错误态
+- 前置条件：fixture 已建立
+- 测试数据：验证记录与机器证据
+- 测试替身：注入无 shell 执行器
+- 操作：运行聚焦验证并补写完成事实
+- 可观察断言：结果补写后首次 complete 通过
+- 目标测试：\`tests/settlement.test.mjs\`
+- 测试定位：\`${locator}\`
+- 聚焦命令：\`node --test tests/settlement.test.mjs\`
+- 关联验证：V-01
+- 结果分类：${completed ? '通过' : '未执行'}
+- 证据：${completed ? '\`openspec/changes/evidence-change/evidence/V-01.json\`' : '待执行'}
+
+${completed ? '## 复验记录\n\n运行说明只记录完成事实，不改变测试目标。\n' : ''}`);
+  return locator;
+}
+
 function localManifest(fixture, overrides = {}) {
   const evidenceId = overrides.evidenceId || 'V-01';
   return {
@@ -227,6 +319,117 @@ test('[TC-01] 受控执行与零测试证据保护', async (context) => {
   assert.equal(failed.code, 'command_failed');
   assert.equal(failed.exitCode, 7);
   assert.equal(fs.readFileSync(evidencePath, 'utf8'), persisted);
+});
+
+test('[TC-01] 受管 Verify 结果补写与语义版本兼容', async (context) => {
+  const fixture = createFixture(context);
+  const locator = writeManagedVerifyFixture(fixture);
+  const evidencePath = path.join(fixture.changePath, 'evidence', 'V-01.json');
+  const passed = await runVerificationEvidence({
+    target: fixture.root,
+    change: 'evidence-change',
+    requirement: 'requirements/REQ-2026-001-evidence.md',
+    evidenceId: 'V-01',
+    locator,
+    command: [process.execPath, '--test', 'tests/settlement.test.mjs'],
+    write: true,
+    execute: (_command, _args, _options, handlers) => {
+      handlers.stdout(`${locator}\n`);
+      return { status: 0, signal: null, error: null };
+    },
+  });
+  assert.equal(passed.ok, true, JSON.stringify(passed));
+  assert.equal(passed.manifest.semanticBinding.version, 2);
+
+  writeManagedVerifyFixture(fixture, { completed: true });
+  const complete = validateTestPlan(path.join(fixture.changePath, 'test-plan.md'), {
+    requirement: fixture.requirementPath,
+    change: fixture.changePath,
+    stage: 'complete',
+  });
+  assert.equal(complete.ok, true, JSON.stringify(complete.errors));
+  assert.equal(complete.evidenceValidation.diagnostics[0]?.code, 'evidence_valid');
+
+  const v2Manifest = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+  const semanticPlan = fs.readFileSync(path.join(fixture.changePath, 'test-plan.md'), 'utf8');
+  fs.writeFileSync(
+    path.join(fixture.changePath, 'test-plan.md'),
+    semanticPlan.replace('结果补写后首次 complete 通过', '改变后的真实断言'),
+    'utf8',
+  );
+  const staleV2 = validateEvidenceManifest({
+    root: fixture.root,
+    changePath: fixture.changePath,
+    evidencePath,
+    expectedId: 'V-01',
+    expectedRequirement: fixture.requirementPath,
+    manifest: v2Manifest,
+  });
+  assert.equal(staleV2.code, 'stale_semantic_evidence');
+  assert.equal(staleV2.semanticFresh, false);
+
+  const v1Fixture = createFixture(context);
+  const v1Locator = writeManagedVerifyFixture(v1Fixture);
+  const v1Path = path.join(v1Fixture.changePath, 'evidence', 'V-01.json');
+  const v1Manifest = localManifest(v1Fixture, {
+    semanticBinding: computeVerificationSemanticBinding({
+      requirementPath: v1Fixture.requirementPath,
+      changePath: v1Fixture.changePath,
+      evidenceId: 'V-01',
+      semanticBindingVersion: 1,
+    }),
+    locator: v1Locator,
+  });
+  const validV1 = validateEvidenceManifest({
+    root: v1Fixture.root,
+    changePath: v1Fixture.changePath,
+    evidencePath: v1Path,
+    expectedId: 'V-01',
+    expectedRequirement: v1Fixture.requirementPath,
+    manifest: v1Manifest,
+  });
+  assert.equal(validV1.ok, true, JSON.stringify(validV1));
+  assert.equal(validV1.manifest.semanticBinding.version, 1);
+
+  const v1Requirement = fs.readFileSync(v1Fixture.requirementPath, 'utf8');
+  fs.writeFileSync(v1Fixture.requirementPath, v1Requirement.replace(
+    'node --test tests/settlement.test.mjs | 待执行',
+    'node --test tests/settlement.test.mjs；新增运行说明 | 待执行',
+  ), 'utf8');
+  const staleV1 = validateEvidenceManifest({
+    root: v1Fixture.root,
+    changePath: v1Fixture.changePath,
+    evidencePath: v1Path,
+    expectedId: 'V-01',
+    expectedRequirement: v1Fixture.requirementPath,
+    manifest: v1Manifest,
+  });
+  assert.equal(staleV1.code, 'stale_semantic_evidence');
+
+  const unknownVersion = validateEvidenceManifest({
+    root: v1Fixture.root,
+    changePath: v1Fixture.changePath,
+    evidencePath: v1Path,
+    expectedId: 'V-01',
+    expectedRequirement: v1Fixture.requirementPath,
+    manifest: {
+      ...v1Manifest,
+      semanticBinding: { ...v1Manifest.semanticBinding, version: 99 },
+    },
+  });
+  assert.equal(unknownVersion.code, 'unsupported_semantic_binding_version');
+  assert.equal(unknownVersion.target, 'openspec/changes/evidence-change/evidence/V-01.json');
+
+  const missingVersion = validateEvidenceManifest({
+    root: v1Fixture.root,
+    changePath: v1Fixture.changePath,
+    evidencePath: v1Path,
+    expectedId: 'V-01',
+    expectedRequirement: v1Fixture.requirementPath,
+    manifest: { ...v1Manifest, semanticBinding: null },
+  });
+  assert.equal(missingVersion.code, 'unsupported_semantic_binding_version');
+  assert.equal(missingVersion.semanticFresh, false);
 });
 
 test('[TC-02] 证据安全与工作区新鲜度', (context) => {

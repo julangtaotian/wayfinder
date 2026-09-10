@@ -62,6 +62,9 @@ export class VerificationSemanticError extends Error {
   }
 }
 
+export const CURRENT_VERIFICATION_SEMANTIC_BINDING_VERSION = 2;
+export const VERIFICATION_SEMANTIC_BINDING_VERSIONS = Object.freeze([1, 2]);
+
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
   if (!value || typeof value !== 'object') return value;
@@ -129,9 +132,21 @@ function requireUniqueRows(rows, key, label, target) {
   return rows;
 }
 
-export function buildVerificationSemanticSnapshot({ requirementPath, changePath, evidenceId } = {}) {
+export function buildVerificationSemanticSnapshot({
+  requirementPath,
+  changePath,
+  evidenceId,
+  semanticBindingVersion = CURRENT_VERIFICATION_SEMANTIC_BINDING_VERSION,
+} = {}) {
   if (!/^V-\d{2,}$/u.test(evidenceId || '')) {
     throw new VerificationSemanticError('invalid_evidence_id', `${semanticText.invalidEvidenceId}${evidenceId || semanticText.emptyValue}`, evidenceId || null);
+  }
+  if (!VERIFICATION_SEMANTIC_BINDING_VERSIONS.includes(semanticBindingVersion)) {
+    throw new VerificationSemanticError(
+      'unsupported_semantic_binding_version',
+      `语义绑定版本不受支持：${String(semanticBindingVersion)}`,
+      evidenceId,
+    );
   }
   // Node 标准库由真实运行时验证；未加载 Node 声明的 IDE 不应把这些确定性 API 视为未解析引用。
   //noinspection JSUnresolvedReference
@@ -238,14 +253,18 @@ export function buildVerificationSemanticSnapshot({ requirementPath, changePath,
     semanticText.observableAssertion, semanticText.targetTest, semanticText.testLocator, semanticText.focusedCommand,
     semanticText.verificationLink,
   ];
+  const verificationSnapshot = {
+    id: evidenceId,
+    type: verification[semanticText.verificationType],
+  };
+  // v1 必须保留原算法；v2 将运行后才能确定的说明排除，避免完成事实使证据自失效。
+  if (semanticBindingVersion === 1) {
+    verificationSnapshot.execution = verification[semanticText.executionContext];
+  }
   return stableValue({
-    semanticSchemaVersion: 1,
+    semanticSchemaVersion: semanticBindingVersion,
     revision,
-    verification: {
-      id: evidenceId,
-      type: verification[semanticText.verificationType],
-      execution: verification[semanticText.executionContext],
-    },
+    verification: verificationSnapshot,
     decisions: selectedDecisions,
     acceptances: selectedAcceptances,
     testCases: cases.sort((left, right) => left.id.localeCompare(right.id)).map((testCase) => ({

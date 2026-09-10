@@ -47,6 +47,10 @@ The inspector and validators are read-only. The evidence command defaults to a z
 5. For visual cases, delegate browser capture and comparison to `$frontend-ui-review` and reference its page, viewport, scenario, run, and persisted artifacts. For other manual cases, record device or environment, operations, observable checks, and evidence paths.
 6. Run the complete validator only after all applicable cases and verification records have valid passing evidence. The validator recalculates the selected requirement/test-plan semantic binding, workspace freshness, and every persisted log or artifact descriptor; it never reruns the recorded command.
 
+The normal successful sequence is `preview → one explicit execution → completion-fact updates → one complete validation`. Under semantic binding v2, completion facts may update dates, result statuses, evidence paths, acceptance checkboxes, case statuses, result classifications and separate run summaries without invalidating the captured evidence. These updates must not change D-*, A-*, R-*, mapped assertions, test operations, target tests, locators, focused commands or their relationships.
+
+For a known structured diagnostic, the workflow must not read validator implementation and instead follows the published `code`, `status`, `target`, freshness and trust fields. Minimal implementation inspection is reserved for an unknown code, missing fields or contradictory fields.
+
 ## Guardrails
 
 - Analysis is always read-only; Plan and Implement require the corresponding user intent.

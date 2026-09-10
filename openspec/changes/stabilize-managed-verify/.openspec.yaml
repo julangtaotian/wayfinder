@@ -1,0 +1,5 @@
+schema: spec-driven
+test_plan: required
+verification_evidence: required
+created: 2026-09-10
+goal: 验证成功后更新运行记录不再误判证据过期，同时保持真实语义变更失败关闭与历史证据兼容

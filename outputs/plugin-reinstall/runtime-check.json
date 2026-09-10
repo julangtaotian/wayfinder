@@ -1,9 +1,0 @@
-{
-  "openspecIntegrity": true,
-  "smoke": {
-    "ok": true,
-    "skipped": false,
-    "platformKey": "darwin-arm64",
-    "screenshotBytes": 3509
-  }
-}

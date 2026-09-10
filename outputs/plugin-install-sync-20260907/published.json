@@ -1,6 +1,0 @@
-{
-  "marketplace": "dist/frontend-ai-workflow-darwin-arm64",
-  "previous": "outputs/plugin-install-sync-20260907/previous-marketplace",
-  "version": "0.18.0+codex.20260907095840",
-  "previousRemovedAfterVerification": true
-}

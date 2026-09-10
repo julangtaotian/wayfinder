@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "date": "2026-09-10",
+  "purpose": "对当前已安装版本重新执行一次受管 Verify 与深度初始化行为复验",
+  "plugin": {
+    "version": "0.18.0",
+    "build": "0.18.0+codex.20260909095907",
+    "sourceMatched": true,
+    "candidateHashes": {
+      "skills/frontend-test/SKILL.md": "3bef2e70599bddb8db0606ffbe4b3c70f832ce18655b2f77b0be87661261971d",
+      "skills/frontend-workflow-bootstrap/SKILL.md": "3c2015c531a726f7952eb5130b2c5a290c058374bef5bc16a6c6b4b59eab3505",
+      "references/managed-test-workflow.md": "6c4d12740ad36b903c41c13749a83935b0dd58e901735e47c2b0bf277c1da4a5",
+      "references/workflow-initialization.md": "1861fb99ee1588883d5cb04e4812a63babbbf2791e7d430013cc776b1331cc52"
+    }
+  },
+  "execution": {
+    "model": "gpt-6-astra",
+    "reasoning": "xhigh",
+    "timeout": null,
+    "automaticRetry": false,
+    "automaticUsageReset": false,
+    "networkOrDependencyInstall": false
+  },
+  "fixtures": {
+    "managedVerify": {
+      "baselineCommit": "3ba0e58f79b11d4740121b600008851993249a5a",
+      "change": "add-fixture-test",
+      "requirement": "requirements/REQ-2026-001-fixture.md",
+      "expectedMutationBoundary": "仅验证记录与证据；不修改业务源码和既有测试"
+    },
+    "deepInitialization": {
+      "baselineCommit": "9c7a34031da22f2b61576c8ea5911d7a7f0c5f31",
+      "includedFiles": 15,
+      "expectedMutationBoundary": "仅更新 AGENTS.md、wayfinder/frontend.md 与 openspec/config.yaml 的受管内容"
+    }
+  },
+  "comparisonBaseline": "outputs/complex-mode-20260909/results.json",
+  "retainedEvidence": [
+    "managed-verify.events.jsonl",
+    "managed-verify.answer.md",
+    "managed-verify.run.json",
+    "deep-init.events.jsonl",
+    "deep-init.answer.md",
+    "deep-init.run.json",
+    "protocol.json",
+    "results.json",
+    "report.md"
+  ]
+}

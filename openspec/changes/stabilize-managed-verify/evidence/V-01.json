@@ -1,0 +1,66 @@
+{
+  "artifacts": [],
+  "change": "stabilize-managed-verify",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=受管 Verify 结果补写与语义版本兼容",
+      "tests/verification-evidence-integrity.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-10T03:11:24.907Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "118e4d3ee1908bbe82972014ac6cac4296d6b793",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-01] 受管 Verify 结果补写与语义版本兼容",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 284,
+      "path": "outputs/verification-evidence/stabilize-managed-verify/V-01/20260910031124677-1080-10c9452a/stdout.log",
+      "sha256": "1eed82777f3468c10e8833e500ac0624d8460431eb4dea5819f3265bb1cf93ff",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": "outputs/verification-evidence/stabilize-managed-verify/V-01/20260910031124677-1080-10c9452a/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-046-managed-verify-stability.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02",
+      "A-03"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-03",
+      "D-04",
+      "D-05"
+    ],
+    "revision": "R-01",
+    "sha256": "849c51b47590aa174719698e8c61003c8de6ab3d3bb3233aedc665205b923913",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 2
+  },
+  "startedAt": "2026-09-10T03:11:24.678Z",
+  "status": "passed",
+  "workspaceFingerprint": "ee2df916206e7cac86c293f3e4dcc622464384d313a5d5bec769d6c0918ae69c"
+}
