@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：已实现
+- 状态：已验证
 - 需求：`requirements/REQ-2026-048-compact-lifecycle-storage.md`
 - 变更：compact-lifecycle-storage
 - 需求修订基线：R-01
@@ -219,7 +219,7 @@
 
 ### TC-10：本地发布门禁与真实矩阵分层
 
-- 状态：计划
+- 状态：人工通过
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：集成
@@ -236,5 +236,5 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-10、V-11、V-12
-- 结果分类：未执行
+- 结果分类：通过
 - 证据：`openspec/changes/compact-lifecycle-storage/verification.md`

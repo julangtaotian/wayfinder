@@ -175,7 +175,7 @@
 | V-09 | 自动 | CI 事件差异、生命周期版本、产物保留和混合结构门禁 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-09.json` |
 | V-10 | 自动 | 本地全量、结构、OpenSpec 与统一验证 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-10.json` |
 | V-11 | 自动 | 官方 Skill 与 Plugin validators | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-11.json` |
-| V-12 | 人工 | 人工复核 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 同一候选提交 | 2026-09-11 | 未执行 | `openspec/changes/compact-lifecycle-storage/verification.md` |
+| V-12 | 人工 | 人工复核 Run #110：提交 `891e22b604a9f619cded8516ed192c668234dae4` 的共享校验与五平台矩阵 | 2026-09-11 | 通过 | [GitHub Actions Run #110](https://github.com/julangtaotian/wayfinder/actions/runs/34580007285) |
 
 ## 验收标准
 
