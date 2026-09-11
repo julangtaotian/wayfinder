@@ -53,6 +53,15 @@ const REQUIREMENT_DECISION_ASSETS = [
 const REQUIREMENT_MIGRATION_ASSETS = [
   'scripts/preview-requirement-upgrade.mjs',
   'scripts/requirement-archive.mjs',
+  'scripts/lifecycle-contract.mjs',
+  'scripts/lifecycle-history.mjs',
+  'scripts/lifecycle-runtime.mjs',
+  'scripts/lifecycle-status.mjs',
+  'scripts/lifecycle-transaction.mjs',
+  'scripts/lifecycle-finalize.mjs',
+  'scripts/lifecycle-audit.mjs',
+  'scripts/lifecycle-migration.mjs',
+  'scripts/stage-context.mjs',
   'references/requirement-guidelines.md',
 ];
 const DELIVERY_GUARD_ASSETS = [

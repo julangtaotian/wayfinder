@@ -97,6 +97,10 @@ blob-report/
 /outputs/complex-mode-20260909/workspaces/
 
 # 运行日志与进程临时状态
+# frontend-ai-workflow:start
+/.frontend-ai-workflow/
+/.frontend-ui-review/runs/
+# frontend-ai-workflow:end
 *.log
 *.pid
 *.seed

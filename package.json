@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "type": "module",
   "description": "Team marketplace and Codex plugin for reusable frontend AI workflows.",
@@ -22,7 +22,11 @@
     "verify:platform": "node scripts/verify.mjs --scope platform",
     "benchmark:developer-effectiveness": "node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs",
     "requirements:archive": "node plugins/frontend-ai-workflow/scripts/requirement-archive.mjs",
-    "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs"
+    "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs",
+    "lifecycle:audit": "node plugins/frontend-ai-workflow/scripts/lifecycle-audit.mjs",
+    "lifecycle:status": "node plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs",
+    "lifecycle:migrate": "node plugins/frontend-ai-workflow/scripts/lifecycle-migration.mjs",
+    "context:stage": "node plugins/frontend-ai-workflow/scripts/stage-context.mjs"
   },
   "engines": {
     "node": ">=20.19.0"

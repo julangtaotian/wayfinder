@@ -72,11 +72,11 @@ function assertOwnedDirectory(target, label) {
 
 export function resolveOfficialValidatorPaths(repositoryRoot = defaultRepositoryRoot) {
   const root = resolveRepositoryRoot(repositoryRoot);
-  const outputsRoot = path.join(root, 'outputs');
-  const cacheRoot = path.join(outputsRoot, 'official-validator-cache');
-  const runtimeRoot = path.join(outputsRoot, 'official-validator-runtime');
+  const outputsRoot = path.join(root, '.frontend-ai-workflow');
+  const cacheRoot = path.join(outputsRoot, 'cache', 'official-validator');
+  const runtimeRoot = path.join(outputsRoot, 'runs', 'official-validator');
   for (const [target, label] of [
-    [outputsRoot, 'outputs 目录'],
+    [outputsRoot, '工作流运行时目录'],
     [cacheRoot, '官方预检缓存'],
     [runtimeRoot, '官方预检临时运行时'],
   ]) {
@@ -550,6 +550,7 @@ export function runOfficialValidatorPreflight({
   try {
     paths = resolveOfficialValidatorPaths(repositoryRoot);
     fs.mkdirSync(paths.outputsRoot, { recursive: true });
+    fs.mkdirSync(path.dirname(paths.cacheRoot), { recursive: true });
     assertOwnedDirectory(paths.runtimeRoot, '官方预检临时运行时');
     runRoot = resolveRunRoot(paths.runtimeRoot, runId);
     fs.mkdirSync(paths.runtimeRoot, { recursive: true });
@@ -604,7 +605,7 @@ export function runOfficialValidatorPreflight({
           output = failureResult(officialValidatorError(
             'official_validator_start_failed',
             `官方预检临时运行时清理失败：${cleanupError.message}`,
-            { target: 'outputs/official-validator-runtime' },
+            { target: '.frontend-ai-workflow/runs/official-validator' },
           ), context);
         } else if (output) {
           output.cleanupError = cleanupError.message;
@@ -623,7 +624,7 @@ export function cleanupOfficialValidatorCache({ repositoryRoot = defaultReposito
     ok: true,
     code: 'official_validator_cache_cleaned',
     status: 'cleaned',
-    target: 'outputs/official-validator-cache',
+    target: '.frontend-ai-workflow/cache/official-validator',
   };
 }
 

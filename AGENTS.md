@@ -13,19 +13,19 @@
 - marketplace 与 manifest：`.agents/plugins/marketplace.json`、`plugins/frontend-ai-workflow/.codex-plugin/plugin.json`。
 - 日常源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates`、`references` 和 `tests`。
 - 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取。
-- 历史与验收资产：`requirements`、`openspec`、`outputs`、`.frontend-ui-review`；按当前需求、变更或验收目标读取。
+- 生命周期与验收资产：活动内容位于 `requirements`、`openspec/changes`，正式合同位于 `openspec/specs`，持久设计输入位于 `design`；完成状态优先读取 `.workflow-history`，本地运行内容位于 `.frontend-ai-workflow`。
 
 ## AI 读取路由
 
 - 普通功能、修复和检查先在日常源码范围内定位；优先使用精确文件名和限定目录搜索。
-- 除非任务明确涉及运行时、平台打包、视觉证据或历史规划，不递归枚举 `runtime/**/node_modules`、被忽略的单平台成品、`outputs`、`.frontend-ui-review/runs` 和 `openspec/changes/archive`。
+- 除非任务明确涉及运行时、平台打包、视觉证据或存量迁移，不递归枚举 `runtime/**/node_modules`、被忽略的单平台成品、`.frontend-ai-workflow`、`outputs`、`.frontend-ui-review/runs` 和旧 `openspec/changes/archive`。
 - 项目健康检查先使用精简模式；只有计数和用户问题需要具体目标时才按诊断 code 查询，完整结果作为必要事实缺失时的兜底。
 
 ## 持续体积治理
 
-- 已验收需求的完整正文位于 `requirements/archive/<year>/`；根 `REQ-*.md` 是轻量入口，`requirements/index.json` 是稳定目录。日常检查不得展开归档正文，只有显式历史审计才读取。
-- 完成流程负责自动生成根存根并刷新索引；恢复执行必须幂等，不得生成第二份正文。
-- 每次仓库统一验证必须执行确定性体积门禁，覆盖退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算。
+- schema v2 完成状态由 `.workflow-history/<year>.jsonl` 的追加事件投影；活动需求保持到待验证，完成后与活动变更一并清除，不再生成需求正文归档、OpenSpec 永久归档或根存根。
+- `legacy-readonly` 只用于迁移旧仓库；v2 写入器不得与旧归档流程混用。迁移必须先预览，引用、未知文件、符号链接或未跟踪目标存在时失败关闭。
+- 每次仓库统一验证必须执行确定性生命周期与体积门禁，覆盖事件篡改、无事件删除、退役路径、受跟踪运行时、活跃全文需求和日常大文件预算。
 - 预算是规划合同。需要调整时必须先建立需求、设计与回归证据，禁止按当前仓库体积静默放宽，也不再依赖定期人工瘦身。
 
 ## 实现约束
@@ -51,11 +51,10 @@
 
 ## 验证
 
-- 本地验证产生的日志、截图、临时 fixture、下载内容、缓存和仅用于验证的依赖必须写入仓库 `outputs/<验证主题>/`，不得散落在项目根目录或系统临时目录。
-- `outputs` 只长期跟踪最终报告、机器可读结论和被需求或 OpenSpec 明确引用的必要证据；一次性准备脚本、原始接口快照、重复提示词、可由最终结果重建的中间状态默认保持本地忽略。新增持久主题前先检查文件数预算，原则上保留至少 20 个文件余量。
-- 清理历史 `outputs` 前先反向检查仓库引用；不得删除仍被需求、变更、验证记录或正式报告引用的证据，已有最终报告和结构化结论优先保留。
-- 仓库级 Vitest 验证运行时固定使用 `outputs/frontend-test-runtime/`，可复用 npm 缓存固定使用 `outputs/frontend-test-cache/`；需要真实 Vitest 证据时先运行 `npm run prepare:test-runtime`，验证结束后运行 `npm run cleanup:test-runtime`，仅在需要回收缓存时运行 `npm run cleanup:test-cache`，不在根目录保留 `node_modules`。
-- `outputs` 内已有的持久设计与验收资产属于项目内容，禁止为了清理临时验证环境而整体删除；只清理本次验证明确创建的子目录。
+- 本地验证日志、截图、fixture、下载内容和依赖统一写入 `.frontend-ai-workflow/runs/<主题>/<run-id>/`，可重建缓存写入 `cache/`，崩溃恢复写入 `transactions/`；三个目录整体忽略，不为每个主题新增过滤规则。
+- 默认验证不产生长期 tracked outputs。高风险、发布或显式 strict 完成至多保留一个受预算约束的证据包；外部 CI 结果不回写仓库。
+- 仓库级 Vitest 验证运行时固定使用 `.frontend-ai-workflow/runs/frontend-test-runtime/`，缓存使用 `.frontend-ai-workflow/cache/frontend-test-cache/`；清理只作用于对应受管子目录。
+- 旧 `outputs`、`.frontend-ui-review/runs` 和归档资产只能通过 lifecycle migration 预览与显式写入处理，禁止直接整体删除或触碰未跟踪内容。
 - 运行 `npm test`。
 - 运行 `npm run validate`。
 - 使用官方 skill validator 检查所有自定义技能。

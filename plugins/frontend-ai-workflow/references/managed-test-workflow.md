@@ -34,7 +34,7 @@ The inspector and validators are read-only. The evidence command defaults to a z
 
 ## Verify
 
-1. Preview the narrowest recorded focused command with `verification-evidence.mjs`, inspect its normalized executable, working directory, V-* target and outputs target, then repeat with `--write` when execution is authorized. Do not promote a coverage or full-suite command to focused verification.
+1. Preview the narrowest recorded focused command with `verification-evidence.mjs`, inspect its normalized executable, working directory, V-* target and managed run target, then repeat with `--write` when execution is authorized. Do not promote a coverage or full-suite command to focused verification; ordinary logs remain under `.frontend-ai-workflow/runs/` and are not long-term repository evidence.
 2. Require exit code 0 and at least one exact planned test-locator match. A zero-test result is blocked even when the process exits successfully, and a failed or zero-locator run must not overwrite an existing passed manifest.
 3. Classify the actual outcome as one of: `通过`, `产品实现缺陷`, `测试设计错误`, `测试代码错误`, `需求歧义`, `环境阻塞`, or `历史无关失败`. Keep focused, related, full, visual, and manual evidence distinct.
 4. Update a case and its `V-*` record to pass only after a real successful execution generated `openspec/changes/<change>/evidence/<V-ID>.json`. Keep machine fields atomic: the result value is exactly one allowed status, and the evidence value contains only one or more backtick-wrapped, safe project-relative paths. Put command summaries, locator counts and explanations in the execution-content field or a separate verification summary; never append them to the result or evidence value. For example:

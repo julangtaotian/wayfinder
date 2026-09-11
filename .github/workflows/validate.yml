@@ -22,10 +22,14 @@ jobs:
   shared:
     name: Shared validation (linux-x64)
     runs-on: ubuntu-24.04
+    env:
+      LIFECYCLE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+      LIFECYCLE_REQUIRE_BASE: '1'
     steps:
       - uses: actions/checkout@v6
         with:
           lfs: false
+          fetch-depth: 2
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0
@@ -83,15 +87,22 @@ jobs:
       - run: npm run verify:platform
       - name: Install pinned Codex CLI for platform evidence
         if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
-        run: npm install --prefix outputs/platform-install-codex --no-audit --no-fund --no-package-lock --ignore-scripts @openai/codex@0.150.0-alpha.8
+        run: npm install --prefix .frontend-ai-workflow/cache/platform-install-codex --no-audit --no-fund --no-package-lock --ignore-scripts @openai/codex@0.150.0-alpha.8
       - name: Verify real Codex install, load, and offline runtime
         if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
-        run: node plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs --write --platform ${{ matrix.platform }} --marketplace dist/frontend-ai-workflow-${{ matrix.platform }} --output outputs/platform-install-evidence/${{ matrix.platform }}.json --codex-entry outputs/platform-install-codex/node_modules/@openai/codex/bin/codex.js
+        run: node plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs --write --platform ${{ matrix.platform }} --marketplace dist/frontend-ai-workflow-${{ matrix.platform }} --output .frontend-ai-workflow/runs/platform-install-evidence/${{ matrix.platform }}.json --codex-entry .frontend-ai-workflow/cache/platform-install-codex/node_modules/@openai/codex/bin/codex.js
       - name: Upload platform package report
         uses: actions/upload-artifact@v7
         with:
           name: plugin-package-report-${{ matrix.platform }}
-          path: |
-            dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
-            outputs/platform-install-evidence/${{ matrix.platform }}.json
+          retention-days: 14
+          path: dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
+          if-no-files-found: error
+      - name: Upload optional platform install evidence
+        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: plugin-install-evidence-${{ matrix.platform }}
+          retention-days: 14
+          path: .frontend-ai-workflow/runs/platform-install-evidence/${{ matrix.platform }}.json
           if-no-files-found: error

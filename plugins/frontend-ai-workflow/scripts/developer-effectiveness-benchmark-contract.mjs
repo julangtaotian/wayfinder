@@ -6,7 +6,7 @@ import {
 } from './project-path-safety.mjs';
 
 export const BENCHMARK_SCHEMA_VERSION = 1;
-export const BENCHMARK_OUTPUT_DIRECTORY = 'outputs/developer-effectiveness-benchmark';
+export const BENCHMARK_OUTPUT_DIRECTORY = '.frontend-ai-workflow/runs/developer-effectiveness-benchmark';
 export const EXPECTED_PROJECT_IDS = Object.freeze(['P1', 'P2', 'P3']);
 export const COMPLEXITY_MATRIX = Object.freeze({
   P1: Object.freeze(['small', 'large']),
@@ -28,7 +28,7 @@ export const COMPLEXITY_CODES = Object.freeze({ small: 'S', medium: 'M', large: 
 export const TASK_TYPES = new Set(['bug', 'feature', 'refactor']);
 export const MANAGEMENT_PATHS = ['AGENTS.md', 'requirements/', 'openspec/', 'wayfinder/'];
 export const FORBIDDEN_CASE_PATHS = [
-  '.git/', 'outputs/', 'requirements/', 'openspec/', 'wayfinder/', 'AGENTS.md',
+  '.git/', '.frontend-ai-workflow/', 'outputs/', 'requirements/', 'openspec/', 'wayfinder/', 'AGENTS.md',
   'package.json', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock',
 ];
 export const UNSAFE_OUTPUT_PATTERNS = [

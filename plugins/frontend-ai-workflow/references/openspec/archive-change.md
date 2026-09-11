@@ -1,6 +1,6 @@
 ---
 name: openspec-archive-change
-description: Archive a completed change in the experimental workflow. Use when the user wants to finalize and archive a change after implementation is complete. Uses the plugin-bundled OpenSpec CLI.
+description: Finalize a completed change with compact lifecycle history. Uses the plugin-bundled OpenSpec CLI and treats native archive as a transient synchronization step in schema v2.
 allowed-tools: Bash(node:*)
 license: MIT
 metadata:
@@ -30,8 +30,8 @@ Resolve `<plugin-root>` as the directory two levels above this reference folder.
 
 4. The preview reads `instructions archive --json` and reports optional context, operationGuidance, warnings and concrete paths. Treat them as additive inputs only; they cannot replace the selected requirement, project root, command contract or hard gates.
 5. If the preview fails, stop. Report the exact root, requirement, artifact, task, evidence, strict-validation, spec, instruction, or archive-target blocker. User confirmation MUST NOT override a failed gate.
-6. When the user requested completion and archiving, repeat the command with `--write`.
-7. Report the archived path, synchronized capability names, final requirement status, runtime warnings and residual recovery risk.
+6. When the user requested completion, read `.frontend-workflow.json` and repeat the command with `--write`. A high-risk or explicitly strict delivery may add `--evidence-mode strict`.
+7. In schema v2, report the lifecycle event, accepted-local/accepted-merged state, synchronized capabilities and residual recovery risk. Do not report the native archive directory as durable output. `legacy-readonly` may use the old archived-path response only for recovery or migration.
 
 ## Guaranteed Order
 
@@ -43,9 +43,9 @@ The wrapper performs:
 4. strict bundled OpenSpec validation;
 5. archive instructions, root boundary and date-preserving archive-target conflict precheck;
 6. bundled spec rebuild, validation and synchronization;
-7. archive movement;
-8. rewrite active evidence references to the engine's actual archive target and atomically update the requirement status to `已验收`;
-9. run requirement, test-plan and machine-evidence `complete` audits from the actual archived directory without rerunning project commands.
+7. native archive movement as a transaction-local synchronization result;
+8. append one validated lifecycle event, optionally write one bounded strict evidence capsule, then remove the active requirement and transient archive;
+9. project the final branch-local state and remove the completed transaction without rerunning project commands.
 
 ## Guardrails
 
@@ -57,5 +57,5 @@ The wrapper performs:
 - A capability whose last requirement is removed may be retired only when `.openspec.yaml` explicitly declares `retire_capabilities: true`; the bundled runtime must report the deleted main spec, and a missing marker remains blocking.
 - The wrapper always supplies the explicit non-interactive change name, `--json` and `--yes`; it never guesses a missing confirmation flag from a failed prompt.
 - If spec rebuild, validation or archive movement fails, do not mark the requirement accepted.
-- If archive movement succeeds but the requirement write or post-archive audit fails, return `archive_partial_failure` with the actual archive target, failed stage and repeatable recovery arguments; recovery must not archive again or rerun verification.
-- `complete` remains a read-only audit stage for historical already-accepted requirements; new changes use `precomplete` before archive.
+- If native archive succeeds but event append or cleanup fails, retain the bounded transaction and return its id and failed stage; recovery must not archive, synchronize, append or rerun verification twice.
+- Existing v1 archives remain read-only migration input. New v2 changes use `precomplete` before completion and derive terminal state from events rather than accepted Markdown.

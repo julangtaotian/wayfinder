@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "run",
+      "verify"
+    ],
+    "cwd": ".",
+    "executable": "npm",
+    "source": "path"
+  },
+  "completedAt": "2026-09-11T08:30:47.702Z",
+  "evidenceId": "V-10",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "统一验证通过",
+  "locatorMatches": 1,
+  "logs": [
+    {
+      "bytes": 57856,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-10/20260911082943782-61457-1f13bef7/stdout.log",
+      "sha256": "e5cbf4b8268102683bda785f266def58d0a8186fd009ae9846957e848e678019",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-10/20260911082943782-61457-1f13bef7/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-09",
+      "A-10"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-18",
+      "D-19"
+    ],
+    "revision": "R-01",
+    "sha256": "6c3314c590d4c0dc3997c57bd77e99ce3b391871c2c6d28237e90d238f29a0e4",
+    "testCaseIds": [
+      "TC-10"
+    ],
+    "verificationId": "V-10",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:29:43.783Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

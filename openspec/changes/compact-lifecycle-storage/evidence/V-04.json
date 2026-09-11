@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=生命周期 Git 差异保护追加历史",
+      "tests/lifecycle-history.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-11T08:31:09.708Z",
+  "evidenceId": "V-04",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "生命周期 Git 差异保护追加历史",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 259,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-04/20260911083109483-79766-3f5f90f3/stdout.log",
+      "sha256": "e6e638124a1e2fe92da04ae0b51c244ed9793be00f2ef2b8f2662c6c6ebf5e13",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-04/20260911083109483-79766-3f5f90f3/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-06"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-09",
+      "D-14",
+      "D-16"
+    ],
+    "revision": "R-01",
+    "sha256": "7df3d34170d534078c2d3aed1c20cd81934ce68a73bd70e4116094d1b8c5a09b",
+    "testCaseIds": [
+      "TC-04"
+    ],
+    "verificationId": "V-04",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:31:09.486Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

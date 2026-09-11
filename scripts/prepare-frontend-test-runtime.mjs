@@ -23,7 +23,7 @@ function resolveOutputChild(outputsRoot, name, label) {
   if (!relativeTarget || relativeTarget.startsWith('..') || path.isAbsolute(relativeTarget)) {
     throw frontendTestRuntimeError(
       'frontend_test_runtime_path_unsafe',
-      `${label}必须位于 outputs 内：${target}`,
+      `${label}必须位于受管运行时目录内：${target}`,
       { target },
     );
   }
@@ -31,9 +31,9 @@ function resolveOutputChild(outputsRoot, name, label) {
 }
 
 export function resolveFrontendTestRuntime(repositoryRoot = defaultRepositoryRoot) {
-  const outputsRoot = path.join(repositoryRoot, 'outputs');
-  const runtimeRoot = resolveOutputChild(outputsRoot, 'frontend-test-runtime', '验证运行时');
-  const cacheRoot = resolveOutputChild(outputsRoot, 'frontend-test-cache', '验证缓存');
+  const outputsRoot = path.join(repositoryRoot, '.frontend-ai-workflow');
+  const runtimeRoot = resolveOutputChild(path.join(outputsRoot, 'runs'), 'frontend-test-runtime', '验证运行时');
+  const cacheRoot = resolveOutputChild(path.join(outputsRoot, 'cache'), 'frontend-test-cache', '验证缓存');
   return {
     outputsRoot,
     runtimeRoot,

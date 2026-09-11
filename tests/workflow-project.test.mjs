@@ -332,6 +332,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.deepEqual(allSteps.map((step) => step.id), [
     'static',
     'footprint',
+    'lifecycle',
     'tests',
     'structure',
     'openspec',
@@ -343,6 +344,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.deepEqual(sharedSteps.map((step) => step.id), [
     'static',
     'footprint',
+    'lifecycle',
     'tests',
     'structure',
     'openspec',
@@ -355,6 +357,9 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     'playwright-integrity',
     'playwright-smoke',
   ]);
+  const requiredBaseStep = buildVerificationSteps(verificationRoot, { scope: 'shared', requireLifecycleBase: true })
+    .find((step) => step.id === 'lifecycle');
+  assert.equal(requiredBaseStep.args.includes('--require-base'), true);
   const allStructureArgs = allSteps.find((step) => step.id === 'structure').args;
   const sharedStructureArgs = sharedSteps.find((step) => step.id === 'structure').args;
   assert.equal(path.basename(allStructureArgs[0]), 'validate-structure.mjs');
@@ -409,12 +414,12 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.equal(failed.code, 'verification_step_failed');
   assert.equal(failed.scope, 'all');
   assert.equal(failed.failedStep, 'openspec');
-  assert.deepEqual(failed.completed, ['static', 'footprint', 'tests', 'structure']);
-  assert.deepEqual(executed, ['static', 'footprint', 'tests', 'structure', 'openspec']);
+  assert.deepEqual(failed.completed, ['static', 'footprint', 'lifecycle', 'tests', 'structure']);
+  assert.deepEqual(executed, ['static', 'footprint', 'lifecycle', 'tests', 'structure', 'openspec']);
   assert.deepEqual(lifecycle, ['prepare', 'cleanup']);
-  const expectedTempRoot = path.join(verificationRoot, 'outputs', 'verify-runtime', 'tmp');
+  const expectedTempRoot = path.join(verificationRoot, '.frontend-ai-workflow', 'runs', 'verify-runtime', 'tmp');
   assert.ok(tempRoots.every((tempRoot) => tempRoot === expectedTempRoot));
-  assert.equal(fs.existsSync(path.join(verificationRoot, 'outputs', 'verify-runtime')), false);
+  assert.equal(fs.existsSync(path.join(verificationRoot, '.frontend-ai-workflow', 'runs', 'verify-runtime')), false);
   assert.match(errors[0], /OpenSpec 全量严格校验/);
 
   const platformLifecycle = [];
@@ -477,11 +482,11 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   assert.equal(preview.ok, true);
   assert.equal(preview.write, false);
   assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false);
-  assert.equal(preview.actions.filter((item) => item.action === 'create').length, 3);
+  assert.equal(preview.actions.filter((item) => item.action === 'create').length, 5);
 
   const applied = runBootstrap({ target: root, write: true });
   assert.equal(applied.ok, true);
-  for (const file of ['AGENTS.md', 'openspec/config.yaml', 'wayfinder/frontend.md']) {
+  for (const file of ['AGENTS.md', 'openspec/config.yaml', 'wayfinder/frontend.md', '.frontend-workflow.json', '.gitignore']) {
     assert.equal(fs.existsSync(path.join(root, file)), true, file);
   }
 
@@ -491,12 +496,14 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /交付构建命令：npm run build/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /静态检查命令：未配置（语义：missing）/);
   assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /operations:/);
-  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /归档前必须通过插件完成预览/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /完成前必须通过插件预览/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.9\.0"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /layout: "wayfinder"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /frontend-ai-workflow:facts:start/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /analysisStatus: "not-requested"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /analysisCoveredFiles: 0/);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.frontend-workflow.json'), 'utf8')).lifecycleMode, 'v2');
+  assert.match(fs.readFileSync(path.join(root, '.gitignore'), 'utf8'), /\/\.frontend-ai-workflow\//u);
   assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
   assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), false);
 });

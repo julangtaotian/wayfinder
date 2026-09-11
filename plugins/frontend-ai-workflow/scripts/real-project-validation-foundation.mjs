@@ -89,7 +89,7 @@ export function assertExternalProjectRoot(value, projectId) {
 }
 
 export function validationBase(repositoryRoot) {
-  return path.join(repositoryRoot, 'outputs', 'real-project-validation');
+  return path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'real-project-validation');
 }
 
 export function resolveInsideValidationBase(repositoryRoot, candidate, label, { allowBase = false } = {}) {
@@ -97,7 +97,7 @@ export function resolveInsideValidationBase(repositoryRoot, candidate, label, { 
   const base = validationBase(canonicalRepository);
   const resolved = path.resolve(candidate);
   if (!isInside(base, resolved, { allowRoot: allowBase })) {
-    throw new RealProjectValidationError('unsafe_validation_path', `${label}必须位于 outputs/real-project-validation 内`, normalizeMachinePath(path.relative(canonicalRepository, resolved)));
+    throw new RealProjectValidationError('unsafe_validation_path', `${label}必须位于 .frontend-ai-workflow/runs/real-project-validation 内`, normalizeMachinePath(path.relative(canonicalRepository, resolved)));
   }
   const repositoryRelative = normalizeMachinePath(path.relative(canonicalRepository, resolved));
   resolveSafeProjectPath(canonicalRepository, repositoryRelative, label);

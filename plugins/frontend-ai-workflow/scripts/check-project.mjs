@@ -25,10 +25,15 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 import { inspectPluginRepository, PLUGIN_REPOSITORY_KIND } from './plugin-repository-health.mjs';
+import { readLifecycleConfig } from './lifecycle-contract.mjs';
+import { runtimePathsAreIgnored } from './lifecycle-runtime.mjs';
+import { readLifecycleEvents } from './lifecycle-history.mjs';
 
 const WAYFINDER_REQUIRED_FILES = [
   'AGENTS.md',
   'openspec/config.yaml',
+  '.frontend-workflow.json',
+  '.gitignore',
   WAYFINDER_PATH,
 ];
 
@@ -43,6 +48,7 @@ const LEGACY_REQUIRED_FILES = [
 const OUTER_MANAGED_FILES = [
   { file: 'AGENTS.md', kind: 'html' },
   { file: 'openspec/config.yaml', kind: 'yaml' },
+  { file: '.gitignore', kind: 'yaml' },
 ];
 const ANALYSIS_STATUSES = new Set(['not-requested', 'pending', 'partial', 'complete']);
 const COMPLETE_ANALYSIS_DIMENSIONS = [
@@ -314,7 +320,7 @@ function checkActiveChanges(root, warnings) {
     .filter((change) => change.status === 'complete')
     .map((change) => change.name);
   if (completedNotArchived.length) {
-    warnings.push(`检测到 ${completedNotArchived.length} 个已完成但仍未归档的活跃变更：${completedNotArchived.join('、')}`);
+    warnings.push(`检测到 ${completedNotArchived.length} 个规划已完成但尚未执行生命周期完成的活动变更：${completedNotArchived.join('、')}`);
   }
   return { available: true, total: changes.length, completedNotArchived };
 }
@@ -401,6 +407,7 @@ export function checkProject(target = process.cwd()) {
   const layout = detectWorkflowLayout(inspection.root);
   const pluginRepository = inspectPluginRepository(inspection.root);
   const isPluginRepository = pluginRepository.kind === PLUGIN_REPOSITORY_KIND;
+  let lifecycle = null;
 
   let deepAnalysis;
   if (isPluginRepository) {
@@ -437,6 +444,21 @@ export function checkProject(target = process.cwd()) {
         : '人工开发工具或外部 CI 的验证环境';
       warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}。`);
     }
+    try {
+      const config = readLifecycleConfig(inspection.root);
+      const history = readLifecycleEvents({ config });
+      lifecycle = {
+        schemaVersion: config.schemaVersion,
+        mode: config.lifecycleMode,
+        eventCount: history.events.length,
+        diagnostics: history.diagnostics,
+        runtimeIgnored: runtimePathsAreIgnored(inspection.root),
+      };
+      if (!lifecycle.runtimeIgnored) errors.push('.gitignore 缺少统一工作流运行时忽略规则');
+      for (const item of history.diagnostics) errors.push(`${item.code}：${item.target}`);
+    } catch (error) {
+      errors.push(`${error.code || 'lifecycle_config_invalid'}：${error.message}`);
+    }
   }
 
   const planningEngine = checkPlanningEngine(inspection.root, errors);
@@ -460,6 +482,7 @@ export function checkProject(target = process.cwd()) {
       repositoryKind: PLUGIN_REPOSITORY_KIND,
       pluginRepository,
     } : {}),
+    lifecycle,
     migrationRequired: layout === 'legacy',
     version: deepAnalysis.version,
     preset: inspection.preset,

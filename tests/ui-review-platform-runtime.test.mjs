@@ -872,7 +872,9 @@ test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
   assert.equal([...platformJob.matchAll(/npm run verify:platform/gmu)].length, 1);
   assert.doesNotMatch(platformJob, /build-playwright-platform\.mjs|package-plugin-platform\.mjs|--replace-lfs-pointers|git lfs pull/u);
   assert.doesNotMatch(workflow, /^\s*schedule:|actions\/cache|cache:|permissions:\s*write/gmu);
-  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 1);
+  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 2);
+  assert.match(platformJob, /Upload optional platform install evidence[\s\S]*collect_platform_install_evidence/u);
+  assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 2);
   assert.match(platformJob, /dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
   assert.doesNotMatch(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\s*$/mu);
   const previewRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-marketplace-preview-'));

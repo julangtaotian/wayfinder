@@ -10,6 +10,11 @@ const EXCLUDED_DIRECTORIES = new Set([
   '.git', '.next', '.nuxt', '.turbo', '.yarn', 'build', 'coverage', 'dist',
   'node_modules', 'out', 'platform-assets', 'storybook-static', 'temp', 'tmp',
 ]);
+const EXCLUDED_WORKFLOW_ROOTS = new Set([
+  '.frontend-ai-workflow', '.frontend-ui-review', '.workflow-history',
+  'openspec', 'outputs', 'requirements', 'wayfinder',
+]);
+const EXCLUDED_WORKFLOW_PREFIXES = new Set(['plugins/frontend-ai-workflow/runtime']);
 const SUFFIX_TEST_FILE_PATTERN = /(?:^|\/)[^/]+\.(?:spec|test)\.[cm]?[jt]sx?$/iu;
 const GENERIC_TEST_FILE_PATTERN = /^(?:spec|test)\.[cm]?[jt]sx?$/iu;
 const GENERATED_TEST_PATTERN = /\.generated\.(?:spec|test)\.[cm]?[jt]sx?$/iu;
@@ -45,6 +50,9 @@ function walkProject(root, directory, files, testDirectories) {
     if (entry.isSymbolicLink()) continue;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRECTORIES.has(entry.name)) continue;
+      const relativeDirectory = projectPath(root, absolutePath);
+      if ((directory === root && EXCLUDED_WORKFLOW_ROOTS.has(entry.name))
+        || EXCLUDED_WORKFLOW_PREFIXES.has(relativeDirectory)) continue;
       if (TEST_DIRECTORIES.has(entry.name.toLowerCase())) testDirectories.add(projectPath(root, absolutePath));
       walkProject(root, absolutePath, files, testDirectories);
     } else if (entry.isFile()) {

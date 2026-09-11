@@ -11,11 +11,11 @@ const defaultRepositoryRoot = path.resolve(scriptDir, '..');
 const VERIFICATION_SCOPES = new Set(['all', 'shared', 'platform']);
 
 function resolveVerificationRuntime(repositoryRoot) {
-  const outputsRoot = path.join(repositoryRoot, 'outputs');
+  const outputsRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs');
   const runtimeRoot = path.join(outputsRoot, 'verify-runtime');
   const relativeRuntime = path.relative(outputsRoot, runtimeRoot);
   if (!relativeRuntime || relativeRuntime.startsWith('..') || path.isAbsolute(relativeRuntime)) {
-    throw new Error(`验证临时目录必须位于 outputs 内：${runtimeRoot}`);
+    throw new Error(`验证临时目录必须位于受管 runs 内：${runtimeRoot}`);
   }
   return { runtimeRoot, tempRoot: path.join(runtimeRoot, 'tmp') };
 }
@@ -60,7 +60,17 @@ export function parseVerificationArgs(argv = []) {
   return offline ? { scope, offline: true } : { scope };
 }
 
-export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, { scope = 'all' } = {}) {
+function lifecycleMode(repositoryRoot) {
+  const configPath = path.join(repositoryRoot, '.frontend-workflow.json');
+  if (!fs.existsSync(configPath)) return 'legacy-readonly';
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf8')).lifecycleMode || 'legacy-readonly';
+  } catch {
+    return 'invalid';
+  }
+}
+
+export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, { scope = 'all', requireLifecycleBase = false } = {}) {
   const selectedScope = resolveVerificationScope(scope);
   const pluginScripts = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
   const testCommand = buildTestCommand({ root: repositoryRoot, group: selectedScope });
@@ -74,6 +84,15 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       id: 'footprint',
       label: '仓库体积与生命周期预算',
       args: [path.join(pluginScripts, 'repository-footprint.mjs'), '--target', repositoryRoot],
+    },
+    {
+      id: 'lifecycle',
+      label: '生命周期格式与追加历史',
+      args: [
+        path.join(pluginScripts, 'lifecycle-audit.mjs'),
+        '--target', repositoryRoot,
+        ...(requireLifecycleBase ? ['--require-base'] : []),
+      ],
     },
     {
       id: 'tests',
@@ -130,14 +149,17 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--smoke'],
     },
   ];
+  const lifecycleAwareSteps = lifecycleMode(repositoryRoot) === 'v2'
+    ? steps.filter((step) => step.id !== 'openspec-archived')
+    : steps;
   if (selectedScope !== 'platform') {
     // 规范源码不再携带平台二进制；真实完整性与 Chromium 冒烟只在平台成品作用域执行。
-    return steps.filter((step) => !['playwright-integrity', 'playwright-smoke'].includes(step.id));
+    return lifecycleAwareSteps.filter((step) => !['playwright-integrity', 'playwright-smoke'].includes(step.id));
   }
   if (selectedScope === 'platform') {
-    return steps.filter((step) => ['tests', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
+    return lifecycleAwareSteps.filter((step) => ['tests', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
   }
-  return steps;
+  return lifecycleAwareSteps;
 }
 
 export function buildVerificationEnvironment(tempRoot, environment = process.env) {
@@ -147,7 +169,7 @@ export function buildVerificationEnvironment(tempRoot, environment = process.env
     TMPDIR: tempRoot,
     TMP: tempRoot,
     TEMP: tempRoot,
-    // 测试 fixture 位于仓库 outputs 内时，不得向上继承主仓库的 Git 忽略规则。
+    // 测试 fixture 位于仓库受管运行目录时，不得向上继承主仓库的 Git 忽略规则。
     GIT_CEILING_DIRECTORIES: [tempRoot, inheritedCeilings].filter(Boolean).join(path.delimiter),
     OPENSPEC_NO_UPDATE_CHECK: '1',
     OPENSPEC_TELEMETRY: '0',
@@ -175,7 +197,8 @@ export function runVerification({
 } = {}) {
   const root = fs.realpathSync(path.resolve(repositoryRoot));
   const selectedScope = resolveVerificationScope(scope);
-  const steps = buildVerificationSteps(root, { scope: selectedScope });
+  const requireLifecycleBase = environment.LIFECYCLE_REQUIRE_BASE === '1';
+  const steps = buildVerificationSteps(root, { scope: selectedScope, requireLifecycleBase });
   const completed = [];
   const { runtimeRoot, tempRoot } = resolveVerificationRuntime(root);
   const inheritedTempRoots = [environment.TMPDIR, environment.TMP, environment.TEMP]

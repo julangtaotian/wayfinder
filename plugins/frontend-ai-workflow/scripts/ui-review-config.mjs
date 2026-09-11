@@ -213,7 +213,7 @@ export function normalizeUiReviewConfig(input, projectRoot, configPath = DEFAULT
   if (!AUTO_FIX_MODES.has(autoFix)) fail('autoFix 只能是 off、suggest 或 apply');
   const artifactsRoot = resolveSafeProjectPath(
     projectRoot,
-    config.artifactsRoot || '.frontend-ui-review/runs',
+    config.artifactsRoot || '.frontend-ai-workflow/runs/ui-review',
     'artifactsRoot',
   ).projectPath;
   if (!Array.isArray(config.scenarios) || config.scenarios.length === 0) fail('scenarios 至少要包含一个验收场景');

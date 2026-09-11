@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "artifactsRoot": ".frontend-ui-review/runs",
+  "artifactsRoot": ".frontend-ai-workflow/runs/ui-review",
   "autoFix": "off",
   "scenarios": [
     {

@@ -41,7 +41,7 @@ import {
 import { TEST_GROUPS } from '../scripts/test-groups.mjs';
 
 const repositoryRoot = path.resolve('.');
-const testOutputRoot = path.join(repositoryRoot, 'outputs', 'developer-effectiveness-benchmark');
+const testOutputRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'developer-effectiveness-benchmark');
 
 function write(target, content) {
   fs.mkdirSync(path.dirname(target), { recursive: true });

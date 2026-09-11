@@ -7,6 +7,7 @@ import {
   REPOSITORY_FOOTPRINT_BUDGETS,
   REPOSITORY_RETIREMENT_LIMITS,
   auditRepositoryFootprint,
+  formatRepositoryFootprint,
 } from '../plugins/frontend-ai-workflow/scripts/repository-footprint.mjs';
 
 const repositoryRoot = path.resolve('.');
@@ -127,6 +128,48 @@ test('仓库体积审计按字节统计受跟踪 outputs 并忽略历史正文�
   assert.equal(result.counts.trackedOutputBytes, 11 * 1024 * 1024);
 });
 
+test('v2 以零上限拒绝旧归档和受跟踪运行时', (context) => {
+  const root = createFixture(context);
+  write(root, '.frontend-workflow.json', `${JSON.stringify({
+    schemaVersion: 2,
+    minimumWriterVersion: '0.19.0',
+    lifecycleMode: 'v2',
+    eventDirectory: '.workflow-history',
+    runtimeDirectory: '.frontend-ai-workflow',
+    strictEvidenceMaxBytes: 4096,
+    eventMaxBytes: 4096,
+  })}\n`);
+  const files = [
+    'outputs/legacy/report.json',
+    'requirements/archive/2026/REQ-2026-001.md',
+    'openspec/changes/archive/2026-09-01-old/tasks.md',
+    '.frontend-ai-workflow/runs/demo/log.txt',
+    '.frontend-ui-review/runs/demo/report.json',
+  ];
+  for (const file of files) write(root, file);
+  write(root, 'openspec/specs/demo/spec.md', '### Requirement: demo\n\n由 D-01 决定并以 A-01 验收。\n');
+  const result = auditRepositoryFootprint({ root, trackedFiles: files });
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics.filter((item) => item.code === 'retired_lifecycle_path').length, 4);
+  assert.equal(result.diagnostics.filter((item) => item.code === 'tracked_runtime_artifact').length, 1);
+  assert.equal(result.diagnostics.some((item) => item.code === 'local_spec_reference' && item.status === 'failed'), true);
+});
+
+test('重复规格失败而跨文件裸 TC 只告警', (context) => {
+  const root = createFixture(context);
+  write(root, 'openspec/specs/one/spec.md', '### Requirement: 重复合同\n');
+  write(root, 'openspec/specs/two/spec.md', '### Requirement: 重复合同\n');
+  write(root, 'tests/one.test.mjs', "test('[TC-01] first', () => {});\n");
+  write(root, 'tests/two.test.mjs', "test('[TC-01] second', () => {});\n");
+  const result = auditRepositoryFootprint({ root, trackedFiles: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.diagnostics.some((item) => item.code === 'duplicate_spec_requirement' && item.status === 'failed'), true);
+  assert.equal(result.diagnostics.some((item) => item.code === 'ambiguous_test_locator' && item.status === 'warning'), true);
+  const formatted = formatRepositoryFootprint(result, { limit: 1 });
+  assert.equal(formatted.diagnostics.length, 1);
+  assert.equal(formatted.diagnosticPage.remaining > 0, true);
+});
+
 test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁一致', () => {
   const packageManifest = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
   const pluginManifest = JSON.parse(fs.readFileSync(
@@ -137,11 +180,11 @@ test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁�
   const repositoryRules = fs.readFileSync(path.join(repositoryRoot, 'AGENTS.md'), 'utf8');
   const readme = fs.readFileSync(path.join(repositoryRoot, 'README.md'), 'utf8');
 
-  assert.equal(packageManifest.version, '0.18.0');
-  assert.match(pluginManifest.version, /^0\.18\.0\+codex\.\d{14}$/u);
+  assert.equal(packageManifest.version, '0.19.0');
+  assert.match(pluginManifest.version, /^0\.19\.0\+codex\.\d{14}$/u);
   assert.match(verifyScript, /id:\s*'footprint'/u);
   assert.match(repositoryRules, /不再依赖定期人工瘦身/u);
-  assert.match(repositoryRules, /只长期跟踪最终报告、机器可读结论和被需求或 OpenSpec 明确引用的必要证据/u);
+  assert.match(repositoryRules, /默认验证不产生长期 tracked outputs/u);
   assert.match(readme, /预算调整必须先形成正式需求和设计决策/u);
 });
 

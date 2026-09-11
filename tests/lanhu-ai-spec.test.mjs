@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
-const specRoot = path.resolve('outputs/lanhu-ai-ui-spec');
+const specRoot = path.resolve('design/lanhu-ai-ui-spec');
 
 function markdownFiles(root) {
   const results = [];

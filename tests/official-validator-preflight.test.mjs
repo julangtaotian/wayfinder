@@ -121,8 +121,8 @@ test('[TC-01] 官方预检复用缓存并执行全部目标', (t) => {
     plugin: first.validators.plugin.sha256,
   });
   assert.equal(first.conclusion, OFFICIAL_VALIDATOR_SUCCESS_CONCLUSION);
-  assert.equal(fs.existsSync(path.join(fixture.root, 'outputs', 'official-validator-runtime')), false);
-  assert.equal(fs.existsSync(path.join(fixture.root, 'outputs', 'official-validator-cache')), true);
+  assert.equal(fs.existsSync(path.join(fixture.root, '.frontend-ai-workflow', 'runs', 'official-validator')), false);
+  assert.equal(fs.existsSync(path.join(fixture.root, '.frontend-ai-workflow', 'cache', 'official-validator')), true);
   assert.equal(fs.readFileSync(fixture.preservedOutput, 'utf8'), 'keep\n');
   assert.ok(firstExecutor.calls.every((call) => call.options.shell === false));
 
@@ -139,7 +139,7 @@ test('[TC-01] 官方预检复用缓存并执行全部目标', (t) => {
 
   const cleaned = cleanupOfficialValidatorCache({ repositoryRoot: fixture.root });
   assert.equal(cleaned.status, 'cleaned');
-  assert.equal(fs.existsSync(path.join(fixture.root, 'outputs', 'official-validator-cache')), false);
+  assert.equal(fs.existsSync(path.join(fixture.root, '.frontend-ai-workflow', 'cache', 'official-validator')), false);
   assert.equal(fs.readFileSync(fixture.preservedOutput, 'utf8'), 'keep\n');
 });
 
@@ -213,7 +213,7 @@ test('[TC-02] 官方预检失败关闭并保留真实诊断', (t) => {
     () => normalizeRepositoryTarget('D:\\workspace', 'E:\\outside', path.win32),
     (error) => error.code === 'official_validator_unavailable',
   );
-  assert.equal(fs.existsSync(path.join(fixture.root, 'outputs', 'official-validator-runtime')), false);
+  assert.equal(fs.existsSync(path.join(fixture.root, '.frontend-ai-workflow', 'runs', 'official-validator')), false);
   assert.equal(fs.readFileSync(fixture.preservedOutput, 'utf8'), 'keep\n');
 });
 

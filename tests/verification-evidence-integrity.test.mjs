@@ -440,6 +440,15 @@ test('[TC-02] 证据安全与工作区新鲜度', (context) => {
   write(fixture.root, 'requirements/REQ-2026-001-evidence.md', '# 生命周期状态变化\n');
   write(fixture.root, 'outputs/verification-evidence/transient.log', '临时日志\n');
   write(fixture.root, 'openspec/changes/evidence-change/evidence/V-99.json', '{}\n');
+  write(fixture.root, '.frontend-ai-workflow/cache/validator/index.json', '{}\n');
+  write(fixture.root, '.frontend-ai-workflow/runs/test/stdout.txt', '临时输出\n');
+  write(fixture.root, '.frontend-ui-review/runs/legacy/state.json', '{}\n');
+  assert.equal(computeWorkspaceFingerprint(fixture.root).digest, initial.digest);
+
+  // UI Review 配置是持久输入，只有 runs 运行产物不应让证据失效。
+  write(fixture.root, '.frontend-ui-review/config.json', '{}\n');
+  assert.notEqual(computeWorkspaceFingerprint(fixture.root).digest, initial.digest);
+  fs.rmSync(path.join(fixture.root, '.frontend-ui-review', 'config.json'));
   assert.equal(computeWorkspaceFingerprint(fixture.root).digest, initial.digest);
 
   write(fixture.root, 'src/settlement.mjs', 'export const total = () => 99;\n');

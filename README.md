@@ -9,18 +9,18 @@
 - 区分默认构建、交付构建与 lint 语义，避免把未知包装脚本当作已验证静态检查。
 - 初始化项目级 `AGENTS.md`、Wayfinder 项目导航和内部规划配置。
 - 把自然语言需求整理成可评审的 Markdown 文档。
-- 使用 `$frontend-change` 推进探索、规划、修订、实施、同步和归档的完整受管生命周期。
+- 使用 `$frontend-change` 推进探索、规划、修订、实施、验证和轻量完成的完整受管生命周期。
 - 使用独立的 `$frontend-fast-change` 直接完成结果已决定、影响可界定的局部前端改动；出现实质边界时携带已有工作单次交接完整流程。
 - 使用 `$frontend-test` 只读盘点测试上下文、形成可追踪 `TC-*` 方案，并在明确请求后按项目原生设施实现与聚焦验证测试。
 - 为自动 V-* 生成 schema v2 机器证据，绑定当前 D/A/V/TC 语义、工作区指纹及日志/附件摘要；完成时只读复算这些事实而不重跑项目命令。
 - 所有插件受管的项目写入统一拒绝项目根以下的符号链接、越界和跨平台歧义路径，并使用独占暂存与原子替换；项目根本身的路径别名仍可规范化使用。
-- 用需求状态、`V-*` 验证记录、人工视觉证据和测试 Git 基线约束交付完成，未满足条件时不允许归档。
+- 用活动需求状态、`V-*` 验证记录、人工视觉证据和测试 Git 基线约束交付完成，未满足条件时不允许同步规格或追加生命周期事件。
 - 以交互状态矩阵覆盖初始数据、真实用户操作、刷新、空态、错误态与卸载，并为旧需求提供只读升级缺口预览。
 - 检查必需文件、项目脚本、工作流版本和内置规划引擎状态。
 - 只升级受管区块，保留业务项目自行维护的内容。
 - 在用户明确要求时，按可审计的文件范围完成 AI 深度项目地图与风险分析。
 - 深度扫描在读取前排除敏感配置和 Git 忽略项，使用稳定快照指纹提示项目地图是否过期。
-- 使用受控需求状态、关联变更范围、逐任务引用和默认 dry-run 的完成入口形成不可绕过的归档门禁。
+- 使用受控活动状态、关联变更范围、逐任务引用和默认 dry-run 的完成入口形成不可绕过的生命周期门禁。
 - 固定内置 OpenSpec 1.9.0，理解规划完成、意外范围报告、归档任务校验、嵌套规格、缩进任务与能力退役，并阻止批量命令在错误规划根静默通过。
 - 使用生产包、声明许可证和包树 SHA-256 清单核验内置 OpenSpec，默认检查不会改写清单。
 - 用 `npm run check:static` 对仓库自有 JavaScript 做零依赖语法检查；同一个 `npm run verify` 在本地和 CI 串行执行该检查、测试、插件结构、OpenSpec 严格校验、归档任务校验、运行时版本与完整性检查。
@@ -29,7 +29,7 @@
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 - 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
-0.18.0 在动态根依赖画像和精简健康检查之上增加持续仓库治理：已验收需求正文按年度归档，根目录只保留轻量入口；统一验证固定执行体积预算门禁；综合测试和核心脚本按职责拆分；蓝湖交付收敛为单一轻量 AI 规范；五平台 CI 从固定 Playwright 官方源只重建当前矩阵平台资产，不依赖仓库 Git LFS 下载额度。AI 默认不展开历史需求正文、无关平台二进制或历史验收资产。动态画像不读取 `node_modules` 或传递依赖，不安装或执行依赖，也不查询注册表、漏洞、许可证和最新版本；“已声明”不等于“已安装、已使用、兼容、安全或验证通过”。项目识别回归覆盖 Vue 2 + Vite、Vue + Webpack、React + Vite、React + Webpack，以及 npm、pnpm、yarn；这些是已认证兼容组合，不是动态识别能力的框架白名单。测试用例闭环首版认证 Vue 3 + Vite + Vitest，其他 runner 只按项目已有文件提供有限支持。Monorepo/workspaces 和多个前端应用的递归依赖画像与专属编排、远程 Figma/蓝湖同步、远程 CI/PR 状态读取与回写不在本版本范围内；外部 CI URL 只能记录为 `external-recorded`，不能由本地字段自我提升为可信通过。
+0.19.0 将完成事实收敛为有界的年度事件流：活动需求在完成前继续保持“待验证”，验收后移除活动正文和临时 OpenSpec 归档，只保留规格与紧凑事件；所有可重建日志、截图、fixture、缓存和事务统一进入被忽略的 `.frontend-ai-workflow/`。存量仓库默认保持 `legacy-readonly`，迁移必须先分页预览并通过引用、Git、符号链接、未知内容和事件冲突检查，再由用户显式写入。统一验证新增目标分支差异保护、混合格式和 Git 索引零上限门禁；本地事件只表示 `accepted-local`，进入指定目标分支后才是 `accepted-merged`，不会把本地结果冒充外部 CI 通过。
 
 ## 官方 Creator validators 预检
 
@@ -41,7 +41,7 @@ npm run validate:official
 
 该命令从当前 Codex 开发环境读取 Skill/Plugin Creator validators，按稳定顺序校验全部自定义 Skill 和插件根，并记录实际脚本 SHA-256、Python/PyYAML 版本、目标与真实输出。它不会替代项目自定义结构校验。
 
-首次执行会取得锁定的 PyYAML 6.0.2 wheel、核验 PyPI 发布摘要，并只安装到 `outputs/official-validator-cache/`；后续执行复用有效缓存，暖缓存可离线使用。依赖锁覆盖 CPython 3.10–3.13 的 macOS x64/ARM64、Linux x64/ARM64（glibc 与 musl）和 Windows x64 wheel；其他 Python 或架构会明确报告依赖不可用，不自动源码构建。冷缓存无法取得固定依赖、validator 或 Python 不可用、脚本未启动以及内容不合法都会返回非零状态，不会降级为自定义检查。
+首次执行会取得锁定的 PyYAML 6.0.2 wheel、核验 PyPI 发布摘要，并只安装到 `.frontend-ai-workflow/cache/official-validator/`；临时运行位于 `runs/official-validator/`，后续执行复用有效缓存，暖缓存可离线使用。依赖锁覆盖 CPython 3.10–3.13 的 macOS x64/ARM64、Linux x64/ARM64（glibc 与 musl）和 Windows x64 wheel；其他 Python 或架构会明确报告依赖不可用，不自动源码构建。冷缓存无法取得固定依赖、validator 或 Python 不可用、脚本未启动以及内容不合法都会返回非零状态，不会降级为自定义检查。
 
 非标准 Codex 安装可以在命令后显式传入 `--skill-validator`、`--plugin-validator` 和 `--python` 路径；默认情况下无需配置。
 
@@ -71,13 +71,13 @@ npm run benchmark:developer-effectiveness -- \
 
 只有同时追加 `--write --execute-agents` 才会生成用例并启动真实代理；单独使用 `--write` 只固定本轮输入和恢复状态。正式整轮前可用 `--smoke-case <冻结用例ID>` 只为目标项目生成两条候选需求并执行指定用例的插件组，smoke 使用独立 run ID，不能代替完整六用例、十二次配对运行。可用 `--timeout-minutes` 设置每次代理上限，`--author-attempts` 设置候选需求重试次数，显式 `--codex` 指定可执行文件或 JavaScript CLI。默认清理所有隔离工作区；`--keep-workspaces` 只用于故障检查，会增加磁盘占用和源码副本保留时间。
 
-所有运行内容位于 `outputs/developer-effectiveness-benchmark/<run-id>/`，同一运行 ID 会核验不可变输入并从未完成阶段恢复，输入不一致时拒绝覆盖。源项目已有未提交内容不会进入副本，整轮运行要求其分支、提交和状态摘要前后一致。运行事件会脱敏和限长，但仍不应把真实凭据写入需求或项目文件。
+所有运行内容位于 `.frontend-ai-workflow/runs/developer-effectiveness-benchmark/<run-id>/`，同一运行 ID 会核验不可变输入并从未完成阶段恢复，输入不一致时拒绝覆盖。源项目已有未提交内容不会进入副本，整轮运行要求其分支、提交和状态摘要前后一致。运行事件会脱敏和限长，但仍不应把真实凭据写入需求或项目文件。
 
 本基准会消耗当前账号的 Codex 额度，并可能需要较长时间。`summary.json`、`review.md` 和 `workbook-import.csv` 始终标记为合成样本；只有六个有效配对齐全时才提供描述性比较，结果不能解释为真实开发者效率、团队采用收益或个人绩效。普通 `npm test`、`npm run validate`、`npm run verify` 和默认 CI 只运行确定性测试，不会读取业务项目或启动真实代理。
 
 ## 安装
 
-前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.18.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
+前置条件：Node.js 20.19 或更高版本、Codex CLI。插件 0.19.0 已内置并固定 OpenSpec 1.9.0，使用者不需要全局安装或升级 OpenSpec。
 
 ```bash
 codex plugin marketplace add /absolute/path/to/frontend-ai-workflow
@@ -178,7 +178,7 @@ $frontend-fast-change 请修复筛选按钮禁用态不刷新的问题，并运�
 
 ### 4. `$frontend-change`
 
-**作用**：负责一个需求从分析、规划、开发、验证到归档的完整生命周期。
+**作用**：负责一个需求从分析、规划、开发、验证到轻量完成的完整生命周期。
 
 同一个变更可以反复调用该命令。它会读取项目中的需求和规划文件，根据用户意图和当前变更状态，自动选择探索、规划、修订、实施或者完成阶段；独立快速 Skill 不改变这里原有的状态规则和完成门禁。
 
@@ -223,12 +223,12 @@ $frontend-change 检查当前变更进行到哪一步，还有哪些任务没有
 **完成变更并收尾**：
 
 ```text
-$frontend-change 验证、同步并归档当前变更
+$frontend-change 验证并完成当前变更
 ```
 
-它会先把需求置为“待验证”，检查任务、验收场景、测试结果、持久机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示包含 archive guidance、证据引用改写、实际规格路径和归档目标的完成预览。所有门槛通过后才同步正式规格、归档变更、把引用迁移到实际归档目录并执行归档后只读审计，再将需求更新为“已验收”；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
+它会先把活动需求置为“待验证”，检查任务、验收场景、测试结果、机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示规格同步、事件追加和清理动作。schema v2 在仓库锁与事务保护下临时调用 OpenSpec archive 同步正式规格，随后追加 `.workflow-history/<year>.jsonl` 事件并清理活动需求、活动变更、临时归档和普通证据。正文不再改写为永久“已验收”，状态由事件投影为 `accepted-local` 或 `accepted-merged`；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
 
-**达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 归档”，不用学习 OpenSpec 的内部命令。
+**达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 完成”，不用学习 OpenSpec 的内部命令或维护归档目录。
 
 ### 5. `$frontend-test`
 
@@ -339,7 +339,7 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 确认升级
 ```
 
-它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.18.0 / OpenSpec 1.9.0，并刷新根项目直接依赖摘要；不会修改 `package.json`、安装依赖，也不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格、测试方案或测试代码，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复、发生冲突或受管目标经过项目内符号链接时，会停止升级并说明原因。
+它只更新带有工作流管理标记的公共内容，包括把项目受管配置同步到工作流 0.19.0 / OpenSpec 1.9.0，并刷新根项目直接依赖摘要；不会修改 `package.json`、安装依赖，也不会覆盖业务代码、需求文档、项目专属上下文、正在进行的规划、历史规格、测试方案或测试代码，以及管理标记之外的项目自定义内容。发现管理标记缺失、重复、发生冲突或受管目标经过项目内符号链接时，会停止升级并说明原因。升级不会顺带迁移或删除历史文件；存量迁移始终是单独的预览和显式写入步骤。
 
 升级预览还会只读检查 `requirements/REQ-*.md`，列出活跃或状态未知需求缺少的决策台账、验收映射和统一状态；它不会改写任何历史需求，迁移必须逐份确认业务事实后再进行。
 
@@ -366,8 +366,8 @@ $frontend-change 开始实施当前变更
 # 需要独立测试方案或测试实现时执行
 $frontend-test 为当前活动变更形成测试用例并实现聚焦测试
 
-# 开发完成后验证和归档
-$frontend-change 验证、同步并归档当前变更
+# 开发完成后验证并记录轻量终态
+$frontend-change 验证并完成当前变更
 
 # 需要进行 UI 验收闭环时执行
 $frontend-ui-review 验收 home-desktop 场景
@@ -389,11 +389,13 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 
 ```text
 AGENTS.md
+.frontend-workflow.json
+.gitignore
 openspec/config.yaml
 wayfinder/frontend.md
 ```
 
-业务需求在首次创建时写入 `requirements/REQ-*.md`，OpenSpec 变更保留在 `openspec/changes/`。需求验收和变更归档成功后，完整需求正文自动迁入 `requirements/archive/<year>/`，根文件成为轻量入口，`requirements/index.json` 提供稳定定位；普通检查只读取根入口，只有显式历史审计才展开归档正文。公共能力更新不覆盖这些业务内容。
+业务需求在活动期写入 `requirements/REQ-*.md`，OpenSpec 变更保留在 `openspec/changes/`，长期设计输入放在 `design/` 而不是 `outputs/`。schema v2 完成后只长期保留正式规格与 `.workflow-history/<year>.jsonl` 紧凑事件；活动需求、活动变更、OpenSpec 临时归档和普通证据被清理。`.frontend-workflow.json` 声明 schema 与最低写入器版本；旧仓库先保持 `legacy-readonly`，运行 `npm run lifecycle:migrate` 预览，只有引用、未知文件、符号链接和未跟踪目标均无阻断时才显式加 `-- --write`。预览默认只返回 10 条摘要，可用 `-- --offset <n> --limit <n>` 分页，确需完整事件字段时再加 `--details`。默认事件是状态声明，不冒充永久审计证明；高风险或发布任务可保留一个有界 strict 证据包。
 
 旧项目如仍包含 `.ai-workflow.yaml` 和 `docs/ai-context/frontend.md`，先运行 Wayfinder 迁移预览；确认创建、保留和删除计划后再显式写入。普通升级不会自动移动或删除旧文件。
 
@@ -406,7 +408,7 @@ npm run cleanup:test-runtime
 npm run cleanup:test-cache
 ```
 
-`prepare:test-runtime` 从 `scripts/fixtures/frontend-test-runtime/` 中受版本控制的锁定输入创建固定 Vitest 运行时，并通过 `npm ci` 写入被定向忽略的 `outputs/frontend-test-runtime/`；可复用 npm 缓存独立位于 `outputs/frontend-test-cache/`，不会在项目根目录创建 `node_modules`。首次在线准备会填充缓存；此后可使用 `npm run prepare:test-runtime -- --offline` 或 `npm run verify:shared -- --offline` 强制只使用缓存，缓存缺失或不完整时命令失败关闭。`cleanup:test-runtime` 只删除临时运行时，`cleanup:test-cache` 才删除可复用缓存。`verify` 是本地与 CI 的统一门禁，首先检查退役路径、受跟踪 outputs、活跃全文需求和日常大文件预算，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `outputs/verify-runtime/tmp` 后自动清理。定位问题时可运行 `npm run test:repository`、`npm run test:workflow`、`npm run test:platform`、`npm run footprint`、`npm run validate` 和 `npm run openspec:version`。
+`prepare:test-runtime` 从 `scripts/fixtures/frontend-test-runtime/` 中受版本控制的锁定输入创建固定 Vitest 运行时，并通过 `npm ci` 写入被整体忽略的 `.frontend-ai-workflow/runs/frontend-test-runtime/`；可复用 npm 缓存独立位于 `.frontend-ai-workflow/cache/frontend-test-cache/`，不会在项目根目录创建 `node_modules`。首次在线准备会填充缓存；此后可使用 `npm run prepare:test-runtime -- --offline` 或 `npm run verify:shared -- --offline` 强制只使用缓存，缓存缺失或不完整时命令失败关闭。`cleanup:test-runtime` 只删除临时运行时，`cleanup:test-cache` 才删除可复用缓存。`verify` 是本地与 CI 的统一门禁，先执行静态语法、生命周期格式、体积和受跟踪运行时检查，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `.frontend-ai-workflow/runs/verify-runtime/tmp` 后自动清理。定位问题时可运行 `npm run lifecycle:status -- --change <change-name>`、`npm run lifecycle:audit`、`npm run lifecycle:migrate`、`npm run test:repository`、`npm run test:workflow`、`npm run footprint` 和 `npm run validate`。
 
 规范源码只保存 Playwright 共享 JavaScript 运行时、锁文件、许可证、五平台元数据和共享完整性清单，不再保存 Chromium/FFmpeg 二进制或平台生成清单。Validate CI 在各原生 runner 上通过固定 Playwright 1.62.1 CLI，在源码目录之外的有界暂存中只生成当前平台 marketplace；普通 push/PR 只上传小型 `package-report.json`，不上传大型浏览器成品，也不增加 cache、schedule 或写权限。完整性、许可、体积和真实 Chromium 冒烟仍是必需门禁，不能用跳过冒烟代替成功。
 
@@ -422,7 +424,7 @@ npm run cleanup:test-cache
 
 ### 生成单平台插件成品
 
-1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output outputs/<平台成品目录>` 预览平台、排除资产和体积预算；预览不创建目录。
+1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output dist/frontend-ai-workflow-<platform-arch>` 预览平台、排除资产和体积预算；预览不创建目录。
 2. 仅在 `<platform-arch>` 与当前原生平台一致时追加 `--write`。成品完整保留共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时排除其他四个平台资产。
 3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。许可、FFmpeg、共享运行时和完整性文件不得用于体积裁剪。
 4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改规范源码；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
@@ -431,7 +433,7 @@ npm run cleanup:test-cache
 
 内置运行时按“候选先行、验证后替换”升级：
 
-1. 在 `outputs/<OpenSpec 升级验证目录>/` 精确安装目标版本，使用 `--omit=dev --ignore-scripts --no-audit --no-fund`，不在项目根目录或现有运行时目录直接安装。
+1. 在 `.frontend-ai-workflow/cache/<OpenSpec 升级验证目录>/` 精确安装目标版本，使用 `--omit=dev --ignore-scripts --no-audit --no-fund`，不在项目根目录或现有固定运行时目录直接安装。
 2. 从官方包内容和生产依赖闭包组装候选，核验 `package.json` 版本、`bin/openspec.js`、根 LICENSE、每个直接生产依赖和依赖许可证。
 3. 用候选执行版本命令、当前仓库 `validate --all --strict --json`、`validate --archived --json` 和兼容场景；全部通过后才备份并替换 `plugins/frontend-ai-workflow/runtime/openspec`。
 4. 显式运行 `node plugins/frontend-ai-workflow/scripts/runtime-integrity.mjs --write`，生成不含绝对路径和时间戳的生产包许可证与 SHA-256 清单。

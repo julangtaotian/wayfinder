@@ -66,7 +66,7 @@ function validateOutputPath(outputPath, allowedOutputRoots) {
   const resolved = canonicalPotentialPath(outputPath);
   const allowed = allowedOutputRoots.map((item) => canonicalPotentialPath(item));
   if (!allowed.some((root) => isInside(root, resolved))) {
-    fail(`安装证据必须写入允许的 outputs 范围：${outputPath}`, {
+    fail(`安装证据必须写入允许的受管运行范围：${outputPath}`, {
       code: 'platform_install_output_unsafe',
       target: outputPath,
     });
@@ -313,10 +313,10 @@ export async function verifyPlatformMarketplaceInstall({
   const nativePlatformKey = `${currentPlatform}-${currentArch}`;
   const sourceRepositoryRoot = fs.realpathSync(path.resolve(repositoryRoot));
   const sourceMarketplaceRoot = validateMarketplaceRoot(marketplaceRoot, sourceRepositoryRoot);
-  const effectiveAllowedRoots = allowedOutputRoots || [path.join(sourceRepositoryRoot, 'outputs')];
+  const managedRunsRoot = path.join(sourceRepositoryRoot, '.frontend-ai-workflow', 'runs');
+  const effectiveAllowedRoots = allowedOutputRoots || [managedRunsRoot];
   const effectiveOutput = outputPath || path.join(
-    sourceRepositoryRoot,
-    'outputs',
+    managedRunsRoot,
     'platform-install-evidence',
     `${platformKey}.json`,
   );

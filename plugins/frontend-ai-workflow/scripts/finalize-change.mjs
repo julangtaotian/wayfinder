@@ -10,6 +10,8 @@ import {
 } from './project-path-safety.mjs';
 import { archiveRequirement as archiveAcceptedRequirement } from './requirement-archive.mjs';
 import { migrateArchivedRequirementReferences } from './finalize-change-references.mjs';
+import { readLifecycleConfig } from './lifecycle-contract.mjs';
+import { finalizeLifecycleV2, recoverLifecycleV2 } from './lifecycle-finalize.mjs';
 import {
   partialFailure,
   postArchiveAudit,
@@ -42,6 +44,7 @@ export function finalizeChange({
   requirement,
   change,
   write = false,
+  evidenceMode = 'default',
 } = {}, injected = {}) {
   const services = {
     checkChange,
@@ -67,6 +70,10 @@ export function finalizeChange({
     throw error;
   }
   if (!check.ok) return { ok: false, write, check, actions: [] };
+  const lifecycleConfig = readLifecycleConfig(check.root);
+  if (lifecycleConfig.lifecycleMode === 'v2') {
+    return finalizeLifecycleV2({ check, write, evidenceMode }, services);
+  }
   try {
     preflightFinalizeSurface(check);
   } catch (error) {
@@ -319,11 +326,11 @@ export function finalizeChange({
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), requirement: null, change: null, write: false };
+  const args = { target: process.cwd(), requirement: null, change: null, write: false, evidenceMode: 'default', recover: null };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (['--target', '--requirement', '--change'].includes(value)) {
-      const key = value.slice(2);
+    if (['--target', '--requirement', '--change', '--evidence-mode', '--recover'].includes(value)) {
+      const key = value === '--evidence-mode' ? 'evidenceMode' : value.slice(2);
       if (!argv[index + 1]) throw new Error(`参数 ${value} 缺少值`);
       args[key] = argv[index + 1];
       index += 1;
@@ -333,8 +340,9 @@ function parseArgs(argv) {
       throw new Error(`不支持的参数：${value}`);
     }
   }
-  if (!args.requirement) throw new Error('必须提供 --requirement');
-  if (!args.change) throw new Error('必须提供 --change');
+  if (!args.recover && !args.requirement) throw new Error('必须提供 --requirement');
+  if (!args.recover && !args.change) throw new Error('必须提供 --change');
+  if (!['default', 'strict'].includes(args.evidenceMode)) throw new Error('--evidence-mode 只能是 default 或 strict');
   return args;
 }
 
@@ -344,7 +352,10 @@ function isEntryPoint() {
 
 if (isEntryPoint()) {
   try {
-    const result = finalizeChange(parseArgs(process.argv.slice(2)));
+    const args = parseArgs(process.argv.slice(2));
+    const result = args.recover
+      ? recoverLifecycleV2({ root: args.target, transactionId: args.recover })
+      : finalizeChange(args);
     console.log(JSON.stringify(result, null, 2));
     if (!result.ok) process.exitCode = 1;
   } catch (error) {

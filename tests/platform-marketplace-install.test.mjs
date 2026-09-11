@@ -321,8 +321,9 @@ test('[TC-12] 人工证据收集复用原五平台矩阵且不增加日常成本
     new RegExp(`@openai/codex@${CODEX_INSTALL_EVIDENCE_CLI_VERSION.replaceAll('.', '\\.')}`, 'u'),
   );
   assert.match(platformJob, /verify-platform-marketplace-install\.mjs --write/u);
-  assert.match(platformJob, /--codex-entry outputs\/platform-install-codex\/node_modules\/@openai\/codex\/bin\/codex\.js/u);
-  assert.match(platformJob, /outputs\/platform-install-evidence\/\$\{\{ matrix\.platform \}\}\.json/u);
-  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 1);
+  assert.match(platformJob, /--codex-entry \.frontend-ai-workflow\/cache\/platform-install-codex\/node_modules\/@openai\/codex\/bin\/codex\.js/u);
+  assert.match(platformJob, /\.frontend-ai-workflow\/runs\/platform-install-evidence\/\$\{\{ matrix\.platform \}\}\.json/u);
+  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 2);
+  assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 2);
   assert.doesNotMatch(workflow, /OPENAI_API_KEY|CODEX_API_KEY|openai\/codex-action|^\s*schedule:/gmu);
 });

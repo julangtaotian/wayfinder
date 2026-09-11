@@ -163,6 +163,9 @@ function validate(fixture, planPath, stage) {
 
 test('[TC-01] 测试上下文只读识别 Vue 3、Vitest、手写测试和生成基线', (t) => {
   const fixture = createFixture(t);
+  writeFile(fixture.root, 'outputs/legacy/tests/ignored.test.js', "throw new Error('不应读取');\n");
+  writeFile(fixture.root, '.frontend-ai-workflow/runs/tests/ignored.test.js', "throw new Error('不应读取');\n");
+  writeFile(fixture.root, 'openspec/changes/archive/old/tests/ignored.test.js', "throw new Error('不应读取');\n");
   const packageBefore = fs.readFileSync(path.join(fixture.root, 'package.json'), 'utf8');
   const context = inspectTestContext(fixture.root);
   assert.equal(context.preset, 'vue3-vite');
@@ -171,6 +174,7 @@ test('[TC-01] 测试上下文只读识别 Vue 3、Vitest、手写测试和生成
   assert.equal(context.runner.certification, 'verified-vue3-vite-vitest');
   assert.deepEqual(context.handwrittenTests, ['tests/existing.spec.js']);
   assert.deepEqual(context.generatedBaselines, ['tests/snapshot.generated.spec.js']);
+  assert.equal(context.testFiles.some((file) => file.includes('ignored.test.js')), false);
   assert.equal(context.scan.sourceContentRead, false);
   assert.equal(fs.readFileSync(path.join(fixture.root, 'package.json'), 'utf8'), packageBefore);
 });
@@ -360,7 +364,7 @@ test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
   assert.equal(executed.args.includes('ci'), true);
   assert.equal(executed.command.endsWith('npm.cmd'), false);
   assert.equal(prepared.npmSource, 'npm_execpath');
-  assert.ok(prepared.runtimeRoot.startsWith(path.join(root, 'outputs')));
+  assert.ok(prepared.runtimeRoot.startsWith(path.join(root, '.frontend-ai-workflow', 'runs')));
 });
 
 test('[TC-01] 锁定输入与缓存路径', (t) => {
@@ -384,7 +388,7 @@ test('[TC-01] 锁定输入与缓存路径', (t) => {
   assert.equal(executed.args.includes('install'), false);
   assert.equal(executed.args.includes('--prefer-offline'), true);
   assert.equal(executed.options.env.npm_config_cache, prepared.cacheRoot);
-  assert.equal(prepared.cacheRoot, path.join(root, 'outputs', 'frontend-test-cache'));
+  assert.equal(prepared.cacheRoot, path.join(root, '.frontend-ai-workflow', 'cache', 'frontend-test-cache'));
   assert.equal(fs.readFileSync(path.join(prepared.runtimeRoot, 'package.json'), 'utf8'), fs.readFileSync(path.join(fixture.root, 'package.json'), 'utf8'));
   assert.equal(fs.readFileSync(path.join(prepared.runtimeRoot, 'package-lock.json'), 'utf8'), fs.readFileSync(path.join(fixture.root, 'package-lock.json'), 'utf8'));
   assert.equal(fs.existsSync(path.join(root, 'node_modules')), false);
@@ -421,7 +425,7 @@ test('[TC-02] 显式离线模式失败关闭', (t) => {
       report: () => {},
     }),
     (error) => error.code === 'frontend_test_runtime_prepare_failed'
-      && error.target === path.join(root, 'outputs', 'frontend-test-runtime')
+      && error.target === path.join(root, '.frontend-ai-workflow', 'runs', 'frontend-test-runtime')
       && error.status === 17,
   );
 });
@@ -429,8 +433,8 @@ test('[TC-02] 显式离线模式失败关闭', (t) => {
 test('[TC-03] 运行时与缓存的分离清理', (t) => {
   const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-cleanup-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const runtimeRoot = path.join(root, 'outputs', 'frontend-test-runtime');
-  const cacheRoot = path.join(root, 'outputs', 'frontend-test-cache');
+  const runtimeRoot = path.join(root, '.frontend-ai-workflow', 'runs', 'frontend-test-runtime');
+  const cacheRoot = path.join(root, '.frontend-ai-workflow', 'cache', 'frontend-test-cache');
   const persistentEvidence = path.join(root, 'outputs', 'persistent-evidence', 'result.txt');
   fs.mkdirSync(runtimeRoot, { recursive: true });
   fs.mkdirSync(cacheRoot, { recursive: true });
@@ -485,7 +489,7 @@ test('[TC-04] 统一验证传播离线选项', (t) => {
 
 test('[TC-03] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {
   const fixtureRoot = path.resolve('tests/fixtures/frontend-test-vue-vitest');
-  const vitestEntry = path.resolve('outputs/frontend-test-runtime/node_modules/vitest/vitest.mjs');
+  const vitestEntry = path.resolve('.frontend-ai-workflow/runs/frontend-test-runtime/node_modules/vitest/vitest.mjs');
   const configPath = path.join(fixtureRoot, 'vitest.config.mjs');
   const testPath = path.join(fixtureRoot, 'tests/math.spec.js');
   const sourceBefore = fs.readFileSync(testPath, 'utf8');

@@ -1,0 +1,62 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=阶段上下文有界且不落盘",
+      "tests/stage-context.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-11T08:31:10.472Z",
+  "evidenceId": "V-06",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "阶段上下文有界且不落盘",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 240,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-06/20260911083110374-79972-f446e511/stdout.log",
+      "sha256": "8de737ff966e4ee8e4a8d9b7ec98b16c4dc36e02771cc5915c8df6a383f492fe",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-06/20260911083110374-79972-f446e511/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-11",
+      "D-12",
+      "D-13"
+    ],
+    "revision": "R-01",
+    "sha256": "224ad16814a801b6e235af678e2be030024fbca5aa51afb10c0664e1a2922483",
+    "testCaseIds": [
+      "TC-06"
+    ],
+    "verificationId": "V-06",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:31:10.376Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

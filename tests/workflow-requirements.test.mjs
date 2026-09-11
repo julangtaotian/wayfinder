@@ -267,6 +267,9 @@ test('[V-01] 完成流程与需求决策模块化兼容：门禁、写入和归�
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-004-finalize.md');
   initializeGitBaseline(root);
   writeManagedChange(root, { tasks: '- [ ] [D-01] [A-01] 完成交付门槛。\n' });
+  const lifecyclePath = path.join(root, '.frontend-workflow.json');
+  const lifecycle = JSON.parse(fs.readFileSync(lifecyclePath, 'utf8'));
+  fs.writeFileSync(lifecyclePath, `${JSON.stringify({ ...lifecycle, lifecycleMode: 'legacy-readonly' }, null, 2)}\n`);
   writeFixtureFile(root, 'requirements/REQ-2026-004-finalize.md', renderGovernedDeliveryRequirement({
     acceptanceChecked: false,
   }));
@@ -291,7 +294,7 @@ test('[V-01] 完成流程与需求决策模块化兼容：门禁、写入和归�
   writeFixtureFile(root, 'openspec/changes/delivery/tasks.md', '- [x] [D-01] [A-01] 完成交付门槛。\n');
   writeFixtureFile(root, 'requirements/REQ-2026-004-finalize.md', renderGovernedDeliveryRequirement());
   const projectBeforeArchive = checkProject(root);
-  assert.match(projectBeforeArchive.warnings.join('\n'), /已完成但仍未归档/);
+  assert.match(projectBeforeArchive.warnings.join('\n'), /规划已完成但尚未执行生命周期完成/);
 
   const preview = finalizeChange({
     target: root,

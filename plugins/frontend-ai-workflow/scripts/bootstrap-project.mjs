@@ -18,7 +18,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
-export const WORKFLOW_VERSION = '0.18.0';
+export const WORKFLOW_VERSION = '0.19.0';
 
 const pluginRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const templateRoot = path.join(pluginRoot, 'assets', 'templates');
@@ -28,6 +28,8 @@ const FILES = [
   { source: 'AGENTS.md', target: 'AGENTS.md', managedKind: 'html', preserveManagedBlocks: ['deep-guardrails'], updateWhenDeep: true },
   { source: 'wayfinder/frontend.md', target: WAYFINDER_PATH, managedKind: 'html', managedBlocks: ['meta', 'facts', 'scope'], requiredManagedBlocks: ['meta', 'facts', 'scope', 'analysis'], migrateManagedBlocks: ['facts'], updateWhenDeep: true },
   { source: 'openspec/config.yaml', target: 'openspec/config.yaml', managedKind: 'yaml', updateWhenDeep: true },
+  { source: '.frontend-workflow.json', target: '.frontend-workflow.json', createDuringUpgrade: true },
+  { source: '.gitignore', target: '.gitignore', managedKind: 'yaml', appendManagedIfMissing: true, createDuringUpgrade: true },
 ];
 
 function snapshotValue(scope, preservedSettings, scopeValue, settingsKey, fallback) {
@@ -267,10 +269,20 @@ function planFile(root, descriptor, variables, options) {
     || renderTemplate(fs.readFileSync(templatePath, 'utf8'), variables);
 
   if (!fs.existsSync(targetPath)) {
-    if (options.onlyManaged) {
+    if (options.onlyManaged && !descriptor.createDuringUpgrade) {
       return { file: descriptor.target, action: 'skip', reason: '升级不创建缺失文件' };
     }
     return { file: descriptor.target, action: 'create', content: rendered };
+  }
+
+  if (descriptor.appendManagedIfMissing) {
+    const existing = fs.readFileSync(targetPath, 'utf8');
+    try {
+      findManagedRange(existing, descriptor.managedKind);
+    } catch {
+      const separator = existing && !existing.endsWith('\n') ? '\n\n' : existing ? '\n' : '';
+      return { file: descriptor.target, action: 'update', content: `${existing}${separator}${rendered}` };
+    }
   }
 
   const mayUpdate = options.updateManaged || (options.deep && descriptor.updateWhenDeep);
@@ -328,8 +340,13 @@ export function runBootstrap({
     }
     scope = deep ? collectProjectScope(inspection.root) : null;
     const variables = templateVariables(inspection, scope, preservedScopeSettings);
+    const effectiveOverrides = { ...contentOverrides };
+    if (onlyManaged && !effectiveOverrides['.frontend-workflow.json']) {
+      const lifecycleTemplate = JSON.parse(fs.readFileSync(path.join(templateRoot, '.frontend-workflow.json'), 'utf8'));
+      effectiveOverrides['.frontend-workflow.json'] = `${JSON.stringify({ ...lifecycleTemplate, lifecycleMode: 'legacy-readonly' }, null, 2)}\n`;
+    }
     planned = FILES.map((descriptor) =>
-      planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides }),
+      planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides: effectiveOverrides }),
     );
 
     if (planned.some((item) => item.action === 'conflict')) {

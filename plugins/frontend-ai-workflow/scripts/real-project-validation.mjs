@@ -531,7 +531,7 @@ function writeStageResult({ repositoryRoot, runRoot, stage, payload }) {
 
 export function runRealProjectValidation({
   repositoryRoot = process.cwd(),
-  matrixPath = path.join(process.cwd(), 'outputs', 'real-project-validation', 'local-matrix.json'),
+  matrixPath = path.join(process.cwd(), '.frontend-ai-workflow', 'runs', 'real-project-validation', 'local-matrix.json'),
   output = null,
   stage = 'all',
   write = false,
@@ -620,7 +620,7 @@ if (isEntryPoint()) {
     const args = parseArgs(process.argv.slice(2));
     const result = runRealProjectValidation({
       ...args,
-      matrixPath: args.matrixPath || path.join(args.repositoryRoot, 'outputs', 'real-project-validation', 'local-matrix.json'),
+      matrixPath: args.matrixPath || path.join(args.repositoryRoot, '.frontend-ai-workflow', 'runs', 'real-project-validation', 'local-matrix.json'),
     });
     console.log(JSON.stringify(result, null, 2));
     if (!result.ok) process.exitCode = 1;

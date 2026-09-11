@@ -179,7 +179,7 @@ export async function runVerificationEvidence({
     if (!fs.statSync(cwd).isDirectory()) throw new EvidenceError('invalid_working_directory', '验证工作目录必须是目录', workingDirectory);
     const normalizedCommand = normalizeEvidenceCommand(command, { platform, environment, nodePath, fileExists });
     const manifestPath = path.join(changePath, 'evidence', `${evidenceId}.json`);
-    const logRoot = path.join(root, 'outputs', 'verification-evidence', path.basename(changePath), evidenceId);
+    const logRoot = path.join(root, '.frontend-ai-workflow', 'runs', 'verification-evidence', path.basename(changePath), evidenceId);
     resolveSafePath(root, manifestPath, '机器证据清单');
     resolveSafePath(root, logRoot, '验证日志目录');
     const semanticBinding = computeVerificationSemanticBinding({ requirementPath, changePath, evidenceId });

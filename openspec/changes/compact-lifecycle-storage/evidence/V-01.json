@@ -1,0 +1,68 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=生命周期事件有界追加并确定性投影",
+      "tests/lifecycle-history.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-11T08:31:08.025Z",
+  "evidenceId": "V-01",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "生命周期事件有界追加并确定性投影",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 270,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-01/20260911083107901-79393-3b18699c/stdout.log",
+      "sha256": "5b3528d3acdab209a6b3c4e7d81c0692710f54c1a63b642e5f0c9d949bae46ba",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-01/20260911083107901-79393-3b18699c/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-01",
+      "A-02"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-01",
+      "D-02",
+      "D-04",
+      "D-05",
+      "D-08",
+      "D-16",
+      "D-17",
+      "D-18"
+    ],
+    "revision": "R-01",
+    "sha256": "dc8299b35d1f7101ca17c9a1c5d1284d7fd66f70c37d2ada92019338a4b46b82",
+    "testCaseIds": [
+      "TC-01"
+    ],
+    "verificationId": "V-01",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:31:07.903Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

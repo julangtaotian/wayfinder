@@ -23,8 +23,8 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/real-project-validation.mjs';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const fixtureOutputRoot = path.join(repositoryRoot, 'outputs', 'real-project-validation', 'test-fixtures');
-const localMatrixPath = path.join(repositoryRoot, 'outputs', 'real-project-validation', 'local-matrix.json');
+const fixtureOutputRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'real-project-validation', 'test-fixtures');
+const localMatrixPath = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'real-project-validation', 'local-matrix.json');
 
 function write(root, relativePath, content) {
   const target = path.join(root, relativePath);
@@ -91,8 +91,8 @@ function createFixture(context, name) {
     },
   };
   const matrix = { schemaVersion: 1, runId: `fixture-${name}`, projects: [project] };
-  const matrixPath = write(root, `outputs/real-project-validation/local-matrix.json`, `${JSON.stringify(matrix, null, 2)}\n`);
-  return { root, projectRoot, project, matrix, matrixPath, runRoot: path.join(root, 'outputs', 'real-project-validation', matrix.runId) };
+  const matrixPath = write(root, `.frontend-ai-workflow/runs/real-project-validation/local-matrix.json`, `${JSON.stringify(matrix, null, 2)}\n`);
+  return { root, projectRoot, project, matrix, matrixPath, runRoot: path.join(root, '.frontend-ai-workflow', 'runs', 'real-project-validation', matrix.runId) };
 }
 
 function captureError(operation) {
@@ -259,9 +259,9 @@ test('[TC-03] 结果分类与证据安全边界', (context) => {
   assert.equal(sensitive.text, null);
   assert.equal(sensitive.code, 'sensitive_output_detected');
 
-  const artifactPath = write(fixture.root, 'outputs/real-project-validation/proof/result.txt', '可审计结果\n');
+  const artifactPath = write(fixture.root, '.frontend-ai-workflow/runs/real-project-validation/proof/result.txt', '可审计结果\n');
   const descriptor = createValidationArtifactDescriptor(fixture.root, artifactPath, '测试证据');
-  assert.equal(descriptor.path, 'outputs/real-project-validation/proof/result.txt');
+  assert.equal(descriptor.path, '.frontend-ai-workflow/runs/real-project-validation/proof/result.txt');
   assert.equal(descriptor.size > 0, true);
   assert.match(descriptor.sha256, /^[0-9a-f]{64}$/u);
   const outsidePath = write(path.dirname(fixture.root), `${path.basename(fixture.root)}-outside.txt`, '越界\n');
@@ -285,7 +285,7 @@ function realCaseOptions() {
 }
 
 function runLocalMatrixStage(stage) {
-  assert.equal(fs.existsSync(localMatrixPath), true, '缺少 outputs/real-project-validation/local-matrix.json');
+  assert.equal(fs.existsSync(localMatrixPath), true, '缺少 .frontend-ai-workflow/runs/real-project-validation/local-matrix.json');
   const preview = runRealProjectValidation({ repositoryRoot, matrixPath: localMatrixPath, stage });
   assert.equal(preview.write, false);
   assert.equal(preview.readyToWrite, true, JSON.stringify(preview.baselines));

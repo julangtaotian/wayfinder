@@ -9,6 +9,8 @@ export const PROJECT_SCOPE_VERSION = '2.2.0';
 
 const EXCLUDED_DIRECTORIES = new Set([
   '.git',
+  '.frontend-ai-workflow',
+  '.workflow-history',
   '.next',
   '.nuxt',
   '.turbo',
@@ -222,7 +224,7 @@ function sortByScanPriority(items) {
 
 // 工作流自身会持续更新，不能让任务勾选或 Wayfinder 自引用造成项目地图立即过期。
 function isFingerprintInput(file) {
-  if (['AGENTS.md', '.ai-workflow.yaml', 'wayfinder/frontend.md'].includes(file.path)) return false;
+  if (['AGENTS.md', '.ai-workflow.yaml', '.frontend-workflow.json', '.gitignore', 'wayfinder/frontend.md'].includes(file.path)) return false;
   if (file.path.startsWith('requirements/') || file.path.startsWith('openspec/')) return false;
   return true;
 }

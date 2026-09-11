@@ -32,7 +32,7 @@ test('OpenSpec 1.9 动态操作输入可见但不改变完成门禁', (t) => {
   assert.equal(checked.commandEvidence.archiveInstructions.status, 'passed');
   assert.equal(checked.archiveInstructions.root.source, 'nearest');
   assert.match(checked.archiveInstructions.context, /实现必须遵守根目录 AGENTS\.md/);
-  assert.ok(checked.archiveInstructions.operationGuidance.some((item) => item.includes('归档前必须通过插件完成预览')));
+  assert.ok(checked.archiveInstructions.operationGuidance.some((item) => item.includes('完成前必须通过插件预览')));
 
   const apply = runOpenSpecSync(['instructions', 'apply', '--change', 'delivery', '--json'], { cwd: root });
   assert.equal(apply.status, 0);

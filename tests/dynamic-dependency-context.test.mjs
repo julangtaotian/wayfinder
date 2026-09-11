@@ -253,6 +253,8 @@ test('[TC-02] 共享上下文与有限兼容信号', (t) => {
     'unchanged',
     'unchanged',
     'unchanged',
+    'skip',
+    'unchanged',
   ]);
 });
 

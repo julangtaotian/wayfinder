@@ -1,0 +1,64 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=存量迁移预览阻断和幂等写入",
+      "tests/lifecycle-migration.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-11T08:31:11.341Z",
+  "evidenceId": "V-08",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "存量迁移预览阻断和幂等写入",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 255,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-08/20260911083110939-80044-9a363294/stdout.log",
+      "sha256": "f8cd63117374a08f8fbea5ffd8e7440dee43855c8ac4f51348a07b2d68adf237",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-08/20260911083110939-80044-9a363294/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-05",
+      "A-08"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-11",
+      "D-12",
+      "D-13",
+      "D-15"
+    ],
+    "revision": "R-01",
+    "sha256": "00c8fd71e51c95d0af11af8903eb0ef254cf5ebdcd0c24a8d7e5839672192144",
+    "testCaseIds": [
+      "TC-08"
+    ],
+    "verificationId": "V-08",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:31:10.942Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

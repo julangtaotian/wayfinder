@@ -21,6 +21,9 @@ function fixture(context) {
   writeFixtureFile(root, 'package.json', '{"name":"archive-fixture","dependencies":{"vue":"^3.5.0"},"devDependencies":{"vite":"^6.0.0"}}\n');
   writeFixtureFile(root, 'tests/existing.spec.js', 'export {};\n');
   writeManagedChange(root);
+  const lifecyclePath = path.join(root, '.frontend-workflow.json');
+  const lifecycle = JSON.parse(fs.readFileSync(lifecyclePath, 'utf8'));
+  fs.writeFileSync(lifecyclePath, `${JSON.stringify({ ...lifecycle, lifecycleMode: 'legacy-readonly' }, null, 2)}\n`);
   const requirement = 'requirements/REQ-2026-001-integrity.md';
   return { root, requirement, requirementPath: path.join(root, requirement) };
 }

@@ -1,0 +1,67 @@
+{
+  "artifacts": [],
+  "change": "compact-lifecycle-storage",
+  "command": {
+    "args": [
+      "--test",
+      "--test-name-pattern=证据安全与工作区新鲜度",
+      "tests/verification-evidence-integrity.test.mjs"
+    ],
+    "cwd": ".",
+    "executable": "/Users/lvshuai/.nvm/versions/node/v22.12.0/bin/node",
+    "source": "node"
+  },
+  "completedAt": "2026-09-11T08:31:10.191Z",
+  "evidenceId": "V-05",
+  "exitCode": 0,
+  "git": {
+    "available": true,
+    "commit": "81b5de16070dfff5420a0e8f28529d6d14e032cd",
+    "dirty": true
+  },
+  "kind": "local-command",
+  "locator": "[TC-02] 证据安全与工作区新鲜度",
+  "locatorMatches": 2,
+  "logs": [
+    {
+      "bytes": 257,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-05/20260911083110068-79939-0810ba05/stdout.log",
+      "sha256": "d0355ebac96b64252ec6a1a7aff55e573e994bcb2db3be367de9edbb2d10f838",
+      "stream": "stdout"
+    },
+    {
+      "bytes": 0,
+      "path": ".frontend-ai-workflow/runs/verification-evidence/compact-lifecycle-storage/V-05/20260911083110068-79939-0810ba05/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stream": "stderr"
+    }
+  ],
+  "requirement": "requirements/REQ-2026-048-compact-lifecycle-storage.md",
+  "schemaVersion": 2,
+  "semanticBinding": {
+    "acceptanceIds": [
+      "A-04",
+      "A-07"
+    ],
+    "algorithm": "sha256",
+    "decisionIds": [
+      "D-04",
+      "D-05",
+      "D-07",
+      "D-10",
+      "D-17",
+      "D-18",
+      "D-19"
+    ],
+    "revision": "R-01",
+    "sha256": "215043574273cf9c08578549647b732507ebb8ba8375f530dea51b28b2af17f3",
+    "testCaseIds": [
+      "TC-05"
+    ],
+    "verificationId": "V-05",
+    "version": 2
+  },
+  "startedAt": "2026-09-11T08:31:10.070Z",
+  "status": "passed",
+  "workspaceFingerprint": "c8b126c76fd55ac0c9cf5fa8d1d9ee311d6ef40c5fab25450167d0e6a04ab924"
+}

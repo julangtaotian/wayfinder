@@ -14,7 +14,7 @@ export { computeVerificationSemanticBinding };
 export const LEGACY_EVIDENCE_SCHEMA_VERSION = 1;
 export const EVIDENCE_SCHEMA_VERSION = 2;
 export const EVIDENCE_KINDS = new Set(['local-command', 'external-ci', 'ui-review']);
-const LIFECYCLE_ROOTS = new Set(['openspec', 'requirements', 'outputs']);
+const LIFECYCLE_ROOTS = new Set(['.frontend-ai-workflow', 'openspec', 'requirements', 'outputs']);
 const EXCLUDED_SEGMENTS = new Set([
   '.git', '.cache', '.idea', '.vscode', 'node_modules', 'coverage', 'test-results',
   'playwright-report', 'blob-report', '.nyc_output', 'dist',
@@ -76,6 +76,7 @@ export function hashFile(filePath) {
 function shouldExclude(relativePath, entryName) {
   const segments = normalizedRepositoryPath(relativePath).split('/').filter(Boolean);
   if (segments.length === 1 && LIFECYCLE_ROOTS.has(segments[0])) return true;
+  if (segments[0] === '.frontend-ui-review' && segments[1] === 'runs') return true;
   if (segments.some((segment) => EXCLUDED_SEGMENTS.has(segment))) return true;
   return IGNORED_FILE_PATTERN.test(entryName);
 }
