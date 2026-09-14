@@ -339,22 +339,24 @@ test('生命周期状态入口与非根 scope 保持一致', (context) => {
   assert.equal(fs.existsSync(changePath), false);
   assert.equal(projectLifecycleState({ root, scope: 'apps/admin', changeId: 'scoped-change' }).status, 'cancelled');
 
-  const invalidRequirement = write(root, 'requirements/REQ-2026-049-invalid.md', '# REQ-2026-049\n');
+  const invalidRequirementRelative = 'requirements/REQ-2026-049-invalid.md';
+  write(root, invalidRequirementRelative, '# REQ-2026-049\n');
   write(root, 'openspec/changes/invalid-reopen/specs/demo/spec.md', '### Requirement: invalid\n');
   const invalid = transitionLifecycle({
     root,
-    requirement: path.relative(root, invalidRequirement),
+    requirement: invalidRequirementRelative,
     change: 'openspec/changes/invalid-reopen',
     type: 'reopened',
     scope: 'apps/admin',
   });
   assert.equal(invalid.code, 'lifecycle_state_blocked');
 
-  const supersededRequirement = write(root, 'requirements/REQ-2026-050-superseded.md', '# REQ-2026-050\n');
+  const supersededRequirementRelative = 'requirements/REQ-2026-050-superseded.md';
+  write(root, supersededRequirementRelative, '# REQ-2026-050\n');
   write(root, 'openspec/changes/superseded-entry/specs/demo/spec.md', '### Requirement: superseded\n');
   const superseded = transitionLifecycle({
     root,
-    requirement: path.relative(root, supersededRequirement),
+    requirement: supersededRequirementRelative,
     change: 'openspec/changes/superseded-entry',
     type: 'superseded',
     scope: 'apps/admin',
