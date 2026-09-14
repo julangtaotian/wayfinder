@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "eventId": "evt-64f094764627d3c72f6c0b96",
+  "requirementId": "REQ-2026-049",
+  "capabilities": [
+    "ai-context-efficiency",
+    "repository-hygiene"
+  ],
+  "checks": [
+    {
+      "name": "requirement",
+      "status": "passed"
+    },
+    {
+      "name": "openspec-strict",
+      "status": "passed"
+    },
+    {
+      "name": "test-plan",
+      "status": "recorded"
+    },
+    {
+      "name": "external-ci",
+      "status": "recorded",
+      "reference": "https://github.com/julangtaotian/wayfinder/actions/runs/34814335384",
+      "revision": "2a0709e803b4c946c8f0efba8022828048effc00"
+    }
+  ],
+  "baseRevision": "2a0709e803b4c946c8f0efba8022828048effc00",
+  "specDigest": "2b52d2650b671c3bc4063d80c3c1c853004980e0773a47b95ae7880ef3848fbe"
+}
