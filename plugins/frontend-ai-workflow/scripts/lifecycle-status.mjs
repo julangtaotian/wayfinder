@@ -1,14 +1,52 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { LifecycleError } from './lifecycle-contract.mjs';
+import { readExternalCiReceipt } from './external-ci-receipt.mjs';
 import { projectLifecycleState } from './lifecycle-history.mjs';
 
-export function getLifecycleStatus({ root = process.cwd(), scope = '.', changeId, mergedRevision = null } = {}) {
+export function getLifecycleStatus({
+  root = process.cwd(),
+  scope = '.',
+  changeId,
+  mergedRevision = null,
+  externalCiReceipt = null,
+} = {}) {
   if (!changeId) throw new Error('必须提供 changeId');
   const result = projectLifecycleState({ root, scope, changeId, mergedRevision });
+  let externalCi = null;
+  // CI 只能验证已经存在的提交，因此回执仅参与只读投影，绝不回写 accepted 事件。
+  if (externalCiReceipt) {
+    if (!mergedRevision) {
+      throw new LifecycleError('external_ci_base_required', '读取外部 CI 回执时必须提供目标 revision', changeId);
+    }
+    if (result.status !== 'accepted-merged') {
+      throw new LifecycleError(
+        'external_ci_event_not_in_revision',
+        '目标 revision 不包含当前 accepted 事件，不能派生外部 CI 交付状态',
+        mergedRevision,
+      );
+    }
+    const recorded = readExternalCiReceipt({ root, receiptPath: externalCiReceipt, baseRevision: mergedRevision });
+    externalCi = {
+      ...recorded.receipt,
+      trust: 'external-recorded',
+      source: 'runtime-receipt',
+    };
+  }
+  const deliveryStatus = externalCi
+    ? 'external-ci-recorded'
+    : result.status === 'accepted-merged'
+      ? 'external-ci-pending'
+      : result.status === 'accepted-local'
+        ? 'commit-pending'
+        : null;
   return {
     ok: result.status !== 'unknown',
     code: result.status === 'unknown' ? 'lifecycle_status_unknown' : 'lifecycle_status_ok',
     status: result.status,
+    deliveryStatus,
+    externalCi,
+    write: false,
     active: result.active,
     scope,
     changeId,
@@ -27,12 +65,19 @@ export function getLifecycleStatus({ root = process.cwd(), scope = '.', changeId
 }
 
 function parseArgs(argv) {
-  const args = { root: process.cwd(), scope: '.', changeId: null, mergedRevision: process.env.LIFECYCLE_BASE_SHA || null };
+  const args = {
+    root: process.cwd(),
+    scope: '.',
+    changeId: null,
+    mergedRevision: process.env.LIFECYCLE_BASE_SHA || null,
+    externalCiReceipt: null,
+  };
   const options = new Map([
     ['--target', 'root'],
     ['--scope', 'scope'],
     ['--change', 'changeId'],
     ['--base', 'mergedRevision'],
+    ['--external-ci-receipt', 'externalCiReceipt'],
   ]);
   for (let index = 0; index < argv.length; index += 1) {
     const field = options.get(argv[index]);

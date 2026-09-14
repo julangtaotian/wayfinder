@@ -157,7 +157,110 @@ test('目标分支包含事件后状态才是 accepted-merged', (context) => {
   const revision = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
   assert.equal(lifecycleEventIdsAtRevision({ root, revision }).eventIds.has(accepted.eventId), true);
   assert.equal(projectLifecycleState({ root, changeId: 'merged-change', mergedRevision: revision }).status, 'accepted-merged');
-  assert.equal(getLifecycleStatus({ root, changeId: 'merged-change', mergedRevision: revision }).event.trust, 'local-verified');
+  const status = getLifecycleStatus({ root, changeId: 'merged-change', mergedRevision: revision });
+  assert.equal(status.event.trust, 'local-verified');
+  assert.equal(status.deliveryStatus, 'external-ci-pending');
+  assert.equal(status.write, false);
+});
+
+test('CI 回执只读派生唯一候选提交的交付状态', (context) => {
+  const root = fixture(context);
+  spawnSync('git', ['init', '-q', root]);
+  spawnSync('git', ['-C', root, 'config', 'user.email', 'test@example.com']);
+  spawnSync('git', ['-C', root, 'config', 'user.name', 'Test']);
+  spawnSync('git', ['-C', root, 'add', '.']);
+  spawnSync('git', ['-C', root, 'commit', '-qm', 'base']);
+  const baseRevision = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  const accepted = event({ changeId: 'post-ci-change' });
+  appendLifecycleEvent({ root, event: accepted });
+  const local = getLifecycleStatus({ root, changeId: 'post-ci-change' });
+  assert.equal(local.status, 'accepted-local');
+  assert.equal(local.deliveryStatus, 'commit-pending');
+
+  spawnSync('git', ['-C', root, 'add', '.']);
+  spawnSync('git', ['-C', root, 'commit', '-qm', 'accepted candidate']);
+  const candidateRevision = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  const receiptRelative = '.frontend-ai-workflow/runs/ci-receipts/run-200.json';
+  const receipt = {
+    schemaVersion: 1,
+    status: 'recorded',
+    revision: candidateRevision,
+    reference: 'https://github.com/example/project/actions/runs/200',
+    jobs: [{ name: 'shared', status: 'passed' }, { name: 'windows-x64', status: 'passed' }],
+  };
+  write(root, receiptRelative, `${JSON.stringify(receipt)}\n`);
+  const before = spawnSync('git', ['-C', root, 'status', '--porcelain'], { encoding: 'utf8' }).stdout;
+  const delivered = getLifecycleStatus({
+    root,
+    changeId: 'post-ci-change',
+    mergedRevision: candidateRevision,
+    externalCiReceipt: receiptRelative,
+  });
+  const repeated = getLifecycleStatus({
+    root,
+    changeId: 'post-ci-change',
+    mergedRevision: candidateRevision,
+    externalCiReceipt: receiptRelative,
+  });
+  assert.equal(delivered.status, 'accepted-merged');
+  assert.equal(delivered.deliveryStatus, 'external-ci-recorded');
+  assert.equal(delivered.externalCi.revision, candidateRevision);
+  assert.equal(delivered.externalCi.trust, 'external-recorded');
+  assert.equal(delivered.externalCi.source, 'runtime-receipt');
+  assert.deepEqual(repeated, delivered);
+  assert.equal(spawnSync('git', ['-C', root, 'status', '--porcelain'], { encoding: 'utf8' }).stdout, before);
+
+  const command = spawnSync(process.execPath, [
+    path.resolve('plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs'),
+    '--target', root,
+    '--change', 'post-ci-change',
+    '--base', candidateRevision,
+    '--external-ci-receipt', receiptRelative,
+  ], { encoding: 'utf8' });
+  assert.equal(command.status, 0, command.stderr);
+  assert.equal(JSON.parse(command.stdout).deliveryStatus, 'external-ci-recorded');
+
+  assert.throws(
+    () => getLifecycleStatus({ root, changeId: 'post-ci-change', externalCiReceipt: receiptRelative }),
+    (error) => error.code === 'external_ci_base_required',
+  );
+  const missingBase = spawnSync(process.execPath, [
+    path.resolve('plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs'),
+    '--target', root,
+    '--change', 'post-ci-change',
+    '--external-ci-receipt', receiptRelative,
+  ], { encoding: 'utf8', env: { ...process.env, LIFECYCLE_BASE_SHA: '' } });
+  assert.equal(missingBase.status, 1);
+  assert.equal(JSON.parse(missingBase.stderr).code, 'external_ci_base_required');
+  assert.throws(
+    () => getLifecycleStatus({
+      root,
+      changeId: 'post-ci-change',
+      mergedRevision: baseRevision,
+      externalCiReceipt: receiptRelative,
+    }),
+    (error) => error.code === 'external_ci_event_not_in_revision',
+  );
+  write(root, receiptRelative, `${JSON.stringify({ ...receipt, revision: 'a'.repeat(40) })}\n`);
+  assert.throws(
+    () => getLifecycleStatus({
+      root,
+      changeId: 'post-ci-change',
+      mergedRevision: candidateRevision,
+      externalCiReceipt: receiptRelative,
+    }),
+    (error) => error.code === 'external_ci_revision_mismatch',
+  );
+  write(root, 'receipt.json', `${JSON.stringify(receipt)}\n`);
+  assert.throws(
+    () => getLifecycleStatus({
+      root,
+      changeId: 'post-ci-change',
+      mergedRevision: candidateRevision,
+      externalCiReceipt: 'receipt.json',
+    }),
+    (error) => error.code === 'external_ci_receipt_outside_runtime',
+  );
 });
 
 test('严格证据可在事件已追加后幂等补齐', (context) => {

@@ -344,3 +344,31 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 #### Scenario: 活动变更仍存在
 - **WHEN** 同一 changeId 同时存在活动目录和旧 accepted 事件
 - **THEN** 系统 MUST 根据 revision/reopen 关系报告 active 或冲突，不得简单沿用旧已验收状态
+
+### Requirement: schema v2 真实 CI 必须作为提交后交付门禁
+
+schema v2 工作流 MUST 把只能在候选提交产生后运行的真实 CI 与活动需求的完成门禁分离。活动需求、A-*、V-* 和 tasks.md MUST 只承载候选提交产生前可完成的实现、规格、本地验证与人工验收；真实 CI MUST 在 accepted 事件与规格同步已经进入唯一候选提交后运行，并由只读生命周期状态查询组合外部回执。CI 未运行、失败或回执不匹配 MUST 阻止交付或发布结论，但 MUST NOT 要求为了记录结果而修改受版本控制文件或产生第二个状态提交。
+
+#### Scenario: 本地候选已经满足完成门禁
+
+- **WHEN** 所有提交前验收、任务、规格和本地证据均已完成，但真实 CI 尚未运行
+- **THEN** schema v2 完成入口 MUST 允许同步正式规格、追加 accepted 事件并清理活动材料
+- **AND** 工作流 MUST 把随后形成的提交描述为唯一候选，不得声称 CI 已通过
+
+#### Scenario: 唯一候选提交通过真实矩阵
+
+- **WHEN** 唯一候选提交触发仓库声明的真实 CI 矩阵且所有任务成功
+- **THEN** 工作流 MUST 通过目标 revision 与运行时回执只读派生交付状态
+- **AND** 不重新创建活动需求、修改 accepted 事件或要求第二个状态提交
+
+#### Scenario: CI 尚未成功
+
+- **WHEN** 唯一候选提交的 CI 尚未运行、仍在运行、失败或回执无法匹配
+- **THEN** 工作流 MUST 保持外部交付状态 pending 或失败并阻止发布通过结论
+- **AND** 不回退或伪造已经完成的本地验收事实
+
+#### Scenario: legacy-readonly 仓库
+
+- **WHEN** 仓库仍处于 `legacy-readonly` 生命周期模式
+- **THEN** 系统 MUST 保留旧完成与归档兼容行为
+- **AND** 不把 schema v2 的单提交派生流程静默写入旧仓库

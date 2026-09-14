@@ -83,16 +83,33 @@
 
 ### Requirement: 外部 CI 回执必须与仓库提交解耦
 
-系统 MUST 只从统一忽略运行时目录显式读取外部 CI 回执。回执 MUST 匹配当前 base revision，并只携带有界 HTTPS 引用和稳定任务状态；未提供时事件 MUST 记录 pending，合法回执只能记录 recorded 语义，不得让受跟踪需求或规格写入精确候选 SHA。
+系统 MUST 在真实 CI 运行前把正式规格、accepted 事件和活动材料清理封存到同一个候选提交，并 MUST 只从统一忽略运行时目录显式读取该提交产生后的外部 CI 回执。回执 MUST 匹配显式目标 revision，该 revision MUST 包含被查询的 accepted 事件，且回执只能携带有界 HTTPS 引用和稳定任务状态。状态查询 MUST 保留 `accepted-local` 与 `accepted-merged` 兼容状态，并独立返回 `commit-pending`、`external-ci-pending` 或 `external-ci-recorded` 派生交付状态；整个查询 MUST 只读，不得把精确候选 SHA、运行 URL 或 CI 任务结果写回事件、需求或规格。合法回执只能记录 `external-recorded` 语义，不得冒充可信远程核验。
+
+#### Scenario: accepted 事件尚未进入目标提交
+
+- **WHEN** 活动材料已经本地完成但 accepted 事件尚未包含在显式目标 revision 中
+- **THEN** 系统 MUST 保持 `accepted-local` 或以稳定 `external_ci_event_not_in_revision` 拒绝回执派生
+- **AND** 不修改工作树或把本地事实描述为提交后 CI 结果
 
 #### Scenario: 未提供外部回执
-- **WHEN** 最终完成没有显式外部 CI 回执
-- **THEN** accepted 事件 MUST 保留 external-ci pending，且本地通过不得冒充外部通过
+
+- **WHEN** 显式目标 revision 包含 accepted 事件但调用方没有提供外部 CI 回执
+- **THEN** 状态查询 MUST 返回 `accepted-merged` 与 `external-ci-pending`
+- **AND** 本地通过和旧事件内嵌 check 不得冒充当前 accepted 提交的外部结果
 
 #### Scenario: 回执匹配最终候选
-- **WHEN** 受管回执的 revision 等于完成前 base revision，且声明的任务均成功
-- **THEN** 事件 MUST 只保存 recorded、revision 和有界引用，受跟踪需求与规格保持不变
+
+- **WHEN** 受管回执的 revision 等于显式目标 revision、该 revision 包含 accepted 事件且声明的任务均成功
+- **THEN** 状态查询 MUST 只读返回 `accepted-merged` 与 `external-ci-recorded`
+- **AND** 返回 recorded、revision、有界引用、任务列表和 `external-recorded` 信任级别
+
+#### Scenario: 重复查询匹配回执
+
+- **WHEN** 调用方对相同目标 revision 与相同回执重复查询
+- **THEN** 系统 MUST 返回确定一致的派生状态且 `write` 保持 false
+- **AND** 事件流、活动材料、正式规格和 Git 工作树不得发生变化
 
 #### Scenario: 回执越界或版本不匹配
-- **WHEN** 回执位于受管目录之外、引用不是 HTTPS、内容超限或 revision 不匹配
-- **THEN** 完成 MUST 在修改仓库前以稳定诊断失败关闭
+
+- **WHEN** 回执位于受管目录之外、引用不是 HTTPS、内容超限、缺少目标 revision 或 revision 不匹配
+- **THEN** 状态查询 MUST 以稳定诊断失败关闭并保持仓库不变

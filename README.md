@@ -29,7 +29,7 @@
 - 在项目自动化流程内完成结构化复杂交互、DOM/像素三态判断、显式授权修复和相同上下文复验，不需要独立 PC 客户端、管理站点或数据库。
 - 随插件提供共享 Playwright，以及 `darwin-arm64`、`darwin-x64`、`linux-x64`、`linux-arm64`、`win32-x64` 五个平台独立浏览器成品；每次安装只携带当前平台，业务项目零安装，视觉插件仅作为已声明的不确定结果兜底。
 
-0.19.0 将完成事实收敛为有界的年度事件流：活动需求在完成前继续保持“待验证”，验收后移除活动正文和临时 OpenSpec 归档，只保留规格与紧凑事件；所有可重建日志、截图、fixture、缓存和事务统一进入被忽略的 `.frontend-ai-workflow/`。存量仓库默认保持 `legacy-readonly`，迁移必须先分页预览并通过引用、Git、符号链接、未知内容和事件冲突检查，再由用户显式写入。统一验证新增目标分支差异保护、混合格式和 Git 索引零上限门禁；本地事件只表示 `accepted-local`，进入指定目标分支后才是 `accepted-merged`，不会把本地结果冒充外部 CI 通过。
+0.19.0 将完成事实收敛为有界的年度事件流：活动需求在完成前继续保持“待验证”，验收后移除活动正文和临时 OpenSpec 归档，只保留规格与紧凑事件；所有可重建日志、截图、fixture、缓存和事务统一进入被忽略的 `.frontend-ai-workflow/`。存量仓库默认保持 `legacy-readonly`，迁移必须先分页预览并通过引用、Git、符号链接、未知内容和事件冲突检查，再由用户显式写入。统一验证新增目标分支差异保护、混合格式和 Git 索引零上限门禁；本地事件只表示 `accepted-local`，进入指定目标分支后才是 `accepted-merged`。schema v2 的真实 CI 不再写入活动验收或任务：先完成并形成包含 accepted 事件的唯一候选提交，再用该提交的运行时回执只读派生 `external-ci-recorded`，不会为了记录 CI 结果额外制造一个新提交，也不会把外部记录冒充可信远程核验。
 
 ## 官方 Creator validators 预检
 
@@ -226,7 +226,7 @@ $frontend-change 检查当前变更进行到哪一步，还有哪些任务没有
 $frontend-change 验证并完成当前变更
 ```
 
-它会先把活动需求置为“待验证”，检查任务、验收场景、测试结果、机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示规格同步、事件追加和清理动作。schema v2 在仓库锁与事务保护下临时调用 OpenSpec archive 同步正式规格，随后追加 `.workflow-history/<year>.jsonl` 事件并清理活动需求、活动变更、临时归档和普通证据。正文不再改写为永久“已验收”，状态由事件投影为 `accepted-local` 或 `accepted-merged`；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
+它会先把活动需求置为“待验证”，检查任务、验收场景、测试结果、机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示规格同步、事件追加和清理动作。schema v2 在仓库锁与事务保护下临时调用 OpenSpec archive 同步正式规格，随后追加 `.workflow-history/<year>.jsonl` 事件并清理活动需求、活动变更、临时归档和普通证据。正文不再改写为永久“已验收”，状态由事件投影为 `accepted-local` 或 `accepted-merged`。真实 CI 是唯一候选提交之后的交付门禁：成功后通过 `.frontend-ai-workflow/runs/ci-receipts/` 回执和只读状态查询派生 `external-ci-recorded`，不回写仓库；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
 
 **达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 完成”，不用学习 OpenSpec 的内部命令或维护归档目录。
 

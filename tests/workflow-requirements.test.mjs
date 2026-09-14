@@ -59,6 +59,31 @@ test('局部需求默认聚焦验证且最终交付不自动触发覆盖率', ()
   assert.match(openSpecTemplate, /全量测试或 coverage 必须注明/);
 });
 
+test('schema v2 在唯一候选提交后只读派生 CI 交付状态', () => {
+  const guidelines = fs.readFileSync(path.join(pluginRoot, 'references', 'requirement-guidelines.md'), 'utf8');
+  const verification = fs.readFileSync(path.join(pluginRoot, 'references', 'change-verification.md'), 'utf8');
+  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8');
+  const archiveGuide = fs.readFileSync(path.join(pluginRoot, 'references', 'openspec', 'archive-change.md'), 'utf8');
+  const requirementTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md'), 'utf8');
+  const readme = fs.readFileSync(path.resolve('README.md'), 'utf8');
+
+  for (const content of [guidelines, requirementTemplate]) {
+    assert.match(content, /真实 CI/);
+    assert.match(content, /A-\*/);
+    assert.match(content, /V-\*/);
+  }
+  for (const content of [changeSkill, archiveGuide]) {
+    assert.match(content, /real CI/);
+    assert.match(content, /active A-\*, V-\* or task/);
+  }
+  for (const content of [verification, changeSkill, archiveGuide]) {
+    assert.match(content, /single candidate|唯一候选/u);
+    assert.match(content, /--external-ci-receipt/);
+  }
+  assert.match(readme, /不会为了记录 CI 结果额外制造一个新提交/);
+  assert.match(readme, /external-ci-recorded/);
+});
+
 test('需求决策台账阻止未确认决策和无证据验收进入任务', (t) => {
   const root = createVueFixture(t);
   const requirementPath = path.join(root, 'requirements', 'REQ-2026-001-decision-ledger.md');

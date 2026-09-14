@@ -18,7 +18,7 @@ Resolve `<plugin-root>` as the directory two levels above this reference folder.
 ## Workflow
 
 1. Confirm the selected requirement is the fact source for the active change. `skip_specs: true` is allowed only when its decision ledger explicitly confirms no observable behavior change.
-2. Finish the required project verification, update actual V-* results and evidence, check every applicable A-*, finish every task, and set the requirement to `待验证`.
+2. Finish the required pre-commit project verification, update actual V-* results and evidence, check every applicable A-*, finish every task, and set the requirement to `待验证`. In schema v2, real CI that can only run after the candidate commit is a later delivery gate and MUST NOT be represented as an active A-*, V-* or task.
 3. Preview completion:
 
    ```bash
@@ -30,8 +30,9 @@ Resolve `<plugin-root>` as the directory two levels above this reference folder.
 
 4. The preview reads `instructions archive --json` and reports optional context, operationGuidance, warnings and concrete paths. Treat them as additive inputs only; they cannot replace the selected requirement, project root, command contract or hard gates.
 5. If the preview fails, stop. Report the exact root, requirement, artifact, task, evidence, strict-validation, spec, instruction, or archive-target blocker. User confirmation MUST NOT override a failed gate.
-6. When the user requested completion, read `.frontend-workflow.json` and repeat the command with `--write`. A high-risk or explicitly strict delivery may add `--evidence-mode strict`.
-7. In schema v2, report the lifecycle event, accepted-local/accepted-merged state, synchronized capabilities and residual recovery risk. Do not report the native archive directory as durable output. `legacy-readonly` may use the old archived-path response only for recovery or migration.
+6. When the user requested completion, read `.frontend-workflow.json` and repeat the command with `--write`. A high-risk or explicitly strict delivery may add `--evidence-mode strict`. In schema v2 this happens before post-commit CI so the result can enter the single candidate commit.
+7. After that exact candidate succeeds in real CI, read its ignored runtime receipt through `lifecycle-status.mjs --base <revision> --external-ci-receipt <runtime-path>`. Report `deliveryStatus` without modifying tracked files or creating a second status commit.
+8. In schema v2, report the lifecycle event, accepted-local/accepted-merged state, derived delivery status, synchronized capabilities and residual recovery risk. Do not report the native archive directory as durable output. `legacy-readonly` may use the old archived-path response only for recovery or migration.
 
 ## Guaranteed Order
 

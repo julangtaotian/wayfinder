@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "eventId": "evt-1705297647309fa0cf19a36e",
+  "requirementId": "REQ-2026-050",
+  "capabilities": [
+    "compact-lifecycle-history",
+    "verifiable-change-delivery"
+  ],
+  "checks": [
+    {
+      "name": "requirement",
+      "status": "passed"
+    },
+    {
+      "name": "openspec-strict",
+      "status": "passed"
+    },
+    {
+      "name": "test-plan",
+      "status": "recorded"
+    },
+    {
+      "name": "external-ci",
+      "status": "pending"
+    }
+  ],
+  "baseRevision": "28f814b66433b78333b8f36497c6c83505cd1a43",
+  "specDigest": "0a4e46971c8e8841a750ba59de1ee620902ada13ddf2f54e823c2756bffd4d34"
+}
