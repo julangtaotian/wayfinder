@@ -72,7 +72,7 @@ test('本机、敏感、缓存和测试临时文件不会进入候选提交', ()
   for (const relativePath of ignoredPaths) assertIgnored(relativePath);
 });
 
-test('公开环境模板、内置运行时和持久交付物保持可提交', () => {
+test('公开环境模板、内置运行时和 v2 持久交付物保持可提交', () => {
   const retainedPaths = [
     '.env.example',
     '.env.development.example',
@@ -84,9 +84,8 @@ test('公开环境模板、内置运行时和持久交付物保持可提交', ()
     'plugins/frontend-ai-workflow/runtime/playwright/platforms/linux-x64.json',
     '.frontend-ui-review/config.json',
     'design/lanhu-ai-ui-spec/README.md',
-    'requirements/REQ-2026-021-openspec-1-8-upgrade.md',
+    '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
-    'openspec/changes/archive/2026-08-12-upgrade-openspec-1-8/proposal.md',
   ];
 
   for (const relativePath of retainedPaths) assertNotIgnored(relativePath);
@@ -105,16 +104,15 @@ test('两套内置运行时的可重建命令链接和缓存保持忽略', () =>
   for (const relativePath of ignoredRuntimePaths) assertIgnored(relativePath);
 });
 
-test('代表性共享运行时、平台元数据、验收证据和规划资产仍受 Git 跟踪', () => {
+test('代表性共享运行时、平台元数据、生命周期历史和正式规格仍受 Git 跟踪', () => {
   const trackedPaths = [
     'plugins/frontend-ai-workflow/runtime/openspec/package.json',
     'plugins/frontend-ai-workflow/runtime/openspec/node_modules/yaml/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/node_modules/playwright/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/platforms/linux-x64.json',
     '.frontend-ui-review/config.json',
-    'requirements/REQ-2026-021-openspec-1-8-upgrade.md',
+    '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
-    'openspec/changes/archive/2026-08-12-upgrade-openspec-1-8/proposal.md',
   ];
 
   for (const relativePath of trackedPaths) {
