@@ -67,6 +67,7 @@ test('本机、敏感、缓存和测试临时文件不会进入候选提交', ()
     'packages/app/debug.log',
     'node_modules/example/index.js',
     'outputs/example-app/node_modules/example/index.js',
+    'outputs/legacy-review/result.json',
   ];
 
   for (const relativePath of ignoredPaths) assertIgnored(relativePath);
@@ -82,7 +83,6 @@ test('公开环境模板、内置运行时和 v2 持久交付物保持可提交'
     'plugins/frontend-ai-workflow/runtime/playwright/package-lock.json',
     'plugins/frontend-ai-workflow/runtime/playwright/node_modules/playwright/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/platforms/linux-x64.json',
-    '.frontend-ui-review/config.json',
     'design/lanhu-ai-ui-spec/README.md',
     '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
@@ -110,7 +110,6 @@ test('代表性共享运行时、平台元数据、生命周期历史和正式�
     'plugins/frontend-ai-workflow/runtime/openspec/node_modules/yaml/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/node_modules/playwright/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/platforms/linux-x64.json',
-    '.frontend-ui-review/config.json',
     '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
   ];
@@ -120,6 +119,95 @@ test('代表性共享运行时、平台元数据、生命周期历史和正式�
     assert.equal(result.status, 0, `关键交付文件未受 Git 跟踪：${relativePath}\n${result.stderr}`);
   }
 
+});
+
+test('根职责地图覆盖关键路径且 outputs 使用单一退役规则', () => {
+  const readme = fs.readFileSync(path.join(repositoryRoot, 'README.md'), 'utf8');
+  assert.match(readme, /^## 仓库结构与职责$/mu, 'README 缺少仓库结构与职责入口');
+
+  const documentedPaths = [
+    'README.md',
+    'AGENTS.md',
+    'package.json',
+    'LICENSE',
+    'THIRD_PARTY_NOTICES.md',
+    '.gitignore',
+    '.gitattributes',
+    '.frontend-workflow.json',
+    '.agents/',
+    '.github/',
+    '.workflow-history/',
+    'plugins/frontend-ai-workflow/',
+    'openspec/specs/',
+    'openspec/changes/',
+    'requirements/',
+    'design/',
+    'scripts/',
+    'tests/',
+    '.frontend-ui-review/',
+    '.frontend-ai-workflow/',
+    'dist/',
+    'outputs/',
+  ];
+
+  for (const relativePath of documentedPaths) {
+    assert.ok(readme.includes(`\`${relativePath}\``), `README 职责地图缺少路径：${relativePath}`);
+  }
+
+  const ignoreLines = fs
+    .readFileSync(path.join(repositoryRoot, '.gitignore'), 'utf8')
+    .split(/\r?\n/u)
+    .map((line) => line.trim());
+  assert.equal(
+    ignoreLines.filter((line) => line === '/outputs/').length,
+    1,
+    '根 outputs 应且仅应存在一条统一忽略规则',
+  );
+  assert.deepEqual(
+    ignoreLines.filter((line) => line.startsWith('/outputs/') && line !== '/outputs/'),
+    [],
+    '不得继续维护 outputs 主题级忽略规则',
+  );
+
+  for (const relativePath of [
+    'design/lanhu-ai-ui-spec/README.md',
+    '.workflow-history/2026.jsonl',
+    'openspec/specs/bundled-openspec-runtime/spec.md',
+  ]) {
+    assertNotIgnored(relativePath);
+  }
+});
+
+test('失效根 UI Review 配置退役且插件模板与 fixture 保留', () => {
+  const retiredProjectFiles = [
+    '.frontend-ui-review/config.json',
+    '.frontend-ui-review/playwright-adapter.mjs',
+  ];
+  const tracked = runGit(['ls-files', '--', ...retiredProjectFiles]);
+  assert.equal(tracked.status, 0, tracked.stderr);
+  const effectiveTrackedPaths = tracked.stdout
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    // Git 在提交前仍列出待删除路径，这里按工作树存在性判断交付后的有效文件面。
+    .filter((relativePath) => fs.existsSync(path.join(repositoryRoot, relativePath)));
+  assert.deepEqual(
+    effectiveTrackedPaths,
+    [],
+    `失效项目级 UI Review 文件仍作为有效文件存在：\n${effectiveTrackedPaths.join('\n')}`,
+  );
+
+  for (const relativePath of [
+    'plugins/frontend-ai-workflow/assets/templates/ui-review/config.json',
+    'plugins/frontend-ai-workflow/assets/templates/ui-review/playwright-adapter.mjs',
+    'tests/fixtures/ui-review-complex/index.html',
+  ]) {
+    assert.equal(
+      fs.existsSync(path.join(repositoryRoot, relativePath)),
+      true,
+      `UI Review 模板或测试 fixture 缺失：${relativePath}`,
+    );
+  }
 });
 
 test('[TC-06] 平台二进制、生成清单和 LFS 规则退役且本地成品保持忽略', () => {

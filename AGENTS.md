@@ -10,10 +10,13 @@
 
 ## 结构职责
 
-- marketplace 与 manifest：`.agents/plugins/marketplace.json`、`plugins/frontend-ai-workflow/.codex-plugin/plugin.json`。
-- 日常源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates`、`references` 和 `tests`。
-- 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取。
-- 生命周期与验收资产：活动内容位于 `requirements`、`openspec/changes`，正式合同位于 `openspec/specs`，持久设计输入位于 `design`；完成状态优先读取 `.workflow-history`，本地运行内容位于 `.frontend-ai-workflow`。
+- 根 `README.md` 是能力、使用方式和仓库导航的唯一入口；本文件只保留 AI 与维护执行约束。完整路径职责、生命周期和必要性以 README 的“仓库结构与职责”为准。
+- marketplace 与 manifest：`.agents/plugins/marketplace.json` 只声明本地插件入口，`plugins/frontend-ai-workflow/.codex-plugin/plugin.json` 是发布 manifest；两者不得承载业务实现。
+- 日常插件源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates` 和 `references`；根 `scripts` 只负责编排仓库级测试运行时、官方校验、静态检查和统一验证。
+- 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取，不把生成的平台二进制回写规范源码。
+- 生命周期与验收资产：活动内容位于 `requirements`、`openspec/changes`，正式合同位于 `openspec/specs`，完成状态优先读取 `.workflow-history`；活动内容完成后必须按 schema v2 清理。
+- 持久设计输入位于 `design`，长期测试位于 `tests`，跨平台 CI 位于 `.github/workflows`；项目级 `.frontend-ui-review` 只有在受跟踪页面与设计事实可复现时才保留。
+- 本地运行、缓存和事务只进入 `.frontend-ai-workflow`，单平台成品只进入被忽略的 `dist`；`outputs` 是退役兼容路径，不得新增受跟踪内容或新的主题级忽略规则。
 
 ## AI 读取路由
 

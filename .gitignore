@@ -54,7 +54,7 @@ plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.cache/
 plugins/frontend-ai-workflow/runtime/playwright/node_modules/.DS_Store
 plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.DS_Store
 
-# 工具缓存与增量构建状态；不要宽泛忽略 dist、build 或 outputs
+# 工具缓存与增量构建状态；不要宽泛忽略 dist 或 build
 .cache/
 .turbo/
 .vite/
@@ -68,33 +68,15 @@ plugins/frontend-ai-workflow/runtime/playwright/node_modules/**/.DS_Store
 /dist/frontend-ai-workflow-*/
 /dist/frontend-ai-workflow-*.stage-*/
 
-# 测试、覆盖率和通用浏览器报告；持久 UI 验收记录仍需提交
+# 测试、覆盖率和通用浏览器报告
 coverage/
 test-results/
 playwright-report/
 blob-report/
 .nyc_output/
-/outputs/frontend-test-runtime/
-/outputs/frontend-test-cache/
-/outputs/official-validator-runtime/
-/outputs/official-validator-cache/
-/outputs/official-validator-preflight-tests/
-/outputs/verify-runtime/
-/outputs/validator-runtime/
-/outputs/verification-evidence-integrity/
-/outputs/verification-evidence/
-/outputs/platform-runtime-delivery/
-/outputs/real-project-validation/local-matrix.json
-/outputs/real-project-validation/test-fixtures/
-/outputs/real-project-validation/*/workspaces/
-/outputs/real-project-validation/*/cache/
-/outputs/real-project-validation/*/tmp/
-/outputs/developer-effectiveness-benchmark/
 
-# 评测实时副本只供执行中观察，正式事件记录保留为 *.events.jsonl。
-/outputs/*/*.live.jsonl
-# 本次行为评测的隔离项目及其嵌套 Git 仅保留在本地供审计。
-/outputs/complex-mode-20260909/workspaces/
+# schema v2 已退役根 outputs；本地遗留只通过迁移预览处理，不再按主题扩展规则
+/outputs/
 
 # 运行日志与进程临时状态
 # frontend-ai-workflow:start

@@ -383,6 +383,35 @@ $frontend-workflow-upgrade 检查可以升级的内容，先展示预览
 
 可以简单记为：`bootstrap` 管接入，`fast-change` 管明确局部修改，`requirement-write` 管需求，`change` 管完整开发过程，`test` 管测试用例闭环，`ui-review / ui-fix / ui-verify` 管 UI 验收闭环，`check` 管检查，`upgrade` 管升级。
 
+## 仓库结构与职责
+
+根 `README.md` 是插件能力、使用方式和仓库导航的唯一入口；根 `AGENTS.md` 只规定 AI 与维护者必须遵守的执行边界。普通源码目录不重复建立 README，只有面向独立受众、具有独立生命周期或需要复杂导航的内容才保留自己的入口文档。
+
+| 路径 | 内容与边界 | 生命周期 | 必要性 | 主要维护入口 |
+| --- | --- | --- | --- | --- |
+| `README.md` | 插件能力、安装使用、仓库导航与发布说明 | 长期 | 必需 | 本文件 |
+| `AGENTS.md` | AI 读取、写入、跨平台和验证约束，不承载完整使用说明 | 长期 | 必需 | `AGENTS.md` |
+| `package.json` | 零根依赖的仓库命令入口与版本号 | 长期 | 必需 | `scripts/`、插件 manifest |
+| `LICENSE`、`THIRD_PARTY_NOTICES.md` | 自有许可与内置 OpenSpec、Playwright 等第三方声明 | 长期 | 必需 | 运行时升级流程 |
+| `.gitignore`、`.gitattributes` | 提交边界与跨平台文本规范；不得代替体积和完整性门禁 | 长期 | 必需 | `tests/repository-hygiene.test.mjs` |
+| `.frontend-workflow.json` | schema v2、最低写入器、事件和本地运行目录合同 | 长期 | 必需 | 生命周期脚本与模板 |
+| `.agents/` | 本仓库本地 marketplace 入口，不存放插件业务源码 | 长期 | 必需 | `.agents/plugins/marketplace.json` |
+| `.github/` | 共享验证与五平台原生 CI 矩阵 | 长期 | 必需 | `.github/workflows/validate.yml` |
+| `.workflow-history/` | 已完成变更的年度追加事件；不保存完整需求正文 | 长期、有界增长 | 必需 | 生命周期完成与审计脚本 |
+| `plugins/frontend-ai-workflow/` | 实际发布的插件 manifest、Skill、脚本、模板、参考和固定运行时 | 长期 | 必需 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json` |
+| `openspec/specs/` | 已生效的长期行为合同 | 长期 | 必需 | 受管变更完成时同步 |
+| `openspec/changes/` | 当前活动变更的 proposal、delta specs、design、tasks 与临时证据 | 活动期，完成后清理 | 条件必需 | 内置 OpenSpec 1.9.0 |
+| `requirements/` | 当前活动需求正文；完成状态由事件投影，不保留已验收存根 | 活动期，完成后清理 | 条件必需 | `requirements/REQ-*.md` |
+| `design/` | 跨变更长期复用的设计输入；当前入口见 `design/lanhu-ai-ui-spec/README.md` | 长期 | 条件必需 | 各设计主题自己的入口文档 |
+| `scripts/` | 仓库级测试运行时、官方校验预检、静态检查和统一验证编排 | 长期 | 必需 | `package.json` scripts |
+| `tests/` | 仓库治理、工作流、平台运行时与真实 fixture 回归 | 长期 | 必需 | `npm run test:*` |
+| `.frontend-ui-review/` | 仅在仓库本身存在可复现页面、设计依据和交互事实时保存项目级配置；运行产物不在这里长期保留 | 条件性长期配置 | 当前不需要 | 插件 UI Review 模板 |
+| `.frontend-ai-workflow/` | 本地运行日志、fixture、缓存、事务和崩溃恢复状态 | 本地、可重建或短期恢复 | 不提交 | `runs/`、`cache/`、`transactions/` |
+| `dist/` | 当前原生平台的可安装 marketplace 成品 | 本地、可重建 | 不提交 | `prepare-platform-marketplace.mjs` |
+| `outputs/` | schema v2 已退役的旧输出位置，只用于存量迁移或本地历史检查 | 本地遗留 | 不提交、不新增 | `lifecycle:migrate` 预览 |
+
+文档按职责放置：公开能力与开发入口进入根 README；强制维护规则进入根 AGENTS；Skill 只描述触发条件和执行流程；`references/` 保存被 Skill 按需读取的内部合同；正式行为进入 `openspec/specs/`；单次变更资料只进入 `openspec/changes/`；长期设计依据进入 `design/`。同一事实只选择一个主位置，其他文档通过相对路径引用。
+
 ## 项目落地文件
 
 初始化后，目标仓库会得到以下轻量配置：
