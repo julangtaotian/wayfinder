@@ -21,7 +21,7 @@
 
 ### Requirement: 依赖缓存必须有界且可复用
 
-系统 MUST 锁定 PyYAML 精确版本和发布包摘要，MUST 只在 `.frontend-ai-workflow/cache/official-validator-cache/` 核验、准备和复用依赖，MUST NOT 修改用户 Python、仓库根依赖或其他输出。缓存有效时 MUST 直接复用；缓存缺失或无效时 MAY 从依赖源准备固定包，但取得失败或摘要不符 MUST 失败关闭。
+系统 MUST 锁定 PyYAML 精确版本和发布包摘要，MUST 只在 `.frontend-ai-workflow/cache/official-validator-cache/` 核验、准备和复用依赖，并只在 `.frontend-ai-workflow/runs/official-validator-runtime/` 建立本次运行环境，MUST NOT 修改用户 Python、仓库根依赖、`outputs/` 或其他运行目录。缓存有效时 MUST 直接复用；缓存缺失或无效时 MAY 从依赖源准备固定包，但取得失败或摘要不符 MUST 失败关闭。
 
 #### Scenario: 首次准备依赖
 
@@ -41,7 +41,7 @@
 #### Scenario: 预检结束后清理
 
 - **WHEN** 预检成功、内容失败、启动失败或异常结束
-- **THEN** 系统只清理本次 `outputs/official-validator-runtime/`，保留有效缓存和其他 `outputs` 内容；缓存仅由独立显式命令删除
+- **THEN** 系统只清理本次 `.frontend-ai-workflow/runs/official-validator-runtime/`，保留有效缓存和其他运行内容；缓存仅由独立显式命令删除
 
 ### Requirement: 所有未执行与内容失败必须失败关闭
 

@@ -2,7 +2,9 @@
 
 ## Purpose
 为 AI 视觉验收提供精简、可执行且可追溯的交付合同，使设计差异既能在真实页面截图中直观看到，也能由 AI 或开发人员稳定定位到具体 DOM 节点并实施修改。
+
 ## Requirements
+
 ### Requirement: 单项目只交付标注截图与节点报告
 系统 SHALL 在一次成功验收后为单个项目只交付 `ui-review.png` 和 `ui-review.md`，原始截图、DOM 快照、AI 推理过程与中间结构化数据不得进入交付目录；重复生成 SHALL 替换这两个已知文件且不得增加其他交付文件。
 
@@ -87,3 +89,18 @@
 - **WHEN** 正式生成器所在环境没有可用 FFmpeg 或中文字体
 - **THEN** 系统仍以明确中文错误终止，不因专用测试使用工具替身而生成虚假通过结果
 
+### Requirement: UI Review 配置与运行产物必须分离
+
+UI Review MUST 允许跟踪项目配置与适配器，但运行状态、截图、比较结果和失败调试内容 MUST 默认写入 `.frontend-ai-workflow/runs/ui-review/<run-id>/` 或等价受管运行目录并被忽略。命令 MUST 只清理本次 run-id，持久报告只有在 strict 证据包明确选择时才能进入单一有界包。
+
+#### Scenario: 正常 UI Review
+- **WHEN** 调用方执行一个配置场景
+- **THEN** 所有运行产物 MUST 写入本次受管 run 目录，配置和适配器保持原位且不会要求新增主题过滤规则
+
+#### Scenario: UI Review 失败
+- **WHEN** 捕获、交互或比较失败
+- **THEN** 系统 MUST 保留本次有界诊断或按策略清理，不得删除其他 run、配置或项目内容
+
+#### Scenario: 旧 runs 目录被跟踪
+- **WHEN** Git 索引包含 `.frontend-ui-review/runs/` 内容
+- **THEN** 统一门禁 MUST 阻断并引导使用存量迁移预览，而不是静默加入新的忽略例外

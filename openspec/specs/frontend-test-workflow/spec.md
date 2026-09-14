@@ -111,7 +111,7 @@
 
 ### Requirement: 首版兼容声明必须由真实 fixture 证明
 
-首版 MUST 在 Vue 3 + Vite + Vitest fixture 上证明上下文识别、方案校验、专用测试定位、真实聚焦执行、零测试失败和重复执行稳定性。其他 runner MAY 按项目已有模式使用，但系统 MUST NOT 在没有对应 fixture 或外部证据时声明完整兼容；开发验证依赖与临时运行时 MUST 只按需位于 `.frontend-ai-workflow/runs/frontend-test-runtime/`，不得进入项目根目录、插件运行时或业务项目。Vitest 运行时 MUST 由仓库受版本控制的最小清单和锁文件通过确定性安装创建；可复用 npm 缓存 MUST 仅位于被忽略的 `.frontend-ai-workflow/cache/frontend-test-cache/`，与临时运行时分别清理。准备入口与统一验证 MUST 接受显式 `--offline`：缓存完整时离线准备 MUST 不访问 registry，缓存缺失、损坏或不满足锁文件时 MUST 返回非零状态以及稳定 `code`、`target`、`status` 和中文说明。默认模式 MAY 在缓存未命中时访问 registry，但 MUST 优先使用受控缓存。仓库既有的真实平台矩阵 MUST 在每个平台先在线准备、清理临时运行时、清空平台运行时环境后运行离线共享验证并分别清理运行时与缓存，再生成对应平台运行时并运行平台专属验证。
+首版 MUST 在 Vue 3 + Vite + Vitest fixture 上证明上下文识别、方案校验、专用测试定位、真实聚焦执行、零测试失败和重复执行稳定性。其他 runner MAY 按项目已有模式使用，但系统 MUST NOT 在没有对应 fixture 或外部证据时声明完整兼容；开发验证依赖与临时运行时 MUST 只按需位于被忽略的 `.frontend-ai-workflow/runs/frontend-test-runtime/`，可复用 npm 缓存 MUST 只位于 `.frontend-ai-workflow/cache/frontend-test-cache/`，不得进入项目根目录、插件固定运行时、业务项目、`outputs/` 或 Git 索引。测试上下文枚举 MUST 排除仓库根的生命周期、归档、outputs、UI Review runs、Wayfinder 和受管运行时，不得让历史材料扩大日常读取。Vitest 运行时 MUST 由仓库受版本控制的最小清单和锁文件通过确定性安装创建，运行时与缓存必须分别清理。准备入口与统一验证 MUST 接受显式 `--offline`：缓存完整时离线准备 MUST 不访问 registry，缓存缺失、损坏或不满足锁文件时 MUST 返回非零状态以及稳定 `code`、`target`、`status` 和中文说明。默认模式 MAY 在缓存未命中时访问 registry，但 MUST 优先使用受控缓存。仓库既有的真实平台矩阵 MUST 在每个平台先在线准备、清理临时运行时、清空平台运行时环境后运行离线共享验证并分别清理运行时与缓存，再生成对应平台运行时并运行平台专属验证。
 
 #### Scenario: Vue Vitest fixture 完成闭环
 
@@ -124,6 +124,11 @@
 - **THEN** 运行时仅使用 `.frontend-ai-workflow/cache/frontend-test-cache/` 中与锁文件完整性匹配的包内容完成准备
 - **AND** 统一验证将该选项传递至准备入口，根目录不生成依赖目录或锁文件
 
+#### Scenario: 测试上下文面对历史材料
+
+- **WHEN** 仓库根存在旧 outputs、需求归档、OpenSpec 归档或 UI Review runs
+- **THEN** 测试上下文只枚举当前项目源码、配置和测试，不递归读取这些历史或运行时目录
+
 #### Scenario: 离线缓存缺失或不完整
 
 - **WHEN** 调用方以 `--offline` 执行且受控缓存缺失、损坏或无法满足锁文件
@@ -133,8 +138,8 @@
 #### Scenario: 分离清理运行时与缓存
 
 - **WHEN** 调用方清理临时运行时或显式清理缓存
-- **THEN** 每个命令仅删除所属的受控 outputs 子目录
-- **AND** 临时运行时清理不会删除可复用缓存，缓存清理不会影响持久验证证据
+- **THEN** 每个命令仅删除所属的受控运行时子目录
+- **AND** 临时运行时清理不会删除可复用缓存，缓存清理不会影响其他 run
 
 #### Scenario: 真实平台矩阵离线复验
 

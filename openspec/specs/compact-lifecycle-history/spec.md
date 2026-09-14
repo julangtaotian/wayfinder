@@ -1,12 +1,13 @@
-## Purpose
+# compact-lifecycle-history Specification
 
+## Purpose
 为需求完成状态提供有界、追加式、可恢复且跨平台一致的事实记录，使完整规划和普通证据不再成为永久仓库负担，同时保留安全迁移与审计边界。
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 生命周期事件必须有界且可确定投影
 
-系统 MUST 以 schema v2 事件记录完成、取消、替代和重新打开状态。事件 MUST 包含稳定 eventId、仓库相对 scope、changeId、revision、occurredAt、信任级别和规范化规格摘要，并 MUST 拒绝绝对路径、控制字符、重复 eventId、分叉 revision、未知 supersedes、超长字段或超预算事件。状态 MUST 按 revision 和 supersedes 关系投影，不得使用文件最后一行覆盖。（D-02、D-08、D-16～D-18；A-01、A-02、A-07）
+系统 MUST 以 schema v2 事件记录完成、取消、替代和重新打开状态。事件 MUST 包含稳定 eventId、仓库相对 scope、changeId、revision、occurredAt、信任级别和规范化规格摘要，并 MUST 拒绝绝对路径、控制字符、重复 eventId、分叉 revision、未知 supersedes、超长字段或超预算事件。状态 MUST 按 revision 和 supersedes 关系投影，不得使用文件最后一行覆盖。
 
 #### Scenario: 查询已完成需求
 - **WHEN** 活动目录不存在且存在唯一有效 accepted 事件
@@ -22,15 +23,15 @@
 
 #### Scenario: 使用非根 scope 完成并恢复
 - **WHEN** 调用方以规范化仓库相对 scope 完成变更，或完成在写入事件前中断
-- **THEN** 预览、事务、事件、恢复和状态查询 MUST 使用同一 scope，不得回退为根 scope（D-17、D-22；A-13）
+- **THEN** 预览、事务、事件、恢复和状态查询 MUST 使用同一 scope，不得回退为根 scope
 
 #### Scenario: 取消、替代或重新打开
 - **WHEN** 调用方通过正式入口执行 cancelled、superseded 或 reopened
-- **THEN** 系统 MUST 在仓库锁内验证当前投影、revision、supersedes 与活动材料，并保证终态事件不会和未清理的活动变更形成冲突（D-02、D-22；A-02、A-13）
+- **THEN** 系统 MUST 在仓库锁内验证当前投影、revision、supersedes 与活动材料，并保证终态事件不会和未清理的活动变更形成冲突
 
 ### Requirement: 完成必须作为仓库级可恢复事务执行
 
-完成写入 MUST 在仓库级锁内执行 Git 前置检查、原生 OpenSpec 严格归档与规格同步、事件追加和临时材料清理。merge、rebase、cherry-pick、未合并 index、相关 sparse checkout、格式版本不匹配或锁竞争 MUST 在修改文件前失败关闭。原生归档 MUST 仅作为事务中间结果，成功事件提交后不得长期保留。（D-03、D-06、D-07；A-03、A-07）
+完成写入 MUST 在仓库级锁内执行 Git 前置检查、原生 OpenSpec 严格归档与规格同步、事件追加和临时材料清理。merge、rebase、cherry-pick、未合并 index、相关 sparse checkout、格式版本不匹配或锁竞争 MUST 在修改文件前失败关闭。原生归档 MUST 仅作为事务中间结果，成功事件提交后不得长期保留。
 
 #### Scenario: 正常完成
 - **WHEN** 完成前门禁通过且调用方显式写入
@@ -46,7 +47,7 @@
 
 ### Requirement: Git 差异必须保护追加历史
 
-统一验证 MUST 以显式 base revision、PR base SHA 或普通 push 父提交校验生命周期差异。活动变更删除 MUST 与 accepted、cancelled 或 superseded 事件新增配对；既有事件行不得修改或删除，除非显式 schema 迁移模式已经声明。（D-09、D-16；A-06）
+统一验证 MUST 以显式 base revision、PR base SHA 或普通 push 父提交校验生命周期差异。活动变更删除 MUST 与 accepted、cancelled 或 superseded 事件新增配对；既有事件行不得修改或删除，除非显式 schema 迁移模式已经声明。
 
 #### Scenario: 手工删除活动变更
 - **WHEN** Git 差异显示活动变更被删除但没有新增匹配终态事件
@@ -62,7 +63,7 @@
 
 ### Requirement: 存量迁移必须先预览并失败关闭
 
-系统 MUST 为 v1 OpenSpec 归档、需求归档、受跟踪 outputs 和 UI Review runs 提供只读预览；只有显式写入且引用反查、符号链接、未知文件、Git 状态、事件摘要和未跟踪内容检查全部通过时才可迁移。迁移 MUST 不重写 Git 历史，不得删除未跟踪内容，并 MUST 幂等恢复。（D-15；A-08）
+系统 MUST 为 v1 OpenSpec 归档、需求归档、受跟踪 outputs 和 UI Review runs 提供只读预览；只有显式写入且引用反查、符号链接、未知文件、Git 状态、事件摘要和未跟踪内容检查全部通过时才可迁移。迁移 MUST 不重写 Git 历史，不得删除未跟踪内容，并 MUST 幂等恢复。
 
 #### Scenario: 存在未知或仍被引用文件
 - **WHEN** 预览发现无法分类的文件、符号链接或活动文档仍引用目标
@@ -78,11 +79,11 @@
 
 #### Scenario: 路径只出现在迁移合同样例中
 - **WHEN** 精确历史路径只出现在迁移器自身实现或生命周期迁移专用回归测试中
-- **THEN** 预览 MUST 把它记录为有界合同字面量诊断而不阻断，同时生产源码或持久文档中的同类引用 MUST 继续阻断（D-15、D-20；A-11）
+- **THEN** 预览 MUST 把它记录为有界合同字面量诊断而不阻断，同时生产源码或持久文档中的同类引用 MUST 继续阻断
 
 ### Requirement: 外部 CI 回执必须与仓库提交解耦
 
-系统 MUST 只从统一忽略运行时目录显式读取外部 CI 回执。回执 MUST 匹配当前 base revision，并只携带有界 HTTPS 引用和稳定任务状态；未提供时事件 MUST 记录 pending，合法回执只能记录 recorded 语义，不得让受跟踪需求或规格写入精确候选 SHA。（D-05、D-14、D-23；A-14）
+系统 MUST 只从统一忽略运行时目录显式读取外部 CI 回执。回执 MUST 匹配当前 base revision，并只携带有界 HTTPS 引用和稳定任务状态；未提供时事件 MUST 记录 pending，合法回执只能记录 recorded 语义，不得让受跟踪需求或规格写入精确候选 SHA。
 
 #### Scenario: 未提供外部回执
 - **WHEN** 最终完成没有显式外部 CI 回执

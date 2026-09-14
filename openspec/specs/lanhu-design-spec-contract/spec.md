@@ -238,7 +238,7 @@
 
 ### Requirement: 纯 AI 输入目录必须包含响应式表单布局规范
 
-系统 MUST 将已验收的响应式表单布局规则同步到纯 AI 输入目录，并验证规范完整性、README 可发现性和输入纯净边界。
+系统 MUST 将已确认的响应式表单布局规则同步到 `design/lanhu-ai-ui-spec/`，并通过规范完整性、README 可发现性和输入纯净边界检查后才允许作为正式 AI 输入。
 
 #### Scenario: AI 从纯输入目录定位响应式规范
 
@@ -262,12 +262,12 @@
 
 ### Requirement: 精简 AI 规范必须成为唯一活动蓝湖交付
 
-系统 MUST 仅将 `outputs/lanhu-ai-ui-spec/` 作为当前仓库的活动蓝湖 AI 输入合同；该目录 MUST 保留可执行 Markdown、本地必要资产和可解析索引，但 MUST NOT 包含历史验证工程、组件库构建产物、原始批量截图或三方对比矩阵。
+系统 MUST 仅将 `design/lanhu-ai-ui-spec/` 作为当前仓库的活动蓝湖 AI 输入合同；该目录 MUST 保留可执行 Markdown、本地必要资产和可解析索引，但 MUST NOT 包含历史验证工程、组件库构建产物、原始批量截图或三方对比矩阵，也不得继续占用 `outputs/`。
 
 #### Scenario: AI 读取蓝湖规范
 
 - **WHEN** AI 需要使用后台 UI 规则
-- **THEN** 它 MUST 能仅通过 `outputs/lanhu-ai-ui-spec/` 定位规范、场景和本地引用，不读取已退役目录
+- **THEN** 它 MUST 能仅通过 `design/lanhu-ai-ui-spec/` 定位规范、场景和本地引用，不读取已退役目录
 
 #### Scenario: 仓库执行蓝湖规范检查
 
