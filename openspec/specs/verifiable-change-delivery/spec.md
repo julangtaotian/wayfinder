@@ -7,7 +7,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 检查必须区分工作流、变更和交付层级
 
-系统 MUST 分别报告工作流接入健康、需求与规划一致性、测试方案状态和交付就绪状态，并明确区分静态发现、文档记录和实际执行结果。没有声明测试方案的历史变更 MUST 保持原有检查语义；声明方案为必需的变更 MUST 在实施与完成检查中运行对应阶段校验。（D-02、D-06、D-09、D-10；A-03、A-06、A-08）
+系统 MUST 分别报告工作流接入健康、需求与规划一致性、测试方案状态和交付就绪状态，并明确区分静态发现、文档记录和实际执行结果。没有声明测试方案的历史变更 MUST 保持原有检查语义；声明方案为必需的变更 MUST 在实施与完成检查中运行对应阶段校验。
 
 #### Scenario: 只执行工作流健康检查
 
@@ -30,7 +30,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 检查保持原有需求、规划和交付门禁，不自动创建方案或把缺失方案当作错误
 
 ### Requirement: 可识别的持久证据必须实际存在
-系统 MUST 在完成前检查可识别的仓库内证据路径，并在文件缺失或越出项目范围时阻断；无法机器识别的终端摘要 MUST 仅报告为记录而不是已执行证明。（D-05、D-07；A-05、A-06）
+系统 MUST 在完成前检查可识别的仓库内证据路径，并在文件缺失或越出项目范围时阻断；无法机器识别的终端摘要 MUST 仅报告为记录而不是已执行证明。
 
 #### Scenario: 验证记录引用仓库文件
 - **WHEN** V-* 证据位置是项目内相对路径
@@ -42,7 +42,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 完成归档必须使用不可绕过的硬门禁
 
-系统 MUST 在需求、验收、任务、验证记录、已声明测试方案、OpenSpec `isPlanningComplete=true`、全部 artifact 为 `done` 或合法 `skipped`、严格校验、规格合并结果和归档目标全部通过后才归档；对缺少 `isPlanningComplete` 的兼容响应 MAY 回退读取 `isComplete`。测试方案声明为必需时，系统 MUST 要求 `test-plan.md` 存在、修订基线有效、全部适用 TC 已通过且关联 V-* 与持久证据；没有声明的历史变更保持兼容。正常完成入口 MUST NOT 提供跳过测试方案、跳过验证、跳过规格或确认未完成任务的选项。（D-06、D-09、D-10；A-03、A-06、A-08）
+系统 MUST 在需求、验收、任务、验证记录、已声明测试方案、OpenSpec `isPlanningComplete=true`、全部 artifact 为 `done` 或合法 `skipped`、严格校验、规格合并结果和归档目标全部通过后才归档；对缺少 `isPlanningComplete` 的兼容响应 MAY 回退读取 `isComplete`。测试方案声明为必需时，系统 MUST 要求 `test-plan.md` 存在、修订基线有效、全部适用 TC 已通过且关联 V-* 与持久证据；没有声明的历史变更保持兼容。正常完成入口 MUST NOT 提供跳过测试方案、跳过验证、跳过规格或确认未完成任务的选项。
 
 #### Scenario: 任一交付项未完成
 
@@ -100,7 +100,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统不得把需求标为已验收，并报告可恢复的实际状态
 
 ### Requirement: 历史项目必须保持只读兼容
-系统 MUST 对旧需求、旧 Wayfinder 和无 Git 基线项目给出可操作警告，并继续保护管理标记外内容。（D-08；A-07、A-08）
+系统 MUST 对旧需求、旧 Wayfinder 和无 Git 基线项目给出可操作警告，并继续保护管理标记外内容。
 
 #### Scenario: 旧需求执行完成审计
 - **WHEN** 已归档或历史需求仍使用已验收状态且缺少新矩阵
@@ -112,7 +112,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 动态操作输入必须可见且受硬约束
 
-系统 MUST 在实施时读取 `instructions apply --json`，在完成预览时读取 `instructions archive --json`，并报告返回的 context、operationGuidance、warnings 和具体路径；这些输入 MUST NOT 覆盖需求事实、用户选择、规划根或完成硬门禁。实施发现规格外范围时 MUST 暂停并报告，不得静默缩减、延后或简化规定行为，且任务只有在规定行为完整实现后才能标记完成。（D-03、D-08；A-04、A-05）
+系统 MUST 在实施时读取 `instructions apply --json`，在完成预览时读取 `instructions archive --json`，并报告返回的 context、operationGuidance、warnings 和具体路径；这些输入 MUST NOT 覆盖需求事实、用户选择、规划根或完成硬门禁。实施发现规格外范围时 MUST 暂停并报告，不得静默缩减、延后或简化规定行为，且任务只有在规定行为完整实现后才能标记完成。
 
 #### Scenario: 动态指导补充实施步骤
 
@@ -130,7 +130,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统暂停实施、报告新增范围并建议先更新规划，不得通过缩减或延后规定行为来提前完成任务
 
 ### Requirement: 归档和规格处理必须使用运行时实际路径
-系统 MUST 使用 OpenSpec 返回的具体 artifact 和规格路径，兼容单层与嵌套目录；归档目标 MUST 对已有完整日期前缀保持原名，对其他名称只增加一次归档日期。（D-06、D-07；A-04、A-07）
+系统 MUST 使用 OpenSpec 返回的具体 artifact 和规格路径，兼容单层与嵌套目录；归档目标 MUST 对已有完整日期前缀保持原名，对其他名称只增加一次归档日期。
 
 #### Scenario: 处理嵌套规格
 - **WHEN** delta 或主规格位于 `specs/<area>/<capability>/spec.md`
@@ -146,7 +146,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 规划与归档校验必须采用 OpenSpec 1.9.0 语义
 
-系统 MUST 使用内置 OpenSpec 1.9.0 执行规划、任务和归档校验；仓库发布 MUST 保持活动变更与主规格严格模式，并 MUST 独立检查归档任务完成状态。普通模式的多语言兼容 MUST NOT 被误报为严格验证通过。（D-04、D-05、D-06、D-07；A-02、A-03、A-04）
+系统 MUST 使用内置 OpenSpec 1.9.0 执行规划、任务和归档校验；仓库发布 MUST 保持活动变更与主规格严格模式，并 MUST 独立检查归档任务完成状态。普通模式的多语言兼容 MUST NOT 被误报为严格验证通过。
 
 #### Scenario: 普通模式校验中文规范
 
@@ -190,7 +190,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 跨平台高风险变更必须显式标记并分层取证
 
-当变更影响 CI、文件路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断时，工作流 MUST 将其标记为“跨平台高风险”，读取插件共享检查清单，并 MUST 为实际受影响的平台差异增加确定性回归。结构化输出 MUST 优先断言稳定字段而不是完整人类文案；路径断言 MUST 规范化或同时接受目标平台分隔符。只有仓库声明的真实 CI 矩阵全部成功后，外部平台证据才可记录为通过；本地模拟 MUST NOT 冒充真实平台证据。（D-15；A-11）
+当变更影响 CI、文件路径、临时目录、子进程、包管理器入口、环境变量或机器可读诊断时，工作流 MUST 将其标记为“跨平台高风险”，读取插件共享检查清单，并 MUST 为实际受影响的平台差异增加确定性回归。结构化输出 MUST 优先断言稳定字段而不是完整人类文案；路径断言 MUST 规范化或同时接受目标平台分隔符。只有仓库声明的真实 CI 矩阵全部成功后，外部平台证据才可记录为通过；本地模拟 MUST NOT 冒充真实平台证据。
 
 #### Scenario: 变更命中跨平台风险触发器
 
@@ -208,7 +208,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 工作流分别记录本地结果和外部待执行项，保持发布证据未完成且不声称跨平台通过
 
 ### Requirement: 完成入口必须迁移证据引用并执行归档后审计
-系统 SHALL 在完成预览中列出所选活动变更证据引用到实际带日期归档前缀的确定性改写，并 MUST 只在完成前门禁通过后执行归档。归档成功后，系统 MUST 更新需求内属于该变更的证据引用与状态，同时把归档测试方案中的完整变更名和证据路径迁移到实际归档目标，再立即从实际归档目录执行 complete 审计；成功响应必须以该审计通过为前提。（D-05、D-09、D-10，A-02、A-04）
+系统 SHALL 在完成预览中列出所选活动变更证据引用到实际带日期归档前缀的确定性改写，并 MUST 只在完成前门禁通过后执行归档。归档成功后，系统 MUST 更新需求内属于该变更的证据引用与状态，同时把归档测试方案中的完整变更名和证据路径迁移到实际归档目标，再立即从实际归档目录执行 complete 审计；成功响应必须以该审计通过为前提。
 
 #### Scenario: 预览完成动作
 - **WHEN** 完成前门禁通过但调用方没有显式写入
@@ -223,7 +223,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统只改写所选变更的安全项目相对前缀，不改写其他变更、普通文字或 URL
 
 ### Requirement: 归档引用迁移必须幂等且可恢复
-系统 SHALL 防止归档日期重复、目标冲突和无关内容覆盖，并 MUST 在归档成功但需求写入或归档后审计失败时返回稳定错误 code、实际归档目标、待修复引用和可重复恢复动作。恢复不得重跑项目验证或伪造完成成功。（D-10、D-11，A-05）
+系统 SHALL 防止归档日期重复、目标冲突和无关内容覆盖，并 MUST 在归档成功但需求写入或归档后审计失败时返回稳定错误 code、实际归档目标、待修复引用和可重复恢复动作。恢复不得重跑项目验证或伪造完成成功。
 
 #### Scenario: 对已迁移需求重复运行恢复
 - **WHEN** 活动变更已经移动，需求或归档测试方案仍有待迁移字段，或者二者已经完全迁移
@@ -238,14 +238,14 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统返回归档后审计失败和具体 V-*，不得报告需求完整验收
 
 ### Requirement: 历史失效引用必须可见但不被静默改写
-系统 SHALL 在只读检查中识别已验收需求指向不存在活动变更目录的证据引用，并 MUST 输出可定位迁移警告；没有用户明确启动迁移变更时，不得批量修改历史需求，也不得把失效引用继续报告为完整证据。（D-08、D-10，A-06）
+系统 SHALL 在只读检查中识别已验收需求指向不存在活动变更目录的证据引用，并 MUST 输出可定位迁移警告；没有用户明确启动迁移变更时，不得批量修改历史需求，也不得把失效引用继续报告为完整证据。
 
 #### Scenario: 历史需求引用已归档的活动路径
 - **WHEN** 项目检查发现历史需求引用 `openspec/changes/<change>/...`，该活动目录不存在但唯一归档候选存在
 - **THEN** 系统报告原路径、候选归档路径和迁移状态，保持只读且不自动写回
 
 ### Requirement: 完成汇总不得把非可信证据折叠为通过
-检查、完成前校验、正式完成和项目健康汇总 MUST 只有在全部必需自动证据均为当前、完整且可信通过时报告 `passed`。任一子证据为 warning、recorded、external-recorded、inconclusive、blocked、failed、stale 或未知状态时，顶层状态 MUST 保留非通过语义，并 MUST 提供稳定的 `code`、`status`、`target`、`trust` 和 `evidenceId` 以定位来源。（D-08、D-09，A-05、A-06）
+检查、完成前校验、正式完成和项目健康汇总 MUST 只有在全部必需自动证据均为当前、完整且可信通过时报告 `passed`。任一子证据为 warning、recorded、external-recorded、inconclusive、blocked、failed、stale 或未知状态时，顶层状态 MUST 保留非通过语义，并 MUST 提供稳定的 `code`、`status`、`target`、`trust` 和 `evidenceId` 以定位来源。
 
 #### Scenario: 外部记录与本地通过同时存在
 - **WHEN** 一个变更的本地证据通过，但任一必需自动 V-* 只有 external-recorded 外部记录
@@ -265,7 +265,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 完成流程必须分层归档已验收需求
 
-系统 MUST 在变更归档、证据引用迁移和归档后完整审计成功后，把完整需求正文原子迁入 `requirements/archive/<year>/`，在原路径写入轻量已验收存根并刷新稳定目录索引。正式成功响应 MUST 报告根存根、归档正文和索引目标。（D-03、D-04；A-02、A-07）
+系统 MUST 在变更归档、证据引用迁移和归档后完整审计成功后，把完整需求正文原子迁入 `requirements/archive/<year>/`，在原路径写入轻量已验收存根并刷新稳定目录索引。正式成功响应 MUST 报告根存根、归档正文和索引目标。
 
 #### Scenario: 正常完成并归档需求
 
@@ -284,7 +284,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 需求归档恢复必须保持幂等
 
-系统 MUST 能从根完整需求、根存根或唯一年度归档正文恢复未完成迁移；重复恢复 MUST NOT 再次增加年份目录、生成第二份正文、重复改写证据或重新运行项目验证。（D-04；A-02）
+系统 MUST 能从根完整需求、根存根或唯一年度归档正文恢复未完成迁移；重复恢复 MUST NOT 再次增加年份目录、生成第二份正文、重复改写证据或重新运行项目验证。
 
 #### Scenario: 正文已迁移但存根或索引未完成
 
@@ -303,7 +303,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 
 ### Requirement: 本次归档引用完整性必须覆盖支持的文档写法
 
-系统 MUST 迁移所选活动变更的行内代码、普通相对路径和 Markdown 链接，保留远程 URL、其他变更与相似文字，重复执行 MUST 幂等。新归档和恢复审计 MUST 将可识别的缺失或不安全证据报告为失败，普通历史只读检查 MUST 保持原有兼容。（D-01、D-04；A-01）
+系统 MUST 迁移所选活动变更的行内代码、普通相对路径和 Markdown 链接，保留远程 URL、其他变更与相似文字，重复执行 MUST 幂等。新归档和恢复审计 MUST 将可识别的缺失或不安全证据报告为失败，普通历史只读检查 MUST 保持原有兼容。
 
 #### Scenario: 多种引用指向同一证据
 - **WHEN** 文档使用三种支持的写法引用所选变更

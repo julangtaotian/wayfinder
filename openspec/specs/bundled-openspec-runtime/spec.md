@@ -7,7 +7,7 @@
 
 ### Requirement: 插件必须固定使用可核验的内置 OpenSpec 运行时
 
-系统 MUST 从官方 npm 包构建并固定使用 `@fission-ai/openspec@1.9.0` 的生产运行时，MUST NOT 探测、调用或自行升级全局 OpenSpec，且发布物 MUST 保留可核验的版本、入口、生产包、声明许可证和按包树计算的 SHA-256 清单。包装器 MUST 关闭运行时版本检查与匿名遥测；清单 MUST 使用稳定排序且不得包含绝对路径或生成时间；默认操作 MUST 只校验，只有显式 `--write` 才能重建清单。（D-01、D-02、D-08；A-01、A-05）
+系统 MUST 从官方 npm 包构建并固定使用 `@fission-ai/openspec@1.9.0` 的生产运行时，MUST NOT 探测、调用或自行升级全局 OpenSpec，且发布物 MUST 保留可核验的版本、入口、生产包、声明许可证和按包树计算的 SHA-256 清单。包装器 MUST 关闭运行时版本检查与匿名遥测；清单 MUST 使用稳定排序且不得包含绝对路径或生成时间；默认操作 MUST 只校验，只有显式 `--write` 才能重建清单。
 
 #### Scenario: 内置运行时完整
 
@@ -35,7 +35,7 @@
 - **THEN** 系统不生成 OpenSpec 上游 `.agents/skills`、`.codex/skills`、Command Code、Slash Commands 或 Copilot 云端代理文件，只维护插件自身声明的受管内容
 
 ### Requirement: 项目操作必须保护规划根目录边界
-系统 MUST 校验 OpenSpec 返回的规划根来源；在用户没有明确选择机器级 Store 时，本地项目操作 MUST NOT 写入 `root.source=global_default`，也 MUST NOT 由动态 guidance 改变已选择根目录。（D-05、D-08；A-05、A-06）
+系统 MUST 校验 OpenSpec 返回的规划根来源；在用户没有明确选择机器级 Store 时，本地项目操作 MUST NOT 写入 `root.source=global_default`，也 MUST NOT 由动态 guidance 改变已选择根目录。
 
 #### Scenario: 项目使用最近规划根
 - **WHEN** 本地项目存在可识别的 OpenSpec 根且运行时返回 `root.source=nearest`
@@ -47,7 +47,7 @@
 
 ### Requirement: 旧版规划数据必须通过新运行时兼容验证
 
-系统 MUST 使用内置 1.9.0 对升级前创建的变更和规格执行严格校验，并 MUST 保持初始化、重复执行、受管升级与检查对既有业务内容的非破坏语义。（D-02、D-05、D-07、D-08；A-01、A-03、A-05）
+系统 MUST 使用内置 1.9.0 对升级前创建的变更和规格执行严格校验，并 MUST 保持初始化、重复执行、受管升级与检查对既有业务内容的非破坏语义。
 
 #### Scenario: 读取现有规划数据
 

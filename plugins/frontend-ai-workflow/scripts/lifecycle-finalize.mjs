@@ -1,14 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  atomicWriteProjectFile,
   removeProjectDirectory,
   removeProjectFile,
 } from './project-path-safety.mjs';
 import {
   createEventId,
+  normalizeRepositoryPath,
   sha256,
 } from './lifecycle-contract.mjs';
 import { appendLifecycleEvent, projectLifecycleState } from './lifecycle-history.mjs';
+import { readExternalCiReceipt } from './external-ci-receipt.mjs';
 import {
   acquireLifecycleLock,
   completeLifecycleTransaction,
@@ -43,6 +46,24 @@ function listSpecCapabilities(changePath) {
   return capabilities.filter(Boolean).sort();
 }
 
+const LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*（(?=[^（）\r\n]*(?:D|A)-\d+)[DA\d、，；;～~—–\- \t]+）/gu;
+
+export function stripLocalSpecProvenance(content) {
+  return String(content).replace(LOCAL_SPEC_PROVENANCE_PATTERN, '');
+}
+
+function normalizeMainSpecs(root, capabilities) {
+  for (const capability of capabilities) {
+    const file = path.join(root, 'openspec', 'specs', capability, 'spec.md');
+    if (!fs.existsSync(file)) continue;
+    const current = fs.readFileSync(file, 'utf8');
+    const normalized = stripLocalSpecProvenance(current);
+    if (normalized !== current) {
+      atomicWriteProjectFile(root, file, normalized, { label: '正式规格局部追踪清理' });
+    }
+  }
+}
+
 export function digestMainSpecs(root, capabilities) {
   const parts = [];
   for (const capability of capabilities) {
@@ -65,7 +86,14 @@ function archiveResultDetails(result, predictedTarget) {
   return { parsed, archive, archiveName };
 }
 
-export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'default' }, services) {
+export function finalizeLifecycleV2({
+  check,
+  write = false,
+  evidenceMode = 'default',
+  scope = '.',
+  externalCiReceipt = null,
+}, services) {
+  const normalizedScope = normalizeRepositoryPath(scope, 'scope', { allowRoot: true });
   const capabilities = listSpecCapabilities(check.changePath);
   const gitState = inspectGitCompletionState(check.root);
   const actions = [
@@ -76,7 +104,8 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
     { action: 'remove-temporary-archive', target: check.archive?.targetPath || null },
   ];
   if (!gitState.ok) return { ok: false, code: 'lifecycle_git_blocked', status: 'blocked', write, check, gitState, actions: [] };
-  const existing = projectLifecycleState({ root: check.root, scope: '.', changeId: check.changeName });
+  const externalCi = readExternalCiReceipt({ root: check.root, receiptPath: externalCiReceipt, baseRevision: gitState.baseRevision });
+  const existing = projectLifecycleState({ root: check.root, scope: normalizedScope, changeId: check.changeName });
   if (existing.event?.type === 'accepted' && !existing.active) {
     return { ok: true, code: 'lifecycle_already_finalized', status: existing.status, write, check, event: existing.event, actions: [] };
   }
@@ -103,6 +132,8 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
       gitState,
       capabilities,
       evidenceMode,
+      scope: normalizedScope,
+      externalCi: externalCi.receipt,
       actions,
     };
   }
@@ -114,7 +145,10 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
   let transaction = writeLifecycleTransaction(check.root, {
     transactionId,
     stage: 'prepare',
+    operationType: 'accepted',
+    scope: normalizedScope,
     changeId: check.changeName,
+    changePath: path.relative(check.root, check.changePath).replaceAll('\\', '/'),
     requirementPath: path.relative(check.root, check.requirementPath).replaceAll('\\', '/'),
     archivePath: path.relative(check.root, check.archive.targetPath).replaceAll('\\', '/'),
     baseRevision: gitState.baseRevision,
@@ -123,6 +157,7 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
     supersedes,
     capabilities,
     evidenceMode,
+    externalCiCheck: externalCi.check,
   });
   try {
     const archived = services.runOpenSpecSync(
@@ -146,11 +181,12 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
     }
     const details = archiveResultDetails(archived, check.archive.targetPath);
     const archiveTarget = path.join(check.root, 'openspec', 'changes', 'archive', details.archiveName);
+    normalizeMainSpecs(check.root, capabilities);
     const specDigest = digestMainSpecs(check.root, capabilities);
     const event = {
       schemaVersion: 2,
       eventId: createEventId({ changeId: check.changeName, revision: nextRevision, occurredAt: now, specDigest }),
-      scope: '.',
+      scope: normalizedScope,
       changeId: check.changeName,
       requirementId: requirementId(check.requirementPath),
       type: 'accepted',
@@ -163,9 +199,9 @@ export function finalizeLifecycleV2({ check, write = false, evidenceMode = 'defa
         { name: 'requirement', status: 'passed' },
         { name: 'openspec-strict', status: 'passed' },
         { name: 'test-plan', status: check.testPlanRequired ? 'passed' : 'recorded' },
-        { name: 'external-ci', status: 'pending' },
+        externalCi.check,
       ],
-      trust: 'local-verified',
+      trust: externalCi.check.status === 'recorded' ? 'external-recorded' : 'local-verified',
       supersedes,
     };
     transaction = writeLifecycleTransaction(check.root, {
@@ -218,11 +254,12 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
     const archiveTarget = path.join(lock.layout.config.root, current.archivePath);
     let event = current.event;
     if (!event && fs.existsSync(archiveTarget)) {
+      normalizeMainSpecs(lock.layout.config.root, current.capabilities);
       const specDigest = digestMainSpecs(lock.layout.config.root, current.capabilities);
       event = {
         schemaVersion: 2,
         eventId: createEventId({ changeId: current.changeId, revision: current.revision, occurredAt: current.occurredAt, specDigest }),
-        scope: '.',
+        scope: current.scope || '.',
         changeId: current.changeId,
         requirementId: requirementId(path.join(lock.layout.config.root, current.requirementPath)),
         type: 'accepted',
@@ -235,9 +272,9 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
           { name: 'requirement', status: 'passed' },
           { name: 'openspec-strict', status: 'passed' },
           { name: 'test-plan', status: 'recorded' },
-          { name: 'external-ci', status: 'pending' },
+          current.externalCiCheck || { name: 'external-ci', status: 'pending' },
         ],
-        trust: 'local-verified',
+        trust: current.externalCiCheck?.status === 'recorded' ? 'external-recorded' : 'local-verified',
         supersedes: current.supersedes,
       };
       current = writeLifecycleTransaction(root, { ...current, stage: 'archived', event });

@@ -57,6 +57,8 @@ const REQUIREMENT_MIGRATION_ASSETS = [
   'scripts/lifecycle-history.mjs',
   'scripts/lifecycle-runtime.mjs',
   'scripts/lifecycle-status.mjs',
+  'scripts/lifecycle-transition.mjs',
+  'scripts/external-ci-receipt.mjs',
   'scripts/lifecycle-transaction.mjs',
   'scripts/lifecycle-finalize.mjs',
   'scripts/lifecycle-audit.mjs',

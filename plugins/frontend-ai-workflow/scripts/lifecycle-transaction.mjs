@@ -96,7 +96,10 @@ export function writeLifecycleTransaction(root, transaction) {
     schemaVersion: 1,
     transactionId: String(transaction.transactionId || ''),
     stage: String(transaction.stage || ''),
+    operationType: String(transaction.operationType || 'accepted'),
+    scope: normalizeRepositoryPath(transaction.scope ?? '.', 'scope', { allowRoot: true }),
     changeId: String(transaction.changeId || ''),
+    changePath: transaction.changePath ? normalizeRepositoryPath(transaction.changePath, 'changePath') : null,
     requirementPath: normalizeRepositoryPath(transaction.requirementPath, 'requirementPath'),
     archivePath: transaction.archivePath ? normalizeRepositoryPath(transaction.archivePath, 'archivePath') : null,
     eventId: transaction.eventId || null,
@@ -106,6 +109,7 @@ export function writeLifecycleTransaction(root, transaction) {
     occurredAt: transaction.occurredAt || null,
     capabilities: Array.isArray(transaction.capabilities) ? [...transaction.capabilities] : [],
     evidenceMode: transaction.evidenceMode || 'default',
+    externalCiCheck: transaction.externalCiCheck || null,
     event: transaction.event || null,
     updatedAt: new Date().toISOString(),
   };

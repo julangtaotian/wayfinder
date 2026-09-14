@@ -45,6 +45,8 @@ export function finalizeChange({
   change,
   write = false,
   evidenceMode = 'default',
+  scope = '.',
+  externalCiReceipt = null,
 } = {}, injected = {}) {
   const services = {
     checkChange,
@@ -72,7 +74,7 @@ export function finalizeChange({
   if (!check.ok) return { ok: false, write, check, actions: [] };
   const lifecycleConfig = readLifecycleConfig(check.root);
   if (lifecycleConfig.lifecycleMode === 'v2') {
-    return finalizeLifecycleV2({ check, write, evidenceMode }, services);
+    return finalizeLifecycleV2({ check, write, evidenceMode, scope, externalCiReceipt }, services);
   }
   try {
     preflightFinalizeSurface(check);
@@ -326,11 +328,11 @@ export function finalizeChange({
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), requirement: null, change: null, write: false, evidenceMode: 'default', recover: null };
+  const args = { target: process.cwd(), requirement: null, change: null, write: false, evidenceMode: 'default', scope: '.', externalCiReceipt: null, recover: null };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (['--target', '--requirement', '--change', '--evidence-mode', '--recover'].includes(value)) {
-      const key = value === '--evidence-mode' ? 'evidenceMode' : value.slice(2);
+    if (['--target', '--requirement', '--change', '--evidence-mode', '--external-ci-receipt', '--scope', '--recover'].includes(value)) {
+      const key = value === '--evidence-mode' ? 'evidenceMode' : value === '--external-ci-receipt' ? 'externalCiReceipt' : value.slice(2);
       if (!argv[index + 1]) throw new Error(`参数 ${value} 缺少值`);
       args[key] = argv[index + 1];
       index += 1;

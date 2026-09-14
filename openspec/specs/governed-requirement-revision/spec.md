@@ -4,7 +4,7 @@
 TBD - created by archiving change harden-workflow-lifecycle. Update Purpose after archive.
 ## Requirements
 ### Requirement: 行为变化必须先修订需求事实源
-系统 MUST 在范围、可见行为、接口、权限、安全或兼容决策变化时，先更新需求决策、验收和状态矩阵，再修订规划；仅技术实现变化且不改变业务语义时才可只修订设计与任务。（D-03、D-07；A-03）
+系统 MUST 在范围、可见行为、接口、权限、安全或兼容决策变化时，先更新需求决策、验收和状态矩阵，再修订规划；仅技术实现变化且不改变业务语义时才可只修订设计与任务。
 
 #### Scenario: 用户修改已规划的可见行为
 - **WHEN** 活跃变更收到影响业务语义的新决定
@@ -19,7 +19,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 技能可以只修订设计和任务并记录需求依据
 
 ### Requirement: 需求状态必须按受控顺序迁移
-系统 MUST 使用草稿、已确认、实施中、待验证、已验收状态，并在对应阶段阻止非法状态继续。（D-04；A-04）
+系统 MUST 使用草稿、已确认、实施中、待验证、已验收状态，并在对应阶段阻止非法状态继续。
 
 #### Scenario: 开始规划
 - **WHEN** 需求进入受管变更规划
@@ -34,7 +34,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 需求状态必须为待验证，只有完成门槛与归档成功后才能变成已验收
 
 ### Requirement: 需求必须声明关联变更的决策与验收范围
-新版需求 MUST 为每个关联变更显式列出适用 D-* 与 A-*，并优先按变更目录的完整名称匹配；只有系统生成的 archive 日期前缀 MAY 增加一个剥离日期后的兼容候选。变更任务 MUST 逐行引用有效决策或验收，并覆盖声明范围。（D-06、D-07；A-03、A-04、A-07）
+新版需求 MUST 为每个关联变更显式列出适用 D-* 与 A-*，并优先按变更目录的完整名称匹配；只有系统生成的 archive 日期前缀 MAY 增加一个剥离日期后的兼容候选。变更任务 MUST 逐行引用有效决策或验收，并覆盖声明范围。
 
 #### Scenario: 单个需求拆分为多个变更
 - **WHEN** 校验其中一个变更
@@ -57,7 +57,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统保留旧整体引用校验并返回迁移警告，不自动补写业务范围
 
 ### Requirement: 无规格变更必须由需求事实源明确授权
-系统 MUST 只在需求决策明确确认变更不改变可观察行为时允许 `.openspec.yaml` 声明 `skip_specs: true`；技术人员或动态 guidance 的临时判断 MUST NOT 替代该需求决策。（D-03、D-05；A-03、A-05）
+系统 MUST 只在需求决策明确确认变更不改变可观察行为时允许 `.openspec.yaml` 声明 `skip_specs: true`；技术人员或动态 guidance 的临时判断 MUST NOT 替代该需求决策。
 
 #### Scenario: 需求已确认无行为变化
 - **WHEN** 需求决策明确记录本变更只调整内部实现、文档或工具且不改变可观察行为

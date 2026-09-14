@@ -4,6 +4,40 @@ import { pathToFileURL } from 'node:url';
 import { resolveCanonicalProjectRoot, resolveSafeProjectPath } from './project-path-safety.mjs';
 
 const STAGES = new Set(['plan', 'implement', 'verify', 'complete']);
+const MAX_FACT_TEXT_LENGTH = 500;
+
+function truncateText(value, truncations) {
+  const normalized = String(value ?? '');
+  if (normalized.length <= MAX_FACT_TEXT_LENGTH) return normalized;
+  truncations.count += 1;
+  return normalized.slice(0, MAX_FACT_TEXT_LENGTH - 1) + '…';
+}
+
+function boundFactValue(value, limit, counts, truncations, key) {
+  if (typeof value === 'string') return truncateText(value, truncations);
+  if (Array.isArray(value)) {
+    if (key.endsWith('.values')) {
+      return value.map((item) => boundFactValue(item, limit, counts, truncations, key + '[]'));
+    }
+    const displayed = Math.min(value.length, limit);
+    const current = counts[key] || { total: 0, displayed: 0, omitted: 0 };
+    current.total += value.length;
+    current.displayed += displayed;
+    current.omitted += value.length - displayed;
+    counts[key] = current;
+    return value.slice(0, limit).map((item) => boundFactValue(item, limit, counts, truncations, key + '[]'));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value)
+      .map(([name, item]) => [name, boundFactValue(item, limit, counts, truncations, key ? key + '.' + name : name)]));
+  }
+  return value;
+}
+
+function acceptanceCheckboxFacts(content) {
+  return [...content.matchAll(/^\s*-\s*\[([ xX])\]\s*\[?(A-\d+)\]?(?:[：:\s]|$)/gmu)]
+    .map((match) => ({ id: match[2], done: match[1].trim().toLowerCase() === 'x' }));
+}
 
 function section(content, title) {
   const match = new RegExp(`^##\\s+${title}\\s*$`, 'mu').exec(content);
@@ -68,25 +102,29 @@ export function compileStageContext({
   const acceptances = tableRows(section(requirementContent, '验收—证据映射'), 'A');
   const verification = tableRows(section(requirementContent, '验证记录'), 'V');
   const specs = specFacts(changePath.absolutePath);
-  const facts = {
+  const acceptanceCheckboxes = acceptanceCheckboxFacts(section(requirementContent, '验收标准'));
+  const rawFacts = {
     plan: { decisions, acceptances, capabilities: specs },
     implement: { decisions, pendingTasks: tasks.filter((task) => !task.done), capabilities: specs },
     verify: { acceptances, verification, taskCounts: { total: tasks.length, remaining: tasks.filter((task) => !task.done).length } },
     complete: {
       requirementStatus: requirementContent.match(/^-\s*状态：\s*(.+)$/mu)?.[1]?.trim() || null,
       acceptanceCounts: {
-        total: [...section(requirementContent, '验收标准').matchAll(/^\s*-\s*\[[ xX]\]\s*\[A-/gmu)].length,
-        remaining: [...section(requirementContent, '验收标准').matchAll(/^\s*-\s*\[ \]\s*\[A-/gmu)].length,
+        total: acceptanceCheckboxes.length,
+        remaining: acceptanceCheckboxes.filter((item) => !item.done).length,
       },
       taskCounts: { total: tasks.length, remaining: tasks.filter((task) => !task.done).length },
       verification: verification.map((item) => ({ id: item.id, type: item.values[0], result: item.values[3], evidence: item.values[4] })),
       capabilities: specs.map((item) => item.capability),
     },
   }[stage];
+  const factCounts = {};
+  const textTruncations = { count: 0 };
+  const facts = boundFactValue(rawFacts, limit, factCounts, textTruncations, '');
   const normalizedDiagnostics = diagnostics.map((item) => ({
-    code: String(item.code || 'unknown'),
-    status: String(item.status || 'warning'),
-    target: item.target == null ? null : String(item.target).replaceAll('\\', '/'),
+    code: truncateText(item.code || 'unknown', textTruncations),
+    status: truncateText(item.status || 'warning', textTruncations),
+    target: item.target == null ? null : truncateText(String(item.target).replaceAll('\\', '/'), textTruncations),
   }));
   const page = normalizedDiagnostics.slice(offset, offset + limit);
   const nextOffset = offset + page.length < normalizedDiagnostics.length ? offset + page.length : null;
@@ -96,7 +134,11 @@ export function compileStageContext({
     scope: '.',
     changeId: path.basename(changePath.absolutePath),
     facts,
-    counts: { diagnostics: normalizedDiagnostics.length },
+    counts: {
+      diagnostics: normalizedDiagnostics.length,
+      facts: factCounts,
+      truncatedText: textTruncations.count,
+    },
     diagnostics: page,
     offset,
     limit,

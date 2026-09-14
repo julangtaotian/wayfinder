@@ -23,7 +23,12 @@ import {
   releaseLifecycleLock,
   writeLifecycleTransaction,
 } from '../plugins/frontend-ai-workflow/scripts/lifecycle-transaction.mjs';
-import { finalizeLifecycleV2, recoverLifecycleV2 } from '../plugins/frontend-ai-workflow/scripts/lifecycle-finalize.mjs';
+import {
+  finalizeLifecycleV2,
+  recoverLifecycleV2,
+  stripLocalSpecProvenance,
+} from '../plugins/frontend-ai-workflow/scripts/lifecycle-finalize.mjs';
+import { recoverLifecycleTransition, transitionLifecycle } from '../plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs';
 import { getLifecycleStatus } from '../plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs';
 
 const fixtureParent = path.resolve('.frontend-ai-workflow/runs/lifecycle-history-tests');
@@ -175,6 +180,8 @@ test('跨平台路径与摘要规范化', () => {
   assert.throws(() => normalizeRepositoryPath('D:\\workspace\\project'), /仓库相对路径/u);
   assert.throws(() => normalizeRepositoryPath('a'.repeat(241)), /240/u);
   assert.equal(normalizeRepositoryPath('cafe\u0301'), 'café');
+  assert.equal(stripLocalSpecProvenance('系统 MUST 保持稳定。（D-01～D-03；A-01）'), '系统 MUST 保持稳定。');
+  assert.equal(stripLocalSpecProvenance('对应 REQ-2026-001 D-01。'), '对应 REQ-2026-001 D-01。');
 });
 
 test('完成事务锁定 Git 特殊状态并可恢复', (context) => {
@@ -209,12 +216,13 @@ test('完成事务锁定 Git 特殊状态并可恢复', (context) => {
 test('原生归档后中断可由事务恢复且不会重复追加事件', (context) => {
   const root = fixture(context);
   const requirementPath = write(root, 'requirements/REQ-2026-048-crash.md', '# REQ-2026-048\n');
-  write(root, 'openspec/specs/demo/spec.md', '# demo\n');
+  write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 可恢复。（D-01；A-01）\n');
   const archivePath = 'openspec/changes/archive/2026-09-11-crash-change';
   write(root, `${archivePath}/specs/demo/spec.md`, '### Requirement: demo\n');
   writeLifecycleTransaction(root, {
     transactionId: 'txn-crash-12345678',
     stage: 'archived',
+    scope: 'apps/admin',
     changeId: 'crash-change',
     requirementPath: path.relative(root, requirementPath),
     archivePath,
@@ -230,6 +238,8 @@ test('原生归档后中断可由事务恢复且不会重复追加事件', (cont
   assert.equal(fs.existsSync(requirementPath), false);
   assert.equal(fs.existsSync(path.join(root, archivePath)), false);
   assert.equal(readLifecycleEvents({ root }).events.length, 1);
+  assert.equal(readLifecycleEvents({ root }).events[0].scope, 'apps/admin');
+  assert.equal(fs.readFileSync(path.join(root, 'openspec/specs/demo/spec.md'), 'utf8').includes('D-01'), false);
   assert.equal(recoverLifecycleV2({ root, transactionId: 'txn-crash-12345678' }).code, 'lifecycle_recovery_not_needed');
 });
 
@@ -273,7 +283,7 @@ test('完成事务通过原生同步后只保留紧凑事件', (context) => {
   assert.equal(preview.code, 'lifecycle_finalize_ready');
   const result = finalizeLifecycleV2({ check, write: true }, {
     runOpenSpecSync: () => {
-      write(root, 'openspec/specs/demo/spec.md', '# demo\n');
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）\n');
       fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
       fs.renameSync(changePath, archiveTarget);
       return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };
@@ -283,9 +293,138 @@ test('完成事务通过原生同步后只保留紧凑事件', (context) => {
   assert.equal(fs.existsSync(requirementPath), false);
   assert.equal(fs.existsSync(archiveTarget), false);
   assert.equal(readLifecycleEvents({ root }).events.length, 1);
+  assert.equal(fs.readFileSync(path.join(root, 'openspec/specs/demo/spec.md'), 'utf8').includes('D-01'), false);
   assert.equal(projectLifecycleState({ root, changeId: 'demo-change' }).status, 'accepted-local');
   assert.equal(fs.readdirSync(path.join(root, '.frontend-ai-workflow/transactions')).length, 0);
   assert.equal(recoverLifecycleV2({ root, transactionId: 'txn-does-not-exist' }).code, 'lifecycle_recovery_not_needed');
+});
+
+test('生命周期状态入口与非根 scope 保持一致', (context) => {
+  const root = fixture(context);
+  spawnSync('git', ['init', '-q', root]);
+  spawnSync('git', ['-C', root, 'config', 'user.email', 'test@example.com']);
+  spawnSync('git', ['-C', root, 'config', 'user.name', 'Test']);
+  const requirementRelative = 'requirements/REQ-2026-048-scoped.md';
+  const changeRelative = 'openspec/changes/scoped-change';
+  let requirementPath = write(root, requirementRelative, '# REQ-2026-048\n');
+  let changePath = path.join(root, changeRelative);
+  write(root, `${changeRelative}/specs/demo/spec.md`, '### Requirement: scoped\n');
+  spawnSync('git', ['-C', root, 'add', '.']);
+  spawnSync('git', ['-C', root, 'commit', '-qm', 'base']);
+  const archiveTarget = path.join(root, 'openspec/changes/archive/2026-09-14-scoped-change');
+  const result = finalizeLifecycleV2({
+    check: { root, requirementPath, changePath, changeName: 'scoped-change', archive: { targetPath: archiveTarget }, testPlanRequired: false },
+    write: true,
+    scope: 'apps/admin',
+  }, {
+    runOpenSpecSync: () => {
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n');
+      fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
+      fs.renameSync(changePath, archiveTarget);
+      return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };
+    },
+  });
+  assert.equal(result.event.scope, 'apps/admin');
+  assert.equal(projectLifecycleState({ root, scope: 'apps/admin', changeId: 'scoped-change' }).status, 'accepted-local');
+
+  requirementPath = write(root, requirementRelative, '# REQ-2026-048\n');
+  changePath = path.join(root, changeRelative);
+  write(root, `${changeRelative}/specs/demo/spec.md`, '### Requirement: reopened\n');
+  const reopened = transitionLifecycle({ root, requirement: requirementRelative, change: changeRelative, type: 'reopened', scope: 'apps\\admin', write: true });
+  assert.equal(reopened.status, 'active');
+  assert.equal(reopened.event.scope, 'apps/admin');
+  const cancelled = transitionLifecycle({ root, requirement: requirementRelative, change: changeRelative, type: 'cancelled', scope: 'apps/admin', write: true });
+  assert.equal(cancelled.status, 'cancelled');
+  assert.equal(fs.existsSync(requirementPath), false);
+  assert.equal(fs.existsSync(changePath), false);
+  assert.equal(projectLifecycleState({ root, scope: 'apps/admin', changeId: 'scoped-change' }).status, 'cancelled');
+
+  const invalidRequirement = write(root, 'requirements/REQ-2026-049-invalid.md', '# REQ-2026-049\n');
+  write(root, 'openspec/changes/invalid-reopen/specs/demo/spec.md', '### Requirement: invalid\n');
+  const invalid = transitionLifecycle({
+    root,
+    requirement: path.relative(root, invalidRequirement),
+    change: 'openspec/changes/invalid-reopen',
+    type: 'reopened',
+    scope: 'apps/admin',
+  });
+  assert.equal(invalid.code, 'lifecycle_state_blocked');
+
+  const supersededRequirement = write(root, 'requirements/REQ-2026-050-superseded.md', '# REQ-2026-050\n');
+  write(root, 'openspec/changes/superseded-entry/specs/demo/spec.md', '### Requirement: superseded\n');
+  const superseded = transitionLifecycle({
+    root,
+    requirement: path.relative(root, supersededRequirement),
+    change: 'openspec/changes/superseded-entry',
+    type: 'superseded',
+    scope: 'apps/admin',
+    write: true,
+  });
+  assert.equal(superseded.status, 'superseded');
+  assert.equal(projectLifecycleState({ root, scope: 'apps/admin', changeId: 'superseded-entry' }).status, 'superseded');
+  assert.equal(recoverLifecycleTransition({ root, transactionId: 'txn-does-not-exist' }).code, 'lifecycle_recovery_not_needed');
+});
+
+test('外部 CI 回执与提交解耦', (context) => {
+  const root = fixture(context);
+  spawnSync('git', ['init', '-q', root]);
+  spawnSync('git', ['-C', root, 'config', 'user.email', 'test@example.com']);
+  spawnSync('git', ['-C', root, 'config', 'user.name', 'Test']);
+  const requirementPath = write(root, 'requirements/REQ-2026-051-ci.md', '# REQ-2026-051\n');
+  const changePath = path.join(root, 'openspec/changes/ci-change');
+  write(root, 'openspec/changes/ci-change/specs/demo/spec.md', '### Requirement: ci\n');
+  spawnSync('git', ['-C', root, 'add', '.']);
+  spawnSync('git', ['-C', root, 'commit', '-qm', 'base']);
+  const baseRevision = spawnSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim();
+  const receiptRelative = '.frontend-ai-workflow/runs/ci-receipts/run-100.json';
+  const receipt = {
+    schemaVersion: 1,
+    status: 'recorded',
+    revision: baseRevision,
+    reference: 'https://github.com/example/project/actions/runs/100',
+    jobs: [{ name: 'shared', status: 'passed' }, { name: 'windows-x64', status: 'passed' }],
+  };
+  write(root, receiptRelative, `${JSON.stringify(receipt)}\n`);
+  const archiveTarget = path.join(root, 'openspec/changes/archive/2026-09-14-ci-change');
+  const check = {
+    root,
+    requirementPath,
+    changePath,
+    changeName: 'ci-change',
+    archive: { targetPath: archiveTarget },
+    testPlanRequired: false,
+  };
+  const pending = finalizeLifecycleV2({ check, write: false }, { runOpenSpecSync: () => null });
+  assert.equal(pending.externalCi, null);
+  const preview = finalizeLifecycleV2({ check, write: false, externalCiReceipt: receiptRelative }, { runOpenSpecSync: () => null });
+  assert.equal(preview.externalCi.revision, baseRevision);
+  write(root, 'receipt.json', `${JSON.stringify(receipt)}\n`);
+  assert.throws(
+    () => finalizeLifecycleV2({ check, write: false, externalCiReceipt: 'receipt.json' }, { runOpenSpecSync: () => null }),
+    (error) => error.code === 'external_ci_receipt_outside_runtime',
+  );
+  write(root, receiptRelative, `${JSON.stringify({ ...receipt, revision: 'a'.repeat(40) })}\n`);
+  assert.throws(
+    () => finalizeLifecycleV2({ check, write: false, externalCiReceipt: receiptRelative }, { runOpenSpecSync: () => null }),
+    (error) => error.code === 'external_ci_revision_mismatch',
+  );
+  write(root, receiptRelative, `${JSON.stringify(receipt)}\n`);
+  const result = finalizeLifecycleV2({ check, write: true, externalCiReceipt: receiptRelative }, {
+    runOpenSpecSync: () => {
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n');
+      fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
+      fs.renameSync(changePath, archiveTarget);
+      return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };
+    },
+  });
+  const externalCheck = result.event.checks.find((item) => item.name === 'external-ci');
+  assert.deepEqual(externalCheck, {
+    name: 'external-ci',
+    status: 'recorded',
+    reference: receipt.reference,
+    revision: baseRevision,
+  });
+  assert.equal(result.event.trust, 'external-recorded');
 });
 
 test('重新打开的变更再次验收时延续同一事件版本链', (context) => {

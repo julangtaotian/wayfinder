@@ -7,7 +7,7 @@
 
 ### Requirement: 健康检查必须识别有效本地插件仓库
 
-系统 SHALL 将根目录存在 `.agents/plugins/marketplace.json`、且至少一个 `source.source` 为 `local` 的条目安全对应到仓库内 `.codex-plugin/plugin.json` 的目标识别为插件仓库。检查结果 SHALL 返回 `repositoryKind: "plugin-repository"` 和 `pluginRepository`，其中包含整体状态、marketplace 相对路径、已识别插件的名称、相对路径、manifest 版本与状态。该类别 SHALL 保持 `layout` 的原有语义不变，并且不要求 Wayfinder、业务受管标记、构建、lint 或类型检查脚本。（D-01、D-02、D-03、D-04；A-01、A-02）
+系统 SHALL 将根目录存在 `.agents/plugins/marketplace.json`、且至少一个 `source.source` 为 `local` 的条目安全对应到仓库内 `.codex-plugin/plugin.json` 的目标识别为插件仓库。检查结果 SHALL 返回 `repositoryKind: "plugin-repository"` 和 `pluginRepository`，其中包含整体状态、marketplace 相对路径、已识别插件的名称、相对路径、manifest 版本与状态。该类别 SHALL 保持 `layout` 的原有语义不变，并且不要求 Wayfinder、业务受管标记、构建、lint 或类型检查脚本。
 
 #### Scenario: 当前插件仓库通过健康检查
 
@@ -23,7 +23,7 @@
 
 ### Requirement: 插件配置与路径必须失败关闭并可定位
 
-系统 SHALL 只接受仓库内、项目相对、正斜杠表示且不经符号链接的本地插件路径。marketplace JSON 损坏、没有本地插件条目、非法或越界路径、符号链接、缺少或损坏 manifest、条目名称与 manifest 名称不一致、manifest 缺少名称/版本/技能目录或技能目录不存在时，系统 MUST 返回 `ok=false` 与非零 CLI 状态。`pluginRepository.diagnostics` MUST 使用稳定英文 `code`、`status`、`target`，并保留中文人类说明。（D-02、D-06、D-10；A-03）
+系统 SHALL 只接受仓库内、项目相对、正斜杠表示且不经符号链接的本地插件路径。marketplace JSON 损坏、没有本地插件条目、非法或越界路径、符号链接、缺少或损坏 manifest、条目名称与 manifest 名称不一致、manifest 缺少名称/版本/技能目录或技能目录不存在时，系统 MUST 返回 `ok=false` 与非零 CLI 状态。`pluginRepository.diagnostics` MUST 使用稳定英文 `code`、`status`、`target`，并保留中文人类说明。
 
 #### Scenario: marketplace 或 manifest 损坏
 
@@ -39,7 +39,7 @@
 
 ### Requirement: 插件仓库健康检查必须保持只读和有界
 
-插件仓库健康检查 SHALL 只读取根 package、marketplace、被引用 manifest 及其必要目录元数据。它 SHALL 继续执行已有只读规划引擎、活动变更和需求证据审计，但 MUST NOT 扫描 `runtime/**`、`outputs` 或归档正文，也 MUST NOT 运行测试、打包、浏览器、安装或网络下载。根级 `test` 与 `validate` 命令 SHALL 作为插件仓库命令事实呈现；缺失时只给出非阻断提醒，不得虚构命令。（D-04、D-05、D-08；A-01、A-02、A-05）
+插件仓库健康检查 SHALL 只读取根 package、marketplace、被引用 manifest 及其必要目录元数据。它 SHALL 继续执行已有只读规划引擎、活动变更和需求证据审计，但 MUST NOT 扫描 `runtime/**`、`outputs` 或归档正文，也 MUST NOT 运行测试、打包、浏览器、安装或网络下载。根级 `test` 与 `validate` 命令 SHALL 作为插件仓库命令事实呈现；缺失时只给出非阻断提醒，不得虚构命令。
 
 #### Scenario: 重复检查有效插件仓库
 
@@ -49,7 +49,7 @@
 
 ### Requirement: 非插件项目必须保持既有健康检查语义
 
-当目标没有插件 marketplace，或没有形成完整插件仓库签名时，系统 SHALL 保持 Wayfinder、旧工作流和未初始化业务项目的既有布局识别、错误与迁移提示。单独存在 `.codex-plugin` 目录、目录名或其他局部文件 SHALL NOT 使目标获得插件仓库豁免。（D-07；A-04）
+当目标没有插件 marketplace，或没有形成完整插件仓库签名时，系统 SHALL 保持 Wayfinder、旧工作流和未初始化业务项目的既有布局识别、错误与迁移提示。单独存在 `.codex-plugin` 目录、目录名或其他局部文件 SHALL NOT 使目标获得插件仓库豁免。
 
 #### Scenario: Wayfinder 项目不受插件识别影响
 

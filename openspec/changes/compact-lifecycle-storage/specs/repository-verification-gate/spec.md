@@ -39,3 +39,15 @@ GitHub Actions MUST 使用满足根 `engines.node` 最低要求的 Node.js 版�
 
 - **WHEN** 官方下载连续三次失败或超时、许可补齐失败、路径越界、完整性检查失败或成品不匹配当前原生平台
 - **THEN** 构建器以稳定 `code`、`status` 和 `target` 失败关闭，清理本次暂存，不修改源码目录且不得继续验证、打包或上传
+
+### Requirement: 插件源码仓库必须呈现生命周期健康状态
+
+当仓库存在生命周期配置时，项目健康检查 MUST 无论仓库属于业务项目还是插件源码仓库，都返回 schemaVersion、mode、eventCount、diagnostics、runtimeIgnored 和 migrationRequired。插件仓库专属检查不得把 lifecycle 置空或只按旧布局推断迁移要求。（D-16、D-24；A-15）
+
+#### Scenario: 插件仓库仍处于 legacy-readonly
+- **WHEN** 插件源码仓库配置 lifecycleMode 为 legacy-readonly
+- **THEN** 健康摘要 MUST 显示实际 mode 并标记需要迁移，不得返回 lifecycle null
+
+#### Scenario: 插件仓库已切换 v2
+- **WHEN** 插件源码仓库配置 lifecycleMode 为 v2 且历史有效
+- **THEN** 健康摘要 MUST 返回 v2、事件计数和运行时忽略状态，且不得套用业务项目的受管文件要求

@@ -7,7 +7,7 @@
 
 ### Requirement: 项目识别必须覆盖受支持框架矩阵
 
-系统 MUST 根据真实 `package.json` 依赖识别 Vue 2 + Vite、Vue + Webpack、React + Vite 和 React + Webpack，且 MUST NOT 根据目录名称推断框架或构建工具。（D-04；A-04）
+系统 MUST 根据真实 `package.json` 依赖识别 Vue 2 + Vite、Vue + Webpack、React + Vite 和 React + Webpack，且 MUST NOT 根据目录名称推断框架或构建工具。
 
 #### Scenario: 识别受支持框架组合
 
@@ -31,7 +31,7 @@
 
 ### Requirement: 项目识别必须覆盖受支持包管理器
 
-系统 MUST 通过锁文件以确定性优先级识别 pnpm、yarn 和 npm，并 MUST 为识别结果生成对应的项目脚本命令。（D-04；A-04）
+系统 MUST 通过锁文件以确定性优先级识别 pnpm、yarn 和 npm，并 MUST 为识别结果生成对应的项目脚本命令。
 
 #### Scenario: 识别包管理器命令
 
@@ -40,7 +40,7 @@
 
 ### Requirement: 受支持矩阵必须通过工作流关键路径
 
-系统 MUST 在临时 fixture 上验证项目识别、默认只读初始化、显式写入、重复执行、受管升级和项目检查，测试过程 MUST NOT 联网或安装 fixture 的第三方依赖。（D-04、D-06；A-04、A-06）
+系统 MUST 在临时 fixture 上验证项目识别、默认只读初始化、显式写入、重复执行、受管升级和项目检查，测试过程 MUST NOT 联网或安装 fixture 的第三方依赖。
 
 #### Scenario: fixture 完成工作流关键路径
 
@@ -49,7 +49,7 @@
 
 ### Requirement: 支持矩阵结论必须区分证据层级
 
-系统 MUST 将最小 fixture 回归、本机真实项目执行、插件本地统一验证和真实 CI 平台矩阵视为互不替代的证据层级。支持说明 MUST 对每个框架、构建工具、包管理器和测试运行器组合明确标记已认证、有限支持、正确阻断或未覆盖；只有对应层级真实通过后才能提升声明。（D-06、D-07、D-08、D-12、D-13；A-05、A-06、A-07、A-10）
+系统 MUST 将最小 fixture 回归、本机真实项目执行、插件本地统一验证和真实 CI 平台矩阵视为互不替代的证据层级。支持说明 MUST 对每个框架、构建工具、包管理器和测试运行器组合明确标记已认证、有限支持、正确阻断或未覆盖；只有对应层级真实通过后才能提升声明。
 
 #### Scenario: 真实项目在本机通过
 

@@ -2,10 +2,10 @@
 
 ## 基本信息
 
-- 状态：已验证
+- 状态：就绪
 - 需求：`requirements/REQ-2026-048-compact-lifecycle-storage.md`
 - 变更：compact-lifecycle-storage
-- 需求修订基线：R-01
+- 需求修订基线：R-02
 - 默认聚焦命令：`node --test tests/lifecycle-history.test.mjs tests/lifecycle-migration.test.mjs tests/stage-context.test.mjs`
 
 ## 测试上下文
@@ -21,7 +21,7 @@
 
 ### TC-01：生命周期事件有界追加并确定性投影
 
-- 状态：通过
+- 状态：计划
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：单元
@@ -38,7 +38,7 @@
 - 测试定位：`生命周期事件有界追加并确定性投影`
 - 聚焦命令：`node --test --test-name-pattern="生命周期事件有界追加并确定性投影" tests/lifecycle-history.test.mjs`
 - 关联验证：V-01
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-01.json`
 
 ### TC-02：跨平台路径与摘要规范化
@@ -65,7 +65,7 @@
 
 ### TC-03：完成事务锁定 Git 特殊状态并可恢复
 
-- 状态：通过
+- 状态：计划
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：集成
@@ -82,7 +82,7 @@
 - 测试定位：`完成事务锁定 Git 特殊状态并可恢复`
 - 聚焦命令：`node --test --test-name-pattern="完成事务锁定 Git 特殊状态并可恢复" tests/lifecycle-history.test.mjs`
 - 关联验证：V-03
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-03.json`
 
 ### TC-04：生命周期 Git 差异保护追加历史
@@ -131,24 +131,24 @@
 
 ### TC-06：阶段上下文有界且不落盘
 
-- 状态：通过
+- 状态：计划
 - 优先级：P1
 - 验证类型：自动
 - 测试层级：单元
-- 关联决策：D-11
-- 关联验收：A-05
+- 关联决策：D-11、D-21
+- 关联验收：A-05、A-12
 - 关联规格：ai-context-efficiency / 活动变更必须支持阶段化上下文编译
 - 状态矩阵：初始（已有数据）、用户操作、刷新、空态、错误态
 - 前置条件：fixture 包含需求、proposal、design、tasks、delta specs 和大量 diagnostics。
-- 测试数据：四个阶段、offset/limit 边界、未知阶段、缺失活动变更。
+- 测试数据：四个阶段、两种 A-ID 复选框、大量和超长事实、offset/limit 边界、未知阶段、缺失活动变更。
 - 测试替身：注入状态与诊断读取器。
 - 操作：逐阶段请求上下文并比较文件树前后。
-- 可观察断言：字段随阶段收敛、分页准确、参数错误提前失败且没有新增持久文件。
+- 可观察断言：字段随阶段收敛；验收计数正确；每类事实数量和文本长度受限并返回 total/displayed/omitted；参数错误提前失败且没有新增持久文件。
 - 目标测试：`tests/stage-context.test.mjs`
 - 测试定位：`阶段上下文有界且不落盘`
 - 聚焦命令：`node --test tests/stage-context.test.mjs`
 - 关联验证：V-06
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-06.json`
 
 ### TC-07：规格和测试上下文膨胀可定位
@@ -175,29 +175,29 @@
 
 ### TC-08：存量迁移预览、阻断和幂等写入
 
-- 状态：通过
+- 状态：计划
 - 优先级：P0
 - 验证类型：自动
 - 测试层级：集成
-- 关联决策：D-12、D-13、D-15
-- 关联验收：A-05、A-08
+- 关联决策：D-12、D-13、D-15、D-20
+- 关联验收：A-05、A-08、A-11
 - 关联规格：compact-lifecycle-history / 存量迁移必须先预览并失败关闭
 - 状态矩阵：初始（已有数据）、用户操作、刷新、空态、错误态、卸载
 - 前置条件：隔离 Git fixture 含 v1 archive、需求存根、outputs、UI runs 和活动引用。
-- 测试数据：安全历史、未跟踪文件、符号链接、未知扩展、悬空 D/A、重复 TC 与冲突事件。
+- 测试数据：安全历史、迁移器和专用测试合同字面量、生产源码真实依赖、未跟踪文件、符号链接、未知扩展、悬空 D/A、重复 TC 与冲突事件。
 - 测试替身：真实本地 Git fixture，不使用递归删除。
 - 操作：先预览，再尝试阻断写入和合法写入，最后重复执行。
-- 可观察断言：预览零修改；阻断项不删除；合法写入只处理精确 tracked files；重复执行为空操作。
+- 可观察断言：合同字面量只进入有界诊断，真实依赖仍阻断；预览零修改；阻断项不删除；合法写入只处理精确 tracked files；重复执行为空操作。
 - 目标测试：`tests/lifecycle-migration.test.mjs`
 - 测试定位：`存量迁移预览阻断和幂等写入`
 - 聚焦命令：`node --test tests/lifecycle-migration.test.mjs`
 - 关联验证：V-08
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-08.json`
 
 ### TC-09：CI 保留期和混合格式门禁
 
-- 状态：通过
+- 状态：计划
 - 优先级：P1
 - 验证类型：自动
 - 测试层级：集成
@@ -214,12 +214,12 @@
 - 测试定位：`CI 保留期和混合格式门禁`
 - 聚焦命令：`node --test --test-name-pattern="CI 保留期和混合格式门禁" tests/lifecycle-history.test.mjs`
 - 关联验证：V-09
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-09.json`
 
 ### TC-10：本地发布门禁与真实矩阵分层
 
-- 状态：人工通过
+- 状态：计划
 - 优先级：P0
 - 验证类型：人工
 - 测试层级：集成
@@ -236,5 +236,71 @@
 - 测试定位：不适用
 - 聚焦命令：不适用
 - 关联验证：V-10、V-11、V-12
-- 结果分类：通过
+- 结果分类：未执行
 - 证据：`openspec/changes/compact-lifecycle-storage/verification.md`
+
+### TC-11：生命周期状态入口与 scope 一致
+
+- 状态：计划
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-02、D-03、D-17、D-22
+- 关联验收：A-02、A-03、A-13
+- 关联规格：compact-lifecycle-history / 生命周期事件必须有界且可确定投影
+- 状态矩阵：用户操作、刷新、错误态、卸载
+- 前置条件：隔离仓库启用 v2，能够建立活动变更、需求与既有终态事件。
+- 测试数据：非根 scope、accepted、cancelled、superseded、reopened、非法前驱、崩溃恢复。
+- 测试替身：真实本地 Git fixture 与注入的 OpenSpec 同步入口。
+- 操作：分别预览和执行四类状态操作，并在归档后注入中断再恢复。
+- 可观察断言：scope 在预览、事务、事件、恢复和查询中一致；非法转换零修改；终态与活动材料不冲突。
+- 目标测试：`tests/lifecycle-history.test.mjs`
+- 测试定位：`生命周期状态入口与非根 scope 保持一致`
+- 聚焦命令：`node --test --test-name-pattern="生命周期状态入口与非根 scope 保持一致" tests/lifecycle-history.test.mjs`
+- 关联验证：V-13
+- 结果分类：未执行
+- 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-13.json`
+
+### TC-12：外部 CI 回执与提交解耦
+
+- 状态：计划
+- 优先级：P0
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-05、D-14、D-23
+- 关联验收：A-04、A-06、A-14
+- 关联规格：compact-lifecycle-history / 外部 CI 回执必须与仓库提交解耦
+- 状态矩阵：用户操作、空态、错误态
+- 前置条件：隔离仓库具有确定 base revision 和受管运行时目录。
+- 测试数据：缺少回执、匹配 revision、错 revision、目录越界、HTTP 引用、超长引用和失败任务。
+- 测试替身：本地 JSON 回执，不访问网络。
+- 操作：使用各类回执执行完成预览和事件规范化。
+- 可观察断言：缺少回执为 pending；合法回执只形成 recorded 短引用；非法回执零修改失败；受跟踪需求无 SHA 写回。
+- 目标测试：`tests/lifecycle-history.test.mjs`
+- 测试定位：`外部 CI 回执与提交解耦`
+- 聚焦命令：`node --test --test-name-pattern="外部 CI 回执与提交解耦" tests/lifecycle-history.test.mjs`
+- 关联验证：V-14
+- 结果分类：未执行
+- 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-14.json`
+
+### TC-13：插件仓库健康摘要包含生命周期
+
+- 状态：计划
+- 优先级：P1
+- 验证类型：自动
+- 测试层级：集成
+- 关联决策：D-16、D-24
+- 关联验收：A-09、A-15
+- 关联规格：repository-verification-gate / 插件源码仓库必须呈现生命周期健康状态
+- 状态矩阵：初始（已有数据）、刷新、错误态
+- 前置条件：插件仓库 fixture 可分别写入 legacy-readonly、v2 和非法生命周期配置。
+- 测试数据：无事件、合法事件、运行时忽略缺失和非法 schema。
+- 测试替身：现有插件仓库健康 fixture。
+- 操作：运行完整与 summary 健康检查。
+- 可观察断言：两种输出都呈现实际 mode、eventCount、runtimeIgnored 和 migrationRequired；非法配置返回稳定错误。
+- 目标测试：`tests/plugin-repository-health.test.mjs`
+- 测试定位：`插件仓库健康摘要包含生命周期状态`
+- 聚焦命令：`node --test --test-name-pattern="插件仓库健康摘要包含生命周期状态" tests/plugin-repository-health.test.mjs`
+- 关联验证：V-15
+- 结果分类：未执行
+- 证据：`openspec/changes/compact-lifecycle-storage/evidence/V-15.json`

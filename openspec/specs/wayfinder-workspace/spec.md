@@ -23,7 +23,7 @@ TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpos
 - **THEN** 系统 SHALL 创建三项 Wayfinder 布局产物，且创建计划中不得出现旧元数据、旧前端上下文或需求模板。
 
 ### Requirement: Wayfinder 合并元数据与项目导航
-系统 SHALL 在 `wayfinder/frontend.md` 中提供互不重叠且各自恰好成对的 `meta`、`facts`、`scope` 与 `analysis` 受管区块。`meta` SHALL 保存工作流版本、项目识别结果、深度状态与范围统计；`facts` SHALL 保存与同次项目识别一致的人类可读项目概览、平台验证边界和目录职责；`scope` SHALL 保存机器范围摘要；`analysis` SHALL 保存 AI 项目地图。（D-02、D-03、D-07；A-01）
+系统 SHALL 在 `wayfinder/frontend.md` 中提供互不重叠且各自恰好成对的 `meta`、`facts`、`scope` 与 `analysis` 受管区块。`meta` SHALL 保存工作流版本、项目识别结果、深度状态与范围统计；`facts` SHALL 保存与同次项目识别一致的人类可读项目概览、平台验证边界和目录职责；`scope` SHALL 保存机器范围摘要；`analysis` SHALL 保存 AI 项目地图。
 
 #### Scenario: 深度初始化 Wayfinder
 - **WHEN** 用户确认对新项目执行深度初始化
@@ -48,7 +48,7 @@ TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpos
 - **THEN** 系统 SHALL 以插件内置模板生成 `requirements/REQ-*.md`，且不得先创建孤立的模板文件。
 
 ### Requirement: 三个工作流文件必须同步受管项目事实
-系统 SHALL 在显式升级中使用当前项目识别结果刷新 AGENTS、Wayfinder 受管事实和 OpenSpec 配置。三份上下文 SHALL 同步同一次动态直接依赖画像的总数、可读摘要、截断状态和完整事实边界，并 SHALL 将 preset、终端画像和平台画像描述为有限兼容或安全信号。深度初始化 SHALL 同步已有三个受管文件，且所有写入仍 SHALL 要求显式确认。（D-03、D-04、D-06、D-08、D-11；A-02～A-05）
+系统 SHALL 在显式升级中使用当前项目识别结果刷新 AGENTS、Wayfinder 受管事实和 OpenSpec 配置。三份上下文 SHALL 同步同一次动态直接依赖画像的总数、可读摘要、截断状态和完整事实边界，并 SHALL 将 preset、终端画像和平台画像描述为有限兼容或安全信号。深度初始化 SHALL 同步已有三个受管文件，且所有写入仍 SHALL 要求显式确认。
 
 #### Scenario: 深度刷新已有项目
 - **WHEN** 已初始化项目的受管文件仍包含旧预设、技术栈、依赖摘要、命令状态或目录职责，且用户执行深度刷新预览
@@ -64,7 +64,7 @@ TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpos
 - **AND** 受管上下文 SHALL NOT 将截断摘要描述为完整技术栈
 
 ### Requirement: 项目检查必须报告受管内容漂移
-系统 SHALL 只读比较当前项目识别结果与可升级受管内容，返回稳定的受管内容新鲜度结果；存在差异时 SHALL 列出具体文件并给出非阻断刷新警告，不得把预览差异描述为已修复。（D-04、D-07；A-02）
+系统 SHALL 只读比较当前项目识别结果与可升级受管内容，返回稳定的受管内容新鲜度结果；存在差异时 SHALL 列出具体文件并给出非阻断刷新警告，不得把预览差异描述为已修复。
 
 #### Scenario: 受管内容与当前项目事实不一致
 - **WHEN** AGENTS、Wayfinder 或 OpenSpec 受管内容仍使用旧项目事实

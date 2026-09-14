@@ -6,7 +6,7 @@ TBD - created by archiving change add-deep-project-analysis. Update Purpose afte
 ## Requirements
 
 ### Requirement: 全量记账的 AI 项目地图
-系统 SHALL 在深度模式中先取得目标项目的范围清单和完整直接依赖画像，并要求 AI 对每个纳入范围的文本文件记录覆盖状态。AI SHALL 基于动态依赖事实读取相关配置和源码，再生成覆盖项目入口、框架与关键依赖职责、构建与运行配置、路由、页面、组件、状态、请求与服务、鉴权与权限、测试、样式和文档的项目地图。preset、终端画像和平台画像只作为有限兼容或安全信号，不得替代完整依赖事实或源码证据。（D-01、D-05、D-06、D-12；A-03、A-04）
+系统 SHALL 在深度模式中先取得目标项目的范围清单和完整直接依赖画像，并要求 AI 对每个纳入范围的文本文件记录覆盖状态。AI SHALL 基于动态依赖事实读取相关配置和源码，再生成覆盖项目入口、框架与关键依赖职责、构建与运行配置、路由、页面、组件、状态、请求与服务、鉴权与权限、测试、样式和文档的项目地图。preset、终端画像和平台画像只作为有限兼容或安全信号，不得替代完整依赖事实或源码证据。
 
 #### Scenario: 扫描受支持的前端项目
 - **WHEN** 用户对包含 Vue SFC、路由、请求层、配置和测试文件的项目启动深度扫描
@@ -59,7 +59,7 @@ TBD - created by archiving change add-deep-project-analysis. Update Purpose afte
 - **THEN** 命令 SHALL 以中文错误信息失败，且不得读取或修改该目录内容。
 
 ### Requirement: 微信小程序文本源码必须进入深度分析范围
-系统 SHALL 将 WXML、WXSS 和 WXS 视为可纳入的文本源码，使微信小程序的视图结构、样式和视图脚本参与范围覆盖、统计与项目地图新鲜度判断。范围契约版本 SHALL 在新增文本类型时变化。（D-05、D-06、D-07；A-03）
+系统 SHALL 将 WXML、WXSS 和 WXS 视为可纳入的文本源码，使微信小程序的视图结构、样式和视图脚本参与范围覆盖、统计与项目地图新鲜度判断。范围契约版本 SHALL 在新增文本类型时变化。
 
 #### Scenario: 收集微信小程序项目范围
 - **WHEN** 安全目标项目包含未被忽略且未超限的 `.wxml`、`.wxss` 或 `.wxs` 文件
@@ -70,7 +70,7 @@ TBD - created by archiving change add-deep-project-analysis. Update Purpose afte
 - **THEN** 当前范围指纹 SHALL 与既有指纹不同，项目检查 SHALL 报告深度项目地图可能过期
 
 ### Requirement: 深度分析结论不得越过已执行证据
-系统 SHALL 将安全范围内文件的枚举、读取、字节与行数统计、哈希核对和归类，与语法解析、平台编译、Lint 和测试区分记录。没有真实执行相应工具或命令时，AI MUST NOT 声称源码已经解析、编译、Lint 或测试通过，并 SHALL 将未验证能力保留为明确边界。（D-01、D-02；A-01）
+系统 SHALL 将安全范围内文件的枚举、读取、字节与行数统计、哈希核对和归类，与语法解析、平台编译、Lint 和测试区分记录。没有真实执行相应工具或命令时，AI MUST NOT 声称源码已经解析、编译、Lint 或测试通过，并 SHALL 将未验证能力保留为明确边界。
 
 #### Scenario: 仅完成范围读取和哈希
 - **WHEN** 深度范围工具完成安全文件读取、哈希和归类，但没有执行解析器、平台编译、Lint 或测试
@@ -81,7 +81,7 @@ TBD - created by archiving change add-deep-project-analysis. Update Purpose afte
 - **THEN** AI SHALL 只按具体命令的实际结果报告对应验证，不得把范围工具结果作为替代证据
 
 ### Requirement: 证据规则变化必须使旧深度地图待刷新
-系统 SHALL 通过版本化范围契约将影响深度分析结论的证据规则变化纳入指纹，使旧快照能够被健康检查识别为可能过期；检查 MUST 保持只读。（D-05、D-06；A-01、A-03）
+系统 SHALL 通过版本化范围契约将影响深度分析结论的证据规则变化纳入指纹，使旧快照能够被健康检查识别为可能过期；检查 MUST 保持只读。
 
 #### Scenario: 检查旧范围版本的深度地图
 - **WHEN** Wayfinder 仍记录 2.1.0 范围契约，而插件使用包含证据边界的 2.2.0 契约

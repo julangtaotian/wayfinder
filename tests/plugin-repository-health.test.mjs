@@ -109,6 +109,38 @@ test('[TC-01] 有效插件仓库得到专属健康结果', (t) => {
   assert.equal(JSON.parse(cli.stdout).repositoryKind, PLUGIN_REPOSITORY_KIND);
 });
 
+test('插件仓库健康摘要包含生命周期状态', (t) => {
+  const root = createPluginRepositoryFixture(t);
+  writeJson(root, '.frontend-workflow.json', {
+    schemaVersion: 2,
+    minimumWriterVersion: '0.19.0',
+    lifecycleMode: 'legacy-readonly',
+    eventDirectory: '.workflow-history',
+    runtimeDirectory: '.frontend-ai-workflow',
+    strictEvidenceMaxBytes: 4096,
+    eventMaxBytes: 4096,
+  });
+  writeFixtureFile(root, '.gitignore', '/.frontend-ai-workflow/\n');
+
+  const result = checkProject(root);
+  const summary = formatProjectCheckOutput(result, { summary: true });
+  assert.equal(result.ok, true);
+  assert.equal(result.lifecycle.mode, 'legacy-readonly');
+  assert.equal(result.lifecycle.eventCount, 0);
+  assert.equal(result.lifecycle.runtimeIgnored, true);
+  assert.equal(result.migrationRequired, true);
+  assert.equal(summary.lifecycle.mode, 'legacy-readonly');
+  assert.equal(summary.migrationRequired, true);
+
+  writeJson(root, '.frontend-workflow.json', {
+    ...JSON.parse(fs.readFileSync(path.join(root, '.frontend-workflow.json'), 'utf8')),
+    lifecycleMode: 'v2',
+  });
+  const upgraded = checkProject(root);
+  assert.equal(upgraded.lifecycle.mode, 'v2');
+  assert.equal(upgraded.migrationRequired, false);
+});
+
 test('[TC-02] 多插件 summary 有界且完整结果保留全部事实', (t) => {
   const names = Array.from({ length: 23 }, (_, index) => `plugin-${String(23 - index).padStart(2, '0')}`);
   const root = createPluginRepositoryFixture(t, {

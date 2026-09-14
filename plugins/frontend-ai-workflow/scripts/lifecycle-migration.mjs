@@ -13,7 +13,7 @@ import { inspectGitCompletionState } from './lifecycle-transaction.mjs';
 import { readLifecycleEvents } from './lifecycle-history.mjs';
 
 const LEGACY_PREFIXES = ['openspec/changes/archive/', 'requirements/archive/', '.frontend-ui-review/runs/'];
-const OUTPUT_EXTENSIONS = new Set(['.json', '.jsonl', '.md', '.txt', '.png', '.jpg', '.jpeg', '.webp', '.log', '.csv']);
+const OUTPUT_EXTENSIONS = new Set(['.json', '.jsonl', '.md', '.txt', '.png', '.jpg', '.jpeg', '.webp', '.log', '.csv', '.mjs', '.xlsx']);
 
 function git(root, args) {
   return spawnSync('git', ['-C', root, ...args], { encoding: 'utf8', shell: false, maxBuffer: 20 * 1024 * 1024 });
@@ -37,6 +37,33 @@ function isCandidate(config, file) {
 
 function textFile(file) {
   return ['.md', '.json', '.jsonl', '.txt', '.mjs', '.js', '.yaml', '.yml'].includes(path.extname(file).toLowerCase());
+}
+
+function isMigrationContractSource(file) {
+  return file === 'plugins/frontend-ai-workflow/scripts/lifecycle-migration.mjs';
+}
+
+function isTestSource(file) {
+  return /(?:^|\/)(?:tests?|__tests__)(?:\/|$)/u.test(file)
+    || /\.(?:spec|test)\.[cm]?[jt]sx?$/iu.test(file);
+}
+
+function escapePattern(value) {
+  return value.replace(/[.*+?^{}()|[\]\\$]/gu, '\\$&');
+}
+
+function referenceUsesFileAtRuntime(content, reference) {
+  const escaped = escapePattern(reference);
+  const fileCall = new RegExp('\\b(?:readFile(?:Sync)?|createReadStream|openSync|statSync|lstatSync|accessSync|existsSync)\\s*\\([^\\n)]{0,800}' + escaped, 'u');
+  const moduleCall = new RegExp('\\b(?:import|require)\\s*\\([^\\n)]{0,800}' + escaped, 'u');
+  const staticImport = new RegExp("\\bfrom\\s+['\"][^'\"]*" + escaped, 'u');
+  return fileCall.test(content) || moduleCall.test(content) || staticImport.test(content);
+}
+
+function referenceRole(file, content, reference) {
+  if (isMigrationContractSource(file)) return 'migration-contract';
+  if (isTestSource(file) && !referenceUsesFileAtRuntime(content, reference)) return 'test-contract';
+  return 'dependency';
 }
 
 function requirementId(content, fallback) {
@@ -119,6 +146,7 @@ function archiveEvents(config, trackedFiles) {
 function collectReferences(config, trackedFiles, candidates) {
   const candidateFiles = [...candidates].sort();
   const references = [];
+  const diagnostics = [];
   const referenceSources = trackedFiles.filter((item) => {
     if (candidates.has(item) || item.startsWith('plugins/frontend-ai-workflow/runtime/') || !textFile(item)) return false;
     const stats = fs.lstatSync(path.join(config.root, item));
@@ -129,12 +157,17 @@ function collectReferences(config, trackedFiles, candidates) {
     for (const candidate of candidateFiles) {
       const candidateDirectory = `${path.posix.dirname(candidate)}/`;
       const directoryIsSpecific = !['./', 'outputs/', 'requirements/', 'requirements/archive/', 'openspec/changes/archive/', '.frontend-ui-review/runs/'].includes(candidateDirectory);
-      if (content.includes(candidate) || (directoryIsSpecific && content.includes(candidateDirectory))) {
-        references.push({ file, reference: candidate });
-      }
+      const matchedReference = content.includes(candidate)
+        ? candidate
+        : (directoryIsSpecific && content.includes(candidateDirectory) ? candidateDirectory : null);
+      if (!matchedReference) continue;
+      const role = referenceRole(file, content, matchedReference);
+      const item = { file, reference: candidate, role };
+      if (role === 'dependency') references.push(item);
+      else diagnostics.push(item);
     }
   }
-  return references;
+  return { references, diagnostics };
 }
 
 function collectLocalSpecReferences(config, trackedFiles) {
@@ -207,7 +240,7 @@ export function previewLifecycleMigration({ root = process.cwd() } = {}) {
   const candidateSet = new Set([...candidateFiles, ...untracked]);
   const symlinks = collectSymlinks(config.root, candidateFiles);
   const unknownOutputs = candidateFiles.filter((file) => file.startsWith('outputs/') && !OUTPUT_EXTENSIONS.has(path.extname(file).toLowerCase()));
-  const references = collectReferences(config, trackedFiles, candidateSet);
+  const referenceResult = collectReferences(config, trackedFiles, candidateSet);
   const localSpecReferences = collectLocalSpecReferences(config, trackedFiles);
   const archiveResult = archiveEvents(config, trackedFiles);
   const events = archiveResult.events;
@@ -218,7 +251,7 @@ export function previewLifecycleMigration({ root = process.cwd() } = {}) {
     ...gitState.diagnostics.map((item) => ({ ...item, status: 'blocked' })),
     ...symlinks.map((target) => ({ code: 'migration_symlink', status: 'blocked', target })),
     ...unknownOutputs.map((target) => ({ code: 'unknown_output_file', status: 'blocked', target })),
-    ...references.map((item) => ({ code: 'active_legacy_reference', status: 'blocked', target: item.file, reference: item.reference })),
+    ...referenceResult.references.map((item) => ({ code: 'active_legacy_reference', status: 'blocked', target: item.file, reference: item.reference })),
     ...localSpecReferences.map((item) => ({
       code: 'local_spec_reference',
       status: 'blocked',
@@ -240,11 +273,17 @@ export function previewLifecycleMigration({ root = process.cwd() } = {}) {
     status: blockers.length ? 'blocked' : 'ready',
     write: false,
     mode: config.lifecycleMode,
-    counts: { events: events.length, candidateFiles: candidateFiles.length, blockers: blockers.length },
+    counts: {
+      events: events.length,
+      candidateFiles: candidateFiles.length,
+      blockers: blockers.length,
+      referenceDiagnostics: referenceResult.diagnostics.length,
+    },
     blockerCounts,
     events,
     candidateFiles,
     blockers,
+    referenceDiagnostics: referenceResult.diagnostics,
   };
 }
 
@@ -265,12 +304,14 @@ export function paginateLifecycleMigrationResult(result, { offset = 0, limit = 1
     events,
     candidateFiles: page(result.candidateFiles),
     blockers: page(result.blockers),
+    referenceDiagnostics: page(result.referenceDiagnostics || []),
     page: {
       offset,
       limit,
       remainingEvents: Math.max(0, result.events.length - offset - limit),
       remainingCandidateFiles: Math.max(0, result.candidateFiles.length - offset - limit),
       remainingBlockers: Math.max(0, result.blockers.length - offset - limit),
+      remainingReferenceDiagnostics: Math.max(0, (result.referenceDiagnostics || []).length - offset - limit),
     },
   };
 }

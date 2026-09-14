@@ -127,6 +127,8 @@ test('需求模板和工作流要求使用决策台账与验收证据映射', ()
   assert.match(config, /交付构建命令/);
   assert.match(requirementSkill, /validate-requirement-decisions/);
   assert.match(changeSkill, /--change <change-root>/);
+  assert.match(changeSkill, /pure trailing provenance annotations in delta specifications/);
+  assert.match(changeSkill, /Keep those IDs out of the lasting contract wording/);
 });
 
 test('决策校验阻止拆分规格绕过需求台账', (t) => {

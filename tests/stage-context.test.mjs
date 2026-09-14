@@ -25,6 +25,7 @@ test('阶段上下文有界且不落盘', (context) => {
 | ID | 决策项 | 状态 | 取值 | 来源 |
 | --- | --- | --- | --- | --- |
 | D-01 | 决策 | 已确认 | 开启 | 用户 |
+| D-02 | 第二个决策 | 已确认 | ${'很长的决策内容'.repeat(100)} | 用户 |
 
 ## 验证记录
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
@@ -32,12 +33,14 @@ test('阶段上下文有界且不落盘', (context) => {
 | V-01 | 自动 | focused | 2026-09-11 | 计划 | evidence.json |
 
 ## 验收标准
-- [ ] [A-01] 验收
+- [ ] A-01：验收
+- [x] [A-02] 已验收
 
 ## 验收—证据映射
 | 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 |
 | --- | --- | --- | --- | --- | --- |
 | A-01 | 验收 | D-01 | 自动 | evidence.json | 计划 |
+| A-02 | 第二项验收 | D-02 | 自动 | evidence.json | 计划 |
 `);
   write(root, 'openspec/changes/demo/tasks.md', '- [x] 完成一项\n- [ ] 待完成行为\n');
   write(root, 'openspec/changes/demo/specs/demo/spec.md', '## ADDED Requirements\n\n### Requirement: 示例行为\n');
@@ -51,8 +54,31 @@ test('阶段上下文有界且不落盘', (context) => {
     limit: 1,
   });
   assert.equal(result.facts.taskCounts.remaining, 1);
+  assert.deepEqual(result.facts.acceptanceCounts, { total: 2, remaining: 1 });
+  assert.equal(result.facts.verification.length, 1);
   assert.equal(result.diagnostics.length, 1);
   assert.equal(result.nextOffset, 1);
   assert.deepEqual([...fs.readdirSync(path.join(root, 'openspec/changes/demo'))].sort(), before);
   assert.throws(() => compileStageContext({ root, stage: 'unknown' }), /stage/u);
+
+  const plan = compileStageContext({
+    root,
+    requirement: 'requirements/REQ-2026-001-demo.md',
+    change: 'openspec/changes/demo',
+    stage: 'plan',
+    limit: 1,
+  });
+  assert.equal(plan.facts.decisions.length, 1);
+  assert.deepEqual(plan.counts.facts.decisions, { total: 2, displayed: 1, omitted: 1 });
+  assert.equal(plan.counts.truncatedText > 0, false);
+
+  const expanded = compileStageContext({
+    root,
+    requirement: 'requirements/REQ-2026-001-demo.md',
+    change: 'openspec/changes/demo',
+    stage: 'plan',
+    limit: 2,
+  });
+  assert.equal(expanded.counts.truncatedText > 0, true);
+  assert.equal(JSON.stringify(expanded).includes('很长的决策内容'.repeat(80)), false);
 });

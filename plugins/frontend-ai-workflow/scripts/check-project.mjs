@@ -25,7 +25,7 @@ import {
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 import { inspectPluginRepository, PLUGIN_REPOSITORY_KIND } from './plugin-repository-health.mjs';
-import { readLifecycleConfig } from './lifecycle-contract.mjs';
+import { LIFECYCLE_CONFIG_PATH, readLifecycleConfig } from './lifecycle-contract.mjs';
 import { runtimePathsAreIgnored } from './lifecycle-runtime.mjs';
 import { readLifecycleEvents } from './lifecycle-history.mjs';
 
@@ -444,6 +444,10 @@ export function checkProject(target = process.cwd()) {
         : '人工开发工具或外部 CI 的验证环境';
       warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}。`);
     }
+  }
+
+  const lifecycleConfigured = fs.existsSync(path.join(inspection.root, LIFECYCLE_CONFIG_PATH));
+  if (!isPluginRepository || lifecycleConfigured) {
     try {
       const config = readLifecycleConfig(inspection.root);
       const history = readLifecycleEvents({ config });
@@ -483,7 +487,7 @@ export function checkProject(target = process.cwd()) {
       pluginRepository,
     } : {}),
     lifecycle,
-    migrationRequired: layout === 'legacy',
+    migrationRequired: layout === 'legacy' || lifecycle?.mode === 'legacy-readonly',
     version: deepAnalysis.version,
     preset: inspection.preset,
     dependencyProfile: inspection.dependencyProfile,

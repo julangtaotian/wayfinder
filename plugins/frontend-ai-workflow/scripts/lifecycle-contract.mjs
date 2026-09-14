@@ -90,7 +90,26 @@ function normalizeChecks(value) {
     if (!['passed', 'pending', 'recorded', 'failed'].includes(status)) {
       fail('invalid_lifecycle_event', `checks[${index}].status 无效`, status);
     }
-    return { name, status };
+    const result = { name, status };
+    if (item.reference != null) {
+      const reference = canonicalText(item.reference).trim();
+      let parsed;
+      try {
+        parsed = new URL(reference);
+      } catch {
+        fail('invalid_lifecycle_event', `checks[${index}].reference 必须是 HTTPS URL`, 'checks');
+      }
+      if (!reference || reference.length > 500 || parsed.protocol !== 'https:' || parsed.username || parsed.password) {
+        fail('invalid_lifecycle_event', `checks[${index}].reference 必须是至多 500 字符且无凭据的 HTTPS URL`, 'checks');
+      }
+      result.reference = reference;
+    }
+    if (item.revision != null) {
+      const revision = canonicalText(item.revision).trim();
+      if (!/^[a-f0-9]{7,64}$/u.test(revision)) fail('invalid_lifecycle_event', `checks[${index}].revision 格式无效`, 'checks');
+      result.revision = revision;
+    }
+    return result;
   });
 }
 

@@ -20,6 +20,14 @@
 - **WHEN** 同一规格分别使用 LF 与 CRLF 或 Windows 与 Git 风格路径表达
 - **THEN** 系统 MUST 按规范化字节和路径得到相同摘要与 scope，且不写入开发机绝对路径
 
+#### Scenario: 使用非根 scope 完成并恢复
+- **WHEN** 调用方以规范化仓库相对 scope 完成变更，或完成在写入事件前中断
+- **THEN** 预览、事务、事件、恢复和状态查询 MUST 使用同一 scope，不得回退为根 scope（D-17、D-22；A-13）
+
+#### Scenario: 取消、替代或重新打开
+- **WHEN** 调用方通过正式入口执行 cancelled、superseded 或 reopened
+- **THEN** 系统 MUST 在仓库锁内验证当前投影、revision、supersedes 与活动材料，并保证终态事件不会和未清理的活动变更形成冲突（D-02、D-22；A-02、A-13）
+
 ### Requirement: 完成必须作为仓库级可恢复事务执行
 
 完成写入 MUST 在仓库级锁内执行 Git 前置检查、原生 OpenSpec 严格归档与规格同步、事件追加和临时材料清理。merge、rebase、cherry-pick、未合并 index、相关 sparse checkout、格式版本不匹配或锁竞争 MUST 在修改文件前失败关闭。原生归档 MUST 仅作为事务中间结果，成功事件提交后不得长期保留。（D-03、D-06、D-07；A-03、A-07）
@@ -68,3 +76,22 @@
 - **WHEN** 对已迁移仓库再次运行相同命令
 - **THEN** 系统 MUST 返回零新增事件和零删除目标，不生成重复记录
 
+#### Scenario: 路径只出现在迁移合同样例中
+- **WHEN** 精确历史路径只出现在迁移器自身实现或生命周期迁移专用回归测试中
+- **THEN** 预览 MUST 把它记录为有界合同字面量诊断而不阻断，同时生产源码或持久文档中的同类引用 MUST 继续阻断（D-15、D-20；A-11）
+
+### Requirement: 外部 CI 回执必须与仓库提交解耦
+
+系统 MUST 只从统一忽略运行时目录显式读取外部 CI 回执。回执 MUST 匹配当前 base revision，并只携带有界 HTTPS 引用和稳定任务状态；未提供时事件 MUST 记录 pending，合法回执只能记录 recorded 语义，不得让受跟踪需求或规格写入精确候选 SHA。（D-05、D-14、D-23；A-14）
+
+#### Scenario: 未提供外部回执
+- **WHEN** 最终完成没有显式外部 CI 回执
+- **THEN** accepted 事件 MUST 保留 external-ci pending，且本地通过不得冒充外部通过
+
+#### Scenario: 回执匹配最终候选
+- **WHEN** 受管回执的 revision 等于完成前 base revision，且声明的任务均成功
+- **THEN** 事件 MUST 只保存 recorded、revision 和有界引用，受跟踪需求与规格保持不变
+
+#### Scenario: 回执越界或版本不匹配
+- **WHEN** 回执位于受管目录之外、引用不是 HTTPS、内容超限或 revision 不匹配
+- **THEN** 完成 MUST 在修改仓库前以稳定诊断失败关闭

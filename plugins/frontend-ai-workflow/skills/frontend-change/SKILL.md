@@ -43,7 +43,7 @@ Use when the problem, behavior, boundary, or solution is unclear. Read `../../re
 Use when the user wants to start a defined change and no matching active change exists. Read `../../references/openspec/propose.md`.
 
 - Ground the plan in the requirement document and actual repository structure.
-- Use the requirement's `D-*` and `A-*` IDs in specifications, design, and tasks. Do not create plan tasks from `暂定` or `待确认` decisions.
+- Use the requirement's `D-*` and `A-*` IDs in design, tasks, test plans, and pure trailing provenance annotations in delta specifications. Keep those IDs out of the lasting contract wording because lifecycle completion removes the provenance annotations after specification synchronization. Do not create plan tasks from `暂定` or `待确认` decisions.
 - After creating the managed change, add or update its row in the requirement's `关联变更范围`, then validate the requirement with that change path before describing the plan as implementation-ready.
 - Turn every matrix row marked `覆盖` into a test or explicit manual verification task. Keep any `不适用` reason visible in the plan; do not treat refresh and empty-state coverage as a substitute for initial-data or real-user-operation coverage.
 - When the requirement marks an independent test plan as required, create or update `<change-root>/test-plan.md`, preserve `test_plan: required` in metadata, and run the test-plan validator at `plan` stage before calling the change implementation-ready.

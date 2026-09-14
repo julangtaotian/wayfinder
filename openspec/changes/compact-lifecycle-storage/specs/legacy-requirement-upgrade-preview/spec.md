@@ -2,7 +2,7 @@
 
 ### Requirement: v2 日常检查不得展开已退役需求入口
 
-当仓库声明 lifecycle schema v2 时，旧需求升级预览和其他日常检查 MUST 只处理当前活动 `requirements/REQ-*.md`，不得依赖 `requirements/index.json`、已验收根存根或 `requirements/archive/`。legacy-readonly 仓库 MAY 继续只读识别旧结构以支持迁移预览。（D-01、D-02、D-11、D-16；A-01、A-02、A-05、A-09）
+当仓库声明 lifecycle schema v2 时，旧需求升级预览和其他日常检查 MUST 只处理当前活动需求，不得依赖旧集中索引、已验收根存根或需求正文归档。legacy-readonly 仓库 MAY 继续只读识别旧结构以支持迁移预览。（D-01、D-02、D-11、D-16；A-01、A-02、A-05、A-09）
 
 #### Scenario: v2 仓库执行旧需求预览
 

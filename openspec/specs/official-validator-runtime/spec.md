@@ -7,7 +7,7 @@
 
 ### Requirement: 系统必须通过显式入口真实执行当前 Creator validators
 
-系统 MUST 提供 `npm run validate:official`，MUST 读取当前 Codex 开发环境中的 Skill Creator 和 Plugin Creator validators，MUST 按仓库相对路径稳定排序对每个自定义 Skill 分别执行一次 Skill validator，并 MUST 对插件根执行一次 Plugin validator。系统 MUST 记录实际 validator 来源标识和 SHA256，MUST NOT 把外部脚本复制进仓库或以项目自写校验替代不可用的官方脚本。（D-01、D-02；A-01、A-05）
+系统 MUST 提供 `npm run validate:official`，MUST 读取当前 Codex 开发环境中的 Skill Creator 和 Plugin Creator validators，MUST 按仓库相对路径稳定排序对每个自定义 Skill 分别执行一次 Skill validator，并 MUST 对插件根执行一次 Plugin validator。系统 MUST 记录实际 validator 来源标识和 SHA256，MUST NOT 把外部脚本复制进仓库或以项目自写校验替代不可用的官方脚本。
 
 #### Scenario: 全部目标预检通过
 
@@ -21,7 +21,7 @@
 
 ### Requirement: 依赖缓存必须有界且可复用
 
-系统 MUST 锁定 PyYAML 精确版本和发布包摘要，MUST 只在 `outputs/official-validator-cache/` 核验、准备和复用依赖，MUST NOT 修改用户 Python、仓库根依赖或其他输出。缓存有效时 MUST 直接复用；缓存缺失或无效时 MAY 从依赖源准备固定包，但取得失败或摘要不符 MUST 失败关闭。（D-03、D-04；A-02、A-03）
+系统 MUST 锁定 PyYAML 精确版本和发布包摘要，MUST 只在 `.frontend-ai-workflow/cache/official-validator-cache/` 核验、准备和复用依赖，MUST NOT 修改用户 Python、仓库根依赖或其他输出。缓存有效时 MUST 直接复用；缓存缺失或无效时 MAY 从依赖源准备固定包，但取得失败或摘要不符 MUST 失败关闭。
 
 #### Scenario: 首次准备依赖
 
@@ -45,7 +45,7 @@
 
 ### Requirement: 所有未执行与内容失败必须失败关闭
 
-系统 MUST 区分 validator/Python 不可用、固定依赖不可用、子进程启动失败和内容校验失败，分别使用 `official_validator_unavailable`、`official_validator_dependency_unavailable`、`official_validator_start_failed` 和 `official_validator_validation_failed`。内容失败 MUST 保留 `validator`、仓库相对 `target`、真实退出码、stdout 和 stderr；任何失败 MUST 返回非零状态。（D-06、D-08；A-03）
+系统 MUST 区分 validator/Python 不可用、固定依赖不可用、子进程启动失败和内容校验失败，分别使用 `official_validator_unavailable`、`official_validator_dependency_unavailable`、`official_validator_start_failed` 和 `official_validator_validation_failed`。内容失败 MUST 保留 `validator`、仓库相对 `target`、真实退出码、stdout 和 stderr；任何失败 MUST 返回非零状态。
 
 #### Scenario: validator 启动失败
 
@@ -64,7 +64,7 @@
 
 ### Requirement: 预检必须保持显式使用和诚实结论边界
 
-系统 MUST NOT 把官方预检加入普通 `npm run validate`、`npm run verify` 或常规 CI。成功结果 MUST 只表述为“当前本地 Creator validators 预检通过”，MUST NOT 宣称固定快照、最新上游规则、Skill 行为质量或 OpenAI 公共目录最终审核通过。缓存、启动适配和外部 validator MUST NOT 进入插件发布物。（D-05、D-07、D-08；A-04、A-05）
+系统 MUST NOT 把官方预检加入普通 `npm run validate`、`npm run verify` 或常规 CI。成功结果 MUST 只表述为“当前本地 Creator validators 预检通过”，MUST NOT 宣称固定快照、最新上游规则、Skill 行为质量或 OpenAI 公共目录最终审核通过。缓存、启动适配和外部 validator MUST NOT 进入插件发布物。
 
 #### Scenario: 普通验证不触发预检
 

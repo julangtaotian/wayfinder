@@ -81,6 +81,42 @@ test('存量迁移拒绝未跟踪目标和活动引用', (context) => {
   assert.equal(preview.blockerCounts.untracked_migration_target, 1);
 });
 
+test('存量迁移接受已知脚本和工作簿产物并继续阻断未知类型', (context) => {
+  const root = fixture(context);
+  write(root, 'outputs/legacy/run.mjs', 'export const result = true;\n');
+  write(root, 'outputs/legacy/report.xlsx', 'fixture');
+  write(root, 'outputs/legacy/native.bin', 'fixture');
+  spawnSync('git', ['-C', root, 'add', 'outputs']);
+
+  const preview = previewLifecycleMigration({ root });
+  const unknownTargets = preview.blockers
+    .filter((item) => item.code === 'unknown_output_file')
+    .map((item) => item.target);
+  assert.deepEqual(unknownTargets, ['outputs/legacy/native.bin']);
+});
+
+test('迁移区分合同字面量和真实文件依赖', (context) => {
+  const root = fixture(context);
+  const target = 'openspec/changes/archive/2026-09-01-old-change/proposal.md';
+  write(root, 'tests/migration-contract.test.mjs', `assert.equal('${target}', '${target}');\n`);
+  write(root, 'tests/runtime-dependency.test.mjs', `fs.readFileSync('${target}', 'utf8');\n`);
+  write(root, 'src/runtime-dependency.mjs', `export const legacy = '${target}';\n`);
+  spawnSync('git', ['-C', root, 'add', 'tests', 'src']);
+
+  const preview = previewLifecycleMigration({ root });
+  assert.equal(preview.referenceDiagnostics.some((item) => item.file === 'tests/migration-contract.test.mjs'
+    && item.role === 'test-contract'), true);
+  assert.equal(preview.blockers.some((item) => item.code === 'active_legacy_reference'
+    && item.target === 'tests/migration-contract.test.mjs'), false);
+  assert.equal(preview.blockers.some((item) => item.code === 'active_legacy_reference'
+    && item.target === 'tests/runtime-dependency.test.mjs'), true);
+  assert.equal(preview.blockers.some((item) => item.code === 'active_legacy_reference'
+    && item.target === 'src/runtime-dependency.mjs'), true);
+  const page = paginateLifecycleMigrationResult(preview, { limit: 1 });
+  assert.equal(page.referenceDiagnostics.length, 1);
+  assert.equal(page.page.remainingReferenceDiagnostics >= 0, true);
+});
+
 test('迁移识别多变更需求并把旧索引与根存根纳入精确目标', (context) => {
   const root = fixture(context);
   write(root, 'openspec/changes/archive/2026-09-02-second-change/proposal.md', '# second\n');

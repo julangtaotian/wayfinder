@@ -2,7 +2,7 @@
 
 ## 基本信息
 
-- 状态：待验证
+- 状态：实施中
 - 提出人：用户
 - 负责人：Codex
 - 目标版本：0.19.0
@@ -38,6 +38,11 @@
 | D-17 | 分支与多项目语义 | 项目默认 | 状态区分 branch-local 与 merged；scope 使用规范化仓库相对路径，禁止绝对路径并处理大小写、Unicode、长度碰撞 | squash、monorepo 与 Windows 审计 |
 | D-18 | 摘要规范 | 项目默认 | 摘要基于 LF 规范化的稳定字节或 Git blob 内容，事件不记录自身尚未生成的 commit SHA，可选记录 baseRevision | CRLF 与自引用 SHA 审计 |
 | D-19 | 跨平台风险 | 项目默认 | 跨平台高风险：是；命中 CI、路径、临时目录、子进程、环境变量、Git 和机器诊断；影响真实矩阵 Linux x64/ARM64、Windows x64、macOS Intel/ARM64 | 跨平台清单与 `.github/workflows/validate.yml` |
+| D-20 | 迁移引用语义 | 项目默认 | 迁移只把会在迁移后失效的运行时或文档依赖作为阻断；迁移器自身源码和专用回归测试中的合同样例作为有界诊断保留但不阻断，生产源码与持久文档中的真实引用仍失败关闭 | 存量预览发现测试夹具和迁移器字面量形成 224 项误阻断 |
+| D-21 | 阶段上下文总量上限 | 已确认 | `limit` 同时约束 diagnostics 和各事实数组，事实文本按固定长度裁剪并报告总数、返回数与省略数；验收复选框同时兼容 `A-01：` 与 `[A-01]` 语法 | 实仓检查发现完成阶段验收计数为 0，且非 diagnostics 字段可无界增长 |
+| D-22 | 生命周期操作入口与 scope | 项目默认 | 完成、取消、替代、重开均使用正式命令入口和规范化仓库相对 scope；完成事务与恢复不得硬编码根 scope，终态操作必须与活动材料清理原子配对 | 事件 schema 支持多状态，但只有 accepted 有正式入口且完成逻辑固定使用 `.` |
+| D-23 | 外部 CI 回执 | 已确认 | 最终候选的外部 CI 结果由显式传入、位于忽略运行时目录的只读 JSON 回执承载；回执必须匹配 base revision，事件最多记录 `pending` 或 `recorded`、短引用和 revision，不把外部结果声明为可信通过，也不修改已提交需求文档 | 精确 SHA 写回受跟踪文档会制造新的提交和验证循环 |
+| D-24 | 插件仓库健康摘要 | 项目默认 | 只要存在生命周期配置，插件源码仓库与业务仓库都必须返回 lifecycle mode、状态和迁移要求；插件自检分支不得用 `lifecycle: null` 隐藏 legacy-readonly | 实仓健康检查与独立 lifecycle 审计结果不一致 |
 
 ## 范围
 
@@ -130,18 +135,21 @@
 - 状态投影按 revision 与 supersedes 关系解析；重复 eventId、分叉 revision、未知 supersedes 或同层冲突返回诊断，不采用文件最后一行。
 - 阶段上下文返回 `schemaVersion`、`stage`、`scope`、`changeId`、`facts`、`counts`、`diagnostics`、`offset`、`limit` 和 `nextOffset`，不写新的持久文件。
 - Git 差异检查在 PR 使用 base SHA，在普通 push 使用父提交；无法确定基线时报告 unavailable，不伪造通过。
+- 迁移预览区分阻断引用与合同字面量诊断；诊断、事件、候选和阶段事实均按调用参数分页或裁剪，不因历史规模生成无界响应。
+- 外部 CI 回执只允许从受管运行时目录显式读取，必须使用 HTTPS 引用并匹配当前 base revision；未提供时事件保持 pending。
 
 ## 关联变更范围
 
 | 变更 | 决策范围 | 验收范围 |
 | --- | --- | --- |
-| compact-lifecycle-storage | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08、D-09、D-10、D-11、D-12、D-13、D-14、D-15、D-16、D-17、D-18、D-19 | A-01、A-02、A-03、A-04、A-05、A-06、A-07、A-08、A-09、A-10 |
+| compact-lifecycle-storage | D-01、D-02、D-03、D-04、D-05、D-06、D-07、D-08、D-09、D-10、D-11、D-12、D-13、D-14、D-15、D-16、D-17、D-18、D-19、D-20、D-21、D-22、D-23、D-24 | A-01、A-02、A-03、A-04、A-05、A-06、A-07、A-08、A-09、A-10、A-11、A-12、A-13、A-14、A-15 |
 
 ## 修订记录
 
 | 修订 | 日期 | 影响决策 | 影响验收 | 验证与任务处理 |
 | --- | --- | --- | --- | --- |
 | R-01 | 2026-09-11 | D-01～D-19 | A-01～A-10 | 综合多轮审计建立整体迁移和实现顺序；全部验证保持计划。 |
+| R-02 | 2026-09-14 | D-02、D-03、D-05、D-11、D-15、D-17、D-20～D-24 | A-01～A-15 | 根据实施后实仓复核重新打开变更；旧验证结果不作为修订后结论，迁移引用、上下文边界、状态入口、CI 回执和健康摘要按顺序重验。 |
 
 ## 兼容性与风险
 
@@ -154,8 +162,8 @@
 
 ## 测试与验证
 
-- 测试文件策略：新建；目标路径：`tests/lifecycle-history.test.mjs`；基线证据：规划时目标文件不存在，相关完成、footprint、UI Review、CI 与结构测试已受 Git 跟踪；选择理由：生命周期事件建立独立能力测试，迁移和上下文按职责使用独立文件并扩展既有专用测试，不以裸 TC 编号作为唯一定位。
-- 独立测试方案：需要；活动变更与目标：`openspec/changes/compact-lifecycle-storage/test-plan.md`；需求修订基线：R-01。
+- 测试文件策略：扩展现有；目标路径：`tests/lifecycle-history.test.mjs`、`tests/lifecycle-migration.test.mjs`、`tests/stage-context.test.mjs`、现有项目健康检查专用测试；基线证据：这些文件已覆盖对应能力，本轮在同一职责内补充误引用、总量边界、scope、状态入口、外部回执和插件仓库摘要场景；不向生成基线或其他功能测试追加场景。
+- 独立测试方案：需要；活动变更与目标：`openspec/changes/compact-lifecycle-storage/test-plan.md`；需求修订基线：R-02。
 - 验证范围：全量；执行聚焦生命周期测试、`npm test`、`npm run validate`、官方 Skill/Plugin validators 和 `npm run verify`；原因是完成、规格、CI 和共享运行时均受影响。
 - 跨平台回归：Windows/POSIX 路径双侧规范化、CRLF/LF 摘要、锁竞争、异常清理、Git 特殊状态、sparse checkout、旧写入器和机器诊断稳定字段。
 - 外部验证：五平台真实矩阵在最终候选提交上全部成功前保持待执行。
@@ -164,31 +172,39 @@
 
 | 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | 生命周期事件 schema、追加、投影和冲突 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-01.json` |
-| V-02 | 自动 | 跨平台路径、Unicode、长度与 LF/CRLF 摘要 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-02.json` |
-| V-03 | 自动 | 完成事务、锁、Git 特殊状态、原生 archive 临时化与恢复 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-03.json` |
-| V-04 | 自动 | 生命周期 Git 差异保护和追加历史 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-04.json` |
-| V-05 | 自动 | 运行时目录、tracked 临时产物硬门禁与 UI Review 边界 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-05.json` |
-| V-06 | 自动 | 阶段上下文有界输出且不落盘 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-06.json` |
-| V-07 | 自动 | 正式规格治理与测试定位歧义 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-07.json` |
-| V-08 | 自动 | 存量迁移预览、引用/未知文件阻断、显式写入与幂等 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-08.json` |
-| V-09 | 自动 | CI 事件差异、生命周期版本、产物保留和混合结构门禁 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-09.json` |
-| V-10 | 自动 | 本地全量、结构、OpenSpec 与统一验证 | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-10.json` |
-| V-11 | 自动 | 官方 Skill 与 Plugin validators | 2026-09-11 | 通过 | `openspec/changes/compact-lifecycle-storage/evidence/V-11.json` |
-| V-12 | 人工 | 人工复核 Run #110：提交 `891e22b604a9f619cded8516ed192c668234dae4` 的共享校验与五平台矩阵 | 2026-09-11 | 通过 | [GitHub Actions Run #110](https://github.com/julangtaotian/wayfinder/actions/runs/34580007285) |
+| V-01 | 自动 | 生命周期事件 schema、追加、投影和冲突 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-01.json` |
+| V-02 | 自动 | 跨平台路径、Unicode、长度与 LF/CRLF 摘要 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-02.json` |
+| V-03 | 自动 | 完成事务、锁、Git 特殊状态、原生 archive 临时化与恢复 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-03.json` |
+| V-04 | 自动 | 生命周期 Git 差异保护和追加历史 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-04.json` |
+| V-05 | 自动 | 运行时目录、tracked 临时产物硬门禁与 UI Review 边界 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-05.json` |
+| V-06 | 自动 | 阶段上下文验收解析、事实总量上限且不落盘 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-06.json` |
+| V-07 | 自动 | 正式规格治理与测试定位歧义 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-07.json` |
+| V-08 | 自动 | 存量迁移预览、引用语义、未知文件阻断、显式写入与幂等 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-08.json` |
+| V-09 | 自动 | CI 事件差异、生命周期版本、产物保留和混合结构门禁 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-09.json` |
+| V-10 | 自动 | 本地全量、结构、OpenSpec 与统一验证 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-10.json` |
+| V-11 | 自动 | 官方 Skill 与 Plugin validators | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-11.json` |
+| V-12 | 人工 | 最终候选的共享校验与五平台矩阵，由忽略目录中的外部 CI 回执确认 | 2026-09-14 | 计划 | `.frontend-ai-workflow/runs/ci-receipts/<run-id>.json` |
+| V-13 | 自动 | cancelled、superseded、reopened 正式入口与非根 scope 完成/恢复 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-13.json` |
+| V-14 | 自动 | 外部 CI 回执路径、revision、状态与有界事件引用 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-14.json` |
+| V-15 | 自动 | 插件源码仓库健康摘要显示 lifecycle mode 与迁移要求 | 2026-09-14 | 计划 | `openspec/changes/compact-lifecycle-storage/evidence/V-15.json` |
 
 ## 验收标准
 
-- [x] A-01：当前持久结构不再要求 OpenSpec 归档、需求正文归档和普通 tracked outputs；v2 配置与事件格式有界、可版本化且不含绝对路径。
-- [x] A-02：状态由事件安全投影并区分 active、accepted-local、accepted-merged、cancelled、superseded、unknown；待验证正文不再干扰完成后的判断。
-- [x] A-03：完成入口复用 OpenSpec 原生安全能力，仓库级锁、Git 前置检查、事务恢复和幂等追加可以阻止并发、部分失败和重复事件。
-- [x] A-04：默认运行、缓存、事务和 UI Review 产物进入统一忽略目录；严格模式至多保留一个有界证据包，普通流程不产生长期文件树。
-- [x] A-05：阶段上下文有界且不落盘，正式规格具备重复/退役/总上下文诊断，测试证据不依赖裸 TC 编号。
-- [x] A-06：CI 对活动变更删除、事件追加、旧事件篡改、混合版本和 tracked 临时目录执行稳定差异门禁，并设置远端产物保留期。
-- [x] A-07：Windows/POSIX、LF/CRLF、scope、Unicode、路径长度、锁与子进程错误均有确定性回归；本地结果不冒充五平台外部通过。
-- [x] A-08：存量迁移默认预览、显式写入、引用反查、未知文件阻断和幂等恢复成立，不删除未跟踪内容或重写 Git 历史。
-- [x] A-09：技能、模板、README、AGENTS 和机器诊断统一采用 v2 生命周期，不再指导每次为 outputs 新增过滤规则或移动证据路径。
-- [x] A-10：聚焦、本地全量、结构、官方 validators 和统一验证通过；真实五平台 CI 保持独立待执行直至精确提交成功。
+- [ ] A-01：当前持久结构不再要求 OpenSpec 归档、需求正文归档和普通 tracked outputs；v2 配置与事件格式有界、可版本化且不含绝对路径。
+- [ ] A-02：状态由事件安全投影并区分 active、accepted-local、accepted-merged、cancelled、superseded、unknown；待验证正文不再干扰完成后的判断。
+- [ ] A-03：完成入口复用 OpenSpec 原生安全能力，仓库级锁、Git 前置检查、事务恢复和幂等追加可以阻止并发、部分失败和重复事件。
+- [ ] A-04：默认运行、缓存、事务和 UI Review 产物进入统一忽略目录；严格模式至多保留一个有界证据包，普通流程不产生长期文件树。
+- [ ] A-05：阶段上下文有界且不落盘，正式规格具备重复/退役/总上下文诊断，测试证据不依赖裸 TC 编号。
+- [ ] A-06：CI 对活动变更删除、事件追加、旧事件篡改、混合版本和 tracked 临时目录执行稳定差异门禁，并设置远端产物保留期。
+- [ ] A-07：Windows/POSIX、LF/CRLF、scope、Unicode、路径长度、锁与子进程错误均有确定性回归；本地结果不冒充五平台外部通过。
+- [ ] A-08：存量迁移默认预览、显式写入、引用反查、未知文件阻断和幂等恢复成立，不删除未跟踪内容或重写 Git 历史。
+- [ ] A-09：技能、模板、README、AGENTS 和机器诊断统一采用 v2 生命周期，不再指导每次为 outputs 新增过滤规则或移动证据路径。
+- [ ] A-10：聚焦、本地全量、结构、官方 validators 和统一验证通过；真实五平台 CI 保持独立待执行直至精确提交成功。
+- [ ] A-11：迁移预览不再把迁移器源码和专用测试中的历史路径样例当成活动依赖，同时仍阻断生产源码和持久文档中的真实引用。
+- [ ] A-12：四个阶段的所有事实数组和字符串均有确定上限，返回总数与省略数；两种 A-ID 复选框语法都能得到正确完成计数。
+- [ ] A-13：完成、取消、替代、重开入口均支持规范化非根 scope，终态与活动材料不会形成冲突状态，恢复沿用原 scope。
+- [ ] A-14：外部 CI 不再写回需求或规格；缺少回执时事件为 pending，匹配最终候选的受管回执只产生 recorded 引用且不会被表述为可信通过。
+- [ ] A-15：插件源码仓库健康检查返回实际 lifecycle mode、迁移要求和稳定诊断，不再返回空 lifecycle。
 
 ## 验收—证据映射
 
@@ -204,6 +220,11 @@
 | A-08 | 存量安全迁移 | D-15 | 自动 | `tests/lifecycle-migration.test.mjs` | 预览、阻断、写入和恢复幂等 | V-08 |
 | A-09 | 使用指引一致 | D-01～D-18 | 自动 | 技能、模板、README、AGENTS 引用检查 | 不再生成旧归档和 outputs 指引 | V-09、V-10 |
 | A-10 | 发布级验证 | D-19 | 自动+人工 | 本地统一验证与 GitHub Actions | 本地通过；外部保持待执行 | V-10、V-11、V-12 |
+| A-11 | 迁移引用分类 | D-15、D-20 | 自动 | `tests/lifecycle-migration.test.mjs` | 合同样例不阻断，真实依赖仍阻断且分类有界 | V-08 |
+| A-12 | 阶段上下文总量边界 | D-11、D-21 | 自动 | `tests/stage-context.test.mjs` | 两种验收语法正确计数，所有事实返回总数与省略数 | V-06 |
+| A-13 | 状态入口与 scope | D-02、D-03、D-17、D-22 | 自动 | `tests/lifecycle-history.test.mjs` | 四类入口、非根 scope 和恢复状态确定 | V-13 |
+| A-14 | 外部 CI 回执 | D-05、D-14、D-23 | 自动+人工 | 生命周期完成测试与最终候选回执 | pending/recorded 语义、revision 匹配和零写回成立 | V-12、V-14 |
+| A-15 | 插件仓库健康摘要 | D-16、D-24 | 自动 | 项目健康检查专用测试 | plugin-repository 分支仍返回生命周期配置与迁移要求 | V-15 |
 
 ## 待确认问题
 

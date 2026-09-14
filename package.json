@@ -26,6 +26,7 @@
     "lifecycle:audit": "node plugins/frontend-ai-workflow/scripts/lifecycle-audit.mjs",
     "lifecycle:status": "node plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs",
     "lifecycle:migrate": "node plugins/frontend-ai-workflow/scripts/lifecycle-migration.mjs",
+    "lifecycle:transition": "node plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs",
     "context:stage": "node plugins/frontend-ai-workflow/scripts/stage-context.mjs"
   },
   "engines": {

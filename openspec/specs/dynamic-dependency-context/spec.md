@@ -7,7 +7,7 @@
 
 ### Requirement: 系统必须动态收集完整直接依赖事实
 
-系统 SHALL 从目标根 `package.json` 的 `dependencies`、`devDependencies`、`peerDependencies` 和 `optionalDependencies` 动态生成版本化 `dependencyProfile`。画像 SHALL 保存唯一包总数、各分组有效条目数，以及按包名稳定排序的完整包清单；每个包 SHALL 保存其全部来源分组和对应原始版本声明，不得由固定技术包名单决定是否纳入。（D-01～D-03；A-01）
+系统 SHALL 从目标根 `package.json` 的 `dependencies`、`devDependencies`、`peerDependencies` 和 `optionalDependencies` 动态生成版本化 `dependencyProfile`。画像 SHALL 保存唯一包总数、各分组有效条目数，以及按包名稳定排序的完整包清单；每个包 SHALL 保存其全部来源分组和对应原始版本声明，不得由固定技术包名单决定是否纳入。
 
 #### Scenario: 收集未知框架和私有包
 
@@ -28,7 +28,7 @@
 
 ### Requirement: 空值和非法依赖声明必须可审计
 
-系统 SHALL 把缺失依赖分组视为合法空值，并 SHALL 为显式非法分组、包名或非空字符串以外的版本声明输出稳定的 `code`、`status` 和 `target` 诊断。无效条目 SHALL 被排除，不得强制字符串化为可信事实；根 `package.json` 无法解析时 SHALL 沿用整体失败语义。（D-03、D-07；A-01）
+系统 SHALL 把缺失依赖分组视为合法空值，并 SHALL 为显式非法分组、包名或非空字符串以外的版本声明输出稳定的 `code`、`status` 和 `target` 诊断。无效条目 SHALL 被排除，不得强制字符串化为可信事实；根 `package.json` 无法解析时 SHALL 沿用整体失败语义。
 
 #### Scenario: 项目没有直接依赖
 
@@ -50,7 +50,7 @@
 
 ### Requirement: 人类摘要不得损失完整机器事实
 
-系统 SHALL 从 `dependencyProfile` 生成确定性的直接依赖摘要。摘要 MAY 使用固定展示上限控制受管文档长度，但 SHALL 明确总数、展示数、遗漏数和完整事实来源；完整 `packages` 清单 SHALL 不受展示上限影响。（D-03、D-04、D-12；A-01、A-02）
+系统 SHALL 从 `dependencyProfile` 生成确定性的直接依赖摘要。摘要 MAY 使用固定展示上限控制受管文档长度，但 SHALL 明确总数、展示数、遗漏数和完整事实来源；完整 `packages` 清单 SHALL 不受展示上限影响。
 
 #### Scenario: 依赖数量不超过展示上限
 
@@ -65,7 +65,7 @@
 
 ### Requirement: 共享工作流入口必须消费同一依赖画像
 
-项目检查、初始化、显式升级和受管上下文 SHALL 使用同一次项目识别生成的 `dependencyProfile` 与摘要。普通初始化 SHALL 保持只读，显式写入 SHALL 只更新合法受管区块并保留项目自定义内容。（D-03、D-04、D-08、D-11；A-02、A-05）
+项目检查、初始化、显式升级和受管上下文 SHALL 使用同一次项目识别生成的 `dependencyProfile` 与摘要。普通初始化 SHALL 保持只读，显式写入 SHALL 只更新合法受管区块并保留项目自定义内容。
 
 #### Scenario: 初始化未知框架项目
 
@@ -81,7 +81,7 @@
 
 ### Requirement: 依赖采集必须保持只读和有界
 
-动态依赖画像 SHALL 只读取目标根 `package.json`，不得联网、查询 registry、读取或执行 `node_modules`、安装或升级依赖、解析传递依赖或扫描 workspace 子包。系统 SHALL 明确直接声明不能证明依赖已安装、正在使用、安全或兼容。（D-02、D-08、D-09、D-12；A-05、A-06）
+动态依赖画像 SHALL 只读取目标根 `package.json`，不得联网、查询 registry、读取或执行 `node_modules`、安装或升级依赖、解析传递依赖或扫描 workspace 子包。系统 SHALL 明确直接声明不能证明依赖已安装、正在使用、安全或兼容。
 
 #### Scenario: 项目存在 node_modules 和 workspace 声明
 

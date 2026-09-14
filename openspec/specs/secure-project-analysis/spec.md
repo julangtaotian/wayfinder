@@ -4,7 +4,7 @@
 TBD - created by archiving change harden-workflow-lifecycle. Update Purpose after archive.
 ## Requirements
 ### Requirement: 深度扫描必须在读取前排除敏感和忽略文件
-系统 MUST 在读取项目文件内容前排除真实环境配置、凭据、密钥类文件和 Git 忽略项，仅允许明确的环境模板文件，并为每个排除项给出稳定原因。（D-01、D-08；A-01、A-07）
+系统 MUST 在读取项目文件内容前排除真实环境配置、凭据、密钥类文件和 Git 忽略项，仅允许明确的环境模板文件，并为每个排除项给出稳定原因。
 
 #### Scenario: Git 项目包含本地敏感配置
 - **WHEN** 深度范围收集遇到被忽略的 `.env.local`、凭据文件或密钥文件
@@ -19,7 +19,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统回退到安全文件遍历并明确报告 Git 元数据不可用
 
 ### Requirement: 项目范围必须生成稳定且源码优先的快照
-系统 MUST 由版本化范围规则、纳入路径和内容摘要生成稳定指纹，并在总量受限时优先保留配置、源码和测试。新增的 WXML、WXSS 和 WXS 文本源码 MUST 继续服从敏感路径、Git 忽略、文件大小、总量和二进制内容限制。（D-05、D-06、D-07；A-03）
+系统 MUST 由版本化范围规则、纳入路径和内容摘要生成稳定指纹，并在总量受限时优先保留配置、源码和测试。新增的 WXML、WXSS 和 WXS 文本源码 MUST 继续服从敏感路径、Git 忽略、文件大小、总量和二进制内容限制。
 
 #### Scenario: 相同项目快照重复收集
 - **WHEN** 同一项目内容和规则没有变化并连续收集两次
@@ -38,7 +38,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统 MUST 按既有稳定原因排除该文件，且 MUST NOT 因扩展名受支持而绕过安全边界
 
 ### Requirement: Wayfinder 必须记录并检查分析快照
-系统 MUST 在显式深度刷新时记录扫描时间、Git 提交、脏状态和范围指纹；普通升级 MUST 保留该基线，健康检查发现变化时只警告而不覆盖分析。（D-02、D-08；A-02、A-07）
+系统 MUST 在显式深度刷新时记录扫描时间、Git 提交、脏状态和范围指纹；普通升级 MUST 保留该基线，健康检查发现变化时只警告而不覆盖分析。
 
 #### Scenario: 显式完成深度刷新
 - **WHEN** 用户确认执行深度写入
@@ -53,7 +53,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统返回项目地图可能过期的警告且不修改任何文件
 
 ### Requirement: 安全纳入的 WXML 必须提供属性粘连静态观察
-系统 SHALL 只对已经通过敏感路径、Git 忽略、文件大小、总量和文本内容限制的 WXML 检查属性结束引号后紧邻下一属性名的静态模式。每个观察 SHALL 返回稳定英文代码、`warning` 级别、项目相对路径、1 基行号和不包含源码值的中文说明。（D-03、D-06；A-02）
+系统 SHALL 只对已经通过敏感路径、Git 忽略、文件大小、总量和文本内容限制的 WXML 检查属性结束引号后紧邻下一属性名的静态模式。每个观察 SHALL 返回稳定英文代码、`warning` 级别、项目相对路径、1 基行号和不包含源码值的中文说明。
 
 #### Scenario: WXML 属性之间疑似缺少空白
 - **WHEN** 安全纳入 WXML 的一个属性结束引号后立即出现下一属性名和等号
@@ -68,7 +68,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 系统 MUST 按既有原因排除该文件，且 MUST NOT 读取其内容执行静态观察
 
 ### Requirement: 静态观察不得冒充平台编译结论
-系统 MUST 将 WXML 属性粘连作为非阻断启发式观察，并明确未执行微信开发者工具或其他平台编译。项目检查 SHALL 在发现观察时保持健康状态成功，同时返回数量、有限位置和验证边界。（D-03、D-04；A-02、A-03）
+系统 MUST 将 WXML 属性粘连作为非阻断启发式观察，并明确未执行微信开发者工具或其他平台编译。项目检查 SHALL 在发现观察时保持健康状态成功，同时返回数量、有限位置和验证边界。
 
 #### Scenario: 健康检查发现 WXML 静态观察
 - **WHEN** 当前安全范围包含一个或多个 `wxml-attribute-spacing` 观察
@@ -79,7 +79,7 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 - **THEN** 项目检查 SHALL 返回空观察列表，且不得据此声称 WXML 已通过语法或平台编译验证
 
 ### Requirement: WXML 静态观察必须忽略注释内容
-系统 SHALL 在属性粘连观察前屏蔽 WXML `<!--` 至 `-->` 注释内容，并 MUST 保留原始换行与注释外活动文本，使单行、跨行和未闭合注释不产生观察，注释外观察仍返回原始文件和 1 基行号。（D-01、D-02；A-01）
+系统 SHALL 在属性粘连观察前屏蔽 WXML `<!--` 至 `-->` 注释内容，并 MUST 保留原始换行与注释外活动文本，使单行、跨行和未闭合注释不产生观察，注释外观察仍返回原始文件和 1 基行号。
 
 #### Scenario: 单行注释包含属性粘连样式
 - **WHEN** 一行 WXML 注释内部包含属性结束引号紧邻下一属性名的文本
