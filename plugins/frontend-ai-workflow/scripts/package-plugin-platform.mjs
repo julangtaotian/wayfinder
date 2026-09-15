@@ -24,6 +24,13 @@ export const PLATFORM_PLUGIN_SIZE_BUDGETS = Object.freeze({
   'linux-arm64': 420 * MEBIBYTE,
   'win32-x64': 340 * MEBIBYTE,
 });
+export const PACKAGE_PRUNING_POLICY_VERSION = 1;
+export const PACKAGE_PRUNING_RULES = Object.freeze([
+  Object.freeze({ id: 'type-declarations', pattern: /\.d\.(?:ts|mts|cts)$/iu }),
+  Object.freeze({ id: 'source-maps', pattern: /\.map$/iu }),
+  Object.freeze({ id: 'documentation', pattern: /^(?:readme|changelog|changes|history)(?:\..+)?$/iu }),
+]);
+const PROTECTED_RUNTIME_FILE = /^(?:package\.json|licen[cs]e(?:\..+)?|notice(?:\..+)?|copying(?:\..+)?|third[-_ ]party(?:\..+)?)$/iu;
 
 export function compactPlatformStageName(label, {
   processId = process.pid,
@@ -177,6 +184,79 @@ function copyPlatformPluginSource({ sourcePluginRoot, platformRuntimeRoot, stage
   );
 }
 
+function runtimeMetadataRoots(pluginRoot) {
+  return [
+    path.join(pluginRoot, 'runtime', 'openspec', 'node_modules'),
+    path.join(pluginRoot, 'runtime', 'playwright', 'node_modules'),
+  ];
+}
+
+function listRegularFiles(roots) {
+  const files = [];
+  const visit = (target) => {
+    if (!fs.existsSync(target)) return;
+    const stats = fs.lstatSync(target);
+    if (stats.isSymbolicLink()) return;
+    if (stats.isFile()) {
+      files.push({ path: target, bytes: stats.size });
+      return;
+    }
+    if (!stats.isDirectory()) return;
+    for (const entry of fs.readdirSync(target).sort()) visit(path.join(target, entry));
+  };
+  for (const root of roots) visit(root);
+  return files;
+}
+
+function metadataRule(filePath) {
+  const name = path.basename(filePath);
+  if (PROTECTED_RUNTIME_FILE.test(name)) return null;
+  return PACKAGE_PRUNING_RULES.find((rule) => rule.pattern.test(name)) || null;
+}
+
+function sourceMetadataDigest(pluginRoot) {
+  const hash = crypto.createHash('sha256');
+  for (const file of listRegularFiles(runtimeMetadataRoots(pluginRoot))) {
+    if (!metadataRule(file.path) && !PROTECTED_RUNTIME_FILE.test(path.basename(file.path))) continue;
+    hash.update(path.relative(pluginRoot, file.path).replaceAll('\\', '/'));
+    hash.update('\0');
+    hash.update(fs.readFileSync(file.path));
+    hash.update('\0');
+  }
+  return hash.digest('hex');
+}
+
+export function prunePackagedRuntimeMetadata({ sourcePluginRoot, packagedPluginRoot }) {
+  const sourceDigestBefore = sourceMetadataDigest(sourcePluginRoot);
+  const protectedBefore = new Map(listRegularFiles(runtimeMetadataRoots(packagedPluginRoot))
+    .filter((file) => PROTECTED_RUNTIME_FILE.test(path.basename(file.path)))
+    .map((file) => [path.relative(packagedPluginRoot, file.path).replaceAll('\\', '/'), sha256File(file.path)]));
+  const totals = new Map(PACKAGE_PRUNING_RULES.map((rule) => [rule.id, { id: rule.id, files: 0, bytes: 0 }]));
+  const removed = [];
+  for (const file of listRegularFiles(runtimeMetadataRoots(packagedPluginRoot))) {
+    const rule = metadataRule(file.path);
+    if (!rule) continue;
+    const relative = path.relative(packagedPluginRoot, file.path).replaceAll('\\', '/');
+    fs.unlinkSync(file.path);
+    const total = totals.get(rule.id);
+    total.files += 1;
+    total.bytes += file.bytes;
+    removed.push({ path: relative, rule: rule.id, bytes: file.bytes });
+  }
+  for (const [relative, digest] of protectedBefore) {
+    const target = path.join(packagedPluginRoot, ...relative.split('/'));
+    if (!fs.existsSync(target) || sha256File(target) !== digest) fail(`平台成品裁剪破坏了受保护文件：${relative}`);
+  }
+  if (sourceMetadataDigest(sourcePluginRoot) !== sourceDigestBefore) fail('平台成品裁剪修改了规范源运行时');
+  return {
+    policyVersion: PACKAGE_PRUNING_POLICY_VERSION,
+    removedFiles: removed.length,
+    removedBytes: removed.reduce((sum, item) => sum + item.bytes, 0),
+    rules: [...totals.values()],
+    sourceDigest: sourceDigestBefore,
+  };
+}
+
 function sha256File(filePath) {
   const hash = crypto.createHash('sha256');
   hash.update(fs.readFileSync(filePath));
@@ -260,6 +340,32 @@ export function measureLogicalSize(root) {
   return size;
 }
 
+function measureExisting(target) {
+  return fs.existsSync(target) ? measureLogicalSize(target) : 0;
+}
+
+export function measurePackageComposition(pluginRoot, platformKey) {
+  const playwrightRoot = path.join(pluginRoot, 'runtime', 'playwright');
+  const openSpecRoot = path.join(pluginRoot, 'runtime', 'openspec');
+  const playwrightBytes = measureExisting(playwrightRoot);
+  const openSpecRuntime = measureExisting(openSpecRoot);
+  const playwrightPlatformAssets = measureExisting(path.join(playwrightRoot, 'platform-assets', platformKey))
+    + measureExisting(path.join(playwrightRoot, 'platforms', `${platformKey}.json`));
+  const total = measureLogicalSize(pluginRoot);
+  return {
+    playwrightPlatformAssets,
+    playwrightSharedRuntime: playwrightBytes - playwrightPlatformAssets,
+    openSpecRuntime,
+    pluginSource: total - playwrightBytes - openSpecRuntime,
+  };
+}
+
+export function classifyPackageHealth(headroomRatio) {
+  if (headroomRatio >= 0.2) return 'healthy';
+  if (headroomRatio >= 0.1) return 'watch';
+  return 'critical';
+}
+
 function splitPlatformKey(platformKey) {
   const [platform, ...archParts] = platformKey.split('-');
   return { platform, arch: archParts.join('-') };
@@ -333,6 +439,7 @@ export async function packagePluginPlatform({
     });
     if (!sourceInspection.available) fail(`外部平台运行时校验失败：${sourceInspection.reason}`);
     copyPlatformPluginSource({ sourcePluginRoot, platformRuntimeRoot, stagePluginRoot, platformKey });
+    const pruning = prunePackagedRuntimeMetadata({ sourcePluginRoot, packagedPluginRoot: stagePluginRoot });
     writeMarketplaceRoot({ marketplaceRoot: stageRoot, repositoryRoot: sourceRepositoryRoot, platformKey });
     writeJson(path.join(packagedRuntimeRoot, 'distribution.json'), {
       schemaVersion: PLAYWRIGHT_DISTRIBUTION_SCHEMA_VERSION,
@@ -373,12 +480,23 @@ export async function packagePluginPlatform({
     if (!validation?.ok) fail(`平台成品结构校验失败：${validation?.reason || '未知错误'}`);
     const sizeBytes = measureLogicalSize(stagePluginRoot);
     if (sizeBytes > budgetBytes) fail(`平台成品超过预算：${sizeBytes} > ${budgetBytes}`);
+    const composition = measurePackageComposition(stagePluginRoot, platformKey);
+    if (Object.values(composition).reduce((sum, value) => sum + value, 0) !== sizeBytes) {
+      fail('平台成品组成无法与总逻辑体积对齐');
+    }
+    const headroomBytes = budgetBytes - sizeBytes;
+    const headroomRatio = Number((headroomBytes / budgetBytes).toFixed(6));
     const report = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       platformKey,
       sizeBytes,
       budgetBytes,
-      headroomBytes: budgetBytes - sizeBytes,
+      headroomBytes,
+      headroomRatio,
+      health: classifyPackageHealth(headroomRatio),
+      unprunedSizeBytes: sizeBytes + pruning.removedBytes,
+      pruning,
+      composition,
       excludedPlatforms,
       stripped: stripEvidence.stripped,
       stripBeforeBytes: stripEvidence.stripBeforeBytes,

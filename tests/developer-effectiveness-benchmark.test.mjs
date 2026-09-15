@@ -23,6 +23,7 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-foundation.mjs';
 import {
   advanceRunState,
+  buildBenchmarkReviewMarkdown,
   buildBenchmarkSummary,
   buildRunMetrics,
   buildWorkbookImportCsv,
@@ -30,7 +31,10 @@ import {
   createRunState,
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-metrics.mjs';
 import {
+  aggregateCodexTokenUsage,
   buildCodexInvocation,
+  extractCodexTokenUsage,
+  parseCodexJsonLines,
   runBoundedProcess,
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-process.mjs';
 import {
@@ -574,4 +578,66 @@ test('[TC-09] 基准兼容入口保持单向模块边界', () => {
   assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-execution.mjs'), /from '\.\/developer-effectiveness-benchmark\.mjs'/u);
   assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-cases.mjs'), /from '\.\/developer-effectiveness-benchmark-foundation\.mjs'/u);
   assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-contract.mjs'), /developer-effectiveness-benchmark-(?:foundation|cases|execution)\.mjs/u);
+});
+
+test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
+  const parsed = parseCodexJsonLines([
+    JSON.stringify({ type: 'thread.started', thread_id: 'session-token' }),
+    JSON.stringify({
+      type: 'turn.completed',
+      usage: { input_tokens: 100, cached_input_tokens: 80, output_tokens: 20, reasoning_output_tokens: 5 },
+    }),
+    JSON.stringify({
+      type: 'turn.completed',
+      usage: { input_tokens: 50, cached_input_tokens: 40, output_tokens: 10, reasoning_output_tokens: 2 },
+    }),
+  ].join('\n'));
+  assert.deepEqual(parsed.tokenUsage, {
+    status: 'available', reason: null, turnCount: 2,
+    inputTokens: 150, cachedInputTokens: 120, outputTokens: 30, reasoningOutputTokens: 7, totalTokens: 180,
+  });
+  assert.equal(extractCodexTokenUsage([{ type: 'turn.completed' }]).status, 'missing');
+  assert.equal(extractCodexTokenUsage([{
+    type: 'turn.completed',
+    usage: { input_tokens: -1, cached_input_tokens: 0, output_tokens: 0, reasoning_output_tokens: 0 },
+  }]).status, 'invalid');
+  for (const inputTokens of [1.5, '1']) {
+    assert.equal(extractCodexTokenUsage([{
+      type: 'turn.completed',
+      usage: { input_tokens: inputTokens, cached_input_tokens: 0, output_tokens: 0, reasoning_output_tokens: 0 },
+    }]).status, 'invalid');
+  }
+  assert.equal(extractCodexTokenUsage([
+    { type: 'turn.completed' },
+    {
+      type: 'turn.completed',
+      usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
+    },
+  ]).status, 'missing');
+  assert.deepEqual(aggregateCodexTokenUsage([parsed.tokenUsage, parsed.tokenUsage]), {
+    status: 'available', reason: null, turnCount: 4,
+    inputTokens: 300, cachedInputTokens: 240, outputTokens: 60, reasoningOutputTokens: 14, totalTokens: 360,
+  });
+
+  const plugin = buildRunMetrics(metricRun('SYN-P1-S01', 'plugin', { tokenUsage: parsed.tokenUsage }));
+  const baselineUsage = extractCodexTokenUsage([{
+    type: 'turn.completed',
+    usage: { input_tokens: 200, cached_input_tokens: 100, output_tokens: 40, reasoning_output_tokens: 8 },
+  }]);
+  const baseline = buildRunMetrics(metricRun('SYN-P1-S01', 'baseline', { tokenUsage: baselineUsage }));
+  const summary = buildBenchmarkSummary([plugin, baseline], { expectedPairs: 1 });
+  assert.equal(summary.groups.mode.plugin.tokenSampleCount, 1);
+  assert.equal(summary.groups.mode.plugin.averageTotalTokens, 180);
+  assert.equal(summary.pairs[0].delta.tokenUsage.totalTokens, -60);
+  assert.match(buildWorkbookImportCsv(summary), /input_tokens,cached_input_tokens,output_tokens/u);
+  assert.match(buildBenchmarkReviewMarkdown(summary), /Token 有效运行：2\/2/u);
+
+  const legacyMetrics = [
+    buildRunMetrics(metricRun('SYN-P1-S02', 'plugin')),
+    buildRunMetrics(metricRun('SYN-P1-S02', 'baseline')),
+  ].map(({ tokenUsage, tokenDataQualityReasons, ...item }) => item);
+  const legacy = buildBenchmarkSummary(legacyMetrics, { expectedPairs: 1 });
+  assert.equal(legacy.runs.every((item) => item.tokenUsage.status === 'missing'), true);
+  assert.equal(legacy.pairs[0].delta.tokenUsage, null);
+  assert.doesNotThrow(() => buildWorkbookImportCsv(legacy));
 });

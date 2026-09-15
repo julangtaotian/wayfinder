@@ -23,6 +23,9 @@
 - 使用受控活动状态、关联变更范围、逐任务引用和默认 dry-run 的完成入口形成不可绕过的生命周期门禁。
 - 固定内置 OpenSpec 1.9.0，理解规划完成、意外范围报告、归档任务校验、嵌套规格、缩进任务与能力退役，并阻止批量命令在错误规划根静默通过。
 - 使用生产包、声明许可证和包树 SHA-256 清单核验内置 OpenSpec，默认检查不会改写清单。
+- 用分层支持矩阵区分 fixture 声明、本机真实项目、统一验证和五平台 CI，不把单一证据扩大成通用兼容性结论。
+- 从指定 GitHub 仓库、workflow 和 40 位提交精确采集六项全绿 CI 回执；默认预览零联网，写入也只进入被忽略的运行目录。
+- 单平台成品在复制后按白名单裁剪运行时类型声明、source map 和说明类元数据，同时保护许可证及包声明，并输出可复算的包体构成、余量和健康等级。
 - 用 `npm run check:static` 对仓库自有 JavaScript 做零依赖语法检查；同一个 `npm run verify` 在本地和 CI 串行执行该检查、测试、插件结构、OpenSpec 严格校验、归档任务校验、运行时版本与完整性检查。
 - 对已确认“不改变可观察行为”的工具、文档或纯内部变更支持受控 `skip_specs`；其他变更仍必须提供 delta specs，完成入口不暴露跳过参数。
 - 通过插件提供通用技能，减少每个仓库重复维护 `.codex/skills`。
@@ -55,7 +58,7 @@ npm run cleanup:official-validator-cache
 
 ## 合成开发者交付效果基准
 
-`npm run benchmark:developer-effectiveness --` 提供一个独立的合成任务基准，用同一冻结需求配对比较插件组与直接实现组，并采集首次交付、总周期、澄清、返工、阻断和验收结果。它默认只预览三个项目的已提交 Git 基线、六个需求与十二次运行规模，不创建工作区，也不调用 Codex。
+`npm run benchmark:developer-effectiveness --` 提供一个独立的合成任务基准，用同一冻结需求配对比较插件组与直接实现组，并采集首次交付、总周期、澄清、返工、阻断、验收结果及 Codex 官方 JSONL 事件中的 Token 用量。它默认只预览三个项目的已提交 Git 基线、六个需求与十二次运行规模，不创建工作区，也不调用 Codex。
 
 预览时必须显式提供三个独立 Git 项目、运行 ID、模型和推理强度：
 
@@ -73,7 +76,34 @@ npm run benchmark:developer-effectiveness -- \
 
 所有运行内容位于 `.frontend-ai-workflow/runs/developer-effectiveness-benchmark/<run-id>/`，同一运行 ID 会核验不可变输入并从未完成阶段恢复，输入不一致时拒绝覆盖。源项目已有未提交内容不会进入副本，整轮运行要求其分支、提交和状态摘要前后一致。运行事件会脱敏和限长，但仍不应把真实凭据写入需求或项目文件。
 
-本基准会消耗当前账号的 Codex 额度，并可能需要较长时间。`summary.json`、`review.md` 和 `workbook-import.csv` 始终标记为合成样本；只有六个有效配对齐全时才提供描述性比较，结果不能解释为真实开发者效率、团队采用收益或个人绩效。普通 `npm test`、`npm run validate`、`npm run verify` 和默认 CI 只运行确定性测试，不会读取业务项目或启动真实代理。
+本基准会消耗当前账号的 Codex 额度，并可能需要较长时间。Token 只累计 `turn.completed.usage` 中的输入、缓存输入、输出和推理输出字段；缺失或非法事件保留为未知，不按字符数或价格估算，也不影响旧样本的时间与返工指标。`summary.json`、`review.md` 和 `workbook-import.csv` 始终标记为合成样本；只有六个有效配对齐全时才提供描述性比较，结果不能解释为真实开发者效率、团队采用收益或个人绩效。普通 `npm test`、`npm run validate`、`npm run verify` 和默认 CI 只运行确定性测试，不会读取业务项目或启动真实代理。
+
+## 支持证据与 CI 回执
+
+`npm run support:matrix --` 默认只投影仓库已声明的七组支持组合，结果保持 `0 certified / 6 limited / 1 uncovered`，并明确列出 monorepo、多应用、React + Vite 真实项目、pnpm 原生测试、远程设计同步和后端链路等缺口。只有相同 40 位 revision 的真实项目证据、本地统一验证和五平台 CI 回执同时存在时，已声明可认证的 Vue 3 + Vite + Vitest + npm 组合才会变为 `certified`；其他组合不会被顺带提升。
+
+```bash
+npm run support:matrix -- \
+  --revision <40位提交> \
+  --real-project-evidence .frontend-ai-workflow/runs/evidence/real-project.json \
+  --local-validation .frontend-ai-workflow/runs/evidence/local-validation.json \
+  --external-ci-receipt .frontend-ai-workflow/runs/ci-receipts/github-<提交前12位>.json
+```
+
+CI 全绿后，先预览精确目标；预览不联网也不写文件。确认后追加 `--write`，采集器才会访问固定的 GitHub API，核验仓库、`validate.yml`、提交、运行链接和六个唯一成功任务，并原子写入忽略目录。私有仓库可通过进程环境提供 `GITHUB_TOKEN` 或 `GH_TOKEN`，凭据不会写入回执或错误结果。
+
+```bash
+npm run ci:receipt -- \
+  --repository owner/repository \
+  --revision <40位提交>
+
+npm run ci:receipt -- \
+  --repository owner/repository \
+  --revision <40位提交> \
+  --write
+```
+
+随后将返回的运行时路径交给 `npm run lifecycle:status -- --change <变更名> --base <40位提交> --external-ci-receipt <回执路径>`，即可只读得到 `external-ci-recorded`。这不会修改受跟踪文件，也不需要为 CI 状态再提交一次。该回执仍是 `external-recorded`，不冒充平台独立签名或可信远程证明。
 
 ## 安装
 
@@ -226,7 +256,7 @@ $frontend-change 检查当前变更进行到哪一步，还有哪些任务没有
 $frontend-change 验证并完成当前变更
 ```
 
-它会先把活动需求置为“待验证”，检查任务、验收场景、测试结果、机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示规格同步、事件追加和清理动作。schema v2 在仓库锁与事务保护下临时调用 OpenSpec archive 同步正式规格，随后追加 `.workflow-history/<year>.jsonl` 事件并清理活动需求、活动变更、临时归档和普通证据。正文不再改写为永久“已验收”，状态由事件投影为 `accepted-local` 或 `accepted-merged`。真实 CI 是唯一候选提交之后的交付门禁：成功后通过 `.frontend-ai-workflow/runs/ci-receipts/` 回执和只读状态查询派生 `external-ci-recorded`，不回写仓库；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
+它会先把活动需求置为“待验证”，检查任务、验收场景、测试结果、机器证据、验证记录、规划 artifact 完成状态和严格 OpenSpec 结果；默认先展示规格同步、事件追加和清理动作。schema v2 在仓库锁与事务保护下临时调用 OpenSpec archive 同步正式规格，随后追加 `.workflow-history/<year>.jsonl` 事件并清理活动需求、活动变更、临时归档和普通证据。正文不再改写为永久“已验收”，状态由事件投影为 `accepted-local` 或 `accepted-merged`。真实 CI 是唯一候选提交之后的交付门禁：成功后通过 `npm run ci:receipt -- --repository <owner/repository> --revision <40位提交> --write` 采集到 `.frontend-ai-workflow/runs/ci-receipts/`，再由只读状态查询派生 `external-ci-recorded`，不回写仓库；完成阶段不会重跑测试或外部 CI，也不能通过确认跳过失败门禁。
 
 **达到的目的**：使用者只记住一个命令，就能完成“分析 → 规划 → 实施 → 验证 → 完成”，不用学习 OpenSpec 的内部命令或维护归档目录。
 
@@ -455,8 +485,9 @@ npm run cleanup:test-cache
 
 1. 运行 `node plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs --platform <platform-arch> --output dist/frontend-ai-workflow-<platform-arch>` 预览平台、排除资产和体积预算；预览不创建目录。
 2. 仅在 `<platform-arch>` 与当前原生平台一致时追加 `--write`。成品完整保留共享 Playwright、OpenSpec、Skills、脚本、当前平台 Chromium/FFmpeg、许可和重建后的完整性清单，同时排除其他四个平台资产。
-3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。许可、FFmpeg、共享运行时和完整性文件不得用于体积裁剪。
-4. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改规范源码；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
+3. 成品逻辑体积上限为 macOS ARM64/x64 各 260 MiB、Linux x64 330 MiB、Linux ARM64 420 MiB、Windows x64 340 MiB。复制后的 OpenSpec 与 Playwright 依赖可删除类型声明、source map 和 README/CHANGELOG/HISTORY 等说明类元数据；`package.json`、LICENSE/LICENCE、NOTICE、COPYING、THIRD-PARTY、FFmpeg、浏览器和完整性文件始终受保护，规范源码摘要在裁剪前后必须一致。
+4. `package-report.json` schema v2 将体积分为插件源码、OpenSpec 运行时、Playwright 共享运行时和平台浏览器四个互斥部分，并记录裁剪前后字节数、删除文件数、剩余余量比例及 `healthy`、`watch`、`critical` 健康等级；总量和分量必须可复算。
+5. Linux ARM64 只在原生构建机对暂存 Chromium 去除调试符号，不修改规范源码；结构、完整性、体积或真实浏览器冒烟任一失败时都不会发布半成品。
 
 ### 升级内置 OpenSpec
 

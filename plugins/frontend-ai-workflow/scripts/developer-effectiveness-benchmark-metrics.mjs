@@ -28,6 +28,32 @@ function nonNegativeInteger(value) {
   return Number.isInteger(value) && value >= 0;
 }
 
+function normalizedTokenUsage(value) {
+  const fields = ['turnCount', 'inputTokens', 'cachedInputTokens', 'outputTokens', 'reasoningOutputTokens', 'totalTokens'];
+  if (value?.status !== 'available' || fields.some((field) => !nonNegativeInteger(value[field]))) {
+    const reason = value?.status === 'invalid' ? 'invalid-token-usage' : 'missing-token-usage';
+    return {
+      status: value?.status === 'invalid' ? 'invalid' : 'missing',
+      reason,
+      turnCount: 0,
+      inputTokens: null,
+      cachedInputTokens: null,
+      outputTokens: null,
+      reasoningOutputTokens: null,
+      totalTokens: null,
+    };
+  }
+  if (value.totalTokens !== value.inputTokens + value.outputTokens
+    || value.cachedInputTokens > value.inputTokens
+    || value.reasoningOutputTokens > value.outputTokens) {
+    return {
+      status: 'invalid', reason: 'invalid-token-usage', turnCount: 0,
+      inputTokens: null, cachedInputTokens: null, outputTokens: null, reasoningOutputTokens: null, totalTokens: null,
+    };
+  }
+  return { ...value, reason: null };
+}
+
 export function classifyFalseBlocker({ blocked, blockerCategory, availabilityChecks = [] }) {
   if (!blocked) return 'none';
   const deterministicCategory = ['missing-file', 'missing-command', 'resource-unavailable'].includes(blockerCategory);
@@ -61,6 +87,7 @@ export function buildRunMetrics(run) {
   if (typeof run.finalAcceptancePassed !== 'boolean') reasons.push('missing-final-acceptance-result');
   if (!Array.isArray(run.evidence) || run.evidence.length === 0) reasons.push('missing-evidence');
   if (['timeout', 'launch-failed', 'interrupted'].includes(run.status)) reasons.push(`infrastructure-${run.status}`);
+  const tokenUsage = normalizedTokenUsage(run.tokenUsage);
   return {
     schemaVersion: BENCHMARK_SCHEMA_VERSION,
     synthetic: true,
@@ -85,6 +112,8 @@ export function buildRunMetrics(run) {
     firstAcceptancePassed: typeof run.firstAcceptancePassed === 'boolean' ? run.firstAcceptancePassed : null,
     finalAcceptancePassed: typeof run.finalAcceptancePassed === 'boolean' ? run.finalAcceptancePassed : null,
     diffstat: run.diffstat || null,
+    tokenUsage,
+    tokenDataQualityReasons: tokenUsage.reason ? [tokenUsage.reason] : [],
     effective: reasons.length === 0,
     dataQualityReasons: reasons,
     evidence: Array.isArray(run.evidence) ? run.evidence : [],
@@ -102,6 +131,7 @@ function ratio(numerator, denominator) {
 
 function summarizeGroup(items) {
   const valid = items.filter((item) => item.effective);
+  const tokenValid = valid.filter((item) => item.tokenUsage?.status === 'available');
   const blockerTotal = valid.reduce((sum, item) => sum + (item.blockerCount || 0), 0);
   const confirmedFalseBlockers = valid.filter((item) => item.falseBlockerStatus === 'confirmed').length;
   return {
@@ -114,11 +144,35 @@ function summarizeGroup(items) {
     averageClarifications: average(valid.map((item) => item.clarificationCount)),
     averageReworks: average(valid.map((item) => item.reworkCount)),
     confirmedFalseBlockerRate: ratio(confirmedFalseBlockers, blockerTotal),
+    tokenSampleCount: tokenValid.length,
+    averageInputTokens: average(tokenValid.map((item) => item.tokenUsage.inputTokens)),
+    averageCachedInputTokens: average(tokenValid.map((item) => item.tokenUsage.cachedInputTokens)),
+    averageOutputTokens: average(tokenValid.map((item) => item.tokenUsage.outputTokens)),
+    averageReasoningOutputTokens: average(tokenValid.map((item) => item.tokenUsage.reasoningOutputTokens)),
+    averageTotalTokens: average(tokenValid.map((item) => item.tokenUsage.totalTokens)),
+  };
+}
+
+function tokenDelta(plugin, baseline) {
+  if (plugin?.tokenUsage?.status !== 'available' || baseline?.tokenUsage?.status !== 'available') return null;
+  return Object.fromEntries([
+    'inputTokens', 'cachedInputTokens', 'outputTokens', 'reasoningOutputTokens', 'totalTokens',
+  ].map((field) => [field, plugin.tokenUsage[field] - baseline.tokenUsage[field]]));
+}
+
+function normalizePersistedMetrics(item) {
+  const tokenUsage = normalizedTokenUsage(item.tokenUsage);
+  return {
+    ...item,
+    tokenUsage,
+    tokenDataQualityReasons: tokenUsage.reason ? [tokenUsage.reason] : [],
   };
 }
 
 export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CASE_COUNT } = {}) {
-  const metrics = runResults.map((item) => item.synthetic === true && 'effective' in item ? item : buildRunMetrics(item));
+  const metrics = runResults.map((item) => (
+    item.synthetic === true && 'effective' in item ? normalizePersistedMetrics(item) : buildRunMetrics(item)
+  ));
   const byCase = new Map();
   for (const item of metrics) {
     if (!byCase.has(item.caseId)) byCase.set(item.caseId, []);
@@ -140,6 +194,7 @@ export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CAS
         totalCycleMs: plugin.totalCycleMs - baseline.totalCycleMs,
         clarifications: plugin.clarificationCount - baseline.clarificationCount,
         reworks: plugin.reworkCount - baseline.reworkCount,
+        tokenUsage: tokenDelta(plugin, baseline),
       } : null,
     };
   });
@@ -163,6 +218,7 @@ export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CAS
       '本报告仅描述合成模拟任务，不能替代真实开发者或团队交付数据。',
       '需求作者与执行代理可能来自同类模型，结果存在任务风格偏置。',
       '误阻断只有确定性反证时自动确认，其余候选需要人工复核。',
+      'Token 只来自 Codex turn.completed.usage；缺失或非法事件保持未知，不按字符或价格推断。',
     ],
   };
 }
@@ -178,7 +234,8 @@ export function buildWorkbookImportCsv(summary) {
     'task_id', 'project_id', 'project_name', 'sample_role', 'workflow_route', 'complexity', 'task_type',
     'started_at', 'first_delivered_at', 'ended_at', 'clarification_count', 'rework_count', 'blocker_count',
     'false_blocker_status', 'first_acceptance_passed', 'final_acceptance_passed', 'status', 'effective',
-    'first_delivery_hours', 'total_cycle_hours', 'synthetic', 'data_quality',
+    'first_delivery_hours', 'total_cycle_hours', 'input_tokens', 'cached_input_tokens', 'output_tokens',
+    'reasoning_output_tokens', 'total_tokens', 'token_data_quality', 'synthetic', 'data_quality',
   ];
   const rows = summary.runs.map((item) => [
     `${item.caseId}-${item.mode}`, item.projectId, item.projectName,
@@ -187,6 +244,8 @@ export function buildWorkbookImportCsv(summary) {
     item.falseBlockerStatus, item.firstAcceptancePassed, item.finalAcceptancePassed, item.status, item.effective,
     item.firstDeliveryMs === null ? null : item.firstDeliveryMs / 3_600_000,
     item.totalCycleMs === null ? null : item.totalCycleMs / 3_600_000,
+    item.tokenUsage.inputTokens, item.tokenUsage.cachedInputTokens, item.tokenUsage.outputTokens,
+    item.tokenUsage.reasoningOutputTokens, item.tokenUsage.totalTokens, item.tokenDataQualityReasons.join('|'),
     true, item.dataQualityReasons.join('|'),
   ]);
   return `${[headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')}\n`;
@@ -194,6 +253,7 @@ export function buildWorkbookImportCsv(summary) {
 
 export function buildBenchmarkReviewMarkdown(summary) {
   const pending = summary.runs.filter((item) => item.falseBlockerStatus === 'review-required');
+  const tokenRuns = summary.runs.filter((item) => item.effective && item.tokenUsage?.status === 'available');
   return [
     '# 合成开发者交付效果基准复核',
     '',
@@ -203,6 +263,7 @@ export function buildBenchmarkReviewMarkdown(summary) {
     `- 运行数：${summary.runCount}`,
     `- 有效运行：${summary.validRunCount}`,
     `- 有效配对：${summary.validPairCount}/${summary.expectedPairCount}`,
+    `- Token 有效运行：${tokenRuns.length}/${summary.validRunCount}`,
     `- 待人工复核误阻断候选：${pending.length}`,
     '',
     '## 待复核项',
@@ -287,6 +348,7 @@ export function buildFailedRunEvidence({ candidate, mode, projectName, error, ev
     finalAcceptancePassed: false,
     diffstat: null,
     turns: [],
+    tokenUsage: null,
     evidence: [evidencePath],
     failureCode: failure.code,
   };

@@ -127,3 +127,35 @@
 #### Scenario: 没有真实矩阵证据时只报告本地结果
 - **WHEN** 聚焦回归和本地统一验证通过但同一提交的五平台 CI 尚未完成
 - **THEN** 系统只声明本地层级通过，并把外部矩阵保持待执行，不得宣称跨平台发布验证完成
+
+### Requirement: 合成基准必须记录 Codex Token 用量与未知语义
+
+系统 MUST 只从 Codex JSONL 的 `turn.completed` 事件读取非负整数 usage 字段，并 MUST 分别记录 input、cached input、output、reasoning output 和可复算 total Token。没有合法 usage 事件时相关指标 MUST 为 `null` 并带数据质量原因，不得用零值、文本长度、时间或账号额度推断。
+
+#### Scenario: 多轮运行包含合法 usage
+
+- **WHEN** 同一执行样本的一个或多个 `turn.completed` 事件提供合法 Token 字段
+- **THEN** 系统按字段累计各轮用量并记录具有 usage 的 turn 数
+- **AND** total 等于 input 与 output 之和，cached input 和 reasoning output 作为其子维度单独保留
+
+#### Scenario: usage 缺失或非法
+
+- **WHEN** JSONL 没有 `turn.completed.usage`，或字段为负数、非整数、字符串或不可解释结构
+- **THEN** 系统把 Token 指标保存为 null 并记录 `missing-token-usage` 或 `invalid-token-usage`
+- **AND** 该字段不进入 Token 均值或配对差值，但其他完整指标仍按既有规则判断
+
+### Requirement: Token 汇总必须与效果结论边界一致
+
+系统 MUST 在执行组、项目、复杂度和逐用例配对中汇总有效且具有 Token 证据的样本，并 MUST 将总 Token、input、cached input、output 与 reasoning output 写入 JSON、CSV 和人工复核报告。配对缺少任一侧 Token 时该项差值 MUST 为 `null`；合成 Token 差值不得描述为真实开发者或团队生产收益。
+
+#### Scenario: 有效配对两侧都有 Token
+
+- **WHEN** 同一合成用例的插件组和对照组均有效且具有完整 Token 指标
+- **THEN** 系统报告插件组减对照组的 Token 差值和各组平均值
+- **AND** 报告继续显著标记 synthetic 与描述性比较限制
+
+#### Scenario: 配对任一侧 Token 未知
+
+- **WHEN** 有效配对中任一侧缺少可靠 Token 证据
+- **THEN** 系统保留其他效果指标并把 Token 差值设为 null
+- **AND** 系统明确 Token 样本数，不把未知值当 0 拉低平均值

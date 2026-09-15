@@ -22,6 +22,7 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/playwright-runtime.mjs';
 import { buildPlaywrightPlatform, copyExternalRuntimeSource } from '../plugins/frontend-ai-workflow/scripts/build-playwright-platform.mjs';
 import {
+  PACKAGE_PRUNING_POLICY_VERSION,
   PLATFORM_PLUGIN_SIZE_BUDGETS,
   PLATFORM_STAGE_RETRY_POLICY,
   compactPlatformStageName,
@@ -91,6 +92,45 @@ test('平台插件成品只保留匹配资产并重建完整性', async (context
   const marketplace = JSON.parse(fs.readFileSync(path.join(options.outputRoot, '.agents', 'plugins', 'marketplace.json'), 'utf8'));
   assert.equal(marketplace.plugins[0].source.path, './plugins/frontend-ai-workflow');
   await assert.rejects(() => packagePluginPlatform({ ...options, write: true }), /拒绝覆盖/u);
+});
+test('[TC-10] 平台成品白名单裁剪与包体报告可复算', async (context) => {
+  const options = packagingOptions(context);
+  const packageRoot = path.join(options.runtimeRoot, 'node_modules', 'playwright');
+  const sourceFiles = {
+    declaration: path.join(packageRoot, 'types.d.ts'),
+    sourceMap: path.join(packageRoot, 'index.js.map'),
+    readme: path.join(packageRoot, 'README.md'),
+    license: path.join(packageRoot, 'LICENSE'),
+    notice: path.join(packageRoot, 'NOTICE.txt'),
+    runtime: path.join(packageRoot, 'runtime.js'),
+  };
+  for (const [name, target] of Object.entries(sourceFiles)) {
+    fs.writeFileSync(target, `${name} fixture\n`);
+  }
+  writePlaywrightIntegrity({
+    runtimeRoot: options.runtimeRoot,
+    integrityPath: path.join(options.runtimeRoot, 'integrity'),
+    platformKeys: EXPECTED_PLATFORMS,
+  });
+  const sourceBefore = Object.fromEntries(Object.entries(sourceFiles).map(([name, target]) => [name, fs.readFileSync(target)]));
+  const result = await packagePluginPlatform({ ...options, write: true });
+  const packagedRoot = path.join(result.pluginRoot, 'runtime', 'playwright', 'node_modules', 'playwright');
+  assert.equal(result.schemaVersion, 2);
+  assert.equal(result.pruning.policyVersion, PACKAGE_PRUNING_POLICY_VERSION);
+  assert.equal(result.pruning.removedFiles, 3);
+  assert.equal(result.pruning.removedBytes, ['declaration', 'sourceMap', 'readme']
+    .reduce((sum, name) => sum + sourceBefore[name].byteLength, 0));
+  assert.equal(result.unprunedSizeBytes, result.sizeBytes + result.pruning.removedBytes);
+  assert.equal(Object.values(result.composition).reduce((sum, bytes) => sum + bytes, 0), result.sizeBytes);
+  assert.equal(result.headroomRatio, Number((result.headroomBytes / result.budgetBytes).toFixed(6)));
+  assert.equal(['healthy', 'watch', 'critical'].includes(result.health), true);
+  for (const name of ['declaration', 'sourceMap', 'readme']) {
+    assert.equal(fs.existsSync(path.join(packagedRoot, path.basename(sourceFiles[name]))), false);
+  }
+  for (const name of ['license', 'notice', 'runtime']) {
+    assert.deepEqual(fs.readFileSync(path.join(packagedRoot, path.basename(sourceFiles[name]))), sourceBefore[name]);
+  }
+  for (const [name, target] of Object.entries(sourceFiles)) assert.deepEqual(fs.readFileSync(target), sourceBefore[name], name);
 });
 test('平台插件成品拒绝危险路径和非原生写入', async (context) => {
   const options = packagingOptions(context);

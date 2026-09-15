@@ -21,6 +21,8 @@
     "verify:shared": "node scripts/verify.mjs --scope shared",
     "verify:platform": "node scripts/verify.mjs --scope platform",
     "benchmark:developer-effectiveness": "node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs",
+    "support:matrix": "node plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs",
+    "ci:receipt": "node plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs",
     "requirements:archive": "node plugins/frontend-ai-workflow/scripts/requirement-archive.mjs",
     "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs",
     "lifecycle:audit": "node plugins/frontend-ai-workflow/scripts/lifecycle-audit.mjs",

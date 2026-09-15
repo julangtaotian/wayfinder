@@ -68,3 +68,38 @@
 - **WHEN** 六项目没有 pnpm、React + Vite 或真实 workspace/Monorepo 样本
 - **THEN** 最终支持矩阵明确保留这些组合为未覆盖
 - **AND** 不得用相邻框架、嵌套 package 或现有 fixture 替代真实项目认证结论
+
+### Requirement: 支持证据矩阵必须提供可重复的机器投影
+
+系统 MUST 提供版本化、默认只读的支持证据矩阵，将每个框架、构建工具、包管理器和测试运行器组合的 fixture、本机真实项目、本地统一验证和五平台 CI 作为独立层级。每个组合 MUST 使用 `certified`、`limited`、`blocked` 或 `uncovered` 之一，并列出阻止提升的具体缺口。
+
+#### Scenario: 只读取仓库内声明证据
+
+- **WHEN** 调用方没有提供本机真实项目结果、统一验证清单或外部 CI 回执
+- **THEN** 系统只记录已声明的 fixture 覆盖，并将其他层级显示为 unavailable
+- **AND** 不得把存在测试文件、规格声明或相邻组合当成完整认证
+
+#### Scenario: 组合取得分层证据
+
+- **WHEN** 调用方提供 schema、项目组合、精确提交和状态均匹配的本机结果、统一验证或 CI 回执
+- **THEN** 系统只提升该组合对应的证据层级并保留来源描述
+- **AND** 单机、单项目或单运行器证据不得提升其他平台、项目或组合
+
+#### Scenario: 输入证据失效或不匹配
+
+- **WHEN** 可选输入无法解析、schema 不支持、提交不匹配、任务不完整或组合标识未知
+- **THEN** 系统返回稳定 `code`、`status` 和 `target` 并拒绝沿用该输入生成提升结论
+
+### Requirement: 已知未覆盖范围必须显式保留
+
+支持证据矩阵 MUST 显式包含 pnpm 原生测试执行、React + Vite 真实项目、workspace/Monorepo、多应用、远程设计同步和后端链等已知缺口。系统 MUST NOT 因 fixture 能识别相应锁文件或框架而把真实执行与生产适用性标记为已认证。
+
+#### Scenario: fixture 能识别 pnpm 与 React Vite
+
+- **WHEN** 确定性 fixture 已覆盖 pnpm 命令生成或 React + Vite 识别，但没有对应真实项目执行
+- **THEN** 矩阵保留 fixture 层证据，同时把原生执行或真实项目层标记为 uncovered
+
+#### Scenario: 没有真实开发者效果样本
+
+- **WHEN** 只有合成配对基准或没有三个真实项目的有效配对数据
+- **THEN** 矩阵把真实开发者、团队和生产收益标记为 unmeasured，不生成收益百分比

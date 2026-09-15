@@ -216,7 +216,83 @@ export function parseCodexJsonLines(content) {
       invalidLineCount += 1;
     }
   }
-  return { events, invalidLineCount, sessionId };
+  return { events, invalidLineCount, sessionId, tokenUsage: extractCodexTokenUsage(events) };
+}
+
+const TOKEN_USAGE_FIELDS = Object.freeze([
+  ['inputTokens', 'input_tokens'],
+  ['cachedInputTokens', 'cached_input_tokens'],
+  ['outputTokens', 'output_tokens'],
+  ['reasoningOutputTokens', 'reasoning_output_tokens'],
+]);
+
+function emptyTokenUsage(status, reason) {
+  return {
+    status,
+    reason,
+    turnCount: 0,
+    inputTokens: null,
+    cachedInputTokens: null,
+    outputTokens: null,
+    reasoningOutputTokens: null,
+    totalTokens: null,
+  };
+}
+
+export function extractCodexTokenUsage(events) {
+  const totals = Object.fromEntries(TOKEN_USAGE_FIELDS.map(([field]) => [field, 0]));
+  let turnCount = 0;
+  let missingUsage = false;
+  for (const event of Array.isArray(events) ? events : []) {
+    if (event?.type !== 'turn.completed') continue;
+    if (event.usage === undefined) {
+      missingUsage = true;
+      continue;
+    }
+    if (!event.usage || typeof event.usage !== 'object' || Array.isArray(event.usage)) {
+      return emptyTokenUsage('invalid', 'invalid-token-usage');
+    }
+    for (const [field, source] of TOKEN_USAGE_FIELDS) {
+      const value = event.usage[source];
+      if (!Number.isSafeInteger(value) || value < 0 || !Number.isSafeInteger(totals[field] + value)) {
+        return emptyTokenUsage('invalid', 'invalid-token-usage');
+      }
+      totals[field] += value;
+    }
+    turnCount += 1;
+  }
+  if (missingUsage || turnCount === 0) return emptyTokenUsage('missing', 'missing-token-usage');
+  if (totals.cachedInputTokens > totals.inputTokens || totals.reasoningOutputTokens > totals.outputTokens) {
+    return emptyTokenUsage('invalid', 'invalid-token-usage');
+  }
+  const totalTokens = totals.inputTokens + totals.outputTokens;
+  if (!Number.isSafeInteger(totalTokens)) return emptyTokenUsage('invalid', 'invalid-token-usage');
+  return { status: 'available', reason: null, turnCount, ...totals, totalTokens };
+}
+
+export function aggregateCodexTokenUsage(usages) {
+  const items = Array.isArray(usages) ? usages : [];
+  if (items.some((item) => item?.status === 'invalid')) return emptyTokenUsage('invalid', 'invalid-token-usage');
+  if (!items.length || items.some((item) => item?.status !== 'available')) {
+    return emptyTokenUsage('missing', 'missing-token-usage');
+  }
+  const totals = Object.fromEntries(TOKEN_USAGE_FIELDS.map(([field]) => [field, 0]));
+  let turnCount = 0;
+  for (const item of items) {
+    turnCount += item.turnCount;
+    for (const [field] of TOKEN_USAGE_FIELDS) {
+      if (!Number.isSafeInteger(item[field]) || item[field] < 0 || !Number.isSafeInteger(totals[field] + item[field])) {
+        return emptyTokenUsage('invalid', 'invalid-token-usage');
+      }
+      totals[field] += item[field];
+    }
+  }
+  if (totals.cachedInputTokens > totals.inputTokens || totals.reasoningOutputTokens > totals.outputTokens) {
+    return emptyTokenUsage('invalid', 'invalid-token-usage');
+  }
+  const totalTokens = totals.inputTokens + totals.outputTokens;
+  if (!Number.isSafeInteger(totalTokens)) return emptyTokenUsage('invalid', 'invalid-token-usage');
+  return { status: 'available', reason: null, turnCount, ...totals, totalTokens };
 }
 
 function runGit(workspace, args, env) {

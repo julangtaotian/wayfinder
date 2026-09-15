@@ -10,7 +10,7 @@ import {
   buildRunMetrics, classifyFalseBlocker,
 } from './developer-effectiveness-benchmark-metrics.mjs';
 import {
-  buildCodexInvocation, parseCodexJsonLines, runBoundedProcess,
+  aggregateCodexTokenUsage, buildCodexInvocation, parseCodexJsonLines, runBoundedProcess,
 } from './developer-effectiveness-benchmark-process.mjs';
 import { resolveSafeProjectPath } from './project-path-safety.mjs';
 
@@ -277,6 +277,7 @@ export async function executeCaseRun({
         timedOut: turn.processResult.timedOut,
         interrupted: turn.processResult.interrupted,
         invalidEventLines: turn.parsed.invalidLineCount,
+        tokenUsage: turn.parsed.tokenUsage,
         response: turn.finalResponse,
         eventPaths: turn.eventPaths,
       });
@@ -397,6 +398,7 @@ export async function executeCaseRun({
     finalAcceptancePassed,
     diffstat: latestChanges.diffstat,
     workflowTransitions,
+    tokenUsage: aggregateCodexTokenUsage(turns.map((turn) => turn.tokenUsage)),
     turns,
     evidence,
   };
