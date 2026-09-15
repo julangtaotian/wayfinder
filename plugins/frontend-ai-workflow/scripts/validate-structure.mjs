@@ -100,6 +100,11 @@ const DEVELOPER_BENCHMARK_FILE_LIMITS = new Map([
   ['scripts/developer-effectiveness-benchmark-cases.mjs', 350],
   ['scripts/developer-effectiveness-benchmark-contract.mjs', 220],
 ]);
+const REAL_EFFECTIVENESS_FILE_LIMITS = new Map([
+  ['scripts/real-developer-effectiveness-statistics.mjs', 450],
+  ['scripts/real-developer-effectiveness-evidence.mjs', 260],
+  ['scripts/support-evidence-matrix.mjs', 450],
+]);
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
   'scripts/runtime-integrity.mjs',
@@ -367,6 +372,18 @@ function validateDeveloperBenchmarkStructure(errors) {
   }
 }
 
+function validateRealEffectivenessStructure(errors) {
+  for (const [file, limit] of REAL_EFFECTIVENESS_FILE_LIMITS) {
+    const absolutePath = path.join(pluginRoot, file);
+    if (!fs.existsSync(absolutePath)) {
+      errors.push(`缺少真实开发者效果证据模块：${file}`);
+      continue;
+    }
+    const lines = fs.readFileSync(absolutePath, 'utf8').trimEnd().split(/\r?\n/u).length;
+    if (lines > limit) errors.push(`真实开发者效果证据模块超过 ${limit} 行：${file}（${lines} 行）`);
+  }
+}
+
 function validateRuntimeIntegrityAssets(errors) {
   for (const file of RUNTIME_INTEGRITY_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少运行时完整性资产：${file}`);
@@ -484,6 +501,7 @@ export async function validateStructure({ scope = 'all' } = {}) {
     validateTestWorkflowAssets(errors);
     validateCoreModularAssets(errors);
     validateDeveloperBenchmarkStructure(errors);
+    validateRealEffectivenessStructure(errors);
     validateRuntimeIntegrityAssets(errors);
     validateUiReviewAssets(errors);
     await validateUiReviewStructure(errors, distribution);

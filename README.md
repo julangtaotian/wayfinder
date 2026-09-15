@@ -24,6 +24,7 @@
 - 固定内置 OpenSpec 1.9.0，理解规划完成、意外范围报告、归档任务校验、嵌套规格、缩进任务与能力退役，并阻止批量命令在错误规划根静默通过。
 - 使用生产包、声明许可证和包树 SHA-256 清单核验内置 OpenSpec，默认检查不会改写清单。
 - 用分层支持矩阵区分 fixture 声明、本机真实项目、统一验证和五平台 CI，不把单一证据扩大成通用兼容性结论。
+- 从匿名真实项目配对观测生成可复算的开发者效率证据，以固定统计门槛、项目级防回退及验收和返工护栏区分证据不足、未证明、回退与已证明改善。
 - 为干净精确提交生成标准本地统一验证回执；默认只预览，显式写入只执行一次固定完整验证，失败不发布证据。
 - 从真实项目矩阵、inspection 与 native-test 标准结果直接投影匿名支持证据，复核 run、项目集合、提交和文件摘要，不再要求手工拼装组合 JSON。
 - 从指定 GitHub 仓库、workflow 和 40 位提交精确采集六项全绿 CI 回执；默认预览零联网，写入也只进入被忽略的运行目录。
@@ -80,6 +81,79 @@ npm run benchmark:developer-effectiveness -- \
 
 本基准会消耗当前账号的 Codex 额度，并可能需要较长时间。Token 只累计 `turn.completed.usage` 中的输入、缓存输入、输出和推理输出字段；缺失或非法事件保留为未知，不按字符数或价格估算，也不影响旧样本的时间与返工指标。`summary.json`、`review.md` 和 `workbook-import.csv` 始终标记为合成样本；只有六个有效配对齐全时才提供描述性比较，结果不能解释为真实开发者效率、团队采用收益或个人绩效。普通 `npm test`、`npm run validate`、`npm run verify` 和默认 CI 只运行确定性测试，不会读取业务项目或启动真实代理。
 
+## 真实开发者效率证据
+
+`npm run effectiveness:real-evidence --` 把已经完成的真实项目配对观测转换为标准效率证据。它不负责招募参与者或启动代理：默认只读取并校验显式指定的研究 JSON，返回预览且不联网、不写文件；只有追加 `--write` 才会把结果写入被忽略的运行目录。
+
+研究输入只能包含匿名别名、摘要和结构化指标。每个配对必须冻结同一项目提交、任务、需求、验收合同、模型、推理强度和时限，并记录隔离工作区、禁止交叉读取、独立验收、执行顺序、首次交付、总周期、返工、阻断和验收结果。Token 只接受 Codex 官方用量字段的非负整数聚合；任一侧未知时，该配对的 Token 差值保持 `null`。输入文件应放在 `.frontend-ai-workflow/runs/developer-effectiveness-studies/`。
+
+输入使用 schema v1。下面展示一个配对的完整字段；正式研究需要按相同结构扩展 `projects` 和 `pairs` 以满足最低规模，`plugin` 与 `baseline` 的字段完全相同。所有摘要使用小写 SHA-256，`projectCommit` 使用 40 位 Git 提交：
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "real-developer-effectiveness-study",
+  "studyId": "study-001",
+  "revision": "<40位插件提交>",
+  "projects": [{ "id": "P1" }],
+  "pairs": [
+    {
+      "id": "PAIR-1",
+      "projectId": "P1",
+      "participantId": "U1",
+      "taskDigest": "<64位摘要>",
+      "projectCommit": "<40位项目提交>",
+      "requirementDigest": "<64位摘要>",
+      "acceptanceDigest": "<64位摘要>",
+      "order": "plugin-first",
+      "conditions": {
+        "model": "<模型>",
+        "reasoning": "high",
+        "timeoutMinutes": 60,
+        "workspaceIsolated": true,
+        "crossReadPrevented": true,
+        "acceptanceIndependent": true
+      },
+      "plugin": {
+        "startedAt": "2026-09-15T00:00:00.000Z",
+        "firstDeliveredAt": "2026-09-15T00:10:00.000Z",
+        "endedAt": "2026-09-15T00:20:00.000Z",
+        "clarificationCount": 0,
+        "reworkCount": 0,
+        "blockerCount": 0,
+        "firstAcceptancePassed": true,
+        "finalAcceptancePassed": true,
+        "tokenUsage": null
+      },
+      "baseline": {
+        "startedAt": "2026-09-15T01:00:00.000Z",
+        "firstDeliveredAt": "2026-09-15T01:15:00.000Z",
+        "endedAt": "2026-09-15T01:25:00.000Z",
+        "clarificationCount": 0,
+        "reworkCount": 0,
+        "blockerCount": 0,
+        "firstAcceptancePassed": true,
+        "finalAcceptancePassed": true,
+        "tokenUsage": null
+      }
+    }
+  ]
+}
+```
+
+```bash
+npm run effectiveness:real-evidence -- \
+  --study .frontend-ai-workflow/runs/developer-effectiveness-studies/<study-id>.json \
+  --revision <40位插件提交>
+
+npm run effectiveness:real-evidence -- \
+  --study .frontend-ai-workflow/runs/developer-effectiveness-studies/<study-id>.json \
+  --revision <40位插件提交> \
+  --write
+```
+
+可形成统计结论的最低规模为三个匿名真实项目、三名匿名参与者、每项目两个双侧最终验收通过的可比较配对、六个非平局配对，并且同一项目任务不重复、两种执行顺序都出现。只有总周期中位改善至少 10%、单侧精确符号检验 `p < 0.05`、所有项目中位周期不回退，且最终验收、首次验收和返工护栏均不下降，状态才是 `demonstrated-improvement` 并公开 `benefitPercent`。规模或可比性不足为 `inconclusive`，门槛未通过为 `no-demonstrated-improvement`，质量回退优先标记为 `regressed`；后三者的收益百分比始终为 `null`。证据还会独立汇总首次交付、澄清、返工、阻断和 Token 差值，但这些次要指标不单独决定总周期结论。这个小样本结论只证明当前冻结任务和参与者下的阶段性结果，不外推长期团队生产率、因果机制或个人绩效。
+
 ## 支持证据与 CI 回执
 
 `npm run support:matrix --` 默认只投影仓库已声明的七组支持组合，结果保持 `0 certified / 6 limited / 1 uncovered`，并明确列出 monorepo、多应用、React + Vite 真实项目、pnpm 原生测试、远程设计同步和后端链路等缺口。只有相同 40 位 revision 的标准真实项目证据、标准本地统一验证回执和五平台 CI 回执同时存在时，已声明可认证的 Vue 3 + Vite + Vitest + npm 组合才会变为 `certified`；其他组合不会被顺带提升。第二阶段手工 schema v1 文件继续可读并显示为 `legacy-recorded`，但不再参与认证。
@@ -107,17 +181,18 @@ npm run support:project-evidence -- \
   --write
 ```
 
-三类回执齐全后显式聚合；命令不会自动挑选“最新”文件，避免跨分支或跨 run 误用陈旧证据：
+支持认证的三类回执齐全后显式聚合；如已有同提交的标准真实效率证据，可作为独立的第四层输入。命令不会自动挑选“最新”文件，避免跨分支或跨 run 误用陈旧证据：
 
 ```bash
 npm run support:matrix -- \
   --revision <40位提交> \
   --real-project-evidence .frontend-ai-workflow/runs/support-evidence/real-project-<提交前12位>.json \
   --local-validation .frontend-ai-workflow/runs/local-validation/<提交前12位>.json \
-  --external-ci-receipt .frontend-ai-workflow/runs/ci-receipts/github-<提交前12位>.json
+  --external-ci-receipt .frontend-ai-workflow/runs/ci-receipts/github-<提交前12位>.json \
+  --developer-effectiveness-evidence .frontend-ai-workflow/runs/developer-effectiveness-evidence/<study-id>-<提交前12位>.json
 ```
 
-这些入口降低的是证据转换成本，不改变真实收益的证明门槛：没有至少三个真实项目的有效开发者配对样本时，开发者、团队和生产收益继续显示为 `unmeasured`，收益百分比保持 `null`。
+不提供真实效率证据时，开发者、团队和生产收益继续显示为 `unmeasured`，收益百分比保持 `null`；提供损坏、跨提交或手工伪造的结果会失败关闭。真实效率证据不会改变支持组合的认证数量，支持范围与开发收益仍是两条独立结论。
 
 CI 全绿后，先预览精确目标；预览不联网也不写文件。确认后追加 `--write`，采集器才会访问固定的 GitHub API，核验仓库、`validate.yml`、提交、运行链接和六个唯一成功任务，并原子写入忽略目录。私有仓库可通过进程环境提供 `GITHUB_TOKEN` 或 `GH_TOKEN`，凭据不会写入回执或错误结果。
 

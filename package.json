@@ -22,6 +22,7 @@
     "verify:shared": "node scripts/verify.mjs --scope shared",
     "verify:platform": "node scripts/verify.mjs --scope platform",
     "benchmark:developer-effectiveness": "node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs",
+    "effectiveness:real-evidence": "node plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs",
     "support:project-evidence": "node plugins/frontend-ai-workflow/scripts/real-project-support-evidence.mjs",
     "support:matrix": "node plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs",
     "ci:receipt": "node plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs",

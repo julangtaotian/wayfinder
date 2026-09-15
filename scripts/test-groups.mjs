@@ -24,6 +24,7 @@ export const TEST_GROUPS = Object.freeze({
     'tests/verification-evidence-integrity.test.mjs',
     'tests/dynamic-dependency-context.test.mjs',
     'tests/developer-effectiveness-benchmark.test.mjs',
+    'tests/real-developer-effectiveness-evidence.test.mjs',
     'tests/project-target-profile.test.mjs',
     'tests/project-platform-profile.test.mjs',
     'tests/real-project-validation.test.mjs',

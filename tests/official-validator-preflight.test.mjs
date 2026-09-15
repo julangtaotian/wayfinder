@@ -106,6 +106,7 @@ test('[TC-01] 官方预检复用缓存并执行全部目标', (t) => {
   });
 
   assert.equal(first.ok, true, JSON.stringify(first));
+  assert.equal(first.code, 'official_validator_preflight_passed');
   assert.equal(first.cacheStatus, 'created');
   assert.equal(first.skillCount, 2);
   assert.deepEqual(first.results.map((item) => item.target), [

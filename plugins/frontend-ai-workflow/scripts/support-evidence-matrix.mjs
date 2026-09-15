@@ -5,6 +5,12 @@ import { pathToFileURL } from 'node:url';
 
 import { readExternalCiReceipt } from './external-ci-receipt.mjs';
 import { resolveSafeProjectPath } from './project-path-safety.mjs';
+import { buildRealDeveloperEffectivenessRecord } from './real-developer-effectiveness-evidence.mjs';
+import {
+  REAL_DEVELOPER_EVIDENCE_GENERATOR,
+  REAL_DEVELOPER_EVIDENCE_KIND,
+  REAL_DEVELOPER_EFFECT_STATUSES,
+} from './real-developer-effectiveness-statistics.mjs';
 import { validateSupportSourceDescriptor } from './real-project-support-evidence.mjs';
 
 const REVISION_PATTERN = /^[a-f0-9]{40}$/u;
@@ -13,6 +19,7 @@ const PROJECT_ID_PATTERN = /^P[1-9][0-9]*$/u;
 const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{2,79}$/iu;
 const STANDARD_LOCAL_GENERATOR = 'frontend-ai-workflow/local-verification-receipt';
 const STANDARD_PROJECT_GENERATOR = 'frontend-ai-workflow/real-project-support-evidence';
+const STANDARD_EFFECTIVENESS_GENERATOR = REAL_DEVELOPER_EVIDENCE_GENERATOR;
 const REQUIRED_LOCAL_STEPS = new Set([
   'static', 'footprint', 'lifecycle', 'tests', 'structure', 'openspec', 'runtime-version', 'runtime-integrity',
 ]);
@@ -158,6 +165,39 @@ function validateRealProjectEvidence(value, revision) {
   };
 }
 
+function validateDeveloperEffectiveness(value, revision) {
+  if (!value) return null;
+  const statuses = new Set(REAL_DEVELOPER_EFFECT_STATUSES);
+  if (value.schemaVersion !== 1 || value.kind !== REAL_DEVELOPER_EVIDENCE_KIND
+    || value.generator?.id !== STANDARD_EFFECTIVENESS_GENERATOR || value.generator?.version !== 1
+    || String(value.revision || '').toLowerCase() !== revision || !statuses.has(value.status)
+    || typeof value.studyId !== 'string' || !RUN_ID_PATTERN.test(value.studyId)
+    || !Number.isSafeInteger(value.sample?.projectCount) || value.sample.projectCount < 1
+    || !Number.isSafeInteger(value.sample?.pairCount) || value.sample.pairCount < 1
+    || !validateSupportSourceDescriptor(value.source?.study)
+    || !value.primaryMetric || !value.qualityGuardrails || !value.tokenUsage || !Array.isArray(value.pairs)) {
+    fail('invalid_developer_effectiveness_evidence', '真实开发者效果证据的 schema、生成器、样本或来源无效', 'developerEffectiveness');
+  }
+  const benefitPercent = value.status === 'demonstrated-improvement' ? value.benefitPercent : null;
+  if ((value.status === 'demonstrated-improvement'
+    && (!Number.isFinite(benefitPercent) || benefitPercent < 10 || benefitPercent !== value.primaryMetric.medianImprovementPercent))
+    || (value.status !== 'demonstrated-improvement' && value.benefitPercent !== null)) {
+    fail('invalid_developer_effectiveness_benefit', '真实开发者效果证据的收益与结论状态不一致', 'developerEffectiveness.benefitPercent');
+  }
+  return {
+    status: value.status,
+    code: String(value.code || ''),
+    benefitPercent,
+    trust: 'generated',
+    studyId: value.studyId,
+    projectCount: value.sample.projectCount,
+    pairCount: value.sample.pairCount,
+    comparablePairCount: value.sample.comparablePairCount,
+    source: { study: { ...value.source.study } },
+    reasons: Array.isArray(value.reasons) ? value.reasons.map(String) : [],
+  };
+}
+
 function layer(status, code, extra = {}) {
   return { status, code, ...extra };
 }
@@ -189,12 +229,19 @@ function combinationProjection(definition, { realProjects, localValidation, ci }
   return { ...definition, status, layers, gaps };
 }
 
-export function buildSupportEvidenceMatrix({ revision = null, realProjectEvidence = null, localValidation = null, externalCiReceipt = null } = {}) {
-  const needsRevision = Boolean(realProjectEvidence || localValidation || externalCiReceipt);
+export function buildSupportEvidenceMatrix({
+  revision = null,
+  realProjectEvidence = null,
+  localValidation = null,
+  externalCiReceipt = null,
+  developerEffectivenessEvidence = null,
+} = {}) {
+  const needsRevision = Boolean(realProjectEvidence || localValidation || externalCiReceipt || developerEffectivenessEvidence);
   const normalizedRevision = normalizeRevision(revision, needsRevision);
   const realProjectLayer = validateRealProjectEvidence(realProjectEvidence, normalizedRevision);
   const realProjects = realProjectLayer.mapped;
   const local = validateLocalValidation(localValidation, normalizedRevision);
+  const developerEffectiveness = validateDeveloperEffectiveness(developerEffectivenessEvidence, normalizedRevision);
   let ci = null;
   if (externalCiReceipt) {
     const jobNames = Array.isArray(externalCiReceipt.jobs)
@@ -232,12 +279,15 @@ export function buildSupportEvidenceMatrix({ revision = null, realProjectEvidenc
         projectIds: [...new Set([...realProjects.values()].flatMap((item) => item.projectIds))].sort(),
       } : null,
       fivePlatformCi: ci ? { trust: 'external-recorded', revision: ci.revision, reference: ci.reference } : null,
+      developerEffectiveness: developerEffectiveness ? {
+        trust: developerEffectiveness.trust,
+        studyId: developerEffectiveness.studyId,
+        source: developerEffectiveness.source,
+      } : null,
     },
     knownGaps: [...KNOWN_SUPPORT_GAPS],
-    developerEffectiveness: {
-      status: 'unmeasured',
-      code: 'real_developer_samples_missing',
-      benefitPercent: null,
+    developerEffectiveness: developerEffectiveness || {
+      status: 'unmeasured', code: 'real_developer_samples_missing', benefitPercent: null,
     },
     limitations: [
       'fixture、本机真实项目、本地统一验证和五平台 CI 互不替代。',
@@ -262,9 +312,18 @@ function verifyDescriptor(root, descriptor, label) {
   if (content.byteLength !== descriptor.bytes || digest !== descriptor.sha256) {
     fail('support_evidence_source_mismatch', `${label}大小或摘要与标准回执不一致`, target.projectPath);
   }
+  return { target, content };
 }
 
-function verifyStandardEvidenceSources(root, realProjectEvidence, localValidation) {
+function canonicalJson(value) {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function verifyStandardEvidenceSources(root, realProjectEvidence, localValidation, developerEffectivenessEvidence) {
   if (realProjectEvidence?.kind === 'real-project-support-evidence') {
     for (const [index, descriptor] of realProjectEvidence.source.files.entries()) {
       verifyDescriptor(root, descriptor, `真实项目来源[${index}]`);
@@ -273,23 +332,42 @@ function verifyStandardEvidenceSources(root, realProjectEvidence, localValidatio
   if (localValidation?.kind === 'local-verification-receipt') {
     verifyDescriptor(root, localValidation.evidence.runner, '本地统一验证来源');
   }
+  if (developerEffectivenessEvidence?.kind === REAL_DEVELOPER_EVIDENCE_KIND) {
+    // 不能只信任回执自身摘要；必须读取研究源文件并按当前规则完整重算标准结果。
+    const verified = verifyDescriptor(root, developerEffectivenessEvidence.source.study, '真实开发者效果来源');
+    let study;
+    try {
+      study = JSON.parse(verified.content.toString('utf8'));
+    } catch {
+      fail('invalid_developer_effectiveness_source_json', '真实开发者效果来源不是有效 JSON', verified.target.projectPath);
+    }
+    const expected = buildRealDeveloperEffectivenessRecord(study, developerEffectivenessEvidence.source.study);
+    if (canonicalJson(expected) !== canonicalJson(developerEffectivenessEvidence)) {
+      fail('developer_effectiveness_evidence_mismatch', '真实开发者效果证据与来源重算结果不一致', 'developerEffectiveness');
+    }
+  }
 }
 
 export function projectSupportEvidenceMatrix({
   root = process.cwd(), revision = null, realProjectEvidencePath = null, localValidationPath = null, externalCiReceiptPath = null,
+  developerEffectivenessEvidencePath = null,
 } = {}) {
   const realProjectEvidence = realProjectEvidencePath ? readJson(root, realProjectEvidencePath, '真实项目证据') : null;
   const localValidation = localValidationPath ? readJson(root, localValidationPath, '本地统一验证证据') : null;
   const external = externalCiReceiptPath
     ? readExternalCiReceipt({ root, receiptPath: externalCiReceiptPath, baseRevision: normalizeRevision(revision, true) }).receipt
     : null;
+  const developerEffectivenessEvidence = developerEffectivenessEvidencePath
+    ? readJson(root, developerEffectivenessEvidencePath, '真实开发者效果证据')
+    : null;
   const projected = buildSupportEvidenceMatrix({
     revision,
     realProjectEvidence,
     localValidation,
     externalCiReceipt: external,
+    developerEffectivenessEvidence,
   });
-  verifyStandardEvidenceSources(root, realProjectEvidence, localValidation);
+  verifyStandardEvidenceSources(root, realProjectEvidence, localValidation, developerEffectivenessEvidence);
   return projected;
 }
 
@@ -300,10 +378,14 @@ function requiredValue(argv, index, option) {
 }
 
 function parseArgs(argv) {
-  const result = { root: process.cwd(), revision: null, realProjectEvidencePath: null, localValidationPath: null, externalCiReceiptPath: null };
+  const result = {
+    root: process.cwd(), revision: null, realProjectEvidencePath: null, localValidationPath: null,
+    externalCiReceiptPath: null, developerEffectivenessEvidencePath: null,
+  };
   const options = new Map([
     ['--target', 'root'], ['--revision', 'revision'], ['--real-project-evidence', 'realProjectEvidencePath'],
     ['--local-validation', 'localValidationPath'], ['--external-ci-receipt', 'externalCiReceiptPath'],
+    ['--developer-effectiveness-evidence', 'developerEffectivenessEvidencePath'],
   ]);
   for (let index = 0; index < argv.length; index += 1) {
     const option = argv[index];
