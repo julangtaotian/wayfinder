@@ -24,6 +24,8 @@
 - 固定内置 OpenSpec 1.9.0，理解规划完成、意外范围报告、归档任务校验、嵌套规格、缩进任务与能力退役，并阻止批量命令在错误规划根静默通过。
 - 使用生产包、声明许可证和包树 SHA-256 清单核验内置 OpenSpec，默认检查不会改写清单。
 - 用分层支持矩阵区分 fixture 声明、本机真实项目、统一验证和五平台 CI，不把单一证据扩大成通用兼容性结论。
+- 为干净精确提交生成标准本地统一验证回执；默认只预览，显式写入只执行一次固定完整验证，失败不发布证据。
+- 从真实项目矩阵、inspection 与 native-test 标准结果直接投影匿名支持证据，复核 run、项目集合、提交和文件摘要，不再要求手工拼装组合 JSON。
 - 从指定 GitHub 仓库、workflow 和 40 位提交精确采集六项全绿 CI 回执；默认预览零联网，写入也只进入被忽略的运行目录。
 - 单平台成品在复制后按白名单裁剪运行时类型声明、source map 和说明类元数据，同时保护许可证及包声明，并输出可复算的包体构成、余量和健康等级。
 - 用 `npm run check:static` 对仓库自有 JavaScript 做零依赖语法检查；同一个 `npm run verify` 在本地和 CI 串行执行该检查、测试、插件结构、OpenSpec 严格校验、归档任务校验、运行时版本与完整性检查。
@@ -80,15 +82,42 @@ npm run benchmark:developer-effectiveness -- \
 
 ## 支持证据与 CI 回执
 
-`npm run support:matrix --` 默认只投影仓库已声明的七组支持组合，结果保持 `0 certified / 6 limited / 1 uncovered`，并明确列出 monorepo、多应用、React + Vite 真实项目、pnpm 原生测试、远程设计同步和后端链路等缺口。只有相同 40 位 revision 的真实项目证据、本地统一验证和五平台 CI 回执同时存在时，已声明可认证的 Vue 3 + Vite + Vitest + npm 组合才会变为 `certified`；其他组合不会被顺带提升。
+`npm run support:matrix --` 默认只投影仓库已声明的七组支持组合，结果保持 `0 certified / 6 limited / 1 uncovered`，并明确列出 monorepo、多应用、React + Vite 真实项目、pnpm 原生测试、远程设计同步和后端链路等缺口。只有相同 40 位 revision 的标准真实项目证据、标准本地统一验证回执和五平台 CI 回执同时存在时，已声明可认证的 Vue 3 + Vite + Vitest + npm 组合才会变为 `certified`；其他组合不会被顺带提升。第二阶段手工 schema v1 文件继续可读并显示为 `legacy-recorded`，但不再参与认证。
+
+提交候选形成后，先预览本地回执；预览不会执行测试或写文件。工作区干净且 HEAD 与 revision 完全一致时追加 `--write`，入口固定执行一次完整 `npm run verify` 链并把标准回执原子写入忽略目录。它不接受任意命令或自定义验证作用域。
+
+```bash
+npm run verify:receipt -- --revision <40位提交>
+
+npm run verify:receipt -- \
+  --revision <40位提交> \
+  --write
+```
+
+真实项目先按既有矩阵分别生成同一 run 的 `inspection/results.json` 与 `native-test/results.json`。随后用标准投影入口复核两份结果的内容摘要、runId、匿名项目集合、项目提交和实际 preset/构建工具/包管理器/runner 事实；默认只读预览，追加 `--write` 才生成支持证据。绝对业务路径、缺陷、摘要篡改或歧义组合都会失败关闭。
+
+```bash
+npm run support:project-evidence -- \
+  --revision <40位插件提交> \
+  --matrix .frontend-ai-workflow/runs/real-project-validation/local-matrix.json
+
+npm run support:project-evidence -- \
+  --revision <40位插件提交> \
+  --matrix .frontend-ai-workflow/runs/real-project-validation/local-matrix.json \
+  --write
+```
+
+三类回执齐全后显式聚合；命令不会自动挑选“最新”文件，避免跨分支或跨 run 误用陈旧证据：
 
 ```bash
 npm run support:matrix -- \
   --revision <40位提交> \
-  --real-project-evidence .frontend-ai-workflow/runs/evidence/real-project.json \
-  --local-validation .frontend-ai-workflow/runs/evidence/local-validation.json \
+  --real-project-evidence .frontend-ai-workflow/runs/support-evidence/real-project-<提交前12位>.json \
+  --local-validation .frontend-ai-workflow/runs/local-validation/<提交前12位>.json \
   --external-ci-receipt .frontend-ai-workflow/runs/ci-receipts/github-<提交前12位>.json
 ```
+
+这些入口降低的是证据转换成本，不改变真实收益的证明门槛：没有至少三个真实项目的有效开发者配对样本时，开发者、团队和生产收益继续显示为 `unmeasured`，收益百分比保持 `null`。
 
 CI 全绿后，先预览精确目标；预览不联网也不写文件。确认后追加 `--write`，采集器才会访问固定的 GitHub API，核验仓库、`validate.yml`、提交、运行链接和六个唯一成功任务，并原子写入忽略目录。私有仓库可通过进程环境提供 `GITHUB_TOKEN` 或 `GH_TOKEN`，凭据不会写入回执或错误结果。
 
@@ -467,7 +496,7 @@ npm run cleanup:test-runtime
 npm run cleanup:test-cache
 ```
 
-`prepare:test-runtime` 从 `scripts/fixtures/frontend-test-runtime/` 中受版本控制的锁定输入创建固定 Vitest 运行时，并通过 `npm ci` 写入被整体忽略的 `.frontend-ai-workflow/runs/frontend-test-runtime/`；可复用 npm 缓存独立位于 `.frontend-ai-workflow/cache/frontend-test-cache/`，不会在项目根目录创建 `node_modules`。首次在线准备会填充缓存；此后可使用 `npm run prepare:test-runtime -- --offline` 或 `npm run verify:shared -- --offline` 强制只使用缓存，缓存缺失或不完整时命令失败关闭。`cleanup:test-runtime` 只删除临时运行时，`cleanup:test-cache` 才删除可复用缓存。`verify` 是本地与 CI 的统一门禁，先执行静态语法、生命周期格式、体积和受跟踪运行时检查，再执行测试、结构、OpenSpec 与运行时验证；预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `.frontend-ai-workflow/runs/verify-runtime/tmp` 后自动清理。定位问题时可运行 `npm run lifecycle:status -- --change <change-name>`、`npm run lifecycle:audit`、`npm run lifecycle:migrate`、`npm run test:repository`、`npm run test:workflow`、`npm run footprint` 和 `npm run validate`。
+`prepare:test-runtime` 从 `scripts/fixtures/frontend-test-runtime/` 中受版本控制的锁定输入创建固定 Vitest 运行时，并通过 `npm ci` 写入被整体忽略的 `.frontend-ai-workflow/runs/frontend-test-runtime/`；可复用 npm 缓存独立位于 `.frontend-ai-workflow/cache/frontend-test-cache/`，不会在项目根目录创建 `node_modules`。首次在线准备会填充缓存；此后可使用 `npm run prepare:test-runtime -- --offline` 或 `npm run verify:shared -- --offline` 强制只使用缓存，缓存缺失或不完整时命令失败关闭。`cleanup:test-runtime` 只删除临时运行时，`cleanup:test-cache` 才删除可复用缓存。`verify` 是本地与 CI 的统一门禁，先执行静态语法、生命周期格式、体积和受跟踪运行时检查，再执行测试、结构、OpenSpec 与运行时验证；`verify:receipt` 则在精确干净提交上执行同一完整链一次并输出可聚合的忽略回执。预算调整必须先形成正式需求和设计决策，不能按当前体积静默放宽。它会把跨平台临时目录固定到 `.frontend-ai-workflow/runs/verify-runtime/tmp` 后自动清理。定位问题时可运行 `npm run lifecycle:status -- --change <change-name>`、`npm run lifecycle:audit`、`npm run lifecycle:migrate`、`npm run test:repository`、`npm run test:workflow`、`npm run footprint` 和 `npm run validate`。
 
 规范源码只保存 Playwright 共享 JavaScript 运行时、锁文件、许可证、五平台元数据和共享完整性清单，不再保存 Chromium/FFmpeg 二进制或平台生成清单。Validate CI 在各原生 runner 上通过固定 Playwright 1.62.1 CLI，在源码目录之外的有界暂存中只生成当前平台 marketplace；普通 push/PR 只上传小型 `package-report.json`，不上传大型浏览器成品，也不增加 cache、schedule 或写权限。完整性、许可、体积和真实 Chromium 冒烟仍是必需门禁，不能用跳过冒烟代替成功。
 

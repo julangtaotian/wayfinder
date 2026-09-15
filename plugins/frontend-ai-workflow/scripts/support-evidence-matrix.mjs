@@ -1,12 +1,21 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { readExternalCiReceipt } from './external-ci-receipt.mjs';
 import { resolveSafeProjectPath } from './project-path-safety.mjs';
+import { validateSupportSourceDescriptor } from './real-project-support-evidence.mjs';
 
 const REVISION_PATTERN = /^[a-f0-9]{40}$/u;
 const EVIDENCE_STATUSES = new Set(['passed', 'limited', 'blocked']);
+const PROJECT_ID_PATTERN = /^P[1-9][0-9]*$/u;
+const RUN_ID_PATTERN = /^[a-z0-9][a-z0-9._-]{2,79}$/iu;
+const STANDARD_LOCAL_GENERATOR = 'frontend-ai-workflow/local-verification-receipt';
+const STANDARD_PROJECT_GENERATOR = 'frontend-ai-workflow/real-project-support-evidence';
+const REQUIRED_LOCAL_STEPS = new Set([
+  'static', 'footprint', 'lifecycle', 'tests', 'structure', 'openspec', 'runtime-version', 'runtime-integrity',
+]);
 const EXPECTED_CI_RECEIPT_JOBS = new Set([
   'shared-linux-x64',
   'platform-darwin-arm64',
@@ -59,30 +68,94 @@ function validateLocalValidation(value, revision) {
   if (value.schemaVersion !== 1 || value.status !== 'passed' || String(value.revision || '').toLowerCase() !== revision) {
     fail('invalid_local_validation_evidence', '本地统一验证证据必须使用 schemaVersion 1、passed 状态并匹配 revision', 'localValidation');
   }
-  return { status: 'passed', code: String(value.code || 'local_validation_passed'), revision };
+  const standard = value.kind === 'local-verification-receipt';
+  if (!standard) {
+    return {
+      status: 'passed', code: String(value.code || 'local_validation_passed'), revision,
+      trust: 'legacy-recorded', certifying: false, source: null,
+    };
+  }
+  const completed = Array.isArray(value.completed) ? value.completed.map(String) : [];
+  const platform = value.platform;
+  const runner = value.evidence?.runner;
+  if (value.generator?.id !== STANDARD_LOCAL_GENERATOR || value.generator?.version !== 1
+    || value.code !== 'verification_passed' || value.scope !== 'all'
+    || !platform || !['platform', 'arch', 'node'].every((field) => typeof platform[field] === 'string' && platform[field])
+    || !Number.isSafeInteger(value.durationMs) || value.durationMs < 0
+    || completed.length !== new Set(completed).size
+    || [...REQUIRED_LOCAL_STEPS].some((step) => !completed.includes(step))
+    || value.evidence?.stepCount !== completed.length
+    || !validateSupportSourceDescriptor(runner) || runner.path !== 'scripts/verify.mjs') {
+    fail('invalid_standard_local_validation', '标准本地统一验证回执的生成器、阶段、平台或来源摘要无效', 'localValidation');
+  }
+  return {
+    status: 'passed', code: value.code, revision,
+    trust: 'generated', certifying: true, platform: { ...platform }, source: { runner: { ...runner } },
+  };
 }
 
 function validateRealProjectEvidence(value, revision) {
-  if (!value) return new Map();
+  if (!value) return { mapped: new Map(), trust: null, certifying: false, source: null };
   if (value.schemaVersion !== 1 || String(value.revision || '').toLowerCase() !== revision || !Array.isArray(value.combinations)) {
     fail('invalid_real_project_evidence', '真实项目证据 schema 或 revision 无效', 'realProjectEvidence');
   }
+  const standard = value.kind === 'real-project-support-evidence';
+  if (standard) {
+    const files = value.source?.files;
+    const sourcePaths = Array.isArray(files) ? files.map((item) => String(item?.path || '')) : [];
+    if (value.generator?.id !== STANDARD_PROJECT_GENERATOR || value.generator?.version !== 1
+      || value.status !== 'passed' || !RUN_ID_PATTERN.test(String(value.runId || ''))
+      || !Array.isArray(files) || files.length !== 3 || files.some((item) => !validateSupportSourceDescriptor(item))
+      || new Set(sourcePaths).size !== 3
+      || sourcePaths.filter((sourcePath) => sourcePath.endsWith('/inspection/results.json')).length !== 1
+      || sourcePaths.filter((sourcePath) => sourcePath.endsWith('/native-test/results.json')).length !== 1
+      || sourcePaths.some((sourcePath) => !sourcePath.includes('/real-project-validation/'))) {
+      fail('invalid_standard_real_project_evidence', '标准真实项目证据的生成器、runId 或来源摘要无效', 'realProjectEvidence');
+    }
+  }
   const known = new Set(SUPPORT_MATRIX_COMBINATIONS.map((item) => item.id));
   const mapped = new Map();
+  const seenProjects = new Set();
   for (const [index, item] of value.combinations.entries()) {
     const id = String(item?.id || '');
     const status = String(item?.status || '');
     if (!known.has(id)) fail('unknown_support_combination', '真实项目证据包含未知组合', id || `combinations[${index}]`);
     if (mapped.has(id)) fail('duplicate_support_combination', '真实项目证据包含重复组合', id);
     if (!EVIDENCE_STATUSES.has(status)) fail('invalid_support_evidence_status', '真实项目证据状态无效', id);
+    let projectIds;
+    let projects;
+    if (standard) {
+      projectIds = Array.isArray(item.projectIds) ? item.projectIds.map(String) : [];
+      projects = Array.isArray(item.projects) ? item.projects : [];
+      if (!projectIds.length || projectIds.length !== new Set(projectIds).size
+        || projectIds.some((projectId) => !PROJECT_ID_PATTERN.test(projectId) || seenProjects.has(projectId))
+        || projects.length !== projectIds.length
+        || projects.some((project, projectIndex) => project?.id !== projectIds[projectIndex]
+          || !REVISION_PATTERN.test(String(project?.commit || '').toLowerCase()))) {
+        fail('invalid_standard_real_project_projects', '标准真实项目证据的匿名项目与提交无效', id);
+      }
+      projectIds.forEach((projectId) => seenProjects.add(projectId));
+    } else {
+      projectIds = [String(item.projectId || 'unknown')];
+      projects = [];
+    }
     mapped.set(id, {
       status,
       code: String(item.code || 'real_project_recorded'),
-      projectId: String(item.projectId || 'unknown'),
+      projectIds,
+      projects,
       revision,
+      runId: standard ? value.runId : null,
+      trust: standard ? 'generated' : 'legacy-recorded',
+      certifying: standard,
     });
   }
-  return mapped;
+  return {
+    mapped,
+    trust: standard ? 'generated' : 'legacy-recorded',
+    certifying: standard,
+    source: standard ? { files: value.source.files.map((item) => ({ ...item })) } : null,
+  };
 }
 
 function layer(status, code, extra = {}) {
@@ -102,21 +175,25 @@ function combinationProjection(definition, { realProjects, localValidation, ci }
   const gaps = [];
   if (!definition.fixture) gaps.push('fixture');
   if (!realProjects.has(definition.id)) gaps.push('local-real-project');
+  else if (!realProject.certifying) gaps.push('local-real-project:legacy-recorded');
   else if (realProject.status !== 'passed') gaps.push(`local-real-project:${realProject.status}`);
   if (!localValidation) gaps.push('local-validation');
+  else if (!localValidation.certifying) gaps.push('local-validation:legacy-recorded');
   if (!ci) gaps.push('five-platform-ci');
   if (!definition.certifiable) gaps.push('certification-not-declared');
   let status = 'limited';
   if (!definition.fixture) status = 'uncovered';
   else if (realProject.status === 'blocked') status = 'blocked';
-  else if (definition.certifiable && realProject.status === 'passed' && localValidation && ci) status = 'certified';
+  else if (definition.certifiable && realProject.status === 'passed' && realProject.certifying
+    && localValidation?.certifying && ci) status = 'certified';
   return { ...definition, status, layers, gaps };
 }
 
 export function buildSupportEvidenceMatrix({ revision = null, realProjectEvidence = null, localValidation = null, externalCiReceipt = null } = {}) {
   const needsRevision = Boolean(realProjectEvidence || localValidation || externalCiReceipt);
   const normalizedRevision = normalizeRevision(revision, needsRevision);
-  const realProjects = validateRealProjectEvidence(realProjectEvidence, normalizedRevision);
+  const realProjectLayer = validateRealProjectEvidence(realProjectEvidence, normalizedRevision);
+  const realProjects = realProjectLayer.mapped;
   const local = validateLocalValidation(localValidation, normalizedRevision);
   let ci = null;
   if (externalCiReceipt) {
@@ -146,6 +223,16 @@ export function buildSupportEvidenceMatrix({ revision = null, realProjectEvidenc
     revision: normalizedRevision,
     counts,
     combinations,
+    evidenceSummary: {
+      localValidation: local ? { trust: local.trust, certifying: local.certifying, source: local.source } : null,
+      realProjects: realProjectEvidence ? {
+        trust: realProjectLayer.trust,
+        certifying: realProjectLayer.certifying,
+        source: realProjectLayer.source,
+        projectIds: [...new Set([...realProjects.values()].flatMap((item) => item.projectIds))].sort(),
+      } : null,
+      fivePlatformCi: ci ? { trust: 'external-recorded', revision: ci.revision, reference: ci.reference } : null,
+    },
     knownGaps: [...KNOWN_SUPPORT_GAPS],
     developerEffectiveness: {
       status: 'unmeasured',
@@ -168,18 +255,42 @@ function readJson(root, candidate, label) {
   }
 }
 
+function verifyDescriptor(root, descriptor, label) {
+  const target = resolveSafeProjectPath(root, descriptor.path, label, { mustExist: true, allowDirectory: false });
+  const content = fs.readFileSync(target.absolutePath);
+  const digest = crypto.createHash('sha256').update(content).digest('hex');
+  if (content.byteLength !== descriptor.bytes || digest !== descriptor.sha256) {
+    fail('support_evidence_source_mismatch', `${label}大小或摘要与标准回执不一致`, target.projectPath);
+  }
+}
+
+function verifyStandardEvidenceSources(root, realProjectEvidence, localValidation) {
+  if (realProjectEvidence?.kind === 'real-project-support-evidence') {
+    for (const [index, descriptor] of realProjectEvidence.source.files.entries()) {
+      verifyDescriptor(root, descriptor, `真实项目来源[${index}]`);
+    }
+  }
+  if (localValidation?.kind === 'local-verification-receipt') {
+    verifyDescriptor(root, localValidation.evidence.runner, '本地统一验证来源');
+  }
+}
+
 export function projectSupportEvidenceMatrix({
   root = process.cwd(), revision = null, realProjectEvidencePath = null, localValidationPath = null, externalCiReceiptPath = null,
 } = {}) {
+  const realProjectEvidence = realProjectEvidencePath ? readJson(root, realProjectEvidencePath, '真实项目证据') : null;
+  const localValidation = localValidationPath ? readJson(root, localValidationPath, '本地统一验证证据') : null;
   const external = externalCiReceiptPath
     ? readExternalCiReceipt({ root, receiptPath: externalCiReceiptPath, baseRevision: normalizeRevision(revision, true) }).receipt
     : null;
-  return buildSupportEvidenceMatrix({
+  const projected = buildSupportEvidenceMatrix({
     revision,
-    realProjectEvidence: realProjectEvidencePath ? readJson(root, realProjectEvidencePath, '真实项目证据') : null,
-    localValidation: localValidationPath ? readJson(root, localValidationPath, '本地统一验证证据') : null,
+    realProjectEvidence,
+    localValidation,
     externalCiReceipt: external,
   });
+  verifyStandardEvidenceSources(root, realProjectEvidence, localValidation);
+  return projected;
 }
 
 function requiredValue(argv, index, option) {

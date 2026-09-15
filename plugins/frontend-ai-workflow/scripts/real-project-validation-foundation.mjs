@@ -38,6 +38,11 @@ export function normalizeMachinePath(value) {
   return String(value || '').replaceAll('\\', '/').replace(/^\.\//u, '');
 }
 
+export function stagePayloadDigest(value) {
+  const { contentDigest: _ignored, ...payload } = value || {};
+  return crypto.createHash('sha256').update(JSON.stringify(payload), 'utf8').digest('hex');
+}
+
 export function validationFailure(error, fallbackTarget = null) {
   if (error instanceof RealProjectValidationError) {
     return {

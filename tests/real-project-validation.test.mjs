@@ -21,6 +21,12 @@ import {
   sanitizeCapturedOutput,
   validateMatrix,
 } from '../plugins/frontend-ai-workflow/scripts/real-project-validation.mjs';
+import { stagePayloadDigest } from '../plugins/frontend-ai-workflow/scripts/real-project-validation-foundation.mjs';
+import {
+  RealProjectSupportEvidenceError,
+  matchSupportCombination,
+  projectRealSupportEvidence,
+} from '../plugins/frontend-ai-workflow/scripts/real-project-support-evidence.mjs';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixtureOutputRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'real-project-validation', 'test-fixtures');
@@ -107,6 +113,166 @@ function captureError(operation) {
   });
   return captured;
 }
+
+function writeStagePayload(fixture, stage, results) {
+  const payload = {
+    schemaVersion: 1,
+    runId: fixture.matrix.runId,
+    stage,
+    platform: { platform: 'darwin', arch: 'arm64', node: 'v20.19.0' },
+    status: 'passed',
+    results,
+  };
+  payload.contentDigest = stagePayloadDigest(payload);
+  write(fixture.root, `${path.relative(fixture.root, fixture.runRoot)}/${stage}/results.json`, `${JSON.stringify(payload, null, 2)}\n`);
+  return payload;
+}
+
+function createProjectionFixture(context, name) {
+  const fixture = createFixture(context, `projection-${name}`);
+  const project = fixture.matrix.projects[0];
+  const projects = [
+    project,
+    { ...project, id: 'P2', role: 'Vue Webpack fixture' },
+    { ...project, id: 'P3', role: 'WeChat fixture' },
+  ];
+  fixture.matrix = { ...fixture.matrix, projects };
+  fs.writeFileSync(fixture.matrixPath, `${JSON.stringify(fixture.matrix, null, 2)}\n`, 'utf8');
+  const inspectionResults = [
+    {
+      projectId: 'P1', stage: 'inspection', root: 'project:P1', commit: project.commit,
+      preset: 'vue3-vite', packageManager: 'npm', buildTools: ['vite'],
+      runner: { name: 'Vitest', certification: 'verified-vue3-vite-vitest' },
+      status: 'passed', code: 'inspection_facts_matched', matchesExpected: true,
+    },
+    {
+      projectId: 'P2', stage: 'inspection', root: 'project:P2', commit: project.commit,
+      preset: 'vue-webpack', packageManager: 'yarn', buildTools: ['webpack'],
+      runner: { name: 'Jest', certification: 'project-evidence-only' },
+      status: 'passed', code: 'inspection_facts_matched', matchesExpected: true,
+    },
+    {
+      projectId: 'P3', stage: 'inspection', root: 'project:P3', commit: project.commit,
+      preset: 'wechat-native', packageManager: 'npm', buildTools: [],
+      runner: { name: '未识别', certification: 'project-evidence-only' },
+      status: 'passed', code: 'inspection_facts_matched', matchesExpected: true,
+    },
+  ];
+  const nativeResults = [
+    { projectId: 'P1', stage: 'native-test', status: 'passed', code: 'certified_test_run_passed', matchesExpected: true },
+    { projectId: 'P2', stage: 'native-test', status: 'limited', code: 'project_evidence_test_run_passed', matchesExpected: true },
+    { projectId: 'P3', stage: 'native-test', status: 'blocked', code: 'test_facility_missing', matchesExpected: true },
+  ];
+  const inspection = writeStagePayload(fixture, 'inspection', inspectionResults);
+  const nativeTest = writeStagePayload(fixture, 'native-test', nativeResults);
+  return { ...fixture, projects, inspection, nativeTest };
+}
+
+test('[TC-09] 真实项目标准结果投影与保守组合映射', (context) => {
+  const fixture = createProjectionFixture(context, 'success');
+  const preview = projectRealSupportEvidence({
+    root: fixture.root,
+    matrix: path.relative(fixture.root, fixture.matrixPath),
+    revision: fixture.project.commit,
+  });
+  assert.equal(preview.status, 'planned');
+  assert.equal(preview.write, false);
+  assert.equal(preview.outputExists, false);
+  assert.deepEqual(preview.combinations.map((item) => [item.id, item.status]), [
+    ['vue-webpack-yarn-jest', 'limited'],
+    ['vue3-vite-vitest-npm', 'passed'],
+    ['wechat-native-npm-manual', 'blocked'],
+  ]);
+  assert.equal(preview.source.files.length, 3);
+  assert.equal(preview.source.files.every((item) => !path.isAbsolute(item.path) && /^[a-f0-9]{64}$/u.test(item.sha256)), true);
+
+  const recorded = projectRealSupportEvidence({
+    root: fixture.root,
+    matrix: path.relative(fixture.root, fixture.matrixPath),
+    revision: fixture.project.commit,
+    write: true,
+  }, {
+    readSnapshot: () => ({ revision: fixture.project.commit, status: '' }),
+  });
+  assert.equal(recorded.status, 'recorded');
+  const evidenceText = fs.readFileSync(path.join(fixture.root, recorded.receipt), 'utf8');
+  assert.equal(evidenceText.includes(fixture.projectRoot), false);
+  const evidence = JSON.parse(evidenceText);
+  assert.equal(evidence.kind, 'real-project-support-evidence');
+  assert.deepEqual(evidence.combinations.find((item) => item.id === 'vue3-vite-vitest-npm').projectIds, ['P1']);
+  assert.deepEqual(evidence.combinations.find((item) => item.id === 'vue-webpack-yarn-jest').projects, [
+    { id: 'P2', commit: fixture.project.commit },
+  ]);
+});
+
+test('[TC-10] 真实项目投影失败安全与敏感边界', (context) => {
+  const digestFixture = createProjectionFixture(context, 'digest');
+  const inspectionPath = path.join(digestFixture.runRoot, 'inspection', 'results.json');
+  const damaged = JSON.parse(fs.readFileSync(inspectionPath, 'utf8'));
+  damaged.results[0].preset = 'react-vite';
+  fs.writeFileSync(inspectionPath, `${JSON.stringify(damaged, null, 2)}\n`, 'utf8');
+  assert.throws(
+    () => projectRealSupportEvidence({ root: digestFixture.root, matrix: path.relative(digestFixture.root, digestFixture.matrixPath), revision: digestFixture.project.commit }),
+    (error) => error instanceof RealProjectSupportEvidenceError && error.code === 'support_stage_digest_mismatch',
+  );
+
+  const defectFixture = createProjectionFixture(context, 'defect');
+  defectFixture.nativeTest.results[0].status = 'defect';
+  defectFixture.nativeTest.results[0].matchesExpected = false;
+  writeStagePayload(defectFixture, 'native-test', defectFixture.nativeTest.results);
+  assert.throws(
+    () => projectRealSupportEvidence({ root: defectFixture.root, matrix: path.relative(defectFixture.root, defectFixture.matrixPath), revision: defectFixture.project.commit }),
+    (error) => error.code === 'support_project_defect' && error.target === 'P1',
+  );
+
+  const absoluteFixture = createProjectionFixture(context, 'absolute');
+  absoluteFixture.inspection.results[0].debugPath = '/private/business/source.vue';
+  writeStagePayload(absoluteFixture, 'inspection', absoluteFixture.inspection.results);
+  assert.throws(
+    () => projectRealSupportEvidence({ root: absoluteFixture.root, matrix: path.relative(absoluteFixture.root, absoluteFixture.matrixPath), revision: absoluteFixture.project.commit }),
+    (error) => error.code === 'support_stage_absolute_path',
+  );
+
+  const duplicateFixture = createProjectionFixture(context, 'duplicate');
+  duplicateFixture.nativeTest.results[2] = { ...duplicateFixture.nativeTest.results[1] };
+  writeStagePayload(duplicateFixture, 'native-test', duplicateFixture.nativeTest.results);
+  assert.throws(
+    () => projectRealSupportEvidence({ root: duplicateFixture.root, matrix: path.relative(duplicateFixture.root, duplicateFixture.matrixPath), revision: duplicateFixture.project.commit }),
+    (error) => error.code === 'support_project_duplicate' && error.target === 'P2',
+  );
+
+  const unknownFixture = createProjectionFixture(context, 'unknown');
+  unknownFixture.inspection.results[0].runner = { name: 'Node Test Runner', certification: 'project-evidence-only' };
+  writeStagePayload(unknownFixture, 'inspection', unknownFixture.inspection.results);
+  assert.throws(
+    () => projectRealSupportEvidence({ root: unknownFixture.root, matrix: path.relative(unknownFixture.root, unknownFixture.matrixPath), revision: unknownFixture.project.commit }),
+    (error) => error.code === 'support_combination_unknown' && error.target === 'P1',
+  );
+
+  const duplicatedRule = {
+    id: 'duplicate', preset: 'vue3-vite', buildTools: ['vite'], packageManager: 'npm',
+    runner: 'Vitest', certification: 'verified-vue3-vite-vitest', certifiable: true,
+  };
+  assert.throws(
+    () => matchSupportCombination({
+      ...unknownFixture.inspection.results[0],
+      runner: { name: 'Vitest', certification: 'verified-vue3-vite-vitest' },
+    }, [duplicatedRule, { ...duplicatedRule }]),
+    (error) => error.code === 'support_combination_ambiguous',
+  );
+
+  const missingFixture = createProjectionFixture(context, 'missing');
+  fs.rmSync(path.join(missingFixture.runRoot, 'native-test', 'results.json'));
+  assert.throws(
+    () => projectRealSupportEvidence({ root: missingFixture.root, matrix: path.relative(missingFixture.root, missingFixture.matrixPath), revision: missingFixture.project.commit }),
+    (error) => error.code === 'project_path_missing',
+  );
+
+  assert.throws(
+    () => projectRealSupportEvidence({ root: unknownFixture.root, matrix: path.relative(unknownFixture.root, unknownFixture.matrixPath), revision: unknownFixture.project.commit, output: 'support.json' }),
+    (error) => error.code === 'support_combination_unknown' || error.code === 'support_evidence_outside_runtime',
+  );
+});
 
 test('[TC-01] 固定基线与漂移失败关闭', (context) => {
   const fixture = createFixture(context, 'baseline');

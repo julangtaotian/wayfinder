@@ -27,6 +27,7 @@ import {
   loadValidationMatrix,
   normalizeMachinePath,
   resolveInsideValidationBase,
+  stagePayloadDigest,
   validationBase,
   validationFailure,
   validateMatrix,
@@ -525,6 +526,7 @@ function writeStageResult({ repositoryRoot, runRoot, stage, payload }) {
   const stageDirectory = path.join(runRoot, stage);
   fs.mkdirSync(stageDirectory, { recursive: true });
   const resultPath = path.join(stageDirectory, 'results.json');
+  payload.contentDigest = stagePayloadDigest(payload);
   fs.writeFileSync(resultPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
   return createValidationArtifactDescriptor(repositoryRoot, resultPath, `${stage} 结果`);
 }

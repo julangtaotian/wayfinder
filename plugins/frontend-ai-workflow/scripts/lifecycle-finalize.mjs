@@ -46,16 +46,32 @@ function listSpecCapabilities(changePath) {
   return capabilities.filter(Boolean).sort();
 }
 
-const LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*（(?=[^（）\r\n]*(?:D|A)-\d+)[DA\d、，；;～~—–\- \t]+）/gu;
+const INLINE_LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*（(?=[^（）\r\n]*(?:D|A)-\d+)[DA\d、，；;～~—–\- \t]+）/gu;
+const STANDALONE_LOCAL_SPEC_PROVENANCE_PATTERN = /^[ \t]*<!--\s*provenance:\s*(?=[^>\r\n]*(?:D|A)-\d+\b)[^>\r\n]*-->[ \t]*(?:\r?\n|$)/gimu;
 
 export function stripLocalSpecProvenance(content) {
-  return String(content).replace(LOCAL_SPEC_PROVENANCE_PATTERN, '');
+  return String(content)
+    .replace(INLINE_LOCAL_SPEC_PROVENANCE_PATTERN, '')
+    .replace(STANDALONE_LOCAL_SPEC_PROVENANCE_PATTERN, '');
 }
 
-function normalizeMainSpecs(root, capabilities) {
-  for (const capability of capabilities) {
-    const file = path.join(root, 'openspec', 'specs', capability, 'spec.md');
-    if (!fs.existsSync(file)) continue;
+function listMainSpecFiles(root) {
+  const specsRoot = path.join(root, 'openspec', 'specs');
+  if (!fs.existsSync(specsRoot)) return [];
+  const files = [];
+  function visit(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) visit(target);
+      else if (entry.isFile() && entry.name === 'spec.md') files.push(target);
+    }
+  }
+  visit(specsRoot);
+  return files.sort();
+}
+
+function normalizeMainSpecs(root) {
+  for (const file of listMainSpecFiles(root)) {
     const current = fs.readFileSync(file, 'utf8');
     const normalized = stripLocalSpecProvenance(current);
     if (normalized !== current) {
@@ -181,7 +197,7 @@ export function finalizeLifecycleV2({
     }
     const details = archiveResultDetails(archived, check.archive.targetPath);
     const archiveTarget = path.join(check.root, 'openspec', 'changes', 'archive', details.archiveName);
-    normalizeMainSpecs(check.root, capabilities);
+    normalizeMainSpecs(check.root);
     const specDigest = digestMainSpecs(check.root, capabilities);
     const event = {
       schemaVersion: 2,
@@ -254,7 +270,7 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
     const archiveTarget = path.join(lock.layout.config.root, current.archivePath);
     let event = current.event;
     if (!event && fs.existsSync(archiveTarget)) {
-      normalizeMainSpecs(lock.layout.config.root, current.capabilities);
+      normalizeMainSpecs(lock.layout.config.root);
       const specDigest = digestMainSpecs(lock.layout.config.root, current.capabilities);
       event = {
         schemaVersion: 2,

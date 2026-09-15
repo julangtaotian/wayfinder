@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -13,9 +14,14 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs';
 import { readExternalCiReceipt } from '../plugins/frontend-ai-workflow/scripts/external-ci-receipt.mjs';
 import {
+  LocalVerificationReceiptError,
+  collectLocalVerificationReceipt,
+} from '../scripts/collect-local-verification-receipt.mjs';
+import {
   KNOWN_SUPPORT_GAPS,
   SupportEvidenceError,
   buildSupportEvidenceMatrix,
+  projectSupportEvidenceMatrix,
 } from '../plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs';
 
 const REVISION = 'a'.repeat(40);
@@ -25,8 +31,146 @@ function createRoot(context, name) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), `delivery-evidence-${name}-`));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.writeFileSync(path.join(root, 'package.json'), '{}\n');
+  fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'scripts', 'verify.mjs'), 'export const fixture = true;\n');
   return root;
 }
+
+function writeProjectFile(root, relativePath, content) {
+  const target = path.join(root, relativePath);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, content, 'utf8');
+  return target;
+}
+
+function describeProjectFile(root, relativePath) {
+  const content = fs.readFileSync(path.join(root, relativePath));
+  return {
+    path: relativePath,
+    bytes: content.byteLength,
+    sha256: crypto.createHash('sha256').update(content).digest('hex'),
+  };
+}
+
+test('[TC-03] 本地统一验证回执预览与单次执行', (context) => {
+  const root = createRoot(context, 'local-receipt');
+  let verificationCalls = 0;
+  let snapshotCalls = 0;
+  const preview = collectLocalVerificationReceipt({ root, revision: REVISION }, {
+    readSnapshot: () => {
+      snapshotCalls += 1;
+      return { revision: REVISION, status: '' };
+    },
+    runVerification: () => {
+      verificationCalls += 1;
+      return { ok: true, status: 0, scope: 'all', completed: ['tests'] };
+    },
+  });
+  assert.equal(preview.status, 'planned');
+  assert.equal(preview.write, false);
+  assert.deepEqual(preview.command, ['node', 'scripts/verify.mjs']);
+  assert.equal(snapshotCalls, 0);
+  assert.equal(verificationCalls, 0);
+  assert.equal(fs.existsSync(path.join(root, preview.output)), false);
+
+  const times = [1_000, 1_125];
+  const recorded = collectLocalVerificationReceipt({ root, revision: REVISION, write: true }, {
+    readSnapshot: () => {
+      snapshotCalls += 1;
+      return { revision: REVISION, status: '' };
+    },
+    runVerification: ({ scope }) => {
+      verificationCalls += 1;
+      assert.equal(scope, 'all');
+      return { ok: true, status: 0, scope, completed: ['static', 'tests', 'structure'] };
+    },
+    now: () => times.shift(),
+    platform: { platform: 'win32', arch: 'x64', node: 'v20.19.0' },
+  });
+  assert.equal(recorded.status, 'recorded');
+  assert.equal(recorded.durationMs, 125);
+  assert.equal(snapshotCalls, 2);
+  assert.equal(verificationCalls, 1);
+  const receiptPath = path.join(root, recorded.receipt);
+  const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8'));
+  assert.equal(receipt.kind, 'local-verification-receipt');
+  assert.deepEqual(receipt.generator, { id: 'frontend-ai-workflow/local-verification-receipt', version: 1 });
+  assert.deepEqual(receipt.platform, { platform: 'win32', arch: 'x64', node: 'v20.19.0' });
+  assert.equal(receipt.evidence.runner.path, 'scripts/verify.mjs');
+  assert.match(receipt.evidence.runner.sha256, /^[a-f0-9]{64}$/u);
+  assert.equal(receipt.evidence.stepCount, 3);
+  const original = fs.readFileSync(receiptPath, 'utf8');
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, write: true }),
+    (error) => error instanceof LocalVerificationReceiptError && error.code === 'local_verification_receipt_exists',
+  );
+  assert.equal(fs.readFileSync(receiptPath, 'utf8'), original);
+});
+
+test('[TC-04] 本地回执失败和漂移边界', (context) => {
+  const root = createRoot(context, 'local-failures');
+  const output = '.frontend-ai-workflow/runs/local-validation/failure.json';
+  const exists = () => fs.existsSync(path.join(root, output));
+
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output, write: true }, {
+      readSnapshot: () => ({ revision: 'b'.repeat(40), status: '' }),
+    }),
+    (error) => error.code === 'local_verification_revision_mismatch' && error.target === '执行前',
+  );
+  assert.equal(exists(), false);
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output, write: true }, {
+      readSnapshot: () => ({ revision: REVISION, status: ' M README.md' }),
+    }),
+    (error) => error.code === 'local_verification_workspace_dirty' && error.target === '执行前',
+  );
+  assert.equal(exists(), false);
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output, write: true }, {
+      readSnapshot: () => ({ revision: REVISION, status: '' }),
+      runVerification: () => ({ ok: false, status: 1, scope: 'all', failedStep: 'tests', completed: [] }),
+      now: () => 0,
+    }),
+    (error) => error.code === 'local_verification_failed' && error.target === 'tests',
+  );
+  assert.equal(exists(), false);
+
+  const snapshots = [
+    { revision: REVISION, status: '' },
+    { revision: REVISION, status: '?? changed.txt' },
+  ];
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output, write: true }, {
+      readSnapshot: () => snapshots.shift(),
+      runVerification: () => ({ ok: true, status: 0, scope: 'all', completed: ['tests'] }),
+      now: () => 0,
+    }),
+    (error) => error.code === 'local_verification_workspace_dirty' && error.target === '执行后',
+  );
+  assert.equal(exists(), false);
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output: 'tracked.json' }),
+    (error) => error.code === 'local_verification_receipt_outside_runtime',
+  );
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output: 'C:\\outside\\receipt.json' }),
+    (error) => ['unsafe_project_path', 'local_verification_receipt_outside_runtime'].includes(error.code),
+  );
+
+  assert.throws(
+    () => collectLocalVerificationReceipt({ root, revision: REVISION, output, write: true }, {
+      readSnapshot: () => ({ revision: REVISION, status: '' }),
+      runVerification: () => ({ ok: true, status: 0, scope: 'all', completed: ['tests'] }),
+      now: () => 0,
+      fileOperations: { rename: () => { throw new Error('rename failed'); } },
+    }),
+    /rename failed/u,
+  );
+  assert.equal(exists(), false);
+  const receiptDirectory = path.dirname(path.join(root, output));
+  assert.equal(fs.readdirSync(receiptDirectory).some((name) => name.endsWith('.tmp')), false);
+});
 
 function successfulRun() {
   return {
@@ -192,7 +336,119 @@ function receipt() {
   };
 }
 
-test('[TC-02] 支持证据矩阵分层且保留未覆盖范围', () => {
+function sourceDescriptor(sourcePath) {
+  return { path: sourcePath, bytes: 128, sha256: 'c'.repeat(64) };
+}
+
+function standardLocalValidation() {
+  const completed = ['static', 'footprint', 'lifecycle', 'tests', 'structure', 'openspec', 'runtime-version', 'runtime-integrity'];
+  return {
+    schemaVersion: 1,
+    kind: 'local-verification-receipt',
+    generator: { id: 'frontend-ai-workflow/local-verification-receipt', version: 1 },
+    status: 'passed',
+    revision: REVISION,
+    code: 'verification_passed',
+    scope: 'all',
+    platform: { platform: 'darwin', arch: 'arm64', node: 'v20.19.0' },
+    durationMs: 1234,
+    completed,
+    evidence: { runner: sourceDescriptor('scripts/verify.mjs'), stepCount: completed.length },
+  };
+}
+
+function standardRealProjectEvidence() {
+  return {
+    schemaVersion: 1,
+    kind: 'real-project-support-evidence',
+    generator: { id: 'frontend-ai-workflow/real-project-support-evidence', version: 1 },
+    status: 'passed',
+    revision: REVISION,
+    runId: 'support-run-001',
+    combinations: [{
+      id: 'vue3-vite-vitest-npm',
+      status: 'passed',
+      code: 'certified_test_run_passed',
+      projectIds: ['P1'],
+      projects: [{ id: 'P1', commit: 'b'.repeat(40) }],
+    }],
+    source: {
+      files: [
+        sourceDescriptor('.frontend-ai-workflow/runs/real-project-validation/local-matrix.json'),
+        sourceDescriptor('.frontend-ai-workflow/runs/real-project-validation/support-run-001/inspection/results.json'),
+        sourceDescriptor('.frontend-ai-workflow/runs/real-project-validation/support-run-001/native-test/results.json'),
+      ],
+    },
+  };
+}
+
+test('[TC-07] 三层标准证据同 revision 聚合', (context) => {
+  const projected = buildSupportEvidenceMatrix({
+    revision: REVISION,
+    realProjectEvidence: standardRealProjectEvidence(),
+    localValidation: standardLocalValidation(),
+    externalCiReceipt: receipt(),
+  });
+  const certified = projected.combinations.find((item) => item.id === 'vue3-vite-vitest-npm');
+  assert.equal(certified.status, 'certified');
+  assert.equal(certified.layers.localRealProject.status, 'passed');
+  assert.equal(certified.layers.localRealProject.trust, 'generated');
+  assert.equal(certified.layers.localValidation.trust, 'generated');
+  assert.equal(certified.layers.fivePlatformCi.status, 'recorded');
+  assert.equal(certified.layers.fivePlatformCi.trust, 'external-recorded');
+  assert.deepEqual(projected.evidenceSummary.realProjects.projectIds, ['P1']);
+  assert.equal(projected.combinations.find((item) => item.id === 'react-vite-npm').status, 'limited');
+
+  const badLocal = standardLocalValidation();
+  badLocal.completed = badLocal.completed.filter((step) => step !== 'tests');
+  badLocal.evidence.stepCount = badLocal.completed.length;
+  assert.throws(() => buildSupportEvidenceMatrix({
+    revision: REVISION,
+    localValidation: badLocal,
+  }), (error) => error instanceof SupportEvidenceError && error.code === 'invalid_standard_local_validation');
+  const badProject = standardRealProjectEvidence();
+  badProject.source.files[0].sha256 = 'invalid';
+  assert.throws(() => buildSupportEvidenceMatrix({
+    revision: REVISION,
+    realProjectEvidence: badProject,
+  }), (error) => error.code === 'invalid_standard_real_project_evidence');
+  assert.throws(() => buildSupportEvidenceMatrix({
+    revision: 'b'.repeat(40),
+    realProjectEvidence: standardRealProjectEvidence(),
+  }), (error) => error.code === 'invalid_real_project_evidence');
+
+  const root = createRoot(context, 'matrix-source');
+  const sourcePaths = [
+    '.frontend-ai-workflow/runs/real-project-validation/local-matrix.json',
+    '.frontend-ai-workflow/runs/real-project-validation/support-run-001/inspection/results.json',
+    '.frontend-ai-workflow/runs/real-project-validation/support-run-001/native-test/results.json',
+  ];
+  sourcePaths.forEach((sourcePath, index) => writeProjectFile(root, sourcePath, `source-${index}\n`));
+  const fileRealEvidence = standardRealProjectEvidence();
+  fileRealEvidence.source.files = sourcePaths.map((sourcePath) => describeProjectFile(root, sourcePath));
+  const fileLocalValidation = standardLocalValidation();
+  fileLocalValidation.evidence.runner = describeProjectFile(root, 'scripts/verify.mjs');
+  const realEvidencePath = '.frontend-ai-workflow/runs/support-evidence/real-project.json';
+  const localEvidencePath = '.frontend-ai-workflow/runs/local-validation/local.json';
+  writeProjectFile(root, realEvidencePath, `${JSON.stringify(fileRealEvidence)}\n`);
+  writeProjectFile(root, localEvidencePath, `${JSON.stringify(fileLocalValidation)}\n`);
+  const fileProjection = projectSupportEvidenceMatrix({
+    root,
+    revision: REVISION,
+    realProjectEvidencePath: realEvidencePath,
+    localValidationPath: localEvidencePath,
+  });
+  assert.equal(fileProjection.evidenceSummary.realProjects.certifying, true);
+  fs.appendFileSync(path.join(root, sourcePaths[1]), 'tampered\n', 'utf8');
+  assert.throws(() => projectSupportEvidenceMatrix({
+    root,
+    revision: REVISION,
+    realProjectEvidencePath: realEvidencePath,
+    localValidationPath: localEvidencePath,
+  }), (error) => error.code === 'support_evidence_source_mismatch' && error.target === sourcePaths[1]);
+});
+
+test('[TC-08] 旧输入兼容与默认效益边界', () => {
   const baseline = buildSupportEvidenceMatrix();
   assert.deepEqual(baseline.counts, { certified: 0, limited: 6, blocked: 0, uncovered: 1 });
   assert.equal(baseline.revision, null);
@@ -214,10 +470,17 @@ test('[TC-02] 支持证据矩阵分层且保留未覆盖范围', () => {
     externalCiReceipt: receipt(),
   });
   const certified = projected.combinations.find((item) => item.id === 'vue3-vite-vitest-npm');
-  assert.equal(certified.status, 'certified');
+  assert.equal(certified.status, 'limited');
   assert.equal(certified.layers.localRealProject.status, 'passed');
+  assert.equal(certified.layers.localRealProject.trust, 'legacy-recorded');
+  assert.equal(certified.layers.localRealProject.certifying, false);
+  assert.equal(certified.layers.localValidation.trust, 'legacy-recorded');
+  assert.equal(certified.layers.localValidation.certifying, false);
   assert.equal(certified.layers.fivePlatformCi.status, 'recorded');
   assert.equal(certified.layers.fivePlatformCi.trust, 'external-recorded');
+  assert.equal(projected.counts.certified, 0);
+  assert.equal(projected.developerEffectiveness.status, 'unmeasured');
+  assert.equal(projected.developerEffectiveness.benefitPercent, null);
   assert.equal(projected.combinations.find((item) => item.id === 'react-vite-npm').status, 'limited');
 
   assert.throws(() => buildSupportEvidenceMatrix({

@@ -129,3 +129,25 @@
 - **WHEN** 矩阵完成或因环境条件部分完成
 - **THEN** 报告逐项显示证据层级、结果和剩余风险
 - **AND** pnpm、React + Vite、真实 workspace/Monorepo、多应用、远程设计同步、后端链和未运行平台继续明确为未覆盖
+
+### Requirement: 标准真实项目结果必须可投影为匿名支持证据
+
+系统 MUST 提供版本化、默认只读的真实项目支持证据投影入口，并只从调用方明确提供的同一 run 矩阵、inspection 标准结果、native-test 标准结果及其可复算文件摘要生成组合事实。系统 MUST 校验 runId、项目集合、匿名项目 ID、精确项目提交、阶段、结果状态和实际 preset、构建工具、包管理器与 runner 事实；组合映射缺失或歧义、项目重复、阶段缺失、结果为 `defect`、摘要损坏、路径越界或持久内容包含业务绝对路径时 MUST 失败关闭。已认证 Vue 3 + Vite + Vitest + npm 的原生测试通过可投影为 `passed`；其他真实成功 MUST 保持 `limited`，正确阻断 MUST 保持 `blocked`。
+
+#### Scenario: 投影已认证真实项目
+
+- **WHEN** 同一 run 的矩阵、inspection 和 native-test 标准结果完整一致，实际事实为 Vue 3 + Vite + Vitest + npm，且原生测试通过
+- **THEN** 系统生成该组合的 `passed` 证据并只记录匿名项目 ID、精确提交、稳定状态和受控来源摘要
+- **AND** 系统不得保存业务项目绝对路径、环境变量值、源码正文或完整终端输出
+
+#### Scenario: 投影有限与正确阻断结果
+
+- **WHEN** 标准结果对应未认证 runner 或其他已知组合的真实成功，或者原生测试被安全前置条件正确阻断
+- **THEN** 系统分别投影 `limited` 或 `blocked`，并保留具体稳定 code
+- **AND** 系统不得把相邻组合或单项目结果外推为完整认证
+
+#### Scenario: 标准结果无法可信关联
+
+- **WHEN** runId、项目集合、项目提交、阶段或摘要不一致，组合事实未知或歧义，项目重复，结果包含 `defect`、越界路径或业务绝对路径
+- **THEN** 系统以稳定 `code`、`status` 和 `target` 拒绝生成可提升证据
+- **AND** 已存在的目标文件保持不变且不会出现半成品

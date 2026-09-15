@@ -276,7 +276,7 @@ test('严格证据可在事件已追加后幂等补齐', (context) => {
   );
 });
 
-test('跨平台路径与摘要规范化', () => {
+test('[TC-01] 正式规格清理行内与独立 provenance 标记', () => {
   assert.equal(canonicalText('a\r\nb\r'), 'a\nb\n');
   assert.equal(sha256('规格\r\n内容'), sha256('规格\n内容'));
   assert.equal(normalizeRepositoryPath('apps\\admin\\'), 'apps/admin');
@@ -284,6 +284,10 @@ test('跨平台路径与摘要规范化', () => {
   assert.throws(() => normalizeRepositoryPath('a'.repeat(241)), /240/u);
   assert.equal(normalizeRepositoryPath('cafe\u0301'), 'café');
   assert.equal(stripLocalSpecProvenance('系统 MUST 保持稳定。（D-01～D-03；A-01）'), '系统 MUST 保持稳定。');
+  const source = '系统 MUST 保持稳定。\r\n<!-- provenance: D-01、D-02；A-01 -->\r\n<!-- provenance: external-contract -->\r\n对应 REQ-2026-001 D-01。\r\n';
+  const normalized = '系统 MUST 保持稳定。\r\n<!-- provenance: external-contract -->\r\n对应 REQ-2026-001 D-01。\r\n';
+  assert.equal(stripLocalSpecProvenance(source), normalized);
+  assert.equal(stripLocalSpecProvenance(normalized), normalized);
   assert.equal(stripLocalSpecProvenance('对应 REQ-2026-001 D-01。'), '对应 REQ-2026-001 D-01。');
 });
 
@@ -363,7 +367,7 @@ test('生命周期 Git 差异保护追加历史', (context) => {
   assert.equal(paired.diagnostics.some((item) => item.code === 'missing_lifecycle_event'), false);
 });
 
-test('完成事务通过原生同步后只保留紧凑事件', (context) => {
+test('[TC-02] 完成事务清理全部正式规格并通过零引用门禁', (context) => {
   const root = fixture(context);
   spawnSync('git', ['init', '-q', root]);
   spawnSync('git', ['-C', root, 'config', 'user.email', 'test@example.com']);
@@ -371,6 +375,7 @@ test('完成事务通过原生同步后只保留紧凑事件', (context) => {
   const requirementPath = write(root, 'requirements/REQ-2026-048-demo.md', '# REQ-2026-048\n');
   const changePath = path.join(root, 'openspec/changes/demo-change');
   write(root, 'openspec/changes/demo-change/specs/demo/spec.md', '### Requirement: demo\n');
+  write(root, 'openspec/specs/existing/spec.md', '# existing\n\n<!-- provenance: D-09；A-09 -->\n<!-- provenance: external-contract -->\n');
   spawnSync('git', ['-C', root, 'add', '.']);
   spawnSync('git', ['-C', root, 'commit', '-qm', 'base']);
   const archiveTarget = path.join(root, 'openspec/changes/archive/2026-09-11-demo-change');
@@ -386,7 +391,7 @@ test('完成事务通过原生同步后只保留紧凑事件', (context) => {
   assert.equal(preview.code, 'lifecycle_finalize_ready');
   const result = finalizeLifecycleV2({ check, write: true }, {
     runOpenSpecSync: () => {
-      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）\n');
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）\n<!-- provenance: D-02；A-02 -->\n');
       fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
       fs.renameSync(changePath, archiveTarget);
       return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };
@@ -397,6 +402,9 @@ test('完成事务通过原生同步后只保留紧凑事件', (context) => {
   assert.equal(fs.existsSync(archiveTarget), false);
   assert.equal(readLifecycleEvents({ root }).events.length, 1);
   assert.equal(fs.readFileSync(path.join(root, 'openspec/specs/demo/spec.md'), 'utf8').includes('D-01'), false);
+  const existingSpec = fs.readFileSync(path.join(root, 'openspec/specs/existing/spec.md'), 'utf8');
+  assert.equal(/\b[DA]-\d+\b/u.test(existingSpec), false);
+  assert.equal(existingSpec.includes('<!-- provenance: external-contract -->'), true);
   assert.equal(projectLifecycleState({ root, changeId: 'demo-change' }).status, 'accepted-local');
   assert.equal(fs.readdirSync(path.join(root, '.frontend-ai-workflow/transactions')).length, 0);
   assert.equal(recoverLifecycleV2({ root, transactionId: 'txn-does-not-exist' }).code, 'lifecycle_recovery_not_needed');
