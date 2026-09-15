@@ -209,7 +209,7 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
   );
 });
 
-test('[TC-12] Codex 安装失败保留稳定诊断并清理隔离目录', async (context) => {
+test('[TC-13] Codex 安装失败保留稳定诊断并清理隔离目录', async (context) => {
   const fixture = createMarketplaceFixture(context);
   const execute = (_command, args) => {
     if (args[1] === '--version') {
@@ -238,7 +238,7 @@ test('[TC-12] Codex 安装失败保留稳定诊断并清理隔离目录', async 
   );
 });
 
-test('[TC-12] 安装证据写入拒绝伪造的非原生平台', async (context) => {
+test('[TC-14] 安装证据写入拒绝伪造的非原生平台', async (context) => {
   const fixture = createMarketplaceFixture(context);
   await assert.rejects(
     () => verifyPlatformMarketplaceInstall({
@@ -258,7 +258,7 @@ test('[TC-12] 安装证据写入拒绝伪造的非原生平台', async (context)
   assert.equal(fs.existsSync(fixture.outputPath), false);
 });
 
-test('[TC-12] Windows 安装缓存通过受控目录联接缩短 Chromium 启动路径', () => {
+test('[TC-15] Windows 安装缓存通过受控目录联接缩短 Chromium 启动路径', () => {
   const workRoot = path.win32.join(
     'D:\\a\\wayfinder\\wayfinder\\outputs',
     compactInstallStageName({ processId: 5092, timestamp: 1788137696439 }),
@@ -308,7 +308,7 @@ test('[TC-12] Windows 安装缓存通过受控目录联接缩短 Chromium 启动
   ]]);
 });
 
-test('[TC-12] 人工证据收集复用原五平台矩阵且不增加日常成本', () => {
+test('[TC-16] 人工证据收集复用原五平台矩阵且不增加日常成本', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   const platformJob = workflow.slice(workflow.indexOf('\n  platform:'));
   assert.match(workflow, /^\s+workflow_dispatch:\r?\n\s+inputs:\r?\n\s+collect_platform_install_evidence:/mu);

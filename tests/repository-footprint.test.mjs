@@ -155,19 +155,40 @@ test('v2 以零上限拒绝旧归档和受跟踪运行时', (context) => {
   assert.equal(result.diagnostics.some((item) => item.code === 'local_spec_reference' && item.status === 'failed'), true);
 });
 
-test('重复规格失败而跨文件裸 TC 只告警', (context) => {
+test('[TC-02] 测试定位按文件作用域识别真实调用', (context) => {
   const root = createFixture(context);
   write(root, 'openspec/specs/one/spec.md', '### Requirement: 重复合同\n');
   write(root, 'openspec/specs/two/spec.md', '### Requirement: 重复合同\n');
-  write(root, 'tests/one.test.mjs', "test('[TC-01] first', () => {});\n");
+  write(root, 'tests/one.test.mjs', [
+    "test('[TC-01] first', () => {});",
+    'const fixture = `',
+    "test('[TC-02] fixture text', () => {});",
+    '`;',
+    "test('[TC-02] duplicate first', () => {});",
+    "it('[TC-02] duplicate second', () => {});",
+    '',
+  ].join('\n'));
   write(root, 'tests/two.test.mjs', "test('[TC-01] second', () => {});\n");
   const result = auditRepositoryFootprint({ root, trackedFiles: [] });
   assert.equal(result.ok, false);
   assert.equal(result.diagnostics.some((item) => item.code === 'duplicate_spec_requirement' && item.status === 'failed'), true);
-  assert.equal(result.diagnostics.some((item) => item.code === 'ambiguous_test_locator' && item.status === 'warning'), true);
+  const ambiguous = result.diagnostics.filter((item) => item.code === 'ambiguous_test_locator');
+  assert.equal(REPOSITORY_FOOTPRINT_BUDGETS.rootTestFileLines, 750);
+  assert.equal(result.counts.ambiguousTestLocators, 1);
+  assert.equal(ambiguous.length, 1);
+  assert.equal(ambiguous[0].status, 'warning');
+  assert.equal(ambiguous[0].target, 'tests/one.test.mjs#TC-02');
+  assert.equal(ambiguous[0].actual, 2);
+  assert.deepEqual(ambiguous[0].details.map(({ file, line }) => ({ file, line })), [
+    { file: 'tests/one.test.mjs', line: 5 },
+    { file: 'tests/one.test.mjs', line: 6 },
+  ]);
   const formatted = formatRepositoryFootprint(result, { limit: 1 });
   assert.equal(formatted.diagnostics.length, 1);
   assert.equal(formatted.diagnosticPage.remaining > 0, true);
+
+  const current = auditRepositoryFootprint({ root: repositoryRoot, trackedFiles: [] });
+  assert.equal(current.counts.ambiguousTestLocators, 0);
 });
 
 test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁一致', () => {

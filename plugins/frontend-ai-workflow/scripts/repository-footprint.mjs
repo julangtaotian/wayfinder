@@ -8,7 +8,7 @@ export const REPOSITORY_FOOTPRINT_BUDGETS = Object.freeze({
   trackedOutputFiles: 200,
   trackedOutputBytes: 10 * 1024 * 1024,
   activeFullRequirements: 5,
-  rootTestFileLines: 1000,
+  rootTestFileLines: 750,
   pluginScriptFileLines: 800,
   specTotalBytes: 512 * 1024,
   testTotalLines: 15000,
@@ -63,6 +63,60 @@ function diagnostic(code, target, actual, budget) {
 
 function warning(code, target, actual, budget, details = undefined) {
   return { code, target: normalizePath(target), status: 'warning', actual, budget, limit: budget, ...(details ? { details } : {}) };
+}
+
+function scanTestLocators(content, relativePath) {
+  const locations = [];
+  const lines = content.split(/\r?\n/u);
+  let lexicalState = 'code';
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
+    if (lexicalState === 'code') {
+      const match = line.match(/^\s*(?:test|it)\(\s*['"]\[(TC-\d+)\]\s*([^'"]+)/u);
+      if (match) {
+        locations.push({
+          locator: match[1],
+          file: relativePath,
+          line: lineIndex + 1,
+          behavior: match[2].trim().slice(0, 160),
+        });
+      }
+    }
+
+    for (let index = 0; index < line.length; index += 1) {
+      const character = line[index];
+      const next = line[index + 1];
+      if (lexicalState === 'line-comment') break;
+      if (lexicalState === 'code') {
+        if (character === '/' && next === '/') {
+          lexicalState = 'line-comment';
+          break;
+        }
+        if (character === '/' && next === '*') {
+          lexicalState = 'block-comment';
+          index += 1;
+        } else if (character === "'") lexicalState = 'single-quote';
+        else if (character === '"') lexicalState = 'double-quote';
+        else if (character === '`') lexicalState = 'template';
+      } else if (lexicalState === 'block-comment') {
+        if (character === '*' && next === '/') {
+          lexicalState = 'code';
+          index += 1;
+        }
+      } else if (character === '\\') {
+        index += 1;
+      } else if (
+        (lexicalState === 'single-quote' && character === "'")
+        || (lexicalState === 'double-quote' && character === '"')
+        || (lexicalState === 'template' && character === '`')
+      ) {
+        lexicalState = 'code';
+      }
+    }
+    if (lexicalState === 'line-comment') lexicalState = 'code';
+  }
+  return locations;
 }
 
 function recursiveFiles(directory, predicate) {
@@ -233,14 +287,15 @@ export function auditRepositoryFootprint({
   for (const file of testFiles) {
     const relative = normalizePath(path.relative(repositoryRoot, file));
     const content = fs.readFileSync(file, 'utf8');
-    for (const match of content.matchAll(/(?:test|it)\(\s*['"]\[(TC-\d+)\]\s*([^'"]+)/gmu)) {
-      const locations = testLocators.get(match[1]) || [];
-      locations.push({ file: relative, behavior: match[2].trim().slice(0, 160) });
-      testLocators.set(match[1], locations);
+    for (const location of scanTestLocators(content, relative)) {
+      const identity = `${relative}#${location.locator}`;
+      const locations = testLocators.get(identity) || [];
+      locations.push({ file: relative, line: location.line, behavior: location.behavior });
+      testLocators.set(identity, locations);
     }
   }
-  for (const [locator, locations] of testLocators) {
-    if (locations.length > 1) diagnostics.push(warning('ambiguous_test_locator', locator, locations.length, 1, locations));
+  for (const [identity, locations] of testLocators) {
+    if (locations.length > 1) diagnostics.push(warning('ambiguous_test_locator', identity, locations.length, 1, locations));
   }
   diagnostics.sort((left, right) => left.code.localeCompare(right.code) || left.target.localeCompare(right.target));
   const blockingDiagnostics = diagnostics.filter((item) => item.status === 'failed');

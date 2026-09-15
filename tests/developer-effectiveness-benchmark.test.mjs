@@ -553,7 +553,7 @@ test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   assert.equal(JSON.parse(fs.readFileSync(path.join(executionRoot, 'state.json'), 'utf8')).stage, 'cleaned');
 });
 
-test('[TC-01] 基准兼容入口保持单向模块边界', () => {
+test('[TC-09] 基准兼容入口保持单向模块边界', () => {
   const limits = new Map([
     ['developer-effectiveness-benchmark.mjs', 500],
     ['developer-effectiveness-benchmark-execution.mjs', 500],

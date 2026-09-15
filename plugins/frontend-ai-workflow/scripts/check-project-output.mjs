@@ -56,7 +56,9 @@ function compactPluginRepository(pluginRepository = null) {
   const displayedPlugins = plugins.slice(0, CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT);
   const displayedDiagnostics = diagnostics.slice(0, CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT);
   return {
-    ...pluginRepository,
+    kind: pluginRepository.kind,
+    status: pluginRepository.status,
+    marketplace: pluginRepository.marketplace,
     plugins: displayedPlugins,
     totalPlugins: plugins.length,
     displayedPlugins: displayedPlugins.length,
@@ -67,16 +69,36 @@ function compactPluginRepository(pluginRepository = null) {
     displayedDiagnostics: displayedDiagnostics.length,
     omittedDiagnostics: Math.max(0, diagnostics.length - displayedDiagnostics.length),
     diagnosticCounts: countByCode(diagnostics),
+    commands: pluginRepository.commands,
   };
 }
 
-// 精简模式只收起可以按需恢复的长数组，完整依赖事实和当前健康状态保持不变。
+function summarizePluginProjectCheck(result) {
+  return {
+    schemaVersion: CHECK_PROJECT_OUTPUT_SCHEMA_VERSION,
+    mode: 'summary',
+    ok: result.ok,
+    root: result.root,
+    repositoryKind: result.repositoryKind,
+    pluginRepository: compactPluginRepository(result.pluginRepository),
+    lifecycle: result.lifecycle,
+    migrationRequired: result.migrationRequired,
+    planningEngine: result.planningEngine,
+    activeChanges: result.activeChanges,
+    errors: result.errors,
+    warnings: result.warnings,
+  };
+}
+
+// 普通项目收起可恢复长数组；插件仓库使用专用投影，避免携带不适用的空画像。
 export function summarizeProjectCheck(result) {
+  if (result.repositoryKind === 'plugin-repository' && result.pluginRepository) {
+    return summarizePluginProjectCheck(result);
+  }
   return {
     ...result,
     schemaVersion: CHECK_PROJECT_OUTPUT_SCHEMA_VERSION,
     mode: 'summary',
-    ...(result.pluginRepository ? { pluginRepository: compactPluginRepository(result.pluginRepository) } : {}),
     verificationEvidenceAudit: compactVerificationEvidenceAudit(result.verificationEvidenceAudit),
     deepAnalysis: compactDeepAnalysis(result.deepAnalysis),
   };

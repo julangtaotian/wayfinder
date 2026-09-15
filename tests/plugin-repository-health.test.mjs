@@ -105,6 +105,11 @@ test('[TC-01] 有效插件仓库得到专属健康结果', (t) => {
   assert.doesNotMatch(result.warnings.join('\n'), /构建脚本|lint 脚本|类型检查/u);
   assert.equal(summary.repositoryKind, PLUGIN_REPOSITORY_KIND);
   assert.equal(summary.pluginRepository.totalPlugins, 1);
+  assert.equal('dependencyProfile' in summary, false);
+  const summaryBytes = Buffer.byteLength(JSON.stringify(summary, null, 2));
+  const fullBytes = Buffer.byteLength(JSON.stringify(result, null, 2));
+  assert.equal(summaryBytes <= 2500, true, `插件 summary 为 ${summaryBytes} 字节`);
+  assert.equal(summaryBytes / fullBytes <= 0.65, true, `插件 summary/full 比例为 ${summaryBytes / fullBytes}`);
   assert.equal(cli.status, 0, cli.stderr);
   assert.equal(JSON.parse(cli.stdout).repositoryKind, PLUGIN_REPOSITORY_KIND);
 });

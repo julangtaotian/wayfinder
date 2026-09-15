@@ -302,7 +302,7 @@ test('[TC-04] 测试方案完成门禁与历史兼容仅对 test_plan: required 
   assert.deepEqual(historical, { required: false, validation: null, errors: [], warnings: [] });
 });
 
-test('[TC-05] frontend-test Skill 合同声明四类意图、测试专属写入和 UI Review 交接', () => {
+test('[TC-10] frontend-test Skill 合同声明四类意图、测试专属写入和 UI Review 交接', () => {
   const skill = fs.readFileSync(
     path.resolve('plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md'),
     'utf8',
@@ -319,7 +319,7 @@ test('[TC-05] frontend-test Skill 合同声明四类意图、测试专属写入�
   assert.match(contract, /updates the same case rather than appending a duplicate/u);
 });
 
-test('[TC-02] 受管 Verify 一次通过公开合同', () => {
+test('[TC-11] 受管 Verify 一次通过公开合同', () => {
   const workflow = fs.readFileSync(path.resolve('plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
   assert.match(workflow, /preview → one explicit execution → completion-fact updates → one complete validation/u);
   assert.match(workflow, /semantic binding v2/u);
@@ -367,7 +367,7 @@ test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
   assert.ok(prepared.runtimeRoot.startsWith(path.join(root, '.frontend-ai-workflow', 'runs')));
 });
 
-test('[TC-01] 锁定输入与缓存路径', (t) => {
+test('[TC-12] 锁定输入与缓存路径', (t) => {
   const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-locked-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   let executed = null;
@@ -394,7 +394,7 @@ test('[TC-01] 锁定输入与缓存路径', (t) => {
   assert.equal(fs.existsSync(path.join(root, 'node_modules')), false);
 });
 
-test('[TC-02] 显式离线模式失败关闭', (t) => {
+test('[TC-13] 显式离线模式失败关闭', (t) => {
   const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-offline-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   let args = null;
@@ -453,7 +453,7 @@ test('[TC-03] 运行时与缓存的分离清理', (t) => {
   assert.equal(fs.existsSync(persistentEvidence), true);
 });
 
-test('[TC-04] 统一验证传播离线选项', (t) => {
+test('[TC-14] 统一验证传播离线选项', (t) => {
   const fixturesRoot = path.resolve('outputs', 'frontend-test-runtime-verify');
   fs.mkdirSync(fixturesRoot, { recursive: true });
   const root = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'fixture-')));
@@ -487,7 +487,7 @@ test('[TC-04] 统一验证传播离线选项', (t) => {
   assert.equal(result.offline, true);
 });
 
-test('[TC-03] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {
+test('[TC-15] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {
   const fixtureRoot = path.resolve('tests/fixtures/frontend-test-vue-vitest');
   const vitestEntry = path.resolve('.frontend-ai-workflow/runs/frontend-test-runtime/node_modules/vitest/vitest.mjs');
   const configPath = path.join(fixtureRoot, 'vitest.config.mjs');
