@@ -134,7 +134,7 @@
 
 ### Requirement: 支持矩阵必须保守消费标准真实开发者效果证据
 
-支持矩阵 MUST 接受可选的标准真实开发者效果证据，并 MUST 校验 schema、固定生成器身份、调用方指定的插件 40 位提交、研究状态、样本摘要和输入来源的相对路径、字节数及 SHA-256。没有输入时真实开发者效果 MUST 保持 `unmeasured` 且 `benefitPercent` 为 null；有效但未达到证明门槛的证据 MUST 保留其真实结论并保持收益为空；只有标准证据为 `demonstrated-improvement` 时才能投影非空收益百分比。旧式手工文件、合成基准、损坏摘要或提交不匹配 MUST NOT 形成提升结论。<!-- provenance: D-01,D-07,D-09; A-03,A-04 -->
+支持矩阵 MUST 接受可选的标准真实开发者效果证据，并 MUST 校验 schema、固定生成器身份、调用方指定的插件 40 位提交、研究状态、样本摘要和输入来源的相对路径、字节数及 SHA-256。没有输入时真实开发者效果 MUST 保持 `unmeasured` 且 `benefitPercent` 为 null；有效但未达到证明门槛的证据 MUST 保留其真实结论并保持收益为空；只有标准证据为 `demonstrated-improvement` 时才能投影非空收益百分比。旧式手工文件、合成基准、损坏摘要或提交不匹配 MUST NOT 形成提升结论。
 
 #### Scenario: 不提供真实效果证据
 - **WHEN** 调用方按现有参数生成支持矩阵

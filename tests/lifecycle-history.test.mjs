@@ -28,6 +28,7 @@ import {
   recoverLifecycleV2,
   stripLocalSpecProvenance,
 } from '../plugins/frontend-ai-workflow/scripts/lifecycle-finalize.mjs';
+import { auditRepositoryFootprint } from '../plugins/frontend-ai-workflow/scripts/repository-footprint.mjs';
 import { recoverLifecycleTransition, transitionLifecycle } from '../plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs';
 import { getLifecycleStatus } from '../plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs';
 
@@ -276,7 +277,7 @@ test('严格证据可在事件已追加后幂等补齐', (context) => {
   );
 });
 
-test('[TC-01] 正式规格清理行内与独立 provenance 标记', () => {
+test('[TC-01] 正式规格清理全部本地 provenance 格式', () => {
   assert.equal(canonicalText('a\r\nb\r'), 'a\nb\n');
   assert.equal(sha256('规格\r\n内容'), sha256('规格\n内容'));
   assert.equal(normalizeRepositoryPath('apps\\admin\\'), 'apps/admin');
@@ -288,6 +289,14 @@ test('[TC-01] 正式规格清理行内与独立 provenance 标记', () => {
   const normalized = '系统 MUST 保持稳定。\r\n<!-- provenance: external-contract -->\r\n对应 REQ-2026-001 D-01。\r\n';
   assert.equal(stripLocalSpecProvenance(source), normalized);
   assert.equal(stripLocalSpecProvenance(normalized), normalized);
+  const trailingSource = '系统 MUST 保持稳定。<!-- provenance: D-01,D-02; A-01 -->\r\n<!-- ordinary: D-03 -->\r\n';
+  const trailingNormalized = '系统 MUST 保持稳定。\r\n<!-- ordinary: D-03 -->\r\n';
+  assert.equal(stripLocalSpecProvenance(trailingSource), trailingNormalized);
+  assert.equal(stripLocalSpecProvenance(trailingNormalized), trailingNormalized);
+  assert.equal(
+    stripLocalSpecProvenance('系统 MUST 保持稳定。<!-- provenance: external-contract -->'),
+    '系统 MUST 保持稳定。<!-- provenance: external-contract -->',
+  );
   assert.equal(stripLocalSpecProvenance('对应 REQ-2026-001 D-01。'), '对应 REQ-2026-001 D-01。');
 });
 
@@ -391,7 +400,7 @@ test('[TC-02] 完成事务清理全部正式规格并通过零引用门禁', (co
   assert.equal(preview.code, 'lifecycle_finalize_ready');
   const result = finalizeLifecycleV2({ check, write: true }, {
     runOpenSpecSync: () => {
-      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）\n<!-- provenance: D-02；A-02 -->\n');
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）<!-- provenance: D-02,D-03; A-02 -->\n');
       fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
       fs.renameSync(changePath, archiveTarget);
       return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };
@@ -405,6 +414,9 @@ test('[TC-02] 完成事务清理全部正式规格并通过零引用门禁', (co
   const existingSpec = fs.readFileSync(path.join(root, 'openspec/specs/existing/spec.md'), 'utf8');
   assert.equal(/\b[DA]-\d+\b/u.test(existingSpec), false);
   assert.equal(existingSpec.includes('<!-- provenance: external-contract -->'), true);
+  const footprint = auditRepositoryFootprint({ root });
+  assert.equal(footprint.code, 'repository_footprint_ok');
+  assert.equal(footprint.counts.localSpecReferences, 0);
   assert.equal(projectLifecycleState({ root, changeId: 'demo-change' }).status, 'accepted-local');
   assert.equal(fs.readdirSync(path.join(root, '.frontend-ai-workflow/transactions')).length, 0);
   assert.equal(recoverLifecycleV2({ root, transactionId: 'txn-does-not-exist' }).code, 'lifecycle_recovery_not_needed');

@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.19.0+codex.20260915080520",
+  "version": "0.19.0+codex.20260915085236",
   "description": "Reusable frontend delivery with traceable planning, project-native verification, measurable developer evidence, and deterministic UI review.",
   "author": {
     "name": "lvshuai"

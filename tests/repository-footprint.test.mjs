@@ -48,6 +48,15 @@ test('仓库体积审计返回稳定预算、计数和通过状态', (context) =
   assert.equal(result.diagnostics.length, 0);
 });
 
+test('[TC-03] 当前仓库满足生命周期与体积预算', () => {
+  const result = auditRepositoryFootprint({ root: repositoryRoot });
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.equal(result.code, 'repository_footprint_ok');
+  assert.equal(result.counts.localSpecReferences, 0);
+  assert.equal(result.budgets.specTotalBytes, 512 * 1024);
+  assert.equal(result.retirementLimits.platformAssetFiles, 0);
+});
+
 test('[TC-07] 平台资产、生成清单和 LFS 规则使用不可放宽的零上限', (context) => {
   const root = createFixture(context);
   const platformAsset = 'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/linux-x64/browser';
@@ -191,7 +200,7 @@ test('[TC-02] 测试定位按文件作用域识别真实调用', (context) => {
   assert.equal(current.counts.ambiguousTestLocators, 0);
 });
 
-test('[V-03] 仓库体积与统一验证治理合同：版本、规则和门禁一致', () => {
+test('[TC-04] 仓库体积与统一验证治理合同保持一致', () => {
   const packageManifest = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
   const pluginManifest = JSON.parse(fs.readFileSync(
     path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', '.codex-plugin', 'plugin.json'),

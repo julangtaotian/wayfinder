@@ -31,7 +31,7 @@
 
 ### Requirement: 完成必须作为仓库级可恢复事务执行
 
-完成写入 MUST 在仓库级锁内执行 Git 前置检查、原生 OpenSpec 严格归档与规格同步、正式规格局部追踪规范化、事件追加和临时材料清理。规范化 MUST 在事件规格摘要生成前扫描全部正式 `spec.md`，精确移除包含 D-* 或 A-* 的行内括号追踪与独立 provenance 注释，并 MUST 保留普通正文示例和不含局部编号的 provenance 内容。merge、rebase、cherry-pick、未合并 index、相关 sparse checkout、格式版本不匹配或锁竞争 MUST 在修改文件前失败关闭。原生归档 MUST 仅作为事务中间结果，成功事件提交后不得长期保留。
+完成写入 MUST 在仓库级锁内执行 Git 前置检查、原生 OpenSpec 严格归档与规格同步、正式规格局部追踪规范化、事件追加和临时材料清理。规范化 MUST 在事件规格摘要生成前扫描全部正式 `spec.md`，精确移除包含 D-* 或 A-* 的行内括号追踪、独立 provenance 注释和正文行尾 provenance HTML 注释，并 MUST 保留普通正文示例、不含局部编号的 provenance 内容及其他 HTML 注释。规范化后正式规格 MUST 直接满足生命周期零引用门禁，不得通过提高预算或增加忽略规则放行残留追踪。merge、rebase、cherry-pick、未合并 index、相关 sparse checkout、格式版本不匹配或锁竞争 MUST 在修改文件前失败关闭。原生归档 MUST 仅作为事务中间结果，成功事件提交后不得长期保留。
 
 #### Scenario: 正常完成
 - **WHEN** 完成前门禁通过且调用方显式写入
@@ -46,10 +46,8 @@
 - **THEN** 恢复 MUST 使用持久事务阶段和内容摘要继续或安全回滚，不得再次移动变更或重复同步规格
 
 #### Scenario: 正式规格含多种局部追踪格式
-- **WHEN** 任一正式规格包含行内括号追踪、独立局部 provenance 注释、普通需求示例或外部 provenance 注释
-- **THEN** 系统 MUST 只删除包含 D-* 或 A-* 的两种活动期追踪格式，并在重复规范化时保持确定一致
-
-
+- **WHEN** 任一正式规格包含行内括号追踪、独立局部 provenance 注释、正文行尾局部 provenance HTML 注释、普通需求示例、外部 provenance 或其他 HTML 注释
+- **THEN** 系统 MUST 只删除包含 D-* 或 A-* 的三种活动期追踪格式，在重复规范化时保持确定一致，并使仓库体积审计报告本地规格引用为零
 
 ### Requirement: Git 差异必须保护追加历史
 
