@@ -293,6 +293,10 @@ test('[TC-01] 正式规格清理全部本地 provenance 格式', () => {
   const trailingNormalized = '系统 MUST 保持稳定。\r\n<!-- ordinary: D-03 -->\r\n';
   assert.equal(stripLocalSpecProvenance(trailingSource), trailingNormalized);
   assert.equal(stripLocalSpecProvenance(trailingNormalized), trailingNormalized);
+  const pureSource = '系统 MUST 保持稳定。 <!-- D-01 D-02; A-01 -->\r\n<!-- D-03、A-02 -->\r\n<!-- ordinary: D-04 -->\r\n<!-- D-05; A-03 note -->\r\n';
+  const pureNormalized = '系统 MUST 保持稳定。\r\n<!-- ordinary: D-04 -->\r\n<!-- D-05; A-03 note -->\r\n';
+  assert.equal(stripLocalSpecProvenance(pureSource), pureNormalized);
+  assert.equal(stripLocalSpecProvenance(pureNormalized), pureNormalized);
   assert.equal(
     stripLocalSpecProvenance('系统 MUST 保持稳定。<!-- provenance: external-contract -->'),
     '系统 MUST 保持稳定。<!-- provenance: external-contract -->',
@@ -384,7 +388,7 @@ test('[TC-02] 完成事务清理全部正式规格并通过零引用门禁', (co
   const requirementPath = write(root, 'requirements/REQ-2026-048-demo.md', '# REQ-2026-048\n');
   const changePath = path.join(root, 'openspec/changes/demo-change');
   write(root, 'openspec/changes/demo-change/specs/demo/spec.md', '### Requirement: demo\n');
-  write(root, 'openspec/specs/existing/spec.md', '# existing\n\n<!-- provenance: D-09；A-09 -->\n<!-- provenance: external-contract -->\n');
+  write(root, 'openspec/specs/existing/spec.md', '# existing\n\n<!-- D-09；A-09 -->\n<!-- provenance: external-contract -->\n');
   spawnSync('git', ['-C', root, 'add', '.']);
   spawnSync('git', ['-C', root, 'commit', '-qm', 'base']);
   const archiveTarget = path.join(root, 'openspec/changes/archive/2026-09-11-demo-change');
@@ -400,7 +404,7 @@ test('[TC-02] 完成事务清理全部正式规格并通过零引用门禁', (co
   assert.equal(preview.code, 'lifecycle_finalize_ready');
   const result = finalizeLifecycleV2({ check, write: true }, {
     runOpenSpecSync: () => {
-      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）<!-- provenance: D-02,D-03; A-02 -->\n');
+      write(root, 'openspec/specs/demo/spec.md', '# demo\n\n系统 MUST 完成。（D-01；A-01）<!-- D-02 D-03; A-02 -->\n');
       fs.mkdirSync(path.dirname(archiveTarget), { recursive: true });
       fs.renameSync(changePath, archiveTarget);
       return { available: true, status: 0, stdout: `${JSON.stringify({ archive: { archivedAs: path.basename(archiveTarget) } })}\n`, stderr: '' };

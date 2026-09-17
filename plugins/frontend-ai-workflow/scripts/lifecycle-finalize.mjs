@@ -49,13 +49,17 @@ function listSpecCapabilities(changePath) {
 const INLINE_LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*（(?=[^（）\r\n]*(?:D|A)-\d+)[DA\d、，；;～~—–\- \t]+）/gu;
 const STANDALONE_LOCAL_SPEC_PROVENANCE_PATTERN = /^[ \t]*<!--\s*provenance:\s*(?=[^>\r\n]*(?:D|A)-\d+\b)[^>\r\n]*-->[ \t]*(?:\r?\n|$)/gimu;
 const TRAILING_LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*<!--\s*provenance:\s*(?=[^>\r\n]*(?:D|A)-\d+\b)[^>\r\n]*-->[ \t]*(?=\r?$)/gimu;
+const STANDALONE_PURE_LOCAL_SPEC_PROVENANCE_PATTERN = /^[ \t]*<!--[ \t]*(?=[^>\r\n]*(?:D|A)-\d+\b)(?:(?:D|A)-\d+\b|[、，,；;～~—–-]|[ \t])+-->[ \t]*(?:\r?\n|$)/gimu;
+const TRAILING_PURE_LOCAL_SPEC_PROVENANCE_PATTERN = /[ \t]*<!--[ \t]*(?=[^>\r\n]*(?:D|A)-\d+\b)(?:(?:D|A)-\d+\b|[、，,；;～~—–-]|[ \t])+-->[ \t]*(?=\r?$)/gimu;
 
 export function stripLocalSpecProvenance(content) {
   // 独立注释先连同换行移除，避免被行尾规则提前消费后留下空行。
   return String(content)
     .replace(INLINE_LOCAL_SPEC_PROVENANCE_PATTERN, '')
     .replace(STANDALONE_LOCAL_SPEC_PROVENANCE_PATTERN, '')
-    .replace(TRAILING_LOCAL_SPEC_PROVENANCE_PATTERN, '');
+    .replace(STANDALONE_PURE_LOCAL_SPEC_PROVENANCE_PATTERN, '')
+    .replace(TRAILING_LOCAL_SPEC_PROVENANCE_PATTERN, '')
+    .replace(TRAILING_PURE_LOCAL_SPEC_PROVENANCE_PATTERN, '');
 }
 
 function listMainSpecFiles(root) {
