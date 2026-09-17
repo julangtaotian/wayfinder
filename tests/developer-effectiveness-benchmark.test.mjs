@@ -34,6 +34,7 @@ import {
   aggregateCodexTokenUsage,
   buildCodexInvocation,
   extractCodexTokenUsage,
+  parseBenchmarkCliArgs,
   parseCodexJsonLines,
   runBoundedProcess,
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-process.mjs';
@@ -108,6 +109,7 @@ function makeCandidate(projectId, complexity) {
     title: `${id} 修复数值回归`,
     complexity,
     taskType: complexity === 'large' ? 'refactor' : 'bug',
+    expectedRoute: (projectId === 'P3' ? complexity === 'medium' : complexity === 'large') ? 'full' : 'fast',
     publicRequirement: '修复当前数值模块的默认导出，使它重新返回公开约定的数值一；保持现有模块路径、导出名称和调用方式不变，不增加依赖，并确保项目已有的 Node.js 聚焦测试能够离线通过。',
     allowedPaths: ['src/value.js'],
     seedPatch: [
@@ -126,6 +128,24 @@ function makeCandidate(projectId, complexity) {
       '@@ -1 +1 @@',
       '-export const value = 0;',
       '+export const value = 1;',
+      '',
+    ].join('\n'),
+    equivalentPatch: [
+      'diff --git a/src/value.js b/src/value.js',
+      '--- a/src/value.js',
+      '+++ b/src/value.js',
+      '@@ -1 +1 @@',
+      '-export const value = 0;',
+      '+export const value = Number(1);',
+      '',
+    ].join('\n'),
+    mutantPatch: [
+      'diff --git a/src/value.js b/src/value.js',
+      '--- a/src/value.js',
+      '+++ b/src/value.js',
+      '@@ -1 +1 @@',
+      '-export const value = 0;',
+      '+export const value = 2;',
       '',
     ].join('\n'),
     evaluatorPatch: [
@@ -263,10 +283,10 @@ test('[TC-03] 插件组和对照组保持配对公平与隔离', (context) => {
   assert.notEqual(left.workspace, right.workspace);
   assert.equal(fs.readFileSync(path.join(left.workspace, 'src/value.js'), 'utf8'), fs.readFileSync(path.join(right.workspace, 'src/value.js'), 'utf8'));
 
-  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-fast-change', finalRoute: 'fast', changedPaths: ['src/value.js'] }).valid, true);
-  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-ai-workflow:frontend-change', finalRoute: 'full', changedPaths: ['requirements/REQ.md', 'openspec/changes/a/proposal.md'] }).valid, true);
+  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-fast-change', finalRoute: 'fast', expectedRoute: 'fast', changedPaths: ['src/value.js'] }).valid, true);
+  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-ai-workflow:frontend-change', finalRoute: 'full', expectedRoute: 'full', changedPaths: ['requirements/REQ.md', 'openspec/changes/a/proposal.md'] }).valid, true);
   assert.equal(detectExecutionRoute({ mode: 'baseline', finalRoute: 'baseline', changedPaths: ['requirements/REQ.md'] }).valid, false);
-  assert.equal(detectExecutionRoute({ mode: 'plugin', finalRoute: 'fast', changedPaths: ['src/value.js'] }).valid, false);
+  assert.equal(detectExecutionRoute({ mode: 'plugin', finalRoute: 'fast', expectedRoute: 'fast', changedPaths: ['src/value.js'] }).valid, false);
   cleanupBoundedWorkspace({ runRoot, workspace: left.workspace });
   cleanupBoundedWorkspace({ runRoot, workspace: right.workspace });
 });
@@ -492,6 +512,7 @@ test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
   assert.equal(packageJson.scripts['benchmark:developer-effectiveness'], 'node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs');
   assert.equal(TEST_GROUPS.workflow.includes('tests/developer-effectiveness-benchmark.test.mjs'), true);
+  assert.equal(TEST_GROUPS.workflow.includes('tests/developer-effectiveness-benchmark-authoring.test.mjs'), true);
   assert.doesNotMatch(packageJson.scripts.test, /developer-effectiveness-benchmark\.mjs/u);
   assert.doesNotMatch(packageJson.scripts.validate, /developer-effectiveness-benchmark\.mjs/u);
 
@@ -640,4 +661,61 @@ test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
   assert.equal(legacy.runs.every((item) => item.tokenUsage.status === 'missing'), true);
   assert.equal(legacy.pairs[0].delta.tokenUsage, null);
   assert.doesNotThrow(() => buildWorkbookImportCsv(legacy));
+});
+
+test('[TC-11] 单次新增运行预算可安全暂停和恢复', async (context) => {
+  const fixture = makeProjects(context, 'tc11');
+  const runId = `tc11-${path.basename(fixture.root).toLowerCase()}`;
+  const runRoot = path.join(testOutputRoot, runId);
+  context.after(() => fs.rmSync(runRoot, { recursive: true, force: true }));
+  let executionCalls = 0;
+  const operations = {
+    authorCases: async () => makeCandidates(),
+    preflightCase: async ({ candidate }) => ({ caseId: candidate.id, status: 'passed', code: 'fixture-preflight-passed' }),
+    preparePluginBaselines: ({ config, baselines }) => new Map(config.projects.map((project) => [project.id, {
+      project,
+      baseline: baselines.find((item) => item.projectId === project.id),
+      workspace: path.join(config.runRoot, 'workspaces', `${project.id.toLowerCase()}-budget`),
+    }])),
+    executeCaseRun: async ({ candidate, mode }) => {
+      executionCalls += 1;
+      const runResult = metricRun(candidate.id, mode, {
+        projectName: fixture.projects.find((item) => item.id === candidate.projectId).name,
+        complexity: candidate.complexity,
+        taskType: candidate.taskType,
+      });
+      return { runResult, metrics: buildRunMetrics(runResult) };
+    },
+  };
+  const bounded = benchmarkOptions(fixture.projects, runId, {
+    write: true, executeAgents: true, maxNewRuns: 1,
+  });
+  const preview = createBenchmarkPreview(bounded).preview;
+  assert.equal(preview.maxNewRuns, 1);
+  const first = await runDeveloperEffectivenessBenchmark(bounded, operations);
+  assert.deepEqual(
+    { code: first.code, new: first.newRunCount, complete: first.completedRunCount, remaining: first.remainingRunCount },
+    { code: 'synthetic_benchmark_paused', new: 1, complete: 1, remaining: 11 },
+  );
+  assert.equal(JSON.parse(fs.readFileSync(path.join(runRoot, 'state.json'), 'utf8')).stage, 'executing');
+  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(path.join(runRoot, 'input.json'), 'utf8')), 'maxNewRuns'), false);
+
+  const second = await runDeveloperEffectivenessBenchmark(bounded, operations);
+  assert.deepEqual(
+    { new: second.newRunCount, complete: second.completedRunCount, remaining: second.remainingRunCount },
+    { new: 1, complete: 2, remaining: 10 },
+  );
+  assert.equal(executionCalls, 2);
+  const completed = await runDeveloperEffectivenessBenchmark({ ...bounded, maxNewRuns: null }, operations);
+  assert.equal(completed.code, 'synthetic_benchmark_completed');
+  assert.equal(executionCalls, 12);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(runRoot, 'state.json'), 'utf8')).stage, 'cleaned');
+  for (const attempt of ['01', '02', '03']) {
+    const cleanup = JSON.parse(fs.readFileSync(path.join(runRoot, 'prepared', 'attempts', attempt, 'cleanup.json'), 'utf8'));
+    assert.equal(cleanup.every((item) => item.status === 'passed'), true);
+  }
+  assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs', '0']), (error) => error.code === 'invalid_max_new_runs');
+  assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs', '-1']), (error) => error.code === 'invalid_max_new_runs');
+  assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs', '1.5']), (error) => error.code === 'invalid_max_new_runs');
+  assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs']), (error) => error.code === 'missing_cli_value');
 });

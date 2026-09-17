@@ -44,6 +44,7 @@ export async function runCodexTurn({
   eventOutputPath,
   sandbox,
   sessionId,
+  mode = 'plugin',
   baselines,
   operations,
 }) {
@@ -57,6 +58,7 @@ export async function runCodexTurn({
     outputPath: temporaryOutputPath,
     sandbox,
     sessionId,
+    mode,
   });
   const execute = operations.runProcess || runBoundedProcess;
   const processResult = await execute({
@@ -85,22 +87,43 @@ export async function runCodexTurn({
   };
 }
 
-export function authorPrompt(projectId, complexities) {
+function safeAuthorCorrection(error) {
+  if (!error) return null;
+  const rawCode = typeof error.code === 'string' ? error.code.trim() : '';
+  const code = /^[a-z0-9_]{1,80}$/u.test(rawCode) ? rawCode : 'case_author_validation_failed';
+  const rawTarget = typeof error.target === 'string' ? error.target.trim() : '';
+  const target = rawTarget
+    && rawTarget.length <= 240
+    && !/[\r\n\0]/u.test(rawTarget)
+    && !path.isAbsolute(rawTarget)
+    && !path.win32.isAbsolute(rawTarget)
+    ? rawTarget.replaceAll('\\', '/')
+    : null;
+  return { code, target };
+}
+
+export function authorPrompt(projectId, complexities, previousError = null) {
   const ids = complexities.map((complexity) => {
     const code = { small: 'S01', medium: 'M01', large: 'L01' }[complexity];
     return `SYN-${projectId}-${code}`;
   });
-  return [
+  const correction = safeAuthorCorrection(previousError);
+  const prompt = [
     '你是合成基准的用例作者，只读检查当前 Git 项目，不要修改工作区，也不要实现最终任务。',
     `请为项目 ${projectId} 生成恰好两个独立模拟需求，ID 和复杂度依次为：${ids.map((id, index) => `${id}(${complexities[index]})`).join('、')}。`,
-    '每个用例必须来自当前仓库真实结构，能够由一个代理在局部范围实现，不需要登录、真实账号、生产接口、网络或安装依赖。',
-    'seedPatch 必须能应用到当前 HEAD；referencePatch 必须能应用到 HEAD + seed；evaluatorPatch 必须能分别应用到 HEAD + seed 和 HEAD + seed + reference。三者都使用完整 unified diff，evaluator 只能新增 .benchmark-evaluator/ 下的 Node.js 标准库测试。',
-    'acceptance.command 固定为 node，args 使用 ["--test", ".benchmark-evaluator/<case>.test.mjs"]；seed + evaluator 必须失败，seed + reference + evaluator 必须通过。',
-    'allowedPaths 只列业务源码或测试相关的项目相对路径，不得包含 AGENTS.md、requirements、openspec、wayfinder、outputs、package manifest 或锁文件。',
+    '每个用例必须来自当前仓库真实结构，不需要登录、真实账号、生产接口、网络或安装依赖。第一项 expectedRoute=fast，必须是边界明确的局部修改；第二项 expectedRoute=full，必须涉及真实共享契约、跨模块边界或需要显式规划的产品决策，不能只靠文件数、补丁行数或复杂度标签伪装。',
+    'seedPatch 必须能应用到当前 HEAD；referencePatch、equivalentPatch 和 mutantPatch 必须各自能独立应用到 HEAD + seed；evaluatorPatch 必须能应用到上述四种状态。所有补丁都使用行号与行数准确、没有省略内容的完整 unified diff，evaluator 只能新增 .benchmark-evaluator/ 下的 Node.js 标准库测试。',
+    'equivalentPatch 必须使用与 referencePatch 不同的局部结构或实现路径但满足同一公开行为，禁止复制参考补丁；mutantPatch 只破坏一个公开验收点并保持其余条件。acceptance.command 固定为 node，args 使用 ["--test", ".benchmark-evaluator/<case>.test.mjs"]；seed 和 mutant 必须失败，reference 和 equivalent 必须通过。',
+    'evaluator 必须是 Node.js 可直接运行的纯 JavaScript ESM；不得把 .ts 或 .vue 原文直接交给 eval、new Function 或 vm 执行，也不得直接 import 依赖 Vite/TypeScript 转换的模块。需要观察这类源码时只能读取文本并验证公开行为或稳定公共契约；不得断言局部变量名、表达式顺序、分号、格式或完整参考源码文本。',
+    'allowedPaths 只列业务源码或测试相关的项目相对路径，不得包含 AGENTS.md、requirements、openspec、wayfinder、outputs、package manifest 或锁文件；seedPatch、referencePatch、equivalentPatch 和 mutantPatch 的每个业务目标都必须由 allowedPaths 中的文件或目录覆盖。',
     'publicRequirement 至少 80 个字符，描述可观察目标、边界和公开验证方式，但不得出现 evaluator、reference.patch、隐藏验收或参考实现等泄露词。',
-    'clarifications 仅包含公开需求确实可能触发的问题与冻结答案；availabilityChecks 只列实现所依赖的已存在项目文件。maxReworks 和 maxClarifications 均不超过 2。',
+    'clarifications 仅包含公开需求确实可能触发的问题与冻结答案；availabilityChecks 只列实现所依赖的已存在项目文件，并且每个 target 都必须由 allowedPaths 中的文件或目录覆盖。maxReworks 和 maxClarifications 均不超过 2。',
     '最终仅返回符合给定 JSON schema 的对象；成功时 status=ready 且 cases 恰好两项，无法满足时 status=blocked 且 cases=[]。',
-  ].join('\n');
+  ];
+  if (correction) {
+    prompt.push(`上一次候选校验失败，请只纠正该合同错误：code=${correction.code}${correction.target ? `，target=${correction.target}` : ''}。`);
+  }
+  return prompt.join('\n');
 }
 
 function executionPrompt(candidate, mode) {
@@ -113,7 +136,7 @@ function executionPrompt(candidate, mode) {
     '最终只返回符合 JSON schema 的对象，question、blockerCode、blockerCategory 不适用时使用空字符串。',
   ];
   if (mode === 'plugin') {
-    common.unshift('请根据项目 AGENTS 和当前已安装的 frontend-ai-workflow 插件准入规则处理任务，选择快速通道或完整通道；完整通道若本轮只完成规划，请返回 status=planned、route=full。');
+    common.unshift(`请根据项目 AGENTS 和当前已安装的 frontend-ai-workflow 插件准入规则处理任务，本用例冻结预期路线为 ${candidate.expectedRoute}；必须按该路线执行并返回一致的 route。完整通道若本轮只完成规划，请返回 status=planned、route=full。`);
   } else {
     common.unshift('直接实现并验证下面的需求，不创建需求文档、OpenSpec 变更、Wayfinder 或其他工作流管理文件；route 固定返回 baseline。');
   }
@@ -264,6 +287,7 @@ export async function executeCaseRun({
         eventOutputPath,
         sandbox: 'workspace-write',
         sessionId,
+        mode,
         baselines,
         operations,
       });
@@ -318,6 +342,7 @@ export async function executeCaseRun({
         eventText,
         finalRoute: response.route,
         changedPaths: latestChanges.changedPaths,
+        expectedRoute: candidate.expectedRoute,
       });
       route = routeResult.route;
       routeValid = routeResult.valid;
@@ -381,6 +406,7 @@ export async function executeCaseRun({
     projectName: sourceProject.name,
     complexity: candidate.complexity,
     taskType: candidate.taskType,
+    expectedRoute: candidate.expectedRoute,
     mode,
     freezeDigest: candidate.assetDigests,
     status: finalStatus,

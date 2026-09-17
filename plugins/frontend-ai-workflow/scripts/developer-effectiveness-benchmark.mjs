@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import {
   BENCHMARK_SCHEMA_VERSION, COMPLEXITY_MATRIX, EXPECTED_RUN_COUNT,
   MIN_DISK_RESERVE_BYTES, DeveloperEffectivenessBenchmarkError,
-  applyUnifiedPatch, cleanupBoundedWorkspace, collectSourceBaseline,
+  applyUnifiedPatch, assertSourceBaselineUnchanged, cleanupBoundedWorkspace, collectSourceBaseline,
   freezeSyntheticCases, prepareCommittedWorkspace, publicSourceBaseline,
   scopedBenchmarkProjects, sha256Json, validateBenchmarkConfig, validateSyntheticCase,
   verifyFrozenCases, writeImmutableJson, writeImmutableText, writeJsonAtomic, writeTextAtomic,
@@ -65,6 +65,10 @@ export function createBenchmarkPreview(options) {
   if (!Number.isInteger(config.authorAttempts) || config.authorAttempts < 1 || config.authorAttempts > 3) {
     throw new DeveloperEffectivenessBenchmarkError('invalid_author_attempts', '作者重试次数必须是 1 到 3 的整数', 'authorAttempts');
   }
+  config.maxNewRuns = options.maxNewRuns == null ? null : Number(options.maxNewRuns);
+  if (config.maxNewRuns !== null && (!Number.isInteger(config.maxNewRuns) || config.maxNewRuns < 1)) {
+    throw new DeveloperEffectivenessBenchmarkError('invalid_max_new_runs', '单次新增运行数必须是正整数', 'maxNewRuns');
+  }
   const baselines = config.projects.map(collectSourceBaseline);
   const disk = checkDiskBudget(config.repositoryRoot);
   const preview = {
@@ -72,6 +76,7 @@ export function createBenchmarkPreview(options) {
     status: 'ready',
     code: 'benchmark_preview_ready',
     ...publicConfig(config, baselines),
+    maxNewRuns: config.maxNewRuns,
     disk,
     limitations: [
       '本轮结果是合成基准，不能替代真实开发者数据。',
@@ -102,6 +107,8 @@ function persistFrozenCases(config, manifest) {
     writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'seed.patch'), `${candidate.seedPatch.trimEnd()}\n`, { mustNotExist: true });
     writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'evaluator.patch'), `${candidate.evaluatorPatch.trimEnd()}\n`, { mustNotExist: true });
     writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'reference.patch'), `${candidate.referencePatch.trimEnd()}\n`, { mustNotExist: true });
+    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'equivalent.patch'), `${candidate.equivalentPatch.trimEnd()}\n`, { mustNotExist: true });
+    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'mutant.patch'), `${candidate.mutantPatch.trimEnd()}\n`, { mustNotExist: true });
     writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'clarifications.json'), candidate.clarifications, { mustNotExist: true });
     writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'acceptance.json'), candidate.acceptance, { mustNotExist: true });
     writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'case.json'), {
@@ -112,6 +119,7 @@ function persistFrozenCases(config, manifest) {
       title: candidate.title,
       complexity: candidate.complexity,
       taskType: candidate.taskType,
+      expectedRoute: candidate.expectedRoute,
       allowedPaths: candidate.allowedPaths,
       availabilityChecks: candidate.availabilityChecks,
       maxReworks: candidate.maxReworks,
@@ -125,6 +133,7 @@ function persistFrozenCases(config, manifest) {
 
 async function authorSyntheticCases({ config, baselines, schemas, operations }) {
   const candidates = [];
+  const preflightResults = [];
   for (const project of scopedBenchmarkProjects(config)) {
     const baseline = baselines.find((item) => item.projectId === project.id);
     let response = null;
@@ -136,15 +145,17 @@ async function authorSyntheticCases({ config, baselines, schemas, operations }) 
       const authorAttemptRoot = nextAttemptDirectory(path.join(config.runRoot, 'authors', project.id, 'attempts'));
       const eventOutputPath = path.join(authorAttemptRoot, 'events.ndjson');
       try {
-        const turn = await runCodexTurn({
+        const runAuthorTurn = operations.authorTurn || runCodexTurn;
+        const turn = await runAuthorTurn({
           config,
           workspace: prepared.workspace,
-          prompt: authorPrompt(project.id, COMPLEXITY_MATRIX[project.id]),
+          prompt: authorPrompt(project.id, COMPLEXITY_MATRIX[project.id], lastError),
           schemaPath: schemas.author,
           temporaryOutputPath,
           eventOutputPath,
           sandbox: 'read-only',
           sessionId: null,
+          mode: 'plugin',
           baselines,
           operations,
         });
@@ -156,7 +167,13 @@ async function authorSyntheticCases({ config, baselines, schemas, operations }) 
           lastError = new DeveloperEffectivenessBenchmarkError('case_author_count_mismatch', `项目 ${project.id} 的需求作者返回数量不正确`, project.id);
         } else {
           try {
-            response = turn.finalResponse.cases.map(validateSyntheticCase);
+            const validated = turn.finalResponse.cases.map(validateSyntheticCase);
+            const results = [];
+            for (const candidate of validated) {
+              results.push(await runPreflightCase({ config, project, baseline, candidate, baselines, operations }));
+            }
+            response = validated;
+            preflightResults.push(...results);
           } catch (error) {
             lastError = error;
           }
@@ -174,18 +191,27 @@ async function authorSyntheticCases({ config, baselines, schemas, operations }) 
     if (!response) throw lastError || new DeveloperEffectivenessBenchmarkError('case_author_failed', `项目 ${project.id} 无法生成用例`, project.id);
     candidates.push(...response);
   }
-  return freezeSyntheticCases(candidates, undefined, scopedBenchmarkProjects(config).map((project) => project.id));
+  const manifest = freezeSyntheticCases(candidates, undefined, scopedBenchmarkProjects(config).map((project) => project.id));
+  return {
+    manifest,
+    preflight: {
+      schemaVersion: BENCHMARK_SCHEMA_VERSION,
+      synthetic: true,
+      manifestDigest: manifest.manifestDigest,
+      results: preflightResults,
+    },
+  };
 }
 
-async function preflightOneCase({ config, project, baseline, candidate, baselines, operations }) {
+export async function preflightOneCase({ config, project, baseline, candidate, baselines, operations }) {
   const checks = [];
-  for (const variant of ['seed', 'reference']) {
+  for (const variant of ['seed', 'reference', 'equivalent', 'mutant']) {
     const name = `${candidate.id.toLowerCase()}-${variant}-preflight`;
     const prepared = prepareCommittedWorkspace({ project, baseline, runRoot: config.runRoot, category: 'evaluations', name, recoverExisting: true });
     try {
       applyUnifiedPatch(prepared.workspace, candidate.seedPatch, `${candidate.id}.seed`, { env: prepared.environment });
-      if (variant === 'reference') {
-        applyUnifiedPatch(prepared.workspace, candidate.referencePatch, `${candidate.id}.reference`, { env: prepared.environment });
+      if (variant !== 'seed') {
+        applyUnifiedPatch(prepared.workspace, candidate[`${variant}Patch`], `${candidate.id}.${variant}`, { env: prepared.environment });
       }
       applyUnifiedPatch(prepared.workspace, candidate.evaluatorPatch, `${candidate.id}.evaluator`, { env: prepared.environment });
       const result = await runAcceptance({ config, candidate, workspace: prepared.workspace, baselines, operations });
@@ -194,7 +220,25 @@ async function preflightOneCase({ config, project, baseline, candidate, baseline
         throw new DeveloperEffectivenessBenchmarkError('case_seed_unexpected_pass', `用例 ${candidate.id} 的 seed 状态意外通过验收`, candidate.id);
       }
       if (variant === 'reference' && !result.passed) {
-        throw new DeveloperEffectivenessBenchmarkError('case_reference_failed', `用例 ${candidate.id} 的参考实现没有通过验收`, candidate.id);
+        throw new DeveloperEffectivenessBenchmarkError(
+          classifyReferenceAcceptanceFailure(result),
+          `用例 ${candidate.id} 的参考实现没有通过验收`,
+          candidate.id,
+        );
+      }
+      if (variant === 'equivalent' && !result.passed) {
+        throw new DeveloperEffectivenessBenchmarkError(
+          'case_equivalent_failed',
+          `用例 ${candidate.id} 的独立正确实现没有通过验收`,
+          candidate.id,
+        );
+      }
+      if (variant === 'mutant' && result.passed) {
+        throw new DeveloperEffectivenessBenchmarkError(
+          'case_mutant_unexpected_pass',
+          `用例 ${candidate.id} 的已知错误变体意外通过验收`,
+          candidate.id,
+        );
       }
     } finally {
       const cleanup = cleanupBoundedWorkspace({ runRoot: config.runRoot, workspace: prepared.workspace });
@@ -203,7 +247,26 @@ async function preflightOneCase({ config, project, baseline, candidate, baseline
       }
     }
   }
-  return { caseId: candidate.id, status: 'passed', code: 'case_preflight_passed', checks };
+  return {
+    caseId: candidate.id,
+    status: 'passed',
+    code: 'case_semantic_preflight_passed',
+    qualityStatus: 'behavior-validated',
+    checks,
+  };
+}
+
+export function classifyReferenceAcceptanceFailure(result = {}) {
+  if (result.launchError) return 'case_reference_launch_failed';
+  if (result.timedOut) return 'case_reference_timeout';
+  if (result.interrupted) return 'case_reference_interrupted';
+  const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+  if (/SyntaxError/u.test(output)) return 'case_reference_syntax_error';
+  if (/ERR_MODULE_NOT_FOUND|Cannot find (?:module|package)/iu.test(output)) return 'case_reference_module_load_failed';
+  if (/ReferenceError/u.test(output)) return 'case_reference_reference_error';
+  if (/TypeError/u.test(output)) return 'case_reference_type_error';
+  if (/AssertionError|ERR_ASSERTION/u.test(output)) return 'case_reference_assertion_failed';
+  return 'case_reference_failed';
 }
 
 async function preflightCases({ config, baselines, manifest, operations }) {
@@ -211,15 +274,19 @@ async function preflightCases({ config, baselines, manifest, operations }) {
   for (const candidate of manifest.cases) {
     const project = config.projects.find((item) => item.id === candidate.projectId);
     const baseline = baselines.find((item) => item.projectId === candidate.projectId);
-    const result = operations.preflightCase
-      ? await operations.preflightCase({ config, project, baseline, candidate })
-      : await preflightOneCase({ config, project, baseline, candidate, baselines, operations });
-    if (result.status !== 'passed') {
-      throw new DeveloperEffectivenessBenchmarkError(result.code || 'case_preflight_failed', `用例 ${candidate.id} 预检失败`, candidate.id);
-    }
-    results.push(result);
+    results.push(await runPreflightCase({ config, project, baseline, candidate, baselines, operations }));
   }
   return { schemaVersion: BENCHMARK_SCHEMA_VERSION, synthetic: true, manifestDigest: manifest.manifestDigest, results };
+}
+
+async function runPreflightCase({ config, project, baseline, candidate, baselines, operations }) {
+  const result = operations.preflightCase
+    ? await operations.preflightCase({ config, project, baseline, candidate })
+    : await preflightOneCase({ config, project, baseline, candidate, baselines, operations });
+  if (result.status !== 'passed') {
+    throw new DeveloperEffectivenessBenchmarkError(result.code || 'case_preflight_failed', `用例 ${candidate.id} 预检失败`, candidate.id);
+  }
+  return result;
 }
 
 function loadOrCreateState(config, inputDigest) {
@@ -272,18 +339,23 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   }
   const schemas = writeSchemas(config);
   let manifest;
+  let authoredPreflight = null;
   const manifestPath = path.join(config.runRoot, 'cases', 'frozen-manifest.json');
   if (fs.existsSync(manifestPath)) manifest = verifyFrozenCases(readJson(manifestPath));
   else {
-    manifest = operations.authorCases
-      ? freezeSyntheticCases(await operations.authorCases({ config, baselines }), undefined, scopedBenchmarkProjects(config).map((project) => project.id))
-      : await authorSyntheticCases({ config, baselines, schemas, operations });
+    if (operations.authorCases) {
+      manifest = freezeSyntheticCases(await operations.authorCases({ config, baselines }), undefined, scopedBenchmarkProjects(config).map((project) => project.id));
+    } else {
+      const authored = await authorSyntheticCases({ config, baselines, schemas, operations });
+      manifest = authored.manifest;
+      authoredPreflight = authored.preflight;
+    }
     persistFrozenCases(config, manifest);
   }
   state = updateState(config, loaded.statePath, state, 'frozen', inputDigest);
   const preflightPath = path.join(config.runRoot, 'cases', 'preflight.json');
   if (!fs.existsSync(preflightPath)) {
-    const preflight = await preflightCases({ config, baselines, manifest, operations });
+    const preflight = authoredPreflight || await preflightCases({ config, baselines, manifest, operations });
     writeImmutableJson(config.repositoryRoot, preflightPath, preflight);
   } else {
     const preflight = readJson(preflightPath);
@@ -309,23 +381,31 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   state = updateState(config, loaded.statePath, state, 'executing', inputDigest);
   const metrics = [];
   const runOrder = [];
+  let newRunCount = 0;
+  let paused = false;
+  const selectedCases = config.smokeCase ? manifest.cases.filter((item) => item.id === config.smokeCase) : manifest.cases;
   try {
-    const selectedCases = config.smokeCase ? manifest.cases.filter((item) => item.id === config.smokeCase) : manifest.cases;
     if (config.smokeCase && selectedCases.length !== 1) {
       throw new DeveloperEffectivenessBenchmarkError('smoke_case_not_found', '冻结清单中不存在指定 smoke 用例', config.smokeCase);
     }
+    runLoop:
     for (const [caseIndex, candidate] of selectedCases.entries()) {
       const sourceProject = config.projects.find((item) => item.id === candidate.projectId);
       const sourceBaseline = baselines.find((item) => item.projectId === candidate.projectId);
       const order = config.smokeCase ? ['plugin'] : (caseIndex % 2 === 0 ? ['plugin', 'baseline'] : ['baseline', 'plugin']);
       for (const mode of order) {
-        runOrder.push({ caseId: candidate.id, mode, index: runOrder.length + 1 });
         const resultPath = path.join(config.runRoot, 'runs', candidate.id, mode, 'result.json');
         const metricsPath = path.join(config.runRoot, 'runs', candidate.id, mode, 'metrics.json');
         if (fs.existsSync(resultPath) && fs.existsSync(metricsPath)) {
+          runOrder.push({ caseId: candidate.id, mode, index: runOrder.length + 1 });
           metrics.push(readJson(metricsPath));
           continue;
         }
+        if (config.maxNewRuns !== null && newRunCount >= config.maxNewRuns) {
+          paused = true;
+          break runLoop;
+        }
+        runOrder.push({ caseId: candidate.id, mode, index: runOrder.length + 1 });
         const pluginPrepared = preparedProjects.get(candidate.projectId);
         const runSource = mode === 'plugin'
           ? { project: pluginPrepared.project, baseline: pluginPrepared.baseline }
@@ -347,11 +427,28 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
         writeImmutableJson(config.repositoryRoot, resultPath, executed.runResult);
         writeImmutableJson(config.repositoryRoot, metricsPath, executed.metrics);
         metrics.push(executed.metrics);
+        newRunCount += 1;
       }
     }
   } finally {
     const cleanup = cleanupPreparedProjects(config, preparedProjects);
     writeImmutableJson(config.repositoryRoot, path.join(preparationAttemptRoot, 'cleanup.json'), cleanup);
+  }
+  for (const [index, project] of config.projects.entries()) assertSourceBaselineUnchanged(baselines[index], project);
+  if (paused) {
+    const expectedRunCount = config.smokeCase ? selectedCases.length : selectedCases.length * 2;
+    return {
+      ok: true,
+      status: 'paused',
+      code: 'synthetic_benchmark_paused',
+      runId: config.runId,
+      synthetic: true,
+      maxNewRuns: config.maxNewRuns,
+      newRunCount,
+      completedRunCount: metrics.length,
+      remainingRunCount: expectedRunCount - metrics.length,
+      limitations: preview.limitations,
+    };
   }
   state = updateState(config, loaded.statePath, state, 'evaluated', inputDigest);
   const summary = buildBenchmarkSummary(metrics);
@@ -368,12 +465,6 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   writeImmutableText(config.repositoryRoot, path.join(config.runRoot, 'workbook-import.csv'), buildWorkbookImportCsv(summary));
   writeImmutableText(config.repositoryRoot, path.join(config.runRoot, 'review.md'), buildBenchmarkReviewMarkdown(summary));
   state = updateState(config, loaded.statePath, state, 'summarized', inputDigest);
-  for (const [index, project] of config.projects.entries()) {
-    const after = collectSourceBaseline(project);
-    if (sha256Json(publicSourceBaseline(after)) !== sha256Json(publicSourceBaseline(baselines[index]))) {
-      throw new DeveloperEffectivenessBenchmarkError('source_baseline_drifted', `项目 ${project.id} 在整轮运行期间发生变化`, project.id, 'defect');
-    }
-  }
   state = updateState(config, loaded.statePath, state, 'cleaned', inputDigest);
   return {
     ok: true,

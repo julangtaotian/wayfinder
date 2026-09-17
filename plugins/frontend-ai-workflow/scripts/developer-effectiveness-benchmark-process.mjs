@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { runBootstrap } from './bootstrap-project.mjs';
+import { MANAGEMENT_PATHS } from './developer-effectiveness-benchmark-contract.mjs';
 import {
   MAX_CAPTURE_BYTES,
   DeveloperEffectivenessBenchmarkError,
@@ -58,6 +59,7 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
     keepWorkspaces: false,
     smokeCase: null,
     authorAttempts: DEFAULT_AUTHOR_ATTEMPTS,
+    maxNewRuns: null,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const option = argv[index];
@@ -75,6 +77,7 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
       '--codex': 'codex',
       '--author-attempts': 'authorAttempts',
       '--smoke-case': 'smokeCase',
+      '--max-new-runs': 'maxNewRuns',
     };
     if (valueOptions[option]) {
       result[valueOptions[option]] = requiredValue(argv, index, option);
@@ -88,8 +91,12 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
   }
   result.timeoutMinutes = Number(result.timeoutMinutes);
   result.authorAttempts = Number(result.authorAttempts);
+  result.maxNewRuns = result.maxNewRuns === null ? null : Number(result.maxNewRuns);
   if (!Number.isInteger(result.authorAttempts) || result.authorAttempts < 1 || result.authorAttempts > 3) {
     throw new DeveloperEffectivenessBenchmarkError('invalid_author_attempts', '作者重试次数必须是 1 到 3 的整数', 'authorAttempts');
+  }
+  if (result.maxNewRuns !== null && (!Number.isInteger(result.maxNewRuns) || result.maxNewRuns < 1)) {
+    throw new DeveloperEffectivenessBenchmarkError('invalid_max_new_runs', '单次新增运行数必须是正整数', 'maxNewRuns');
   }
   return result;
 }
@@ -116,6 +123,7 @@ export function buildCodexInvocation({
   outputPath,
   sandbox = 'workspace-write',
   sessionId = null,
+  mode = 'plugin',
 }) {
   const resolved = resolveCodexEntry(entry);
   const shared = [
@@ -126,10 +134,13 @@ export function buildCodexInvocation({
   ];
   // 当前 Codex CLI 中自动审批本身已选择 workspace-write，不能再与 --sandbox 同传。
   const sandboxArgs = sandbox === 'workspace-write' ? ['--approve-for-me'] : ['--sandbox', sandbox];
+  const isolationArgs = mode === 'baseline'
+    ? ['--ignore-user-config', '--disable', 'plugins', '--enable', 'skip_host_skill_discovery']
+    : [];
   const args = sessionId
-    ? [...resolved.prefix, 'exec', 'resume', ...shared, sessionId, prompt]
+    ? [...resolved.prefix, 'exec', ...isolationArgs, 'resume', ...shared, sessionId, prompt]
     : [
-      ...resolved.prefix, 'exec', ...shared, '--color', 'never', ...sandboxArgs, '--cd', workspace, prompt,
+      ...resolved.prefix, 'exec', ...isolationArgs, ...shared, '--color', 'never', ...sandboxArgs, '--cd', workspace, prompt,
     ];
   return { command: resolved.command, args, cwd: workspace, shell: false, entryKind: resolved.kind };
 }
@@ -309,7 +320,6 @@ function isoNow(operations) {
 }
 
 export function preparePluginBaselines({ config, baselines, operations }) {
-  const allowedPaths = ['AGENTS.md', 'openspec/', 'wayfinder/'];
   const preparedProjects = new Map();
   let active = null;
   try {
@@ -327,7 +337,7 @@ export function preparePluginBaselines({ config, baselines, operations }) {
         throw new DeveloperEffectivenessBenchmarkError('plugin_prepare_failed', `项目 ${project.id} 的插件基线初始化或幂等检查失败`, project.id);
       }
       const preparationChanges = captureWorkspaceChanges(active.workspace, { env: active.environment });
-      const unexpected = preparationChanges.changedPaths.filter((candidate) => !allowedPaths.some((allowed) => (
+      const unexpected = preparationChanges.changedPaths.filter((candidate) => !MANAGEMENT_PATHS.some((allowed) => (
         candidate === allowed.replace(/\/$/u, '') || candidate.startsWith(allowed)
       )));
       if (unexpected.length) {

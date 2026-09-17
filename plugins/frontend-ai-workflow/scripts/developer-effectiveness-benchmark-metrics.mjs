@@ -366,17 +366,19 @@ export const AUTHOR_RESPONSE_SCHEMA = Object.freeze({
       items: {
         type: 'object', additionalProperties: false,
         required: [
-          'id', 'projectId', 'title', 'complexity', 'taskType', 'publicRequirement', 'allowedPaths',
-          'seedPatch', 'evaluatorPatch', 'referencePatch', 'clarifications', 'acceptance', 'availabilityChecks',
+          'id', 'projectId', 'title', 'complexity', 'taskType', 'expectedRoute', 'publicRequirement', 'allowedPaths',
+          'seedPatch', 'evaluatorPatch', 'referencePatch', 'equivalentPatch', 'mutantPatch', 'clarifications', 'acceptance', 'availabilityChecks',
           'maxReworks', 'maxClarifications', 'requiresExternalSystem', 'usesNetwork',
         ],
         properties: {
           id: { type: 'string' }, projectId: { type: 'string' }, title: { type: 'string' },
           complexity: { type: 'string', enum: ['small', 'medium', 'large'] },
           taskType: { type: 'string', enum: ['bug', 'feature', 'refactor'] },
+          expectedRoute: { type: 'string', enum: ['fast', 'full'] },
           publicRequirement: { type: 'string' },
           allowedPaths: { type: 'array', items: { type: 'string' } },
           seedPatch: { type: 'string' }, evaluatorPatch: { type: 'string' }, referencePatch: { type: 'string' },
+          equivalentPatch: { type: 'string' }, mutantPatch: { type: 'string' },
           clarifications: {
             type: 'array',
             items: {
