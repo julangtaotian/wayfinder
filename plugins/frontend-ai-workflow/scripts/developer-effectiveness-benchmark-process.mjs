@@ -58,6 +58,7 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
     executeAgents: false,
     keepWorkspaces: false,
     smokeCase: null,
+    pairCase: null,
     authorAttempts: DEFAULT_AUTHOR_ATTEMPTS,
     maxNewRuns: null,
   };
@@ -77,6 +78,7 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
       '--codex': 'codex',
       '--author-attempts': 'authorAttempts',
       '--smoke-case': 'smokeCase',
+      '--pair-case': 'pairCase',
       '--max-new-runs': 'maxNewRuns',
     };
     if (valueOptions[option]) {

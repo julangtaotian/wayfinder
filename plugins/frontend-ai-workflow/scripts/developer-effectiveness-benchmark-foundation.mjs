@@ -357,7 +357,8 @@ export function captureWorkspaceChanges(workspace, { spawn = spawnSync, env = pr
 }
 
 export function scopedBenchmarkProjects(config) {
-  if (!config.smokeCase) return config.projects;
-  const projectId = config.smokeCase.split('-')[1];
+  const selectedCase = config.pairCase || config.smokeCase;
+  if (!selectedCase) return config.projects;
+  const projectId = selectedCase.split('-')[1];
   return config.projects.filter((project) => project.id === projectId);
 }

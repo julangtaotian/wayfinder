@@ -75,7 +75,7 @@ npm run benchmark:developer-effectiveness -- \
   --project P3=/path/to/project-three
 ```
 
-只有同时追加 `--write --execute-agents` 才会生成用例并启动真实代理；单独使用 `--write` 只固定本轮输入和恢复状态。正式整轮前可用 `--smoke-case <冻结用例ID>` 只为目标项目生成两条候选需求并执行指定用例的插件组，smoke 使用独立 run ID，不能代替完整六用例、十二次配对运行。可用 `--timeout-minutes` 设置每次代理上限，`--author-attempts` 设置候选需求重试次数，显式 `--codex` 指定可执行文件或 JavaScript CLI。默认清理所有隔离工作区；`--keep-workspaces` 只用于故障检查，会增加磁盘占用和源码副本保留时间。
+只有同时追加 `--write --execute-agents` 才会生成用例并启动真实代理；单独使用 `--write` 只固定本轮输入和恢复状态。正式整轮前可用 `--smoke-case <冻结用例ID>` 只为目标项目生成两条候选需求并执行指定用例的插件组；需要在有限额度内先取得同一冻结需求的插件/基线对照时，使用 `--pair-case <冻结用例ID>`，它只执行该用例的两组配对。两种缩小范围的运行都必须使用独立 run ID，不能代替完整六用例、十二次配对运行。可用 `--timeout-minutes` 设置每次代理上限，`--author-attempts` 设置候选需求重试次数，显式 `--codex` 指定可执行文件或 JavaScript CLI。默认清理所有隔离工作区；`--keep-workspaces` 只用于故障检查，会增加磁盘占用和源码副本保留时间。
 
 所有运行内容位于 `.frontend-ai-workflow/runs/developer-effectiveness-benchmark/<run-id>/`，同一运行 ID 会核验不可变输入并从未完成阶段恢复，输入不一致时拒绝覆盖。源项目已有未提交内容不会进入副本，整轮运行要求其分支、提交和状态摘要前后一致。运行事件会脱敏和限长，但仍不应把真实凭据写入需求或项目文件。
 

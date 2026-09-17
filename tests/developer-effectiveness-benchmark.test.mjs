@@ -529,9 +529,24 @@ test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   assert.equal(smoke.expectedCaseCount, 2);
   assert.equal(smoke.scope, 'plugin-smoke');
   assert.deepEqual(scopedBenchmarkProjects({ projects: fixture.projects, smokeCase: 'SYN-P1-S01' }).map((item) => item.id), ['P1']);
+  const paired = createBenchmarkPreview(benchmarkOptions(fixture.projects, `${runId}-paired`, { pairCase: 'SYN-P2-M01' })).preview;
+  assert.equal(paired.expectedRunCount, 2);
+  assert.equal(paired.expectedCaseCount, 2);
+  assert.equal(paired.scope, 'single-paired');
+  assert.deepEqual(scopedBenchmarkProjects({ projects: fixture.projects, pairCase: 'SYN-P2-M01' }).map((item) => item.id), ['P2']);
   assert.throws(
     () => createBenchmarkPreview(benchmarkOptions(fixture.projects, `${runId}-bad-smoke`, { smokeCase: 'SYN-P1-M01' })),
     (error) => error.code === 'invalid_smoke_case',
+  );
+  assert.throws(
+    () => createBenchmarkPreview(benchmarkOptions(fixture.projects, `${runId}-bad-pair`, { pairCase: 'SYN-P1-M01' })),
+    (error) => error.code === 'invalid_pair_case',
+  );
+  assert.throws(
+    () => createBenchmarkPreview(benchmarkOptions(fixture.projects, `${runId}-conflict`, {
+      smokeCase: 'SYN-P1-S01', pairCase: 'SYN-P1-S01',
+    })),
+    (error) => error.code === 'conflicting_case_scope',
   );
 
   const executionRunId = `tc08-run-${path.basename(fixture.root).toLowerCase()}`;
@@ -718,4 +733,5 @@ test('[TC-11] 单次新增运行预算可安全暂停和恢复', async (context)
   assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs', '-1']), (error) => error.code === 'invalid_max_new_runs');
   assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs', '1.5']), (error) => error.code === 'invalid_max_new_runs');
   assert.throws(() => parseBenchmarkCliArgs(['--max-new-runs']), (error) => error.code === 'missing_cli_value');
+  assert.equal(parseBenchmarkCliArgs(['--pair-case', 'SYN-P1-S01']).pairCase, 'SYN-P1-S01');
 });

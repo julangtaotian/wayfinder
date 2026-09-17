@@ -102,6 +102,22 @@ function safeAuthorCorrection(error) {
   return { code, target };
 }
 
+function authorCorrectionGuidance(code) {
+  if (code === 'case_equivalent_failed') {
+    return '重新生成时必须逐条对照 evaluatorPatch、referencePatch 与 equivalentPatch：验收断言必须同时接受两种语义等价但结构不同的实现，不能把独立实现限定为参考实现的赋值写法、语句顺序、中间变量或格式。';
+  }
+  if (code === 'patch_apply_failed') {
+    return '重新读取 target 对应源码并按当前 HEAD 生成完整补丁，逐项核对上下文、行数和目标路径，不得沿用上一次补丁的行号假设。';
+  }
+  if (code === 'case_mutant_unexpected_pass') {
+    return '重新生成时确保 mutantPatch 只破坏一个公开行为，并让 evaluatorPatch 对该行为有能够稳定失败的断言。';
+  }
+  if (code === 'case_seed_unexpected_pass') {
+    return '重新生成时确保 seedPatch 确实留下公开需求尚未满足的行为，并让 evaluatorPatch 能稳定识别该缺口。';
+  }
+  return '重新生成全部候选并针对该稳定错误代码完成四种状态的交叉检查。';
+}
+
 export function authorPrompt(projectId, complexities, previousError = null) {
   const ids = complexities.map((complexity) => {
     const code = { small: 'S01', medium: 'M01', large: 'L01' }[complexity];
@@ -115,13 +131,15 @@ export function authorPrompt(projectId, complexities, previousError = null) {
     'seedPatch 必须能应用到当前 HEAD；referencePatch、equivalentPatch 和 mutantPatch 必须各自能独立应用到 HEAD + seed；evaluatorPatch 必须能应用到上述四种状态。所有补丁都使用行号与行数准确、没有省略内容的完整 unified diff，evaluator 只能新增 .benchmark-evaluator/ 下的 Node.js 标准库测试。',
     'equivalentPatch 必须使用与 referencePatch 不同的局部结构或实现路径但满足同一公开行为，禁止复制参考补丁；mutantPatch 只破坏一个公开验收点并保持其余条件。acceptance.command 固定为 node，args 使用 ["--test", ".benchmark-evaluator/<case>.test.mjs"]；seed 和 mutant 必须失败，reference 和 equivalent 必须通过。',
     'evaluator 必须是 Node.js 可直接运行的纯 JavaScript ESM；不得把 .ts 或 .vue 原文直接交给 eval、new Function 或 vm 执行，也不得直接 import 依赖 Vite/TypeScript 转换的模块。需要观察这类源码时只能读取文本并验证公开行为或稳定公共契约；不得断言局部变量名、表达式顺序、分号、格式或完整参考源码文本。',
+    '返回前必须逐项交叉检查 seed、reference、equivalent、mutant 四种状态：seed 和 mutant 应失败，reference 和 equivalent 应通过。尤其要把 evaluatorPatch 的每条断言同时对照 referencePatch 与 equivalentPatch，语义等价的链式赋值、中间变量、属性顺序或控制流差异不得被误判。',
     'allowedPaths 只列业务源码或测试相关的项目相对路径，不得包含 AGENTS.md、requirements、openspec、wayfinder、outputs、package manifest 或锁文件；seedPatch、referencePatch、equivalentPatch 和 mutantPatch 的每个业务目标都必须由 allowedPaths 中的文件或目录覆盖。',
     'publicRequirement 至少 80 个字符，描述可观察目标、边界和公开验证方式，但不得出现 evaluator、reference.patch、隐藏验收或参考实现等泄露词。',
+    'publicRequirement 中“仅修改”“保持不变”“不得影响”等范围限制必须与 referencePatch 和 equivalentPatch 完全一致；seedPatch 不得制造只能通过违反这些公开限制才能修复的矛盾起点。',
     'clarifications 仅包含公开需求确实可能触发的问题与冻结答案；availabilityChecks 只列实现所依赖的已存在项目文件，并且每个 target 都必须由 allowedPaths 中的文件或目录覆盖。maxReworks 和 maxClarifications 均不超过 2。',
     '最终仅返回符合给定 JSON schema 的对象；成功时 status=ready 且 cases 恰好两项，无法满足时 status=blocked 且 cases=[]。',
   ];
   if (correction) {
-    prompt.push(`上一次候选校验失败，请只纠正该合同错误：code=${correction.code}${correction.target ? `，target=${correction.target}` : ''}。`);
+    prompt.push(`上一次候选校验失败，请只纠正该合同错误：code=${correction.code}${correction.target ? `，target=${correction.target}` : ''}。${authorCorrectionGuidance(correction.code)}`);
   }
   return prompt.join('\n');
 }

@@ -187,12 +187,22 @@ test('[TC-01] 任务作者基础提示声明字段一致性', () => {
   assert.match(prompt, /每个 target 都必须由 allowedPaths/u);
   assert.match(prompt, /行号与行数准确、没有省略内容的完整 unified diff/u);
   assert.match(prompt, /不得把 \.ts 或 \.vue 原文直接交给 eval、new Function 或 vm/u);
+  assert.match(prompt, /每条断言同时对照 referencePatch 与 equivalentPatch/u);
+  assert.match(prompt, /链式赋值、中间变量、属性顺序或控制流差异不得被误判/u);
+  assert.match(prompt, /seedPatch 不得制造只能通过违反这些公开限制才能修复的矛盾起点/u);
   assert.doesNotMatch(prompt, /上一次候选校验失败/u);
   const corrected = authorPrompt('P1', ['small', 'large'], {
     code: 'patch_apply_failed', target: '/private/tmp/sensitive/project.js', message: '不得进入提示的原始错误',
   });
   assert.match(corrected, /code=patch_apply_failed/u);
+  assert.match(corrected, /重新读取 target 对应源码/u);
   assert.doesNotMatch(corrected, /target=|不得进入提示的原始错误|private\/tmp/u);
+
+  const equivalentCorrection = authorPrompt('P2', ['medium', 'large'], {
+    code: 'case_equivalent_failed', target: 'SYN-P2-M01', message: '不应进入提示的验收原文',
+  });
+  assert.match(equivalentCorrection, /验收断言必须同时接受两种语义等价但结构不同的实现/u);
+  assert.doesNotMatch(equivalentCorrection, /不应进入提示的验收原文/u);
 });
 
 test('[TC-02] 任务作者重试只消费最近稳定诊断', async (context) => {
@@ -220,6 +230,30 @@ test('[TC-02] 任务作者重试只消费最近稳定诊断', async (context) =>
   assert.match(prompts[1], /target=src\/outside\.js/u);
   assert.doesNotMatch(prompts[1], /可用性检查越出允许路径/u);
   assert.doesNotMatch(prompts[1], new RegExp(fixture.root.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'u'));
+});
+
+test('[TC-02A] 单用例配对模式只执行同一冻结需求的插件与基线', async (context) => {
+  const fixture = makeProjects(context, 'single-paired');
+  const runId = `single-paired-${path.basename(fixture.root).toLowerCase()}`;
+  context.after(() => fs.rmSync(path.join(testOutputRoot, runId), { recursive: true, force: true }));
+  const candidates = makeCandidates().filter((item) => item.projectId === 'P1');
+  const modes = [];
+  const result = await runDeveloperEffectivenessBenchmark(benchmarkOptions(fixture.projects, runId, {
+    write: true, executeAgents: true, pairCase: 'SYN-P1-S01', authorAttempts: 1,
+  }), {
+    authorTurn: async () => authorTurnResult(candidates),
+    preflightCase: async ({ candidate }) => ({ caseId: candidate.id, status: 'passed', code: 'fixture-preflight-passed' }),
+    preparePluginBaselines: prepareInjectedBaselines,
+    executeCaseRun: async ({ candidate, mode }) => {
+      modes.push(mode);
+      return injectedExecution(fixture)({ candidate, mode });
+    },
+  });
+  assert.equal(result.code, 'synthetic_benchmark_completed');
+  assert.deepEqual(modes, ['plugin', 'baseline']);
+  assert.equal(result.validPairCount, 1);
+  assert.equal(result.expectedPairCount, 1);
+  assert.equal(result.conclusionStatus, 'descriptive-comparison');
 });
 
 test('[TC-03] 任务作者重试耗尽保留最后错误', async (context) => {

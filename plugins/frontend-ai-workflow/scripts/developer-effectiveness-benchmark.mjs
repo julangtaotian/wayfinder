@@ -43,9 +43,10 @@ function publicConfig(config, baselines) {
     reasoning: config.reasoning,
     timeoutMinutes: config.timeoutMinutes,
     expectedCaseCount: scopedBenchmarkProjects(config).reduce((count, project) => count + COMPLEXITY_MATRIX[project.id].length, 0),
-    expectedRunCount: config.smokeCase ? 1 : EXPECTED_RUN_COUNT,
-    scope: config.smokeCase ? 'plugin-smoke' : 'full-paired',
+    expectedRunCount: config.smokeCase ? 1 : (config.pairCase ? 2 : EXPECTED_RUN_COUNT),
+    scope: config.smokeCase ? 'plugin-smoke' : (config.pairCase ? 'single-paired' : 'full-paired'),
     smokeCase: config.smokeCase,
+    pairCase: config.pairCase,
     projects: baselines.map(publicSourceBaseline),
     output: config.runPath,
     write: config.write,
@@ -58,9 +59,10 @@ export function createBenchmarkPreview(options) {
   config.codex = options.codex || 'codex';
   config.keepWorkspaces = Boolean(options.keepWorkspaces);
   config.smokeCase = options.smokeCase || null;
-  if (config.smokeCase && !SMOKE_CASE_IDS.has(config.smokeCase)) {
-    throw new DeveloperEffectivenessBenchmarkError('invalid_smoke_case', 'smoke 用例不属于第一轮固定矩阵', 'smokeCase');
-  }
+  config.pairCase = options.pairCase || null;
+  if (config.smokeCase && config.pairCase) throw new DeveloperEffectivenessBenchmarkError('conflicting_case_scope', '--smoke-case 与 --pair-case 不能同时使用', 'caseScope');
+  if (config.smokeCase && !SMOKE_CASE_IDS.has(config.smokeCase)) throw new DeveloperEffectivenessBenchmarkError('invalid_smoke_case', 'smoke 用例不属于第一轮固定矩阵', 'smokeCase');
+  if (config.pairCase && !SMOKE_CASE_IDS.has(config.pairCase)) throw new DeveloperEffectivenessBenchmarkError('invalid_pair_case', '配对用例不属于第一轮固定矩阵', 'pairCase');
   config.authorAttempts = options.authorAttempts ?? DEFAULT_AUTHOR_ATTEMPTS;
   if (!Number.isInteger(config.authorAttempts) || config.authorAttempts < 1 || config.authorAttempts > 3) {
     throw new DeveloperEffectivenessBenchmarkError('invalid_author_attempts', '作者重试次数必须是 1 到 3 的整数', 'authorAttempts');
@@ -383,10 +385,12 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   const runOrder = [];
   let newRunCount = 0;
   let paused = false;
-  const selectedCases = config.smokeCase ? manifest.cases.filter((item) => item.id === config.smokeCase) : manifest.cases;
+  const selectedCaseId = config.pairCase || config.smokeCase;
+  const selectedCases = selectedCaseId ? manifest.cases.filter((item) => item.id === selectedCaseId) : manifest.cases;
   try {
-    if (config.smokeCase && selectedCases.length !== 1) {
-      throw new DeveloperEffectivenessBenchmarkError('smoke_case_not_found', '冻结清单中不存在指定 smoke 用例', config.smokeCase);
+    if (selectedCaseId && selectedCases.length !== 1) {
+      const code = config.pairCase ? 'pair_case_not_found' : 'smoke_case_not_found';
+      throw new DeveloperEffectivenessBenchmarkError(code, '冻结清单中不存在指定用例', selectedCaseId);
     }
     runLoop:
     for (const [caseIndex, candidate] of selectedCases.entries()) {
@@ -451,7 +455,7 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
     };
   }
   state = updateState(config, loaded.statePath, state, 'evaluated', inputDigest);
-  const summary = buildBenchmarkSummary(metrics);
+  const summary = buildBenchmarkSummary(metrics, config.pairCase ? { expectedPairs: 1 } : undefined);
   const summaryPath = path.join(config.runRoot, 'summary.json');
   writeImmutableJson(config.repositoryRoot, summaryPath, { ...summary, runId: config.runId, runOrder, inputDigest });
   writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'pair-metrics.json'), {
