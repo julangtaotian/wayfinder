@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import {
-  COMMIT_PATTERN, MAX_CAPTURE_BYTES, MAX_PERSISTED_LOG_BYTES,
+  COMMIT_PATTERN, DeveloperEffectivenessBenchmarkError, MANAGEMENT_PATHS, MAX_CAPTURE_BYTES, MAX_PERSISTED_LOG_BYTES, MIN_DISK_RESERVE_BYTES,
   REDACTABLE_SECRET_ASSIGNMENT, UNSAFE_OUTPUT_PATTERNS,
   assertContent, assertString, fail, isInside, normalizeMachinePath, sha256, sha256Json,
 } from './developer-effectiveness-benchmark-contract.mjs';
@@ -21,9 +21,148 @@ export {
   isInside, normalizeComparablePath, normalizeMachinePath, resolveBenchmarkRunRoot,
   sha256, sha256Json, validateBenchmarkConfig,
 } from './developer-effectiveness-benchmark-contract.mjs';
-export {
-  detectExecutionRoute, freezeSyntheticCases, validateSyntheticCase, verifyFrozenCases,
-} from './developer-effectiveness-benchmark-cases.mjs';
+export { freezeSyntheticCases, validateSyntheticCase, verifyFrozenCases } from './developer-effectiveness-benchmark-cases.mjs';
+
+export function checkDiskBudget(repositoryRoot) {
+  if (typeof fs.statfsSync !== 'function') return { status: 'limited', code: 'disk_budget_unavailable', availableBytes: null };
+  const stats = fs.statfsSync(repositoryRoot);
+  const availableBytes = Number(stats.bavail) * Number(stats.bsize);
+  if (availableBytes < MIN_DISK_RESERVE_BYTES) {
+    throw new DeveloperEffectivenessBenchmarkError('disk_reserve_insufficient', '可用磁盘空间低于基准安全预留', 'disk');
+  }
+  return { status: 'passed', code: 'disk_budget_sufficient', availableBytes };
+}
+
+export function detectExecutionRoute({ mode, comparison = 'no-plugin', eventText = '', finalRoute = 'unknown', changedPaths = [], expectedRoute = null }) {
+  if (!['plugin', 'baseline'].includes(mode)) fail('invalid_execution_mode', `未知执行组：${mode}`, mode);
+  const normalizedPaths = changedPaths.map(normalizeMachinePath);
+  const managementPaths = normalizedPaths.filter((candidate) => MANAGEMENT_PATHS.some((prefix) => (
+    candidate === prefix.replace(/\/$/u, '') || candidate.startsWith(prefix)
+  )));
+  const newSkillEvidence = /frontend-ai-workflow:frontend-delivery|frontend-delivery\/SKILL\.md/iu.test(eventText);
+  const oldFastEvidence = /frontend-ai-workflow:frontend-fast-change|frontend-fast-change\/SKILL\.md/iu.test(eventText);
+  const oldManagedEvidence = /frontend-ai-workflow:frontend-change|frontend-change\/SKILL\.md/iu.test(eventText);
+  const managedEventEvidence = /requirements\/REQ-[\w-]+\.md|openspec\/changes\/[\w-]+\//iu.test(eventText);
+  if (mode === 'baseline') {
+    if (comparison === 'old-plugin') {
+      const fast = finalRoute === 'legacy-fast-change' && oldFastEvidence && managementPaths.length === 0;
+      const managed = finalRoute === 'legacy-managed-change' && oldManagedEvidence
+        && (managedEventEvidence || managementPaths.some((candidate) => candidate.startsWith('requirements/') || candidate.startsWith('openspec/changes/')));
+      const valid = (fast || managed) && !newSkillEvidence;
+      return {
+        route: ['legacy-fast-change', 'legacy-managed-change'].includes(finalRoute) ? finalRoute : 'unknown',
+        valid,
+        code: valid ? 'legacy_native_route_confirmed' : (newSkillEvidence ? 'legacy_new_plugin_contamination' : 'legacy_route_evidence_missing'),
+        evidence: { finalRoute, managementPaths, oldFastEvidence, oldManagedEvidence, managedEventEvidence, newSkillEvidence },
+      };
+    }
+    const pluginSkillEvidence = newSkillEvidence || oldFastEvidence || oldManagedEvidence;
+    const valid = finalRoute === 'baseline' && managementPaths.length === 0 && !pluginSkillEvidence;
+    return {
+      route: 'baseline', valid,
+      code: valid ? 'baseline_route_confirmed' : (pluginSkillEvidence ? 'baseline_plugin_contamination' : 'baseline_route_contaminated'),
+      evidence: { finalRoute, managementPaths, pluginSkillEvidence },
+    };
+  }
+  const deliveryEvent = newSkillEvidence;
+  const complexArtifacts = managementPaths.some((candidate) => candidate.startsWith('openspec/changes/'));
+  const routeSupported = ['direct', 'light', 'complex'].includes(finalRoute);
+  const artifactContract = finalRoute === 'complex' ? complexArtifacts : managementPaths.length === 0;
+  if (routeSupported && finalRoute === expectedRoute && deliveryEvent && artifactContract && !oldFastEvidence && !oldManagedEvidence) {
+    return {
+      route: finalRoute, valid: true, code: `plugin_${finalRoute}_route_confirmed`,
+      evidence: { deliveryEvent, complexArtifacts, managementPaths },
+    };
+  }
+  return {
+    route: routeSupported ? finalRoute : 'unknown', valid: false,
+    code: routeSupported && ['direct', 'light', 'complex'].includes(expectedRoute) && finalRoute !== expectedRoute
+      ? 'plugin_route_mismatch' : 'plugin_route_evidence_missing',
+    evidence: { deliveryEvent, complexArtifacts, managementPaths, finalRoute, expectedRoute, oldFastEvidence, oldManagedEvidence },
+  };
+}
+
+export function snapshotPluginTree(pluginRoot) {
+  const root = fs.realpathSync(pluginRoot);
+  const files = [];
+  const visit = (directory, relative = '') => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((left, right) => (
+      left.name < right.name ? -1 : Number(left.name > right.name)
+    ))) {
+      const target = path.join(directory, entry.name);
+      const name = relative ? `${relative}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) visit(target, name);
+      else if (entry.isFile()) {
+        const content = fs.readFileSync(target);
+        files.push({ path: name, bytes: content.byteLength, sha256: sha256(content) });
+      } else {
+        // 安装摘要拒绝符号链接及特殊文件，避免路径逃逸或平台行为不一致。
+        throw new DeveloperEffectivenessBenchmarkError('unsupported_plugin_tree_entry', '插件树含不支持的文件类型', name);
+      }
+    }
+  };
+  visit(root);
+  const manifest = files.find((file) => file.path === '.codex-plugin/plugin.json');
+  if (!manifest) throw new DeveloperEffectivenessBenchmarkError('plugin_manifest_missing', '插件树缺少 manifest', root);
+  const parsed = JSON.parse(fs.readFileSync(path.join(root, '.codex-plugin', 'plugin.json'), 'utf8'));
+  return {
+    version: parsed.version,
+    fileCount: files.length,
+    totalBytes: files.reduce((sum, file) => sum + file.bytes, 0),
+    digest: sha256Json(files),
+    files,
+  };
+}
+
+export function verifyComparisonSnapshots(repositoryRoot, options) {
+  for (const key of ['oldSource', 'oldInstall', 'candidateInstall', 'oldSourceDigest']) {
+    if (!options[key]) throw new DeveloperEffectivenessBenchmarkError('plugin_snapshot_input_missing', `双版本比较缺少 ${key}`, key);
+  }
+  const oldSource = snapshotPluginTree(options.oldSource);
+  const oldInstall = snapshotPluginTree(options.oldInstall);
+  const candidateSource = snapshotPluginTree(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow'));
+  const candidateInstall = snapshotPluginTree(options.candidateInstall);
+  if (oldSource.digest !== options.oldSourceDigest || oldSource.digest !== oldInstall.digest
+    || candidateSource.digest !== candidateInstall.digest) {
+    throw new DeveloperEffectivenessBenchmarkError('plugin_snapshot_mismatch', '插件源码、预期摘要与安装缓存不一致，禁止启动双版本运行', 'pluginSnapshots');
+  }
+  return {
+    snapshots: { oldSource, oldInstall, candidateSource, candidateInstall },
+    summaries: {
+      old: { version: oldSource.version, digest: oldSource.digest, fileCount: oldSource.fileCount },
+      candidate: { version: candidateSource.version, digest: candidateSource.digest, fileCount: candidateSource.fileCount },
+    },
+  };
+}
+
+export function comparisonConfig(repositoryRoot, options) {
+  const comparison = options.comparison || 'no-plugin';
+  if (!['no-plugin', 'old-plugin'].includes(comparison)) {
+    throw new DeveloperEffectivenessBenchmarkError('invalid_comparison', '不支持的基准对照类型', 'comparison');
+  }
+  if (comparison === 'no-plugin') return { comparison };
+  const verified = verifyComparisonSnapshots(repositoryRoot, options);
+  return { comparison, pluginSnapshots: verified.snapshots, pluginSnapshotSummaries: verified.summaries };
+}
+
+export function validateDeliveryScope({ candidate, mode, comparison = 'no-plugin', route, changedPaths }) {
+  const businessPaths = candidate.allowedPaths;
+  const allowsBusinessPath = (target) => businessPaths.some((allowed) => target === allowed || target.startsWith(`${allowed}/`));
+  const allowsComplexArtifact = (target) => mode === 'plugin' && route === 'complex' && target.startsWith('openspec/changes/');
+  const allowsLegacyArtifact = mode === 'baseline' && comparison === 'old-plugin';
+  const forbidden = changedPaths.find((target) => {
+    if (target === '.benchmark-evaluator' || target.startsWith('.benchmark-evaluator/')) return true;
+    if (MANAGEMENT_PATHS.some((prefix) => target === prefix.replace(/\/$/u, '') || target.startsWith(prefix))) {
+      return !allowsComplexArtifact(target) && !allowsLegacyArtifact;
+    }
+    return !allowsBusinessPath(target);
+  });
+  if (forbidden) {
+    throw new DeveloperEffectivenessBenchmarkError('agent_scope_violation', `用例 ${candidate.id} 的代理修改越出冻结范围`, forbidden);
+  }
+  return { status: 'passed', code: 'agent_scope_confirmed' };
+}
+
 function gitResult(root, args, options = {}) {
   return spawnSync('git', ['-C', root, ...args], {
     encoding: 'utf8',
@@ -292,7 +431,10 @@ export function cleanupBoundedWorkspace({ runRoot, workspace, operations = {} })
 
 export function applyUnifiedPatch(workspace, patchContent, label, { spawn = spawnSync, env = process.env } = {}) {
   const patch = assertContent(patchContent, 'empty_patch', `${label}不能为空`, label);
-  const result = spawn('git', ['-C', workspace, 'apply', '--binary', '--whitespace=nowarn', '-'], {
+  const result = spawn('git', [
+    '-C', workspace, 'apply', '--binary', '--whitespace=nowarn',
+    '--ignore-space-change', '--ignore-whitespace', '-',
+  ], {
     input: patch,
     encoding: 'utf8',
     maxBuffer: MAX_CAPTURE_BYTES,

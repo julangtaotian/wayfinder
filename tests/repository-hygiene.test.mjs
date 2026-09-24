@@ -121,7 +121,7 @@ test('代表性共享运行时、平台元数据、生命周期历史和正式�
 
 });
 
-test('根职责地图覆盖关键路径且 outputs 使用单一退役规则', () => {
+test('根职责地图只覆盖当前路径且 outputs 保留单一退役安全网', () => {
   const readme = fs.readFileSync(path.join(repositoryRoot, 'README.md'), 'utf8');
   assert.match(readme, /^## 仓库结构与职责$/mu, 'README 缺少仓库结构与职责入口');
 
@@ -144,10 +144,8 @@ test('根职责地图覆盖关键路径且 outputs 使用单一退役规则', ()
     'design/',
     'scripts/',
     'tests/',
-    '.frontend-ui-review/',
     '.frontend-ai-workflow/',
     'dist/',
-    'outputs/',
   ];
 
   for (const relativePath of documentedPaths) {

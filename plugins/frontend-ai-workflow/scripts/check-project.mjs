@@ -6,20 +6,12 @@ import { inspectProject } from './inspect-project.mjs';
 import { runOpenSpecSync } from './openspec-cli.mjs';
 import { collectProjectScope } from './collect-project-scope.mjs';
 import { runUpdate } from './update-project.mjs';
-import { auditProjectVerificationEvidence } from './verification-evidence.mjs';
+import { formatProjectCheckOutput } from './check-project-output.mjs';
 import {
-  CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE,
-  CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE,
-  formatProjectCheckOutput,
-} from './check-project-output.mjs';
-import {
+  detectRetiredWorkflowPaths,
   detectWorkflowLayout,
-  LEGACY_FRONTEND_PATH,
-  LEGACY_REQUIREMENT_TEMPLATE_PATH,
-  LEGACY_WORKFLOW_PATH,
   managedBlock,
   markerPatterns,
-  readLegacyWorkflowSettings,
   readWayfinderSettings,
   WAYFINDER_BLOCKS,
   WAYFINDER_PATH,
@@ -35,14 +27,6 @@ const WAYFINDER_REQUIRED_FILES = [
   '.frontend-workflow.json',
   '.gitignore',
   WAYFINDER_PATH,
-];
-
-const LEGACY_REQUIRED_FILES = [
-  'AGENTS.md',
-  LEGACY_REQUIREMENT_TEMPLATE_PATH,
-  LEGACY_FRONTEND_PATH,
-  'openspec/config.yaml',
-  LEGACY_WORKFLOW_PATH,
 ];
 
 const OUTER_MANAGED_FILES = [
@@ -244,30 +228,6 @@ function checkWayfinder(root, errors, warnings) {
   };
 }
 
-function checkLegacy(root, errors) {
-  checkRequiredFiles(root, LEGACY_REQUIRED_FILES, errors);
-  const context = path.join(root, LEGACY_FRONTEND_PATH);
-  if (fs.existsSync(context)) {
-    const content = fs.readFileSync(context, 'utf8');
-    for (const block of ['scope', 'analysis']) {
-      const starts = markerCount(content, 'html', 'start', block);
-      const ends = markerCount(content, 'html', 'end', block);
-      if (starts !== 1 || ends !== 1) {
-        errors.push(`旧 frontend.md 的 ${block} 受管标记异常：start=${starts}, end=${ends}`);
-      }
-    }
-  }
-  let settings = {};
-  try {
-    settings = readLegacyWorkflowSettings(root) || {};
-  } catch (error) {
-    errors.push(`旧工作流元数据异常：${error.message}`);
-  }
-  const enabled = settings.deepAnalysis === 'true';
-  if (enabled) checkGuardrails(root, errors);
-  return { enabled, scopeVersion: settings.scopeVersion || null, contextPath: LEGACY_FRONTEND_PATH, version: settings.version || null };
-}
-
 function parsePlanningEngineJson(output) {
   const start = output.indexOf('{');
   if (start < 0) return null;
@@ -405,6 +365,7 @@ export function checkProject(target = process.cwd()) {
   const errors = [];
   const warnings = [];
   const layout = detectWorkflowLayout(inspection.root);
+  const retiredPaths = detectRetiredWorkflowPaths(inspection.root);
   const pluginRepository = inspectPluginRepository(inspection.root);
   const isPluginRepository = pluginRepository.kind === PLUGIN_REPOSITORY_KIND;
   let lifecycle = null;
@@ -416,14 +377,14 @@ export function checkProject(target = process.cwd()) {
     deepAnalysis = { enabled: false, scopeVersion: null, contextPath: null, version: null };
   } else {
     checkOuterManagedFiles(inspection.root, errors);
-    if (layout === 'legacy') {
-      deepAnalysis = checkLegacy(inspection.root, errors);
+    if (layout === 'retired') {
+      errors.push('retired_workflow_state：检测到当前版本不支持的旧工作流状态；请使用匹配的历史插件版本处理，或确认后显式删除退役路径。');
+      deepAnalysis = { enabled: false, scopeVersion: null, contextPath: null, version: null };
     } else {
       checkRequiredFiles(inspection.root, WAYFINDER_REQUIRED_FILES, errors);
       deepAnalysis = checkWayfinder(inspection.root, errors, warnings);
     }
-    if (layout === 'legacy') warnings.push('检测到旧工作流布局；请先运行 Wayfinder 迁移预览，普通升级不会自动移动文件。');
-    if (layout === 'none') warnings.push('未检测到 Wayfinder 或旧工作流元数据。');
+    if (layout === 'none') warnings.push('未检测到 Wayfinder。');
     if (!inspection.scriptNames.build) warnings.push('package.json 未配置构建脚本');
     if (inspection.commandSemantics.test.status === 'placeholder') {
       warnings.push(`package.json 的 ${inspection.commandSemantics.test.scriptName} 是失败占位脚本，不作为可用测试入口`);
@@ -474,10 +435,6 @@ export function checkProject(target = process.cwd()) {
     ? { checked: false, stale: null, files: [] }
     : checkManagedContentFreshness(inspection.root, layout, warnings);
   const activeChanges = checkActiveChanges(inspection.root, warnings);
-  const verificationEvidenceAudit = auditProjectVerificationEvidence(inspection.root);
-  for (const [code, count] of Object.entries(verificationEvidenceAudit.counts)) {
-    warnings.push(`${code}：检测到 ${count} 项，完整目标见 verificationEvidenceAudit.diagnostics`);
-  }
   return {
     ok: errors.length === 0,
     root: inspection.root,
@@ -487,7 +444,11 @@ export function checkProject(target = process.cwd()) {
       pluginRepository,
     } : {}),
     lifecycle,
-    migrationRequired: layout === 'legacy' || lifecycle?.mode === 'legacy-readonly',
+    retiredWorkflowState: layout === 'retired' ? {
+      code: 'retired_workflow_state',
+      paths: retiredPaths,
+      supported: false,
+    } : null,
     version: deepAnalysis.version,
     preset: inspection.preset,
     dependencyProfile: inspection.dependencyProfile,
@@ -498,7 +459,6 @@ export function checkProject(target = process.cwd()) {
     platformCommands: inspection.platformCommands,
     planningEngine,
     activeChanges,
-    verificationEvidenceAudit,
     managedContentFreshness,
     deepAnalysis,
     errors,
@@ -511,38 +471,14 @@ function parseArgs(argv) {
     defaults: {
       target: process.cwd(),
       summary: false,
-      diagnosticCode: null,
-      diagnosticOffset: null,
-      diagnosticLimit: null,
     },
     valueOptions: {
       '--target': 'target',
-      '--diagnostic-code': 'diagnosticCode',
-      '--diagnostic-offset': 'diagnosticOffset',
-      '--diagnostic-limit': 'diagnosticLimit',
     },
     booleanOptions: {
       '--summary': 'summary',
     },
   });
-  if (args.summary && args.diagnosticCode) {
-    throw new Error('参数 --summary 与 --diagnostic-code 不能同时使用');
-  }
-  if (!args.diagnosticCode && (args.diagnosticOffset !== null || args.diagnosticLimit !== null)) {
-    throw new Error('参数 --diagnostic-offset 和 --diagnostic-limit 必须与 --diagnostic-code 一起使用');
-  }
-  if (args.diagnosticCode) {
-    const offset = args.diagnosticOffset === null ? 0 : Number(args.diagnosticOffset);
-    const limit = args.diagnosticLimit === null ? CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE : Number(args.diagnosticLimit);
-    if (!Number.isSafeInteger(offset) || offset < 0) {
-      throw new Error('参数 --diagnostic-offset 必须是非负整数');
-    }
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE) {
-      throw new Error(`参数 --diagnostic-limit 必须是 1-${CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE} 的整数`);
-    }
-    args.diagnosticOffset = offset;
-    args.diagnosticLimit = limit;
-  }
   return args;
 }
 

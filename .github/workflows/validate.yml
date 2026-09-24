@@ -5,8 +5,8 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      collect_platform_install_evidence:
-        description: Collect real Codex install, load, and offline Chromium evidence on all five platforms
+      release_install_smoke:
+        description: Run real Codex install, skill loading, and offline Chromium smoke on all five platforms
         required: false
         default: false
         type: boolean
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   shared:
-    name: Shared validation (linux-x64)
+    name: Shared Validation (linux-x64)
     runs-on: ubuntu-24.04
     env:
       LIFECYCLE_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
@@ -38,8 +38,8 @@ jobs:
         if: always()
         run: npm run cleanup:test-runtime
 
-  platform:
-    name: Validate (${{ matrix.platform }})
+  native-platform:
+    name: Native Platform (${{ matrix.platform }})
     needs: shared
     strategy:
       fail-fast: false
@@ -66,43 +66,64 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20.19.0
-      - name: Warm frontend test cache
+      - name: Warm locked frontend test cache
         run: npm run prepare:test-runtime
-      - name: Remove frontend test runtime before offline recheck
+      - name: Remove online frontend test runtime
         run: npm run cleanup:test-runtime
-      - name: Verify frontend test runtime offline
-        # 离线共享校验验证源码共享运行时；平台成品由后续专属校验验证，避免两类运行时根混用。
-        env:
-          UI_REVIEW_EXPECT_PLATFORM: ''
-          UI_REVIEW_RUNTIME_ROOT: ''
-        run: npm run verify:shared -- --offline
-      - name: Clean frontend test runtime
-        if: always()
-        run: npm run cleanup:test-runtime
-      - name: Clean frontend test cache
-        if: always()
-        run: npm run cleanup:test-cache
-      - name: Prepare platform marketplace outside source runtime
+      - name: Prepare native marketplace outside source runtime
         run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
-      - run: npm run verify:platform
-      - name: Install pinned Codex CLI for platform evidence
-        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
-        run: npm install --prefix .frontend-ai-workflow/cache/platform-install-codex --no-audit --no-fund --no-package-lock --ignore-scripts @openai/codex@0.150.0-alpha.8
-      - name: Verify real Codex install, load, and offline runtime
-        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
-        run: node plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs --write --platform ${{ matrix.platform }} --marketplace dist/frontend-ai-workflow-${{ matrix.platform }} --output .frontend-ai-workflow/runs/platform-install-evidence/${{ matrix.platform }}.json --codex-entry .frontend-ai-workflow/cache/platform-install-codex/node_modules/@openai/codex/bin/codex.js
-      - name: Upload platform package report
+      - name: Verify native contracts and offline runtimes
+        run: npm run verify:platform
+      - name: Upload native package report
         uses: actions/upload-artifact@v7
         with:
           name: plugin-package-report-${{ matrix.platform }}
           retention-days: 14
           path: dist/frontend-ai-workflow-${{ matrix.platform }}/package-report.json
           if-no-files-found: error
-      - name: Upload optional platform install evidence
-        if: github.event_name == 'workflow_dispatch' && inputs.collect_platform_install_evidence
+      - name: Clean frontend test runtime
+        if: always()
+        run: npm run cleanup:test-runtime
+      - name: Clean frontend test cache
+        if: always()
+        run: npm run cleanup:test-cache
+
+  release-install:
+    name: Release Install Smoke (${{ matrix.platform }})
+    if: github.event_name == 'workflow_dispatch' && inputs.release_install_smoke
+    needs: [shared, native-platform]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: darwin-arm64
+          - os: macos-15-intel
+            platform: darwin-x64
+          - os: ubuntu-24.04
+            platform: linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+          - os: windows-2025
+            platform: win32-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20.19.0
+      - name: Prepare final native marketplace
+        run: node plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs --write --platform ${{ matrix.platform }}
+      - name: Install pinned Codex CLI
+        run: npm install --prefix .frontend-ai-workflow/cache/release-install-codex --no-audit --no-fund --no-package-lock --ignore-scripts @openai/codex@0.150.0-alpha.8
+      - name: Verify install, enablement, skill loading, and offline runtime
+        run: node plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs --write --revision ${{ github.sha }} --platform ${{ matrix.platform }} --marketplace dist/frontend-ai-workflow-${{ matrix.platform }} --output .frontend-ai-workflow/runs/release-install-smoke/${{ github.sha }}/${{ matrix.platform }}.json --codex-entry .frontend-ai-workflow/cache/release-install-codex/node_modules/@openai/codex/bin/codex.js
+      - name: Upload release install report
         uses: actions/upload-artifact@v7
         with:
-          name: plugin-install-evidence-${{ matrix.platform }}
+          name: release-install-smoke-${{ github.sha }}-${{ matrix.platform }}
           retention-days: 14
-          path: .frontend-ai-workflow/runs/platform-install-evidence/${{ matrix.platform }}.json
+          path: .frontend-ai-workflow/runs/release-install-smoke/${{ github.sha }}/${{ matrix.platform }}.json
           if-no-files-found: error

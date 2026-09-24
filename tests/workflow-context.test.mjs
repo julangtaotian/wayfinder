@@ -7,7 +7,6 @@ import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { runBootstrap } from '../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
-import { runWayfinderMigration } from '../plugins/frontend-ai-workflow/scripts/migrate-wayfinder-project.mjs';
 import { collectProjectScope, PROJECT_SCOPE_VERSION } from '../plugins/frontend-ai-workflow/scripts/collect-project-scope.mjs';
 import {
   BUNDLED_OPENSPEC_VERSION,
@@ -328,56 +327,32 @@ test('深度初始化不覆盖没有受管标记的 Wayfinder', (t) => {
   assert.equal(fs.readFileSync(frontendPath, 'utf8'), '# 项目自定义导航\n');
 });
 
-test('旧布局必须显式迁移并保留项目事实与硬约束', (t) => {
+test('退役布局失败关闭且当前版本不读取或迁移旧内容', (t) => {
   const root = createVueFixture(t);
   runBootstrap({ target: root, deep: true, write: true });
-  const agentsPath = path.join(root, 'AGENTS.md');
-  fs.writeFileSync(agentsPath, fs.readFileSync(agentsPath, 'utf8').replace(
-    '完成深度扫描后，AI 在本区块写入 4–8 条项目专属的高影响硬约束。每条均须简洁、可执行，并附源码证据路径；只记录已确认的请求边界、鉴权/安全状态、路由或构建边界、验证基线等“不可随意破坏”的事实，不把推断和待确认项写成约束。',
-    '- **请求边界**：页面不得绕过 `src/serve` 直接调用请求层。',
-  ));
-  writeLegacyWorkflow(root);
+  writeLegacyWorkflow(root, { customMetadata: '这不是可解析的 YAML：[:\n' });
+  const retiredPaths = ['.ai-workflow.yaml', 'docs/ai-context/frontend.md', 'requirements/_template.md'];
+  const before = retiredPaths.map((file) => fs.readFileSync(path.join(root, file), 'utf8'));
 
-  const legacy = checkProject(root);
-  assert.equal(legacy.ok, true);
-  assert.equal(legacy.layout, 'legacy');
-  assert.equal(legacy.migrationRequired, true);
-  const preview = runWayfinderMigration({ target: root });
-  assert.equal(preview.ok, true);
-  assert.equal(fs.existsSync(path.join(root, 'wayfinder', 'frontend.md')), false);
-  assert.equal(preview.actions.some((item) => item.file === 'docs/ai-context/frontend.md' && item.action === 'delete'), true);
+  const checked = checkProject(root);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.layout, 'retired');
+  assert.deepEqual(checked.retiredWorkflowState, {
+    code: 'retired_workflow_state',
+    paths: ['.ai-workflow.yaml', 'docs/ai-context/frontend.md', 'requirements/_template.md'],
+    supported: false,
+  });
+  assert.match(checked.errors.join('\n'), /历史插件版本.*显式删除/u);
 
   const updated = runUpdate({ target: root, write: true });
-  assert.equal(updated.migrationRequired, true);
-  assert.equal(fs.existsSync(path.join(root, 'wayfinder', 'frontend.md')), false);
-  const migrated = runWayfinderMigration({ target: root, write: true });
-  assert.equal(migrated.ok, true);
-  const wayfinder = fs.readFileSync(path.join(root, 'wayfinder', 'frontend.md'), 'utf8');
-  assert.match(wayfinder, /项目维护者说明：迁移后必须保留。/);
-  assert.match(wayfinder, /analysisStatus: "pending"/);
-  assert.match(wayfinder, /analysisCoveredFiles: 0/);
-  assert.match(fs.readFileSync(agentsPath, 'utf8'), /页面不得绕过/);
-  assert.equal(fs.existsSync(path.join(root, 'docs', 'ai-context', 'frontend.md')), false);
-  assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), false);
-  assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), false);
-  assert.equal(checkProject(root).layout, 'wayfinder');
-  const repeated = runWayfinderMigration({ target: root });
-  assert.equal(repeated.ok, false);
-  assert.equal(repeated.actions[0].reason, '目标不是可迁移的旧工作流布局');
-});
-
-test('Wayfinder 迁移保留用户自定义的旧元数据与需求模板', (t) => {
-  const root = createVueFixture(t);
-  runBootstrap({ target: root, deep: true, write: true });
-  writeLegacyWorkflow(root, { customMetadata: 'releaseChannel: "uat"\n', requirementTemplate: '# 项目专属需求模板\n' });
-
-  const preview = runWayfinderMigration({ target: root });
-  assert.equal(preview.ok, true);
-  assert.equal(preview.actions.some((item) => item.file === '.ai-workflow.yaml' && item.action === 'keep'), true);
-  assert.equal(preview.actions.some((item) => item.file === 'requirements/_template.md' && item.action === 'keep'), true);
-  runWayfinderMigration({ target: root, write: true });
-  assert.equal(fs.existsSync(path.join(root, '.ai-workflow.yaml')), true);
-  assert.equal(fs.existsSync(path.join(root, 'requirements', '_template.md')), true);
+  assert.equal(updated.ok, false);
+  assert.equal(updated.code, 'retired_workflow_state');
+  assert.match(updated.message, /历史插件版本.*显式删除/u);
+  assert.deepEqual(
+    retiredPaths.map((file) => fs.readFileSync(path.join(root, file), 'utf8')),
+    before,
+    '失败关闭不得修改退役项目',
+  );
 });
 
 test('深度项目约束会被升级保留且健康检查要求有效标记', (t) => {
@@ -385,7 +360,7 @@ test('深度项目约束会被升级保留且健康检查要求有效标记', (t
   runBootstrap({ target: root, deep: true, write: true });
   const agentsPath = path.join(root, 'AGENTS.md');
   const customized = fs.readFileSync(agentsPath, 'utf8').replace(
-    '完成深度扫描后，AI 在本区块写入 4–8 条项目专属的高影响硬约束。每条均须简洁、可执行，并附源码证据路径；只记录已确认的请求边界、鉴权/安全状态、路由或构建边界、验证基线等“不可随意破坏”的事实，不把推断和待确认项写成约束。',
+    '完成后写入 4–8 条带源码路径的已确认约束。',
     '- **请求边界**：页面不得绕过 `src/serve` 直接调用请求层（证据：`src/serve/profile.js`）。',
   );
   fs.writeFileSync(agentsPath, customized, 'utf8');
@@ -443,28 +418,9 @@ test('深度扫描规则要求覆盖、证据与不确定性披露', () => {
   assert.match(checkSkill, /deepAnalysis\.analysis\.status/);
 });
 
-test('需求模板仅作为插件资产按需使用', () => {
-  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-requirement-write', 'SKILL.md'), 'utf8');
-  const template = path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md');
-
-  assert.equal(fs.existsSync(template), true);
-  assert.match(skill, /when present; otherwise use/);
-  assert.match(skill, /requirements\/REQ-\*\.md/);
-});
-
-test('变更验证规则优先选择当前需求影响面的测试', () => {
-  const skill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
-
-  assert.match(skill, /affected files and chains/);
-  assert.match(skill, /narrowest existing tests/);
-  assert.match(skill, /matching manual checks/);
-  assert.match(skill, /full project test command only/);
-});
-
 test('[TC-10] 跨平台高风险变更规则合同', () => {
   const repositoryRules = fs.readFileSync('AGENTS.md', 'utf8');
   const agentsTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8');
-  const changeSkill = fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-change', 'SKILL.md'), 'utf8') + fs.readFileSync(path.join(pluginRoot, 'references/change-verification.md'), 'utf8');
   const checklist = fs.readFileSync(path.join(pluginRoot, 'references', 'cross-platform-ci-checklist.md'), 'utf8');
   const structureValidator = fs.readFileSync(path.join(pluginRoot, 'scripts', 'validate-structure.mjs'), 'utf8');
 
@@ -476,19 +432,11 @@ test('[TC-10] 跨平台高风险变更规则合同', () => {
 
   for (const rules of [agentsTemplate]) {
     assert.match(rules, /跨平台高风险/);
-    assert.match(rules, /CI.*路径.*临时目录.*子进程.*包管理器入口.*环境变量.*机器可读诊断/su);
-    assert.match(rules, /code.*target.*status/su);
-    assert.match(rules, /Git.*子进程.*cwd.*realpath.*path\.join/su);
-    assert.match(rules, /实际值和期望值.*同一规范化函数/su);
-    assert.match(rules, /禁止直接比较原始字符串/u);
-    assert.match(rules, /process\.platform/u);
-    assert.match(rules, /path\.win32.*path\.posix/su);
-    assert.match(rules, /D:\/\.\.\..*D:\\\\.\.\./su);
+    assert.match(rules, /路径、子进程、环境变量、机器诊断或 CI/u);
+    assert.match(rules, /双侧统一规范化/u);
+    assert.match(rules, /本地结果不冒充真实矩阵/u);
   }
 
-  assert.match(changeSkill, /cross-platform-ci-checklist\.md/u);
-  assert.match(changeSkill, /cross-platform risk/u);
-  assert.match(changeSkill, /actual CI-matrix evidence/u);
   assert.match(checklist, /GIT_CEILING_DIRECTORIES/u);
   assert.match(checklist, /npm\.cmd/u);
   assert.match(checklist, /POSIX.*Windows/su);

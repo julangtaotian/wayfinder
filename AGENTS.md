@@ -14,25 +14,28 @@
 - marketplace 与 manifest：`.agents/plugins/marketplace.json` 只声明本地插件入口，`plugins/frontend-ai-workflow/.codex-plugin/plugin.json` 是发布 manifest；两者不得承载业务实现。
 - 日常插件源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates` 和 `references`；根 `scripts` 只负责编排仓库级测试运行时、官方校验、静态检查和统一验证。
 - 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取，不把生成的平台二进制回写规范源码。
-- 生命周期与验收资产：活动内容位于 `requirements`、`openspec/changes`，正式合同位于 `openspec/specs`，完成状态优先读取 `.workflow-history`；活动内容完成后必须按 schema v2 清理。
+- 生命周期与规划资产：只有 Complex 变更写入 `openspec/changes`，正式合同位于 `openspec/specs`，完成状态由 `.workflow-history` 的 schema v2 紧凑事件投影；Direct 与 Light 不创建管理资产。
 - 持久设计输入位于 `design`，长期测试位于 `tests`，跨平台 CI 位于 `.github/workflows`；项目级 `.frontend-ui-review` 只有在受跟踪页面与设计事实可复现时才保留。
-- 本地运行、缓存和事务只进入 `.frontend-ai-workflow`，单平台成品只进入被忽略的 `dist`；`outputs` 是退役兼容路径，不得新增受跟踪内容或新的主题级忽略规则。
+- 本地运行、缓存和事务只进入 `.frontend-ai-workflow`，单平台成品只进入被忽略的 `dist`；`outputs`、生命周期证据 sidecar 和永久 OpenSpec 归档均已退役，仓库中不得重新创建。
 
 ## AI 读取路由
 
 - 普通功能、修复和检查先在日常源码范围内定位；优先使用精确文件名和限定目录搜索。
-- 除非任务明确涉及运行时、平台打包、视觉证据或存量迁移，不递归枚举 `runtime/**/node_modules`、被忽略的单平台成品、`.frontend-ai-workflow`、`outputs`、`.frontend-ui-review/runs` 和旧 `openspec/changes/archive`。
-- 项目健康检查先使用精简模式；只有计数和用户问题需要具体目标时才按诊断 code 查询，完整结果作为必要事实缺失时的兜底。
+- 除非任务明确涉及运行时、平台打包或视觉证据，不递归枚举 `runtime/**/node_modules`、被忽略的单平台成品、`.frontend-ai-workflow` 和 UI Review 运行目录；发现退役目录时直接按体积门禁处理，不把它们作为历史输入继续读取。
+- 项目健康检查先使用精简模式；只有用户问题缺少必要事实时才读取完整结果，不恢复已退役的分页诊断参数。
 
 ## 持续体积治理
 
-- schema v2 完成状态由 `.workflow-history/<year>.jsonl` 的追加事件投影；活动需求保持到待验证，完成后与活动变更一并清除，不再生成需求正文归档、OpenSpec 永久归档或根存根。
-- `legacy-readonly` 只用于迁移旧仓库；v2 写入器不得与旧归档流程混用。迁移必须先预览，引用、未知文件、符号链接或未跟踪目标存在时失败关闭。
+- schema v2 完成状态由 `.workflow-history/<year>.jsonl` 的追加事件投影；Complex 活动变更完成后清除，不再生成需求正文、OpenSpec 永久归档或根存根。
+- 生命周期只支持 schema v2 单轨读写；不得恢复旧归档写入器、迁移命令、兼容路由或完成证据 sidecar。不兼容的旧仓库必须先使用对应旧版本工具处理，再进入当前流程。
 - 每次仓库统一验证必须执行确定性生命周期与体积门禁，覆盖事件篡改、无事件删除、退役路径、受跟踪运行时、活跃全文需求和日常大文件预算。
 - 预算是规划合同。需要调整时必须先建立需求、设计与回归证据，禁止按当前仓库体积静默放宽，也不再依赖定期人工瘦身。
 
 ## 实现约束
 
+- 修复前先以“原始验收项、失败门禁、可观察症状”建立问题指纹。候选名、阶段名、研究名、修改层次或根因假设变化，不得把同一问题重新计为新问题。
+- 同一问题指纹的失败尝试跨阶段累计；最多允许两轮有证据支持的修复，第三次仍出现同一症状时必须停止。只有确定性证据证明原失败机制已经改变，才能申请新的真实运行，不得靠改写提示、改名或放宽门禁重置次数。
+- 开发中或实验性宿主能力不得作为发布或效果门禁的唯一证据；必须设置默认稳定链路对照，无法建立对照时直接记录为方法学阻断。
 - 仅使用 Node.js 标准库，除非新增依赖具有明确且必要的价值。
 - 仓库内代码、配置和文档不得包含开发机绝对路径；引用仓库内容使用相对路径，涉及跨平台路径时由代码统一规范化处理。
 - Node.js 模块依赖使用静态、显式导入；只有确有运行时分支需求时才能动态加载，并补充必要的中文说明。
@@ -55,9 +58,9 @@
 ## 验证
 
 - 本地验证日志、截图、fixture、下载内容和依赖统一写入 `.frontend-ai-workflow/runs/<主题>/<run-id>/`，可重建缓存写入 `cache/`，崩溃恢复写入 `transactions/`；三个目录整体忽略，不为每个主题新增过滤规则。
-- 默认验证不产生长期 tracked outputs。高风险、发布或显式 strict 完成至多保留一个受预算约束的证据包；外部 CI 结果不回写仓库。
+- 默认验证不产生长期受跟踪输出；完成后只保留正式规格与紧凑生命周期事件，外部 CI 结果不回写仓库。
 - 仓库级 Vitest 验证运行时固定使用 `.frontend-ai-workflow/runs/frontend-test-runtime/`，缓存使用 `.frontend-ai-workflow/cache/frontend-test-cache/`；清理只作用于对应受管子目录。
-- 旧 `outputs`、`.frontend-ui-review/runs` 和归档资产只能通过 lifecycle migration 预览与显式写入处理，禁止直接整体删除或触碰未跟踪内容。
+- 退役路径、系统元数据、空目录和完成证据 sidecar 必须由仓库门禁拒绝；不得为保留它们新建 archive、backup、legacy 或 evidence 目录。
 - 运行 `npm test`。
 - 运行 `npm run validate`。
 - 使用官方 skill validator 检查所有自定义技能。

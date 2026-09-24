@@ -1,101 +1,30 @@
 # project-command-semantics Specification
 
 ## Purpose
-定义默认与交付构建、lint、测试入口和平台命令的保守语义，避免把名称存在、失败占位或静态候选误报为可用验证能力。
+定义项目真实命令发现、本地入口检查与保守执行语义，确保声明、可运行性和实际结果被清楚区分，缺失入口不会触发安装、猜测命令或重复失败。
+
 ## Requirements
-### Requirement: 项目检查报告构建语义
 
-项目检查器 SHALL 保留现有 `commands.build` 和 `scriptNames.build` 字段，并 SHALL 额外返回稳定的构建语义字段，分别表示默认构建和交付构建。默认构建 SHALL 优先选择 `build`；交付构建 SHALL 优先选择 `build:prod`、`build:production` 或 `build:release`，不存在时 SHALL 回退默认构建并标示回退来源。
+### Requirement: 命令必须来自当前项目事实
 
-#### Scenario: 项目同时定义默认和生产构建脚本
+系统 MUST 根据 package.json、锁文件、配置和真实入口识别开发、构建、测试、lint 与类型检查命令，不得按目录名猜测。输出 MUST 区分 detected、missing、placeholder 和 unverified。
 
-- **WHEN** `package.json` 同时包含 `build` 与 `build:prod`
-- **THEN** 检查报告保留原有 `commands.build`
-- **AND** 构建语义字段分别报告 `build` 为默认构建、`build:prod` 为交付构建
+#### Scenario: 测试脚本是失败占位符
+- **WHEN** package.json 的 test 仅输出错误并失败
+- **THEN** 系统标记 placeholder，不把它当作可用测试入口
 
-#### Scenario: 项目只定义默认构建脚本
+### Requirement: 执行前必须确认本地入口
 
-- **WHEN** `package.json` 只包含 `build`
-- **THEN** 默认构建和交付构建均报告该命令
-- **AND** 交付构建字段标示其从默认构建回退
+在运行项目命令前，系统 MUST 确认对应本地 CLI、模块或包装器存在。入口缺失时 MUST 记录一次并停止，不安装依赖或重复已知失败。Windows 不得直接启动 `.cmd` 包装器。
 
-### Requirement: 项目检查报告 lint 语义
+#### Scenario: npm JavaScript 入口缺失
+- **WHEN** Windows 环境无法定位 npm 的 JavaScript 入口
+- **THEN** 系统返回稳定阻断，不以 shell 执行 npm.cmd
 
-项目检查器 SHALL 在保留现有 lint 命令字段的同时报告 lint 语义状态。仅静态识别为 lint 工具的脚本 SHALL 标记为 `verified`；存在但无法静态识别的脚本 SHALL 标记为 `unverified` 并产生中文警告；缺少脚本 SHALL 标记为 `missing`。
+### Requirement: 命令发现不得夸大执行事实
 
-#### Scenario: lint 脚本不执行已识别检查工具
+检查结果 MUST 明确 `executed: false`，直到命令真实运行。默认构建与发布构建的来源 MUST 分开报告，回退候选不得描述为生产交付已验证。
 
-- **WHEN** 项目的 `lint` 脚本为 `vite optimize`
-- **THEN** 报告保留该 lint 命令
-- **AND** lint 语义状态为 `unverified`
-- **AND** 警告不得将该脚本描述为有效 lint
-
-#### Scenario: lint 脚本执行已识别检查工具
-
-- **WHEN** 项目的 `lint` 脚本包含 `eslint`、`stylelint`、`biome`、`oxlint` 或 Vue CLI 的 lint 子命令
-- **THEN** lint 语义状态为 `verified`
-- **AND** 不产生语义未验证警告
-
-### Requirement: 项目检查拒绝失败测试占位脚本
-
-项目检查器 SHALL 只把非空且不是已知失败占位内容的测试脚本作为可用测试入口。npm 初始化生成的 `Error: no test specified` 失败脚本以及仅执行 `exit 1` 或 `false` 的脚本 SHALL 标记为 `placeholder`，并 SHALL 保留脚本名与可追溯命令，但 MUST NOT 写入 `commands.test` 或受管文件作为可用测试能力。
-
-#### Scenario: package.json 保留 npm 默认失败测试
-
-- **WHEN** 项目的 `test` 脚本仍是 npm 初始化生成的失败占位内容
-- **THEN** `scriptNames.test` 和 `commands.test` 不报告可用测试入口
-- **AND** `commandSemantics.test` 与 `commandEvidence.test` 返回 `status=placeholder`、原脚本名、当前包管理器命令和 `executed=false`
-- **AND** AGENTS、Wayfinder、OpenSpec 与项目检查明确该脚本不可用，不得执行它充当测试证据
-
-#### Scenario: 项目提供真实测试脚本
-
-- **WHEN** 项目的受支持测试脚本非空且不匹配已知失败占位内容，即使更高优先级脚本仍是失败占位
-- **THEN** 系统保持现有测试命令，并返回 `commandSemantics.test.status=detected`
-
-### Requirement: 系统报告显式平台命令候选
-系统 SHALL 只从非空 `package.json.scripts` 中识别显式平台命令，并 SHALL 为微信小程序、支付宝小程序和 H5 返回稳定目标、全部开发与构建候选、当前包管理器命令、证据来源及 `executed=false`。系统 MUST NOT 解析脚本内容、补造脚本、自动选择候选或执行候选。
-
-#### Scenario: 三类目标和包管理器形成稳定候选
-- **WHEN** 项目使用 npm、pnpm、yarn 或 bun，且脚本名由受支持动作、分隔符和目标别名组成
-- **THEN** 系统返回对应目标的全部非空候选，并使用当前包管理器生成真实命令
-- **AND** 每个候选的来源为 `explicit-platform-script` 且 `executed=false`
-
-#### Scenario: 同一目标存在多个候选
-- **WHEN** 同一平台目标同时配置多个受支持开发或构建脚本
-- **THEN** 系统按稳定顺序保留全部候选
-- **AND** 系统不声明其中任何候选为默认值或已执行结果
-
-#### Scenario: 没有可靠平台脚本
-- **WHEN** 项目只存在空脚本、未支持动作、未支持目标或仅在脚本内容中提及目标
-- **THEN** 系统返回 `status=missing`、`source=unknown`、空目标和空证据
-- **AND** 通用命令语义与既有项目画像保持不变
-
-### Requirement: 平台命令证据进入受管项目上下文
-初始化和升级 SHALL 将同一份平台命令状态、目标与证据写入受管 AGENTS、Wayfinder 和 OpenSpec 上下文，并 MUST 明确静态发现不等于成功执行。预览 SHALL 保持只读，升级 SHALL 保留项目自定义内容和未受管文件。
-
-#### Scenario: 初始化同步平台命令证据
-- **WHEN** 用户预览或写入初始化一个含显式平台脚本的项目
-- **THEN** 预览和写入内容报告一致的平台目标、候选摘要和证据
-- **AND** 内容明确候选尚未执行，预览不修改项目也不执行候选
-
-#### Scenario: 升级刷新平台命令证据
-- **WHEN** 已初始化项目修改平台脚本后显式执行升级
-- **THEN** 系统只更新受管区块中的平台命令上下文
-- **AND** 项目自定义内容、未受管文件和既有业务产物保持不变
-
-### Requirement: 检查和变更流程保守解释平台命令证据
-项目检查、需求整理和受管变更流程 SHALL 使用平台命令候选规划与目标匹配的实施和验证活动，并 MUST 只在真实执行成功后将命令记录为通过。缺少候选时，流程 SHALL 记录所需人工开发工具或外部 CI 环境，不得虚构命令。
-
-#### Scenario: 平台项目缺少平台命令
-- **WHEN** 项目画像已识别平台框架但没有受支持的显式平台脚本
-- **THEN** 项目检查返回非阻断中文警告
-- **AND** 需求或变更计划记录人工开发工具或外部 CI 环境，不生成或执行平台命令
-
-#### Scenario: 普通项目缺少平台命令
-- **WHEN** 普通 Web 项目没有受支持的平台脚本且平台画像未知
-- **THEN** 项目检查保持安静空态，不增加平台缺失警告
-
-#### Scenario: 验证引用已识别候选
-- **WHEN** 需求或变更需要验证已确认的平台目标且存在对应候选
-- **THEN** 验证计划可引用候选命令作为待执行入口
-- **AND** 在命令真实成功前不得描述为构建通过、验证通过或发布就绪
+#### Scenario: 只有默认 build
+- **WHEN** 项目没有显式发布构建脚本
+- **THEN** 系统把默认 build 报告为回退候选并保持未执行语义

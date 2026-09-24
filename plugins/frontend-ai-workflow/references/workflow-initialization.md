@@ -35,15 +35,9 @@ Read only for ordinary initialization, explicit deep initialization or a complet
    Re-run it only when a later write changed managed state or the first result exposed a resolvable diagnostic. Do not run a full check before the map is complete merely to rediscover a known pending state.
 9. Re-run `git status --short` once after writing and summarize only workflow-created or workflow-updated files. For content protection, report changed paths and hash mismatches; do not emit every protected file's full content again after it was already read.
 
-## Legacy Migration
+## Retired workflow state
 
-When the preview or checker reports a legacy layout, do not run ordinary upgrade as a substitute. Preview the explicit migration first:
-
-```bash
-node <plugin-root>/scripts/migrate-wayfinder-project.mjs --target <repository-root>
-```
-
-After the user confirms its create, preserve and delete plan, repeat with `--write`. The migration preserves the complete old frontend context and project-specific AGENTS constraints; it retains any custom requirement template or workflow metadata instead of deleting it.
+When preview or checking reports `retired_workflow_state`, stop. This plugin version only reports the retired paths and does not read, convert or delete their contents. Use the matching historical plugin revision to finish old lifecycle work, or ask the user to confirm an explicit cleanup after independently preserving anything still needed.
 
 ## Guardrails
 

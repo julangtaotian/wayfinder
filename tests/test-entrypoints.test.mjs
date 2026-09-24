@@ -24,7 +24,9 @@ test('[V-05] 聚焦入口与核心脚本兼容合同：三个入口真实发现'
 });
 
 test('聚焦测试零发现时返回稳定错误', (context) => {
-  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'test-groups-empty-'));
+  const parent = path.resolve('.frontend-ai-workflow', 'runs', 'test-entrypoint-fixtures');
+  fs.mkdirSync(parent, { recursive: true });
+  const root = fs.mkdtempSync(path.join(parent, 'test-groups-empty-'));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
   assert.throws(

@@ -5,11 +5,11 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
   DeveloperEffectivenessBenchmarkError,
+  MAX_CAPTURE_BYTES,
   applyUnifiedPatch,
   assertSourceBaselineUnchanged,
   cleanupBoundedWorkspace,
   collectSourceBaseline,
-  comparablePathsEqual,
   detectExecutionRoute,
   freezeSyntheticCases,
   prepareCommittedWorkspace,
@@ -32,7 +32,6 @@ import {
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-metrics.mjs';
 import {
   aggregateCodexTokenUsage,
-  buildCodexInvocation,
   extractCodexTokenUsage,
   parseBenchmarkCliArgs,
   parseCodexJsonLines,
@@ -43,6 +42,7 @@ import {
   executeCaseRun,
   runDeveloperEffectivenessBenchmark,
 } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs';
+import { assessWorkflowRouteHistory, executionPrompt } from '../plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-execution.mjs';
 import { TEST_GROUPS } from '../scripts/test-groups.mjs';
 
 const repositoryRoot = path.resolve('.');
@@ -109,7 +109,7 @@ function makeCandidate(projectId, complexity) {
     title: `${id} 修复数值回归`,
     complexity,
     taskType: complexity === 'large' ? 'refactor' : 'bug',
-    expectedRoute: (projectId === 'P3' ? complexity === 'medium' : complexity === 'large') ? 'full' : 'fast',
+    expectedRoute: complexity === 'small' ? 'direct' : complexity === 'medium' ? 'light' : 'complex',
     publicRequirement: '修复当前数值模块的默认导出，使它重新返回公开约定的数值一；保持现有模块路径、导出名称和调用方式不变，不增加依赖，并确保项目已有的 Node.js 聚焦测试能够离线通过。',
     allowedPaths: ['src/value.js'],
     seedPatch: [
@@ -283,12 +283,18 @@ test('[TC-03] 插件组和对照组保持配对公平与隔离', (context) => {
   assert.notEqual(left.workspace, right.workspace);
   assert.equal(fs.readFileSync(path.join(left.workspace, 'src/value.js'), 'utf8'), fs.readFileSync(path.join(right.workspace, 'src/value.js'), 'utf8'));
 
-  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-fast-change', finalRoute: 'fast', expectedRoute: 'fast', changedPaths: ['src/value.js'] }).valid, true);
-  assert.equal(detectExecutionRoute({ mode: 'plugin', eventText: 'frontend-ai-workflow:frontend-change', finalRoute: 'full', expectedRoute: 'full', changedPaths: ['requirements/REQ.md', 'openspec/changes/a/proposal.md'] }).valid, true);
   assert.equal(detectExecutionRoute({ mode: 'baseline', finalRoute: 'baseline', changedPaths: ['requirements/REQ.md'] }).valid, false);
-  assert.equal(detectExecutionRoute({ mode: 'plugin', finalRoute: 'fast', expectedRoute: 'fast', changedPaths: ['src/value.js'] }).valid, false);
+  assert.equal(detectExecutionRoute({ mode: 'plugin', finalRoute: 'direct', expectedRoute: 'direct', changedPaths: ['src/value.js'] }).valid, false);
   cleanupBoundedWorkspace({ runRoot, workspace: left.workspace });
   cleanupBoundedWorkspace({ runRoot, workspace: right.workspace });
+});
+
+test('[TC-03A] 续轮保持首轮原生路线', () => {
+  assert.deepEqual(assessWorkflowRouteHistory(['light', 'light']), { valid: true, code: 'workflow_route_history_consistent', routeHistory: ['light', 'light'] });
+  assert.deepEqual(assessWorkflowRouteHistory(['complex', 'light']), { valid: false, code: 'workflow_route_transition_mismatch', routeHistory: ['complex', 'light'] });
+  const prompt = executionPrompt(makeCandidate('P3', 'medium'), 'plugin');
+  assert.match(prompt, /不得通过 eval、new Function、vm 或截取、改写源码临时构造执行器/u);
+  assert.match(prompt, /完成业务修改和一次可靠检查或人工复核后直接返回 delivered/u);
 });
 
 test('[TC-04] 澄清首次交付和返工在同一会话闭环', async (context) => {
@@ -304,7 +310,8 @@ test('[TC-04] 澄清首次交付和返工在同一会话闭环', async (context)
     { status: 'delivered', summary: '首次交付', route: 'baseline', question: '', blockerCode: '', blockerCategory: '' },
     { status: 'delivered', summary: '返工完成', route: 'baseline', question: '', blockerCode: '', blockerCategory: '' },
   ];
-  const times = ['2026-09-04T00:00:00.000Z', '2026-09-04T00:00:10.000Z', '2026-09-04T00:00:20.000Z'];
+  const times = [0, 1, 10, 10, 11, 19, 20, 20, 20, 20]
+    .map((seconds) => new Date(Date.UTC(2026, 8, 4, 0, 0, seconds)).toISOString());
   const executed = await executeCaseRun({
     config,
     sourceProject: fixture.projects[0],
@@ -341,6 +348,8 @@ test('[TC-04] 澄清首次交付和返工在同一会话闭环', async (context)
   assert.equal(executed.runResult.finalAcceptancePassed, true);
   assert.equal(executed.metrics.firstDeliveryMs, 10_000);
   assert.equal(executed.metrics.totalCycleMs, 20_000);
+  assert.equal(executed.metrics.phaseTimes.acceptance.length, 2);
+  assert.equal(executed.metrics.phaseTimes.preparation.startedAt, '2026-09-04T00:00:00.000Z');
   assert.equal(invocations.slice(1).every((args) => args.includes('resume') && args.includes('session-1')), true);
 
   const unavailable = manifest.cases.find((item) => item.id === 'SYN-P1-L01');
@@ -371,7 +380,7 @@ function metricRun(caseName, mode, overrides = {}) {
     complexity: 'small',
     taskType: 'bug',
     mode,
-    route: mode === 'plugin' ? 'fast' : 'baseline',
+    route: mode === 'plugin' ? 'direct' : 'baseline',
     routeValid: true,
     status: 'passed',
     freezeDigest: { requirement: 'digest' },
@@ -461,52 +470,6 @@ test('[TC-06] 证据脱敏原子恢复和有界清理', (context) => {
   assert.equal(cleanupBoundedWorkspace({ runRoot, workspace: link }).code, 'cleanup_target_symlink');
 });
 
-test('[TC-07] 跨平台路径和无 shell 子进程保持稳定诊断', async (context) => {
-  const fixture = makeFixture(context, 'tc07 空格');
-  assert.equal(comparablePathsEqual('d:/Workspace/demo/', 'D:\\Workspace\\demo', 'win32'), true);
-  assert.equal(comparablePathsEqual('/tmp/demo/', '/tmp/demo', 'posix'), true);
-  const initial = buildCodexInvocation({
-    entry: path.join(fixture, 'codex cli.mjs'), workspace: fixture, model: 'gpt-test', reasoning: 'medium',
-    prompt: '执行', schemaPath: path.join(fixture, 'schema.json'), outputPath: path.join(fixture, 'result.json'),
-  });
-  assert.equal(initial.command, process.execPath);
-  assert.equal(initial.shell, false);
-  assert.equal(initial.args.includes('--color'), true);
-  assert.equal(initial.args.includes('--approve-for-me'), true);
-  assert.equal(initial.args.includes('--sandbox'), false);
-  const readOnly = buildCodexInvocation({
-    entry: 'codex', workspace: fixture, model: 'gpt-test', reasoning: 'medium', prompt: '只读分析',
-    schemaPath: path.join(fixture, 'schema.json'), outputPath: path.join(fixture, 'result.json'), sandbox: 'read-only',
-  });
-  assert.equal(readOnly.args.includes('--approve-for-me'), false);
-  assert.deepEqual(readOnly.args.slice(readOnly.args.indexOf('--sandbox'), readOnly.args.indexOf('--sandbox') + 2), ['--sandbox', 'read-only']);
-  const resumed = buildCodexInvocation({
-    entry: 'codex', workspace: fixture, model: 'gpt-test', reasoning: 'medium', prompt: '继续',
-    schemaPath: path.join(fixture, 'schema.json'), outputPath: path.join(fixture, 'result.json'), sessionId: 'session-1',
-  });
-  assert.equal(resumed.args.includes('--color'), false);
-  assert.equal(resumed.args.includes('resume'), true);
-  assert.throws(() => buildCodexInvocation({ entry: 'codex.cmd' }), (error) => error.code === 'windows_wrapper_not_supported');
-
-  const failed = await runBoundedProcess({
-    command: process.execPath, args: ['-e', 'process.exit(7)'], cwd: fixture, env: process.env, timeoutMs: 5_000,
-  });
-  assert.equal(failed.exitCode, 7);
-  const timedOut = await runBoundedProcess({
-    command: process.execPath, args: ['-e', 'setInterval(() => {}, 1000)'], cwd: fixture, env: process.env, timeoutMs: 30,
-  });
-  assert.equal(timedOut.timedOut, true);
-  const forced = await runBoundedProcess({
-    command: process.execPath,
-    args: ['-e', "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)"],
-    cwd: fixture,
-    env: process.env,
-    timeoutMs: 30,
-  }, { terminationGraceMs: 30 });
-  assert.equal(forced.timedOut, true);
-  assert.equal(forced.exitCode, null);
-});
-
 test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   const fixture = makeProjects(context, 'tc08');
   const packageJson = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
@@ -593,29 +556,6 @@ test('[TC-08] 普通仓库验证不启动真实代理', async (context) => {
   assert.equal(JSON.parse(fs.readFileSync(path.join(executionRoot, 'state.json'), 'utf8')).stage, 'cleaned');
 });
 
-test('[TC-09] 基准兼容入口保持单向模块边界', () => {
-  const limits = new Map([
-    ['developer-effectiveness-benchmark.mjs', 500],
-    ['developer-effectiveness-benchmark-execution.mjs', 500],
-    ['developer-effectiveness-benchmark-foundation.mjs', 600],
-    ['developer-effectiveness-benchmark-cases.mjs', 350],
-    ['developer-effectiveness-benchmark-contract.mjs', 220],
-  ]);
-  const sources = new Map();
-  for (const [file, limit] of limits) {
-    const source = fs.readFileSync(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts', file), 'utf8');
-    sources.set(file, source);
-    assert.equal(source.trimEnd().split(/\r?\n/u).length <= limit, true, `${file} 超过 ${limit} 行`);
-  }
-
-  assert.match(sources.get('developer-effectiveness-benchmark.mjs'), /from '\.\/developer-effectiveness-benchmark-execution\.mjs'/u);
-  assert.match(sources.get('developer-effectiveness-benchmark-foundation.mjs'), /from '\.\/developer-effectiveness-benchmark-cases\.mjs'/u);
-  assert.match(sources.get('developer-effectiveness-benchmark-foundation.mjs'), /from '\.\/developer-effectiveness-benchmark-contract\.mjs'/u);
-  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-execution.mjs'), /from '\.\/developer-effectiveness-benchmark\.mjs'/u);
-  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-cases.mjs'), /from '\.\/developer-effectiveness-benchmark-foundation\.mjs'/u);
-  assert.doesNotMatch(sources.get('developer-effectiveness-benchmark-contract.mjs'), /developer-effectiveness-benchmark-(?:foundation|cases|execution)\.mjs/u);
-});
-
 test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
   const parsed = parseCodexJsonLines([
     JSON.stringify({ type: 'thread.started', thread_id: 'session-token' }),
@@ -632,6 +572,12 @@ test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
     status: 'available', reason: null, turnCount: 2,
     inputTokens: 150, cachedInputTokens: 120, outputTokens: 30, reasoningOutputTokens: 7, totalTokens: 180,
   });
+  const activity = parseCodexJsonLines(JSON.stringify({
+    type: 'item.completed', item: { type: 'command_execution', command: 'sed -n 1,80p AGENTS.md && node --test tests/value.test.mjs' },
+  })).activity;
+  assert.deepEqual(activity, {
+    commandCount: 1, observedSkillReadCommands: 0, observedAgentsReadCommands: 1, observedTestCommands: 1,
+  });
   assert.equal(extractCodexTokenUsage([{ type: 'turn.completed' }]).status, 'missing');
   assert.equal(extractCodexTokenUsage([{
     type: 'turn.completed',
@@ -643,6 +589,10 @@ test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
       usage: { input_tokens: inputTokens, cached_input_tokens: 0, output_tokens: 0, reasoning_output_tokens: 0 },
     }]).status, 'invalid');
   }
+  assert.equal(extractCodexTokenUsage([{
+    type: 'turn.completed',
+    usage: { input_tokens: 1, cached_input_tokens: 2, output_tokens: 1, reasoning_output_tokens: 0 },
+  }]).status, 'invalid');
   assert.equal(extractCodexTokenUsage([
     { type: 'turn.completed' },
     {
@@ -676,6 +626,58 @@ test('[TC-10] Codex Token 用量保持可累计与未知语义', () => {
   assert.equal(legacy.runs.every((item) => item.tokenUsage.status === 'missing'), true);
   assert.equal(legacy.pairs[0].delta.tokenUsage, null);
   assert.doesNotThrow(() => buildWorkbookImportCsv(legacy));
+});
+
+test('[TC-10A] 用量缺失与事件截断自动否决正式观测合同', async () => {
+  const completeUsage = {
+    status: 'available', reason: null, turnCount: 1,
+    inputTokens: 10, cachedInputTokens: 2, outputTokens: 3, reasoningOutputTokens: 1, totalTokens: 13,
+  };
+  const duration = {
+    deliveryCycleMs: 10, preparationMs: 1, agentExecutionMs: 7,
+    acceptanceMs: 2, cleanupMs: 1, acceptanceDurationsMs: [2],
+  };
+  const phaseTimes = {
+    preparation: { startedAt: '2026-09-04T00:00:00.000Z', endedAt: '2026-09-04T00:00:01.000Z' },
+    delivery: { startedAt: '2026-09-04T00:00:01.000Z', endedAt: '2026-09-04T00:00:03.000Z' },
+    acceptance: [{ startedAt: '2026-09-04T00:00:02.000Z', endedAt: '2026-09-04T00:00:03.000Z' }],
+    cleanup: { startedAt: '2026-09-04T00:00:03.000Z', endedAt: '2026-09-04T00:00:04.000Z' },
+  };
+  const strict = (mode, overrides = {}) => buildRunMetrics(metricRun('SYN-P1-S01', mode, {
+    telemetryContract: 'complete-turn-usage-v1',
+    turns: [{ invalidEventLines: 0, stdoutTruncated: false, stderrTruncated: false }],
+    tokenUsage: completeUsage,
+    duration,
+    phaseTimes,
+    ...overrides,
+  }));
+  const valid = strict('plugin');
+  assert.equal(valid.effective, true);
+  assert.equal(valid.duration.deliveryCycleMs, 10);
+  const noUsage = strict('baseline', { tokenUsage: { status: 'missing', reason: 'missing-token-usage' } });
+  assert.equal(noUsage.effective, false);
+  assert.equal(noUsage.dataQualityReasons.includes('missing-token-usage'), true);
+  const truncated = strict('baseline', {
+    turns: [{ invalidEventLines: 0, stdoutTruncated: true, stderrTruncated: false }],
+  });
+  assert.equal(truncated.effective, false);
+  assert.equal(truncated.dataQualityReasons.includes('incomplete-event-stream'), true);
+  const noPhaseTimes = strict('baseline', { phaseTimes: null });
+  assert.equal(noPhaseTimes.effective, false);
+  assert.equal(noPhaseTimes.dataQualityReasons.includes('missing-phase-timestamps'), true);
+  const summary = buildBenchmarkSummary([valid, noUsage], { expectedPairs: 1 });
+  assert.equal(summary.validPairCount, 0);
+  assert.equal(summary.pairs[0].effective, false);
+  const captured = await runBoundedProcess({
+    command: process.execPath,
+    args: ['-e', `process.stdout.write('x'.repeat(${MAX_CAPTURE_BYTES + 1}))`],
+    cwd: repositoryRoot,
+    env: process.env,
+    timeoutMs: 10_000,
+  });
+  assert.equal(captured.exitCode, 0);
+  assert.equal(captured.stdoutTruncated, true);
+  assert.equal(Buffer.byteLength(captured.stdout), MAX_CAPTURE_BYTES);
 });
 
 test('[TC-11] 单次新增运行预算可安全暂停和恢复', async (context) => {

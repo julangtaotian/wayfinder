@@ -12,9 +12,9 @@ import {
   resolveSafeProjectPath,
 } from './project-path-safety.mjs';
 import {
+  detectRetiredWorkflowPaths,
   detectWorkflowLayout,
   findManagedRange,
-  LEGACY_WORKFLOW_PATH,
   WAYFINDER_PATH,
 } from './workflow-layout.mjs';
 
@@ -309,7 +309,6 @@ export function runBootstrap({
   updateManaged = false,
   onlyManaged = false,
   deep = false,
-  allowLegacy = false,
   preservedScopeSettings = null,
   contentOverrides = {},
 } = {}) {
@@ -323,28 +322,26 @@ export function runBootstrap({
     for (const descriptor of FILES) {
       resolveSafeProjectPath(inspection.root, descriptor.target, '受管目标');
     }
-    resolveSafeProjectPath(inspection.root, LEGACY_WORKFLOW_PATH, '旧工作流元数据');
-    // 旧布局只能由显式迁移调用接管，普通初始化和升级不得隐式产生两套上下文。
+    // 退役工作流只做路径级识别；当前版本不读取、迁移或解释旧格式。
     layout = detectWorkflowLayout(inspection.root);
-    if (layout === 'legacy' && !allowLegacy) {
+    if (layout === 'retired') {
+      const retiredPaths = detectRetiredWorkflowPaths(inspection.root);
       return {
-        ok: true,
+        ok: false,
+        code: 'retired_workflow_state',
         write,
         version: WORKFLOW_VERSION,
         layout,
-        migrationRequired: true,
+        retiredPaths,
+        message: '检测到当前版本不支持的旧工作流状态；请使用与旧项目匹配的历史插件版本完成处理，或在确认内容不再需要后显式删除退役路径。',
         inspection,
         scope: null,
-        actions: [{ file: LEGACY_WORKFLOW_PATH, action: 'skip', reason: '检测到旧工作流布局，请先执行 Wayfinder 迁移预览' }],
+        actions: retiredPaths.map((file) => ({ file, action: 'skip', reason: '当前版本不解释或迁移旧工作流格式' })),
       };
     }
     scope = deep ? collectProjectScope(inspection.root) : null;
     const variables = templateVariables(inspection, scope, preservedScopeSettings);
     const effectiveOverrides = { ...contentOverrides };
-    if (onlyManaged && !effectiveOverrides['.frontend-workflow.json']) {
-      const lifecycleTemplate = JSON.parse(fs.readFileSync(path.join(templateRoot, '.frontend-workflow.json'), 'utf8'));
-      effectiveOverrides['.frontend-workflow.json'] = `${JSON.stringify({ ...lifecycleTemplate, lifecycleMode: 'legacy-readonly' }, null, 2)}\n`;
-    }
     planned = FILES.map((descriptor) =>
       planFile(inspection.root, descriptor, variables, { updateManaged, onlyManaged, deep, contentOverrides: effectiveOverrides }),
     );

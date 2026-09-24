@@ -10,7 +10,7 @@ import {
   cleanupBoundedWorkspace,
   collectSourceBaseline,
   commitWorkspaceBaseline,
-  prepareCommittedWorkspace,
+  prepareCommittedWorkspace, sanitizeCapturedOutput, workspaceEnvironment, writeTextAtomic,
 } from './developer-effectiveness-benchmark-foundation.mjs';
 
 const PROJECT_OPTION = '--project';
@@ -59,6 +59,12 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
     keepWorkspaces: false,
     smokeCase: null,
     pairCase: null,
+    reuseCasesFrom: null,
+    comparison: 'no-plugin',
+    oldSource: null,
+    oldSourceDigest: null,
+    oldInstall: null,
+    candidateInstall: null,
     authorAttempts: DEFAULT_AUTHOR_ATTEMPTS,
     maxNewRuns: null,
   };
@@ -79,7 +85,13 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
       '--author-attempts': 'authorAttempts',
       '--smoke-case': 'smokeCase',
       '--pair-case': 'pairCase',
+      '--reuse-cases-from': 'reuseCasesFrom',
       '--max-new-runs': 'maxNewRuns',
+      '--comparison': 'comparison',
+      '--old-source': 'oldSource',
+      '--old-source-digest': 'oldSourceDigest',
+      '--old-install': 'oldInstall',
+      '--candidate-install': 'candidateInstall',
     };
     if (valueOptions[option]) {
       result[valueOptions[option]] = requiredValue(argv, index, option);
@@ -99,6 +111,9 @@ export function parseBenchmarkCliArgs(argv, { repositoryRoot = process.cwd() } =
   }
   if (result.maxNewRuns !== null && (!Number.isInteger(result.maxNewRuns) || result.maxNewRuns < 1)) {
     throw new DeveloperEffectivenessBenchmarkError('invalid_max_new_runs', '单次新增运行数必须是正整数', 'maxNewRuns');
+  }
+  if (!['no-plugin', 'old-plugin'].includes(result.comparison)) {
+    throw new DeveloperEffectivenessBenchmarkError('invalid_comparison', '主对照只能选 old-plugin，诊断对照只能选 no-plugin', 'comparison');
   }
   return result;
 }
@@ -126,6 +141,7 @@ export function buildCodexInvocation({
   sandbox = 'workspace-write',
   sessionId = null,
   mode = 'plugin',
+  comparison = 'no-plugin',
 }) {
   const resolved = resolveCodexEntry(entry);
   const shared = [
@@ -136,11 +152,19 @@ export function buildCodexInvocation({
   ];
   // 当前 Codex CLI 中自动审批本身已选择 workspace-write，不能再与 --sandbox 同传。
   const sandboxArgs = sandbox === 'workspace-write' ? ['--approve-for-me'] : ['--sandbox', sandbox];
-  const isolationArgs = mode === 'baseline'
-    ? ['--ignore-user-config', '--disable', 'plugins', '--enable', 'skip_host_skill_discovery']
-    : [];
+  // resume 不接受 --sandbox；每轮显式恢复首轮权限，防止返工轮回落为只读。
+  const resumePermissions = sandbox === 'workspace-write'
+    ? ['--config', 'sandbox_mode="workspace-write"', '--config', 'approval_policy="on-request"', '--config', 'approvals_reviewer="auto_review"']
+    : ['--config', `sandbox_mode="${sandbox}"`];
+  const isolationArgs = comparison === 'old-plugin'
+    ? [
+      '--ignore-user-config', '--enable', 'plugins', '--enable', 'skip_host_skill_discovery',
+      '--config', `plugins.frontend-ai-workflow@frontend-ai-workflow.enabled=${mode === 'plugin'}`,
+      '--config', `plugins.frontend-ai-workflow@p9-old-plugin.enabled=${mode === 'baseline'}`,
+    ]
+    : (mode === 'baseline' ? ['--ignore-user-config', '--disable', 'plugins', '--enable', 'skip_host_skill_discovery'] : []);
   const args = sessionId
-    ? [...resolved.prefix, 'exec', ...isolationArgs, 'resume', ...shared, sessionId, prompt]
+    ? [...resolved.prefix, 'exec', ...isolationArgs, 'resume', ...resumePermissions, ...shared, sessionId, prompt]
     : [
       ...resolved.prefix, 'exec', ...isolationArgs, ...shared, '--color', 'never', ...sandboxArgs, '--cd', workspace, prompt,
     ];
@@ -156,22 +180,33 @@ export function runBoundedProcess(
     try {
       child = spawnProcess(command, args, { cwd, env, shell: false, stdio: ['pipe', 'pipe', 'pipe'] });
     } catch (error) {
-      resolve({ exitCode: null, launchError: true, timedOut: false, interrupted: false, stdout: '', stderr: error.message });
+      resolve({
+        exitCode: null, launchError: true, timedOut: false, interrupted: false,
+        stdout: '', stderr: error.message, stdoutTruncated: false, stderrTruncated: false,
+      });
       return;
     }
     let stdout = Buffer.alloc(0);
     let stderr = Buffer.alloc(0);
+    let stdoutTruncated = false;
+    let stderrTruncated = false;
     let timedOut = false;
     let interrupted = false;
     let settled = false;
     let terminationReason = null;
     let forceTimer = null;
-    const append = (current, chunk) => {
-      const combined = Buffer.concat([current, Buffer.from(chunk)]);
-      return combined.byteLength > MAX_CAPTURE_BYTES ? combined.subarray(0, MAX_CAPTURE_BYTES) : combined;
+    const append = (current, chunk, stream) => {
+      const incoming = Buffer.from(chunk);
+      const remaining = MAX_CAPTURE_BYTES - current.byteLength;
+      if (incoming.byteLength > remaining) {
+        if (stream === 'stdout') stdoutTruncated = true;
+        else stderrTruncated = true;
+        return remaining > 0 ? Buffer.concat([current, incoming.subarray(0, remaining)]) : current;
+      }
+      return Buffer.concat([current, incoming]);
     };
-    child.stdout?.on('data', (chunk) => { stdout = append(stdout, chunk); });
-    child.stderr?.on('data', (chunk) => { stderr = append(stderr, chunk); });
+    child.stdout?.on('data', (chunk) => { stdout = append(stdout, chunk, 'stdout'); });
+    child.stderr?.on('data', (chunk) => { stderr = append(stderr, chunk, 'stderr'); });
     const stop = (reason) => {
       if (!child || settled || terminationReason) return;
       terminationReason = reason;
@@ -196,7 +231,7 @@ export function runBoundedProcess(
       process.removeListener('SIGTERM', interruptHandler);
       resolve({
         exitCode: null, launchError: true, timedOut, interrupted,
-        stdout: stdout.toString('utf8'), stderr: error.message,
+        stdout: stdout.toString('utf8'), stderr: error.message, stdoutTruncated, stderrTruncated,
       });
     });
     child.once('close', (code) => {
@@ -208,7 +243,7 @@ export function runBoundedProcess(
       process.removeListener('SIGTERM', interruptHandler);
       resolve({
         exitCode: code, launchError: false, timedOut, interrupted,
-        stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8'),
+        stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8'), stdoutTruncated, stderrTruncated,
       });
     });
     if (input !== null) child.stdin?.end(input);
@@ -229,7 +264,87 @@ export function parseCodexJsonLines(content) {
       invalidLineCount += 1;
     }
   }
-  return { events, invalidLineCount, sessionId, tokenUsage: extractCodexTokenUsage(events) };
+  return { events, invalidLineCount, sessionId, tokenUsage: extractCodexTokenUsage(events), activity: summarizeCodexActivity(events) };
+}
+
+export function summarizeCodexActivity(events) {
+  const commands = (Array.isArray(events) ? events : [])
+    .filter((event) => event?.type === 'item.completed' && event.item?.type === 'command_execution')
+    .map((event) => String(event.item.command || ''));
+  return {
+    commandCount: commands.length,
+    observedSkillReadCommands: commands.filter((command) => /SKILL\.md/u.test(command)).length,
+    observedAgentsReadCommands: commands.filter((command) => /(?:^|[\s/])AGENTS\.md/u.test(command)).length,
+    observedTestCommands: commands.filter((command) => /(?:npm\s+test|node\s+--test|vitest|playwright\s+test)/u.test(command)).length,
+  };
+}
+
+function readFinalResponse(outputPath, processResult) {
+  if (processResult.finalResponse) return processResult.finalResponse;
+  if (!fs.existsSync(outputPath)) {
+    throw new DeveloperEffectivenessBenchmarkError('codex_final_response_missing', 'Codex 没有生成结构化最终响应', 'codex');
+  }
+  try {
+    return JSON.parse(fs.readFileSync(outputPath, 'utf8'));
+  } catch (error) {
+    throw new DeveloperEffectivenessBenchmarkError('codex_final_response_invalid', `Codex 最终响应不是有效 JSON：${error.message}`, 'codex');
+  }
+}
+
+export function outputRedactions(config, baselines, workspace = null) {
+  return [
+    ...baselines.map((baseline) => ({ value: baseline.sourceRoot, replacement: `project:${baseline.projectId}` })),
+    { value: workspace, replacement: '[workspace]' },
+    { value: config.runRoot, replacement: '[run]' },
+    { value: config.repositoryRoot, replacement: '[repository]' },
+  ];
+}
+
+export async function runCodexTurn({
+  config, workspace, prompt, schemaPath, temporaryOutputPath, eventOutputPath,
+  sandbox, sessionId, mode = 'plugin', baselines, operations,
+}) {
+  const invocation = buildCodexInvocation({
+    entry: config.codex, workspace, model: config.model, reasoning: config.reasoning,
+    prompt, schemaPath, outputPath: temporaryOutputPath, sandbox, sessionId, mode,
+    comparison: config.comparison,
+  });
+  const execute = operations.runProcess || runBoundedProcess;
+  const startedAt = new Date().toISOString();
+  const processResult = await execute({
+    ...invocation,
+    env: workspaceEnvironment(config.runRoot, workspace),
+    timeoutMs: config.timeoutMinutes * 60_000,
+  });
+  const endedAt = new Date().toISOString();
+  const parsed = parseCodexJsonLines(processResult.stdout);
+  // 截断后的事件流即使用量事件恰好仍在前缀中，也不能作为完整用量证据。
+  if (processResult.stdoutTruncated || processResult.stderrTruncated || parsed.invalidLineCount > 0) {
+    parsed.tokenUsage = {
+      status: 'invalid', reason: processResult.stdoutTruncated || processResult.stderrTruncated
+        ? 'truncated-agent-output' : 'invalid-event-stream',
+      turnCount: 0, inputTokens: null, cachedInputTokens: null,
+      outputTokens: null, reasoningOutputTokens: null, totalTokens: null,
+    };
+  }
+  const redactions = outputRedactions(config, baselines, workspace);
+  const sanitized = sanitizeCapturedOutput(processResult.stdout, { redactions });
+  const sanitizedError = sanitizeCapturedOutput(processResult.stderr, { redactions });
+  if (!sanitized.safe || !sanitizedError.safe) {
+    throw new DeveloperEffectivenessBenchmarkError('sensitive_agent_output', '代理事件包含敏感信息，已拒绝持久化原文', eventOutputPath);
+  }
+  writeTextAtomic(config.repositoryRoot, eventOutputPath, sanitized.text || '', { mustNotExist: true });
+  const stderrOutputPath = eventOutputPath.replace(/events\.ndjson$/u, 'stderr.log');
+  writeTextAtomic(config.repositoryRoot, stderrOutputPath, sanitizedError.text || '', { mustNotExist: true });
+  let finalResponse = null;
+  if (!processResult.launchError && !processResult.timedOut && !processResult.interrupted && processResult.exitCode === 0) {
+    finalResponse = readFinalResponse(temporaryOutputPath, processResult);
+  }
+  if (fs.existsSync(temporaryOutputPath)) fs.unlinkSync(temporaryOutputPath);
+  return {
+    processResult, parsed, finalResponse, startedAt, endedAt,
+    eventPaths: [eventOutputPath, stderrOutputPath].map((target) => path.relative(config.repositoryRoot, target).replaceAll('\\', '/')),
+  };
 }
 
 const TOKEN_USAGE_FIELDS = Object.freeze([
@@ -271,6 +386,10 @@ export function extractCodexTokenUsage(events) {
         return emptyTokenUsage('invalid', 'invalid-token-usage');
       }
       totals[field] += value;
+    }
+    if (event.usage.cached_input_tokens > event.usage.input_tokens
+      || event.usage.reasoning_output_tokens > event.usage.output_tokens) {
+      return emptyTokenUsage('invalid', 'invalid-token-usage');
     }
     turnCount += 1;
   }

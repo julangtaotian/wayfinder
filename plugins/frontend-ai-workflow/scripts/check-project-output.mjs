@@ -1,7 +1,5 @@
 export const CHECK_PROJECT_OUTPUT_SCHEMA_VERSION = '1.0.0';
 export const CHECK_PROJECT_OBSERVATION_SAMPLE_LIMIT = 5;
-export const CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE = 20;
-export const CHECK_PROJECT_DIAGNOSTIC_MAX_PAGE_SIZE = 100;
 export const CHECK_PROJECT_PLUGIN_SUMMARY_LIMIT = 20;
 
 function compareText(left, right) {
@@ -17,15 +15,6 @@ function countByCode(items) {
     counts.set(code, (counts.get(code) || 0) + 1);
   }
   return Object.fromEntries([...counts].sort(([left], [right]) => compareText(left, right)));
-}
-
-function compactVerificationEvidenceAudit(audit = {}) {
-  const { diagnostics: _diagnostics, ...summary } = audit;
-  return {
-    ...summary,
-    availableCodes: Object.keys(audit.counts || {}).sort(compareText),
-    diagnosticsIncluded: false,
-  };
 }
 
 function compactDeepAnalysis(deepAnalysis = {}) {
@@ -82,7 +71,7 @@ function summarizePluginProjectCheck(result) {
     repositoryKind: result.repositoryKind,
     pluginRepository: compactPluginRepository(result.pluginRepository),
     lifecycle: result.lifecycle,
-    migrationRequired: result.migrationRequired,
+    retiredWorkflowState: result.retiredWorkflowState,
     planningEngine: result.planningEngine,
     activeChanges: result.activeChanges,
     errors: result.errors,
@@ -99,58 +88,13 @@ export function summarizeProjectCheck(result) {
     ...result,
     schemaVersion: CHECK_PROJECT_OUTPUT_SCHEMA_VERSION,
     mode: 'summary',
-    verificationEvidenceAudit: compactVerificationEvidenceAudit(result.verificationEvidenceAudit),
     deepAnalysis: compactDeepAnalysis(result.deepAnalysis),
-  };
-}
-
-export function queryProjectCheckDiagnostics(result, code, {
-  offset = 0,
-  limit = CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE,
-} = {}) {
-  const audit = result.verificationEvidenceAudit || {};
-  const allDiagnostics = Array.isArray(audit.diagnostics) ? audit.diagnostics : [];
-  const matched = allDiagnostics.filter((item) => item.code === code);
-  const diagnostics = matched.slice(offset, offset + limit);
-  const nextOffset = offset + diagnostics.length;
-  const availableCodes = [...new Set([
-    ...Object.keys(audit.counts || {}),
-    ...allDiagnostics.map((item) => item.code).filter(Boolean),
-  ])].sort(compareText);
-
-  return {
-    schemaVersion: CHECK_PROJECT_OUTPUT_SCHEMA_VERSION,
-    mode: 'diagnostics',
-    ok: result.ok,
-    root: result.root,
-    checked: audit.checked ?? false,
-    executed: audit.executed ?? false,
-    requirements: audit.requirements ?? 0,
-    records: audit.records ?? 0,
-    code,
-    count: diagnostics.length,
-    totalCount: matched.length,
-    offset,
-    limit,
-    nextOffset: nextOffset < matched.length ? nextOffset : null,
-    remainingCount: Math.max(0, matched.length - nextOffset),
-    availableCodes,
-    diagnostics,
   };
 }
 
 export function formatProjectCheckOutput(result, {
   summary = false,
-  diagnosticCode = null,
-  diagnosticOffset = 0,
-  diagnosticLimit = CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE,
 } = {}) {
-  if (diagnosticCode) {
-    return queryProjectCheckDiagnostics(result, diagnosticCode, {
-      offset: diagnosticOffset,
-      limit: diagnosticLimit,
-    });
-  }
   if (summary) return summarizeProjectCheck(result);
   return result;
 }

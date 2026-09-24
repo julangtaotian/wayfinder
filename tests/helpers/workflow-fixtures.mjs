@@ -7,11 +7,8 @@ import { runBootstrap, WORKFLOW_VERSION } from '../../plugins/frontend-ai-workfl
 
 export const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 export const expectedPublicSkills = [
-  'frontend-change',
-  'frontend-fast-change',
-  'frontend-requirement-write',
+  'frontend-delivery',
   'frontend-test',
-  'frontend-ui-fix',
   'frontend-ui-review',
   'frontend-ui-verify',
   'frontend-workflow-bootstrap',
@@ -299,11 +296,10 @@ ${matrix}
 `;
 }
 
-// 旧布局 fixture 用于验证显式迁移，不依赖已移除的旧版模板资产。
+// 退役布局 fixture 只用于验证当前版本失败关闭，不要求旧格式仍可被解析。
 export function writeLegacyWorkflow(root, options = {}) {
   fs.rmSync(path.join(root, 'wayfinder'), { recursive: true, force: true });
-  const requirementTemplate = fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'requirements', '_template.md'), 'utf8');
-  writeFixtureFile(root, 'requirements/_template.md', options.requirementTemplate || requirementTemplate);
+  writeFixtureFile(root, 'requirements/_template.md', options.requirementTemplate || '# 退役需求模板\n');
   writeFixtureFile(root, '.ai-workflow.yaml', `# frontend-ai-workflow:start version=0.5.0\nversion: "0.5.0"\nopenspecVersion: "1.6.0"\npreset: "vue3-vite"\nproject: "sample-vue-app"\npackageManager: "npm"\ndeepAnalysis: true\nscopeVersion: "1.0.0"\nscopeIncludedFiles: 9\nscopeExcludedFiles: 1\nscopeIncludedBytes: 999\ndeepContext: "docs/ai-context/frontend.md"\n# frontend-ai-workflow:end\n\n# 可在此处追加项目自己的工作流元数据。\n${options.customMetadata || ''}`);
   writeFixtureFile(root, 'docs/ai-context/frontend.md', `# sample-vue-app 前端上下文\n\n项目维护者说明：迁移后必须保留。\n\n<!-- frontend-ai-workflow:scope:start version=0.5.0 -->\n## 深度扫描范围\n\n- 深度分析状态：true。\n<!-- frontend-ai-workflow:scope:end -->\n\n<!-- frontend-ai-workflow:analysis:start version=0.5.0 -->\n## 深度项目地图\n\n- 已确认事实：请求经统一封装。\n<!-- frontend-ai-workflow:analysis:end -->\n`);
 }

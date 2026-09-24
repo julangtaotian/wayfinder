@@ -6,16 +6,14 @@ import { resolveCanonicalProjectRoot, resolveSafeProjectPath } from './project-p
 export const LIFECYCLE_SCHEMA_VERSION = 2;
 export const LIFECYCLE_WRITER_VERSION = '0.19.0';
 export const LIFECYCLE_CONFIG_PATH = '.frontend-workflow.json';
-export const LIFECYCLE_MODES = new Set(['legacy-readonly', 'v2']);
+export const LIFECYCLE_MODES = new Set(['v2']);
 export const LIFECYCLE_EVENT_TYPES = new Set(['accepted', 'cancelled', 'superseded', 'reopened']);
-export const LIFECYCLE_TRUST_LEVELS = new Set(['declared', 'local-verified', 'external-recorded']);
 export const DEFAULT_LIFECYCLE_CONFIG = Object.freeze({
   schemaVersion: LIFECYCLE_SCHEMA_VERSION,
   minimumWriterVersion: LIFECYCLE_WRITER_VERSION,
-  lifecycleMode: 'legacy-readonly',
+  lifecycleMode: 'v2',
   eventDirectory: '.workflow-history',
   runtimeDirectory: '.frontend-ai-workflow',
-  strictEvidenceMaxBytes: 4096,
   eventMaxBytes: 4096,
 });
 
@@ -81,54 +79,24 @@ function normalizeStringArray(value, label, { maxItems = 64, maxLength = 240 } =
   return result;
 }
 
-function normalizeChecks(value) {
-  if (!Array.isArray(value) || value.length > 32) fail('invalid_lifecycle_event', 'checks 必须是至多 32 项的数组', 'checks');
-  return value.map((item, index) => {
-    if (!item || typeof item !== 'object' || Array.isArray(item)) fail('invalid_lifecycle_event', `checks[${index}] 必须是对象`, 'checks');
-    const name = requireSafeId(item.name, `checks[${index}].name`);
-    const status = canonicalText(item.status).trim();
-    if (!['passed', 'pending', 'recorded', 'failed'].includes(status)) {
-      fail('invalid_lifecycle_event', `checks[${index}].status 无效`, status);
-    }
-    const result = { name, status };
-    if (item.reference != null) {
-      const reference = canonicalText(item.reference).trim();
-      let parsed;
-      try {
-        parsed = new URL(reference);
-      } catch {
-        fail('invalid_lifecycle_event', `checks[${index}].reference 必须是 HTTPS URL`, 'checks');
-      }
-      if (!reference || reference.length > 500 || parsed.protocol !== 'https:' || parsed.username || parsed.password) {
-        fail('invalid_lifecycle_event', `checks[${index}].reference 必须是至多 500 字符且无凭据的 HTTPS URL`, 'checks');
-      }
-      result.reference = reference;
-    }
-    if (item.revision != null) {
-      const revision = canonicalText(item.revision).trim();
-      if (!/^[a-f0-9]{7,64}$/u.test(revision)) fail('invalid_lifecycle_event', `checks[${index}].revision 格式无效`, 'checks');
-      result.revision = revision;
-    }
-    return result;
-  });
-}
-
 export function normalizeLifecycleEvent(value, { maxBytes = 4096 } = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('invalid_lifecycle_event', '生命周期事件必须是对象');
+  for (const field of ['requirementId', 'checks', 'trust', 'evidence', 'evidencePath']) {
+    if (Object.prototype.hasOwnProperty.call(value, field)) {
+      fail('retired_lifecycle_field', `生命周期事件不得包含退役字段 ${field}`, field);
+    }
+  }
   const event = {
     schemaVersion: Number(value.schemaVersion),
     eventId: canonicalText(value.eventId).trim(),
     scope: normalizeRepositoryPath(value.scope ?? '.', 'scope', { allowRoot: true }),
     changeId: requireSafeId(value.changeId, 'changeId'),
-    requirementId: requireSafeId(value.requirementId, 'requirementId'),
     type: canonicalText(value.type).trim(),
     revision: Number(value.revision),
     occurredAt: canonicalText(value.occurredAt).trim(),
     baseRevision: value.baseRevision == null ? null : canonicalText(value.baseRevision).trim(),
     capabilities: normalizeStringArray(value.capabilities || [], 'capabilities'),
     specDigest: canonicalText(value.specDigest).trim(),
-    checks: normalizeChecks(value.checks || []),
-    trust: canonicalText(value.trust).trim(),
     supersedes: value.supersedes == null ? null : canonicalText(value.supersedes).trim(),
   };
   if (event.schemaVersion !== LIFECYCLE_SCHEMA_VERSION) fail('lifecycle_schema_mismatch', `生命周期事件 schemaVersion 必须为 ${LIFECYCLE_SCHEMA_VERSION}`);
@@ -139,7 +107,6 @@ export function normalizeLifecycleEvent(value, { maxBytes = 4096 } = {}) {
   if (Number.isNaN(date.getTime()) || date.toISOString() !== event.occurredAt) fail('invalid_lifecycle_event', 'occurredAt 必须是 ISO UTC 时间', event.occurredAt);
   if (event.baseRevision && !/^[a-f0-9]{7,64}$/u.test(event.baseRevision)) fail('invalid_lifecycle_event', 'baseRevision 格式无效', event.baseRevision);
   if (!SHA256.test(event.specDigest)) fail('invalid_lifecycle_event', 'specDigest 必须是 SHA-256', event.specDigest);
-  if (!LIFECYCLE_TRUST_LEVELS.has(event.trust)) fail('invalid_lifecycle_event', 'trust 无效', event.trust);
   if (event.supersedes && !EVENT_ID.test(event.supersedes)) fail('invalid_lifecycle_event', 'supersedes 格式无效', event.supersedes);
   const bytes = Buffer.byteLength(`${JSON.stringify(event)}\n`, 'utf8');
   if (bytes > maxBytes) fail('lifecycle_event_too_large', `生命周期事件超过 ${maxBytes} 字节`, event.eventId);
@@ -172,7 +139,7 @@ export function readLifecycleConfig(root = process.cwd()) {
     fail('lifecycle_writer_mismatch', `当前写入器 ${LIFECYCLE_WRITER_VERSION} 不满足最低版本 ${config.minimumWriterVersion}`, LIFECYCLE_CONFIG_PATH);
   }
   for (const field of ['eventDirectory', 'runtimeDirectory']) normalizeRepositoryPath(config[field], field);
-  for (const field of ['strictEvidenceMaxBytes', 'eventMaxBytes']) {
+  for (const field of ['eventMaxBytes']) {
     if (!Number.isSafeInteger(config[field]) || config[field] < 512 || config[field] > 65536) fail('invalid_lifecycle_config', `${field} 必须是 512 到 65536 的整数`, LIFECYCLE_CONFIG_PATH);
   }
   resolveSafeProjectPath(repositoryRoot, config.eventDirectory, '生命周期事件目录');

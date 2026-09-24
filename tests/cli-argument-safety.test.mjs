@@ -14,7 +14,6 @@ const CLI_CASES = [
   { id: 'check', script: 'check-project.mjs', writeCapable: false },
   { id: 'bootstrap', script: 'bootstrap-project.mjs', writeCapable: true },
   { id: 'update', script: 'update-project.mjs', writeCapable: true },
-  { id: 'migrate', script: 'migrate-wayfinder-project.mjs', writeCapable: true },
 ];
 
 function writeFile(root, relativePath, content) {
@@ -83,7 +82,7 @@ function initializeWorkflow(root) {
   assert.equal(parseOutput(initialized, '初始化').ok, true);
 }
 
-test('五个入口保持合法参数和默认 dry-run 兼容', (t) => {
+test('四个入口保持合法参数和默认 dry-run 兼容', (t) => {
   const root = createFixture(t);
 
   const defaultInspect = runCli('inspect-project.mjs', [], root);
@@ -120,18 +119,7 @@ test('五个入口保持合法参数和默认 dry-run 兼容', (t) => {
       expectedStatus: 0,
       assertOutput: (output) => {
         assert.equal(output.mode, 'summary');
-        assert.equal(output.verificationEvidenceAudit.diagnosticsIncluded, false);
-      },
-    },
-    {
-      label: '健康检查诊断查询',
-      script: 'check-project.mjs',
-      args: ['--target', root, '--diagnostic-code', 'legacy_markdown_evidence'],
-      expectedStatus: 0,
-      assertOutput: (output) => {
-        assert.equal(output.mode, 'diagnostics');
-        assert.equal(output.code, 'legacy_markdown_evidence');
-        assert.equal(output.limit, 20);
+        assert.equal(output.ok, true);
       },
     },
     {
@@ -148,13 +136,6 @@ test('五个入口保持合法参数和默认 dry-run 兼容', (t) => {
       expectedStatus: 0,
       assertOutput: (output) => assert.equal(output.write, false),
     },
-    {
-      label: '非旧布局迁移',
-      script: 'migrate-wayfinder-project.mjs',
-      args: ['--target', root, '--write'],
-      expectedStatus: 1,
-      assertOutput: (output) => assert.equal(output.layout, 'wayfinder'),
-    },
   ];
 
   for (const call of legalCalls) {
@@ -162,13 +143,10 @@ test('五个入口保持合法参数和默认 dry-run 兼容', (t) => {
     const result = runCli(call.script, call.args, root);
     assert.equal(result.status, call.expectedStatus, `${call.label}: ${result.stderr}`);
     call.assertOutput(parseOutput(result, call.label));
-    if (call.script === 'migrate-wayfinder-project.mjs') {
-      assert.deepEqual(snapshotTree(root), before, '非旧布局迁移不得修改文件');
-    }
   }
 });
 
-test('五个入口拒绝未知参数且不修改目标项目', (t) => {
+test('四个入口拒绝未知参数且不修改目标项目', (t) => {
   const root = createFixture(t);
   initializeWorkflow(root);
 
@@ -183,45 +161,21 @@ test('五个入口拒绝未知参数且不修改目标项目', (t) => {
   }
 });
 
-test('健康检查精简模式和诊断查询保持参数安全', (t) => {
+test('健康检查精简模式拒绝退役诊断参数且不修改项目', (t) => {
   const root = createFixture(t);
   initializeWorkflow(root);
   const before = snapshotTree(root);
 
-  const conflict = runCli('check-project.mjs', [
-    '--target',
-    path.join(root, 'missing-target'),
-    '--summary',
-    '--diagnostic-code',
-    'legacy_markdown_evidence',
-  ], root);
-  assert.notEqual(conflict.status, 0);
-  assert.equal(conflict.stdout, '');
-  assert.match(conflict.stderr, /--summary 与 --diagnostic-code 不能同时使用/u);
-  assert.doesNotMatch(conflict.stderr, /目标目录不存在/u, '参数冲突必须在项目读取前失败');
-
-  const missingCode = runCli('check-project.mjs', ['--target', root, '--diagnostic-code'], root);
-  assert.notEqual(missingCode.status, 0);
-  assert.equal(missingCode.stdout, '');
-  assert.match(missingCode.stderr, /参数 --diagnostic-code 缺少值/u);
-
-  const orphanPagination = runCli('check-project.mjs', ['--target', root, '--diagnostic-offset', '20'], root);
-  assert.notEqual(orphanPagination.status, 0);
-  assert.equal(orphanPagination.stdout, '');
-  assert.match(orphanPagination.stderr, /必须与 --diagnostic-code 一起使用/u);
-
-  const invalidLimit = runCli('check-project.mjs', [
-    '--target', root,
-    '--diagnostic-code', 'legacy_markdown_evidence',
-    '--diagnostic-limit', '101',
-  ], root);
-  assert.notEqual(invalidLimit.status, 0);
-  assert.equal(invalidLimit.stdout, '');
-  assert.match(invalidLimit.stderr, /--diagnostic-limit 必须是 1-100 的整数/u);
+  for (const option of ['--diagnostic-code', '--diagnostic-offset', '--diagnostic-limit']) {
+    const retired = runCli('check-project.mjs', ['--target', root, option, 'legacy'], root);
+    assert.notEqual(retired.status, 0);
+    assert.equal(retired.stdout, '');
+    assert.match(retired.stderr, new RegExp(`不支持的参数：${option}`, 'u'));
+  }
   assert.deepEqual(snapshotTree(root), before, '参数失败不得修改目标项目');
 });
 
-test('五个入口拒绝缺失、空白和选项令牌目标值', (t) => {
+test('四个入口拒绝缺失、空白和选项令牌目标值', (t) => {
   const root = createFixture(t);
   initializeWorkflow(root);
   const invalidTargetArgs = [

@@ -1,7 +1,7 @@
 # secure-project-analysis Specification
 
 ## Purpose
-TBD - created by archiving change harden-workflow-lifecycle. Update Purpose after archive.
+定义项目分析的敏感文件排除、Git 忽略边界和安全降级行为，确保范围收集不会读取或泄露项目外与私密内容。
 ## Requirements
 ### Requirement: 深度扫描必须在读取前排除敏感和忽略文件
 系统 MUST 在读取项目文件内容前排除真实环境配置、凭据、密钥类文件和 Git 忽略项，仅允许明确的环境模板文件，并为每个排除项给出稳定原因。
@@ -92,4 +92,3 @@ TBD - created by archiving change harden-workflow-lifecycle. Update Purpose afte
 #### Scenario: 注释前后存在活动标记
 - **WHEN** 同一行注释前后或相邻行存在注释外的属性粘连
 - **THEN** 系统 SHALL 只报告注释外匹配，并保持其原始文件路径和行号
-

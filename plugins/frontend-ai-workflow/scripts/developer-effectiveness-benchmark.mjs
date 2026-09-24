@@ -2,13 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  BENCHMARK_SCHEMA_VERSION, COMPLEXITY_MATRIX, EXPECTED_RUN_COUNT,
-  MIN_DISK_RESERVE_BYTES, DeveloperEffectivenessBenchmarkError,
+  BENCHMARK_SCHEMA_VERSION, COMPLEXITY_MATRIX, EXPECTED_RUN_COUNT, DeveloperEffectivenessBenchmarkError,
   applyUnifiedPatch, assertSourceBaselineUnchanged, cleanupBoundedWorkspace, collectSourceBaseline,
+  checkDiskBudget, comparisonConfig,
   freezeSyntheticCases, prepareCommittedWorkspace, publicSourceBaseline,
   scopedBenchmarkProjects, sha256Json, validateBenchmarkConfig, validateSyntheticCase,
-  verifyFrozenCases, writeImmutableJson, writeImmutableText, writeJsonAtomic, writeTextAtomic,
+  verifyFrozenCases, writeImmutableJson, writeImmutableText, writeJsonAtomic,
 } from './developer-effectiveness-benchmark-foundation.mjs';
+import {
+  inspectReusableCases,
+  persistFrozenCases,
+} from './developer-effectiveness-benchmark-case-bundle.mjs';
 import {
   AUTHOR_RESPONSE_SCHEMA, EXECUTION_RESPONSE_SCHEMA, advanceRunState, buildBenchmarkReviewMarkdown,
   buildBenchmarkSummary, buildFailedRunEvidence, buildWorkbookImportCsv, createRunState,
@@ -24,15 +28,6 @@ import {
 export { executeCaseRun } from './developer-effectiveness-benchmark-execution.mjs';
 
 const SMOKE_CASE_IDS = new Set(['SYN-P1-S01', 'SYN-P1-L01', 'SYN-P2-M01', 'SYN-P2-L01', 'SYN-P3-S01', 'SYN-P3-M01']);
-function checkDiskBudget(repositoryRoot) {
-  if (typeof fs.statfsSync !== 'function') return { status: 'limited', code: 'disk_budget_unavailable', availableBytes: null };
-  const stats = fs.statfsSync(repositoryRoot);
-  const availableBytes = Number(stats.bavail) * Number(stats.bsize);
-  if (availableBytes < MIN_DISK_RESERVE_BYTES) {
-    throw new DeveloperEffectivenessBenchmarkError('disk_reserve_insufficient', '可用磁盘空间低于基准安全预留', 'disk');
-  }
-  return { status: 'passed', code: 'disk_budget_sufficient', availableBytes };
-}
 
 function publicConfig(config, baselines) {
   return {
@@ -42,11 +37,16 @@ function publicConfig(config, baselines) {
     model: config.model,
     reasoning: config.reasoning,
     timeoutMinutes: config.timeoutMinutes,
+    comparison: config.comparison,
+    pluginSnapshots: config.pluginSnapshotSummaries || null,
     expectedCaseCount: scopedBenchmarkProjects(config).reduce((count, project) => count + COMPLEXITY_MATRIX[project.id].length, 0),
     expectedRunCount: config.smokeCase ? 1 : (config.pairCase ? 2 : EXPECTED_RUN_COUNT),
     scope: config.smokeCase ? 'plugin-smoke' : (config.pairCase ? 'single-paired' : 'full-paired'),
     smokeCase: config.smokeCase,
     pairCase: config.pairCase,
+    reuseCasesFrom: config.reuseCasesFrom,
+    reuseManifestDigest: config.reuseCaseSource?.manifest.manifestDigest || null,
+    reusePreflightDigest: config.reuseCaseSource ? sha256Json(config.reuseCaseSource.preflight) : null,
     projects: baselines.map(publicSourceBaseline),
     output: config.runPath,
     write: config.write,
@@ -58,11 +58,14 @@ export function createBenchmarkPreview(options) {
   const config = validateBenchmarkConfig(options);
   config.codex = options.codex || 'codex';
   config.keepWorkspaces = Boolean(options.keepWorkspaces);
+  Object.assign(config, comparisonConfig(config.repositoryRoot, options));
   config.smokeCase = options.smokeCase || null;
   config.pairCase = options.pairCase || null;
+  config.reuseCasesFrom = options.reuseCasesFrom || null;
   if (config.smokeCase && config.pairCase) throw new DeveloperEffectivenessBenchmarkError('conflicting_case_scope', '--smoke-case 与 --pair-case 不能同时使用', 'caseScope');
   if (config.smokeCase && !SMOKE_CASE_IDS.has(config.smokeCase)) throw new DeveloperEffectivenessBenchmarkError('invalid_smoke_case', 'smoke 用例不属于第一轮固定矩阵', 'smokeCase');
   if (config.pairCase && !SMOKE_CASE_IDS.has(config.pairCase)) throw new DeveloperEffectivenessBenchmarkError('invalid_pair_case', '配对用例不属于第一轮固定矩阵', 'pairCase');
+  config.reuseCaseSource = inspectReusableCases(config);
   config.authorAttempts = options.authorAttempts ?? DEFAULT_AUTHOR_ATTEMPTS;
   if (!Number.isInteger(config.authorAttempts) || config.authorAttempts < 1 || config.authorAttempts > 3) {
     throw new DeveloperEffectivenessBenchmarkError('invalid_author_attempts', '作者重试次数必须是 1 到 3 的整数', 'authorAttempts');
@@ -100,37 +103,6 @@ function writeSchemas(config) {
 
 function readJson(target) {
   return JSON.parse(fs.readFileSync(target, 'utf8'));
-}
-
-function persistFrozenCases(config, manifest) {
-  for (const candidate of manifest.cases) {
-    const caseRoot = path.join(config.runRoot, 'cases', candidate.id);
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'public-requirement.md'), `${candidate.publicRequirement.trim()}\n`, { mustNotExist: true });
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'seed.patch'), `${candidate.seedPatch.trimEnd()}\n`, { mustNotExist: true });
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'evaluator.patch'), `${candidate.evaluatorPatch.trimEnd()}\n`, { mustNotExist: true });
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'reference.patch'), `${candidate.referencePatch.trimEnd()}\n`, { mustNotExist: true });
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'equivalent.patch'), `${candidate.equivalentPatch.trimEnd()}\n`, { mustNotExist: true });
-    writeTextAtomic(config.repositoryRoot, path.join(caseRoot, 'mutant.patch'), `${candidate.mutantPatch.trimEnd()}\n`, { mustNotExist: true });
-    writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'clarifications.json'), candidate.clarifications, { mustNotExist: true });
-    writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'acceptance.json'), candidate.acceptance, { mustNotExist: true });
-    writeJsonAtomic(config.repositoryRoot, path.join(caseRoot, 'case.json'), {
-      schemaVersion: BENCHMARK_SCHEMA_VERSION,
-      synthetic: true,
-      id: candidate.id,
-      projectId: candidate.projectId,
-      title: candidate.title,
-      complexity: candidate.complexity,
-      taskType: candidate.taskType,
-      expectedRoute: candidate.expectedRoute,
-      allowedPaths: candidate.allowedPaths,
-      availabilityChecks: candidate.availabilityChecks,
-      maxReworks: candidate.maxReworks,
-      maxClarifications: candidate.maxClarifications,
-      assetDigests: candidate.assetDigests,
-      patchPaths: candidate.patchPaths,
-    }, { mustNotExist: true });
-  }
-  writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'cases', 'frozen-manifest.json'), manifest);
 }
 
 async function authorSyntheticCases({ config, baselines, schemas, operations }) {
@@ -334,6 +306,10 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   const input = publicConfig(config, baselines);
   const inputDigest = sha256Json(input);
   writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'input.json'), input);
+  if (config.pluginSnapshots) {
+    writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'snapshots', 'old-plugin.json'), config.pluginSnapshots.oldSource);
+    writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'snapshots', 'candidate-plugin.json'), config.pluginSnapshots.candidateSource);
+  }
   const loaded = loadOrCreateState(config, inputDigest);
   let state = loaded.state;
   if (!config.executeAgents) {
@@ -343,9 +319,17 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
   let manifest;
   let authoredPreflight = null;
   const manifestPath = path.join(config.runRoot, 'cases', 'frozen-manifest.json');
-  if (fs.existsSync(manifestPath)) manifest = verifyFrozenCases(readJson(manifestPath));
+  if (fs.existsSync(manifestPath)) {
+    manifest = verifyFrozenCases(readJson(manifestPath));
+    if (config.reuseCaseSource && manifest.manifestDigest !== config.reuseCaseSource.manifest.manifestDigest) {
+      throw new DeveloperEffectivenessBenchmarkError('reused_manifest_mismatch', '当前 run 的冻结清单与显式来源不一致', config.runId);
+    }
+  }
   else {
-    if (operations.authorCases) {
+    if (config.reuseCaseSource) {
+      manifest = config.reuseCaseSource.manifest;
+      authoredPreflight = config.reuseCaseSource.preflight;
+    } else if (operations.authorCases) {
       manifest = freezeSyntheticCases(await operations.authorCases({ config, baselines }), undefined, scopedBenchmarkProjects(config).map((project) => project.id));
     } else {
       const authored = await authorSyntheticCases({ config, baselines, schemas, operations });
@@ -454,8 +438,21 @@ export async function runDeveloperEffectivenessBenchmark(options, operations = {
       limitations: preview.limitations,
     };
   }
+  if (config.smokeCase) {
+    const invalidSmoke = metrics.find((item) => item.status !== 'passed' || item.effective !== true);
+    if (invalidSmoke) {
+      throw new DeveloperEffectivenessBenchmarkError(
+        'smoke_run_failed',
+        `方法学 smoke ${invalidSmoke.caseId} 未形成有效通过样本`,
+        `${invalidSmoke.caseId}:${invalidSmoke.mode}`,
+      );
+    }
+  }
   state = updateState(config, loaded.statePath, state, 'evaluated', inputDigest);
-  const summary = buildBenchmarkSummary(metrics, config.pairCase ? { expectedPairs: 1 } : undefined);
+  const summary = buildBenchmarkSummary(metrics, {
+    expectedPairs: config.pairCase ? 1 : undefined,
+    comparison: config.comparison,
+  });
   const summaryPath = path.join(config.runRoot, 'summary.json');
   writeImmutableJson(config.repositoryRoot, summaryPath, { ...summary, runId: config.runId, runOrder, inputDigest });
   writeImmutableJson(config.repositoryRoot, path.join(config.runRoot, 'pair-metrics.json'), {

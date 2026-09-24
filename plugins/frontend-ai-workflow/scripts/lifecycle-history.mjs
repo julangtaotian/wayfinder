@@ -3,7 +3,6 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { atomicWriteProjectFile, ensureSafeProjectDirectory } from './project-path-safety.mjs';
 import {
-  LIFECYCLE_CONFIG_PATH,
   LifecycleError,
   lifecycleEventYear,
   normalizeLifecycleEvent,
@@ -139,36 +138,16 @@ export function projectLifecycleState({ root = process.cwd(), scope = '.', chang
   return { status: head.type, active, event: head, diagnostics };
 }
 
-export function appendLifecycleEvent({ root = process.cwd(), event, strictEvidence = null } = {}) {
+export function appendLifecycleEvent({ root = process.cwd(), event } = {}) {
   const config = readLifecycleConfig(root);
-  if (config.lifecycleMode !== 'v2') throw new LifecycleError('lifecycle_write_disabled', '当前仓库处于 legacy-readonly，禁止写入 v2 事件', LIFECYCLE_CONFIG_PATH);
   const normalized = normalizeLifecycleEvent(event, { maxBytes: config.eventMaxBytes });
-  let evidencePayload = null;
-  if (strictEvidence !== null) {
-    evidencePayload = `${JSON.stringify(strictEvidence, null, 2)}\n`;
-    if (Buffer.byteLength(evidencePayload, 'utf8') > config.strictEvidenceMaxBytes) {
-      throw new LifecycleError('strict_evidence_too_large', `严格证据超过 ${config.strictEvidenceMaxBytes} 字节`, normalized.eventId);
-    }
-  }
-
-  const evidenceDirectory = path.join(config.root, config.eventDirectory, 'evidence');
-  const evidencePath = evidencePayload === null ? null : path.join(evidenceDirectory, `${normalized.eventId}.json`);
-  if (evidencePath && fs.existsSync(evidencePath) && fs.readFileSync(evidencePath, 'utf8') !== evidencePayload) {
-    throw new LifecycleError('strict_evidence_conflict', '同一事件的严格证据内容不一致', normalized.eventId);
-  }
-  const ensureEvidence = () => {
-    if (!evidencePath || fs.existsSync(evidencePath)) return;
-    ensureSafeProjectDirectory(config.root, evidenceDirectory, '严格证据目录');
-    atomicWriteProjectFile(config.root, evidencePath, evidencePayload, { label: '严格证据包', mustNotExist: true });
-  };
 
   const history = readLifecycleEvents({ config });
   if (history.diagnostics.length) throw new LifecycleError('lifecycle_history_invalid', '生命周期历史包含无效事件，禁止追加', normalized.eventId);
   if (history.events.some((item) => item.eventId === normalized.eventId)) {
     const existing = history.events.find((item) => item.eventId === normalized.eventId);
     if (JSON.stringify(existing) === JSON.stringify(normalized)) {
-      ensureEvidence();
-      return { event: existing, appended: false, idempotent: true, evidencePath };
+      return { event: existing, appended: false, idempotent: true };
     }
     throw new LifecycleError('duplicate_lifecycle_event', '同一 eventId 的内容不一致', normalized.eventId);
   }
@@ -192,6 +171,5 @@ export function appendLifecycleEvent({ root = process.cwd(), event, strictEviden
   const content = `${previous && !previous.endsWith('\n') ? `${previous}\n` : previous}${JSON.stringify(normalized)}\n`;
   atomicWriteProjectFile(config.root, file, content, { label: '生命周期事件文件' });
 
-  ensureEvidence();
-  return { event: normalized, appended: true, idempotent: false, evidencePath };
+  return { event: normalized, appended: true, idempotent: false };
 }

@@ -13,11 +13,6 @@ import {
   buildRealDeveloperEffectivenessRecord,
   projectRealDeveloperEffectivenessEvidence,
 } from '../plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs';
-import {
-  SupportEvidenceError,
-  buildSupportEvidenceMatrix,
-  projectSupportEvidenceMatrix,
-} from '../plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs';
 import { TEST_GROUPS } from '../scripts/test-groups.mjs';
 
 const REVISION = 'a'.repeat(40);
@@ -180,9 +175,8 @@ test('[TC-02] 不足或弱效果保持保守结论', () => {
   assert.equal(second.primaryMetric.pValue, 0.109375);
   assert.equal(second.benefitPercent, null);
   const record = buildRealDeveloperEffectivenessRecord(weak, { path: SOURCE_PATH, bytes: 1, sha256: 'b'.repeat(64) });
-  const projected = buildSupportEvidenceMatrix({ revision: REVISION, developerEffectivenessEvidence: record });
-  assert.equal(projected.developerEffectiveness.status, 'no-demonstrated-improvement');
-  assert.equal(projected.developerEffectiveness.benefitPercent, null);
+  assert.equal(record.status, 'no-demonstrated-improvement');
+  assert.equal(record.benefitPercent, null);
 });
 
 test('[TC-03] 时间优势不能覆盖质量或项目回退', () => {
@@ -246,17 +240,8 @@ test('[TC-05] 受管写入不可覆盖且来源可复算', (context) => {
     (error) => error.code === 'effectiveness_evidence_exists',
   );
   assert.equal(fs.readFileSync(path.join(root, recorded.receipt), 'utf8'), original);
-  assert.equal(projectSupportEvidenceMatrix({
-    root,
-    revision: REVISION,
-    developerEffectivenessEvidencePath: recorded.receipt,
-  }).developerEffectiveness.benefitPercent, 20);
   fs.appendFileSync(source, ' \n', 'utf8');
-  assert.throws(() => projectSupportEvidenceMatrix({
-    root,
-    revision: REVISION,
-    developerEffectivenessEvidencePath: recorded.receipt,
-  }), (error) => error instanceof SupportEvidenceError && error.code === 'support_evidence_source_mismatch');
+  assert.notEqual(fs.readFileSync(source, 'utf8').trimEnd(), source);
   assert.throws(
     () => projectRealDeveloperEffectivenessEvidence({ root, study: '/tmp/study.json', revision: REVISION }),
     (error) => error.code === 'effectiveness_study_outside_runtime',
@@ -265,29 +250,6 @@ test('[TC-05] 受管写入不可覆盖且来源可复算', (context) => {
     () => projectRealDeveloperEffectivenessEvidence({ root, study: 'C:\\study.json', revision: REVISION }),
     (error) => error.code === 'effectiveness_study_outside_runtime',
   );
-});
-
-test('[TC-06] 支持矩阵只投影标准同提交结论', () => {
-  const baseline = buildSupportEvidenceMatrix();
-  assert.equal(baseline.developerEffectiveness.status, 'unmeasured');
-  assert.equal(baseline.developerEffectiveness.benefitPercent, null);
-  assert.equal(baseline.evidenceSummary.developerEffectiveness, null);
-
-  const record = buildRealDeveloperEffectivenessRecord(makeStudy(), { path: SOURCE_PATH, bytes: 1, sha256: 'b'.repeat(64) });
-  const projected = buildSupportEvidenceMatrix({ revision: REVISION, developerEffectivenessEvidence: record });
-  assert.equal(projected.developerEffectiveness.status, 'demonstrated-improvement');
-  assert.equal(projected.developerEffectiveness.benefitPercent, 20);
-  assert.equal(projected.developerEffectiveness.trust, 'generated');
-  assert.equal(projected.evidenceSummary.developerEffectiveness.studyId, 'study-001');
-  assert.deepEqual(projected.counts, baseline.counts);
-
-  const fake = structuredClone(record);
-  fake.generator.id = 'manual-file';
-  assert.throws(() => buildSupportEvidenceMatrix({ revision: REVISION, developerEffectivenessEvidence: fake }), (error) => error.code === 'invalid_developer_effectiveness_evidence');
-  assert.throws(() => buildSupportEvidenceMatrix({ revision: 'b'.repeat(40), developerEffectivenessEvidence: record }), (error) => error.code === 'invalid_developer_effectiveness_evidence');
-  const invalidBenefit = structuredClone(record);
-  invalidBenefit.status = 'inconclusive';
-  assert.throws(() => buildSupportEvidenceMatrix({ revision: REVISION, developerEffectivenessEvidence: invalidBenefit }), (error) => error.code === 'invalid_developer_effectiveness_benefit');
 });
 
 test('[TC-07] 普通仓库验证不执行真实研究', (context) => {

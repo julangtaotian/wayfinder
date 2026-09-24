@@ -1,91 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 import {
   BENCHMARK_SCHEMA_VERSION, DeveloperEffectivenessBenchmarkError,
   applyUnifiedPatch, captureWorkspaceChanges, cleanupBoundedWorkspace, commitWorkspaceBaseline,
-  detectExecutionRoute, prepareCommittedWorkspace, sanitizeCapturedOutput, workspaceEnvironment,
-  writeJsonAtomic, writeTextAtomic,
+  detectExecutionRoute, prepareCommittedWorkspace, sanitizeCapturedOutput, validateDeliveryScope, workspaceEnvironment,
+  writeJsonAtomic,
 } from './developer-effectiveness-benchmark-foundation.mjs';
 import {
   buildRunMetrics, classifyFalseBlocker,
 } from './developer-effectiveness-benchmark-metrics.mjs';
-import {
-  aggregateCodexTokenUsage, buildCodexInvocation, parseCodexJsonLines, runBoundedProcess,
-} from './developer-effectiveness-benchmark-process.mjs';
+import { aggregateCodexTokenUsage, outputRedactions, runBoundedProcess, runCodexTurn } from './developer-effectiveness-benchmark-process.mjs';
 import { resolveSafeProjectPath } from './project-path-safety.mjs';
 
-function readFinalResponse(outputPath, processResult) {
-  if (processResult.finalResponse) return processResult.finalResponse;
-  if (!fs.existsSync(outputPath)) {
-    throw new DeveloperEffectivenessBenchmarkError('codex_final_response_missing', 'Codex 没有生成结构化最终响应', 'codex');
-  }
-  try {
-    return JSON.parse(fs.readFileSync(outputPath, 'utf8'));
-  } catch (error) {
-    throw new DeveloperEffectivenessBenchmarkError('codex_final_response_invalid', `Codex 最终响应不是有效 JSON：${error.message}`, 'codex');
-  }
-}
-
-function outputRedactions(config, baselines, workspace = null) {
-  return [
-    ...baselines.map((baseline) => ({ value: baseline.sourceRoot, replacement: `project:${baseline.projectId}` })),
-    { value: workspace, replacement: '[workspace]' },
-    { value: config.runRoot, replacement: '[run]' },
-    { value: config.repositoryRoot, replacement: '[repository]' },
-  ];
-}
-
-export async function runCodexTurn({
-  config,
-  workspace,
-  prompt,
-  schemaPath,
-  temporaryOutputPath,
-  eventOutputPath,
-  sandbox,
-  sessionId,
-  mode = 'plugin',
-  baselines,
-  operations,
-}) {
-  const invocation = buildCodexInvocation({
-    entry: config.codex,
-    workspace,
-    model: config.model,
-    reasoning: config.reasoning,
-    prompt,
-    schemaPath,
-    outputPath: temporaryOutputPath,
-    sandbox,
-    sessionId,
-    mode,
-  });
-  const execute = operations.runProcess || runBoundedProcess;
-  const processResult = await execute({
-    ...invocation,
-    env: workspaceEnvironment(config.runRoot, workspace),
-    timeoutMs: config.timeoutMinutes * 60_000,
-  });
-  const parsed = parseCodexJsonLines(processResult.stdout);
-  const redactions = outputRedactions(config, baselines, workspace);
-  const sanitized = sanitizeCapturedOutput(processResult.stdout, { redactions });
-  const sanitizedError = sanitizeCapturedOutput(processResult.stderr, { redactions });
-  if (!sanitized.safe || !sanitizedError.safe) {
-    throw new DeveloperEffectivenessBenchmarkError('sensitive_agent_output', '代理事件包含敏感信息，已拒绝持久化原文', eventOutputPath);
-  }
-  writeTextAtomic(config.repositoryRoot, eventOutputPath, sanitized.text || '', { mustNotExist: true });
-  const stderrOutputPath = eventOutputPath.replace(/events\.ndjson$/u, 'stderr.log');
-  writeTextAtomic(config.repositoryRoot, stderrOutputPath, sanitizedError.text || '', { mustNotExist: true });
-  let finalResponse = null;
-  if (!processResult.launchError && !processResult.timedOut && !processResult.interrupted && processResult.exitCode === 0) {
-    finalResponse = readFinalResponse(temporaryOutputPath, processResult);
-  }
-  if (fs.existsSync(temporaryOutputPath)) fs.unlinkSync(temporaryOutputPath);
-  return {
-    processResult, parsed, finalResponse,
-    eventPaths: [eventOutputPath, stderrOutputPath].map((target) => path.relative(config.repositoryRoot, target).replaceAll('\\', '/')),
-  };
-}
+export { validateDeliveryScope };
+export { runCodexTurn };
 
 function safeAuthorCorrection(error) {
   if (!error) return null;
@@ -103,11 +32,20 @@ function safeAuthorCorrection(error) {
 }
 
 function authorCorrectionGuidance(code) {
+  if (code === 'case_reference_assertion_failed') {
+    return '重新生成时必须把 evaluatorPatch 的每条断言实际应用到 referencePatch 后逐项核对；文本验收需要兼容合法的引号、属性写法和等价格式，不能让参考实现因 evaluator 自身的正则或字符串假设失败。';
+  }
   if (code === 'case_equivalent_failed') {
     return '重新生成时必须逐条对照 evaluatorPatch、referencePatch 与 equivalentPatch：验收断言必须同时接受两种语义等价但结构不同的实现，不能把独立实现限定为参考实现的赋值写法、语句顺序、中间变量或格式。';
   }
+  if (code === 'unsafe_evaluator_source') {
+    return '重新生成时禁止截取源码片段、动态执行源码或启动子进程探测；优先选择可由 Node.js 直接导入并行为验证的模块，否则只对完整源码中的稳定公共契约做不依赖局部结构的检查。';
+  }
+  if (code === 'case_allowed_paths_include_evaluator') {
+    return '重新生成时 allowedPaths 只能包含执行代理可修改的业务源码或项目测试路径，禁止包含 .benchmark-evaluator；冻结验收器由基准隔离管理，不能向执行代理公开。';
+  }
   if (code === 'patch_apply_failed') {
-    return '重新读取 target 对应源码并按当前 HEAD 生成完整补丁，逐项核对上下文、行数和目标路径，不得沿用上一次补丁的行号假设。';
+    return '重新读取 target 对应源码并按当前 HEAD 生成完整补丁，逐项核对上下文、行数和目标路径；返回前使用与基准一致的 git apply --check --ignore-space-change --ignore-whitespace 规则验证，不得沿用上一次补丁的行号假设。';
   }
   if (code === 'case_mutant_unexpected_pass') {
     return '重新生成时确保 mutantPatch 只破坏一个公开行为，并让 evaluatorPatch 对该行为有能够稳定失败的断言。';
@@ -124,45 +62,67 @@ export function authorPrompt(projectId, complexities, previousError = null) {
     return `SYN-${projectId}-${code}`;
   });
   const correction = safeAuthorCorrection(previousError);
+  const routeCoverage = {
+    P1: '项目 P1 的第二项必须寻找一个真实 Light 任务：存在清晰有界的多文件或调用链，但不命中任何 Complex 硬触发；找不到时返回 blocked，禁止靠文件数伪装。',
+    P3: '项目 P3 的第二项必须寻找一个真实 Complex 任务：必须命中架构、公共契约、权限、安全、依赖、构建、部署、CI、平台兼容或影响不可界定中的至少一项硬触发；找不到时返回 blocked，禁止靠复杂度标签伪装。',
+  }[projectId] || null;
   const prompt = [
     '你是合成基准的用例作者，只读检查当前 Git 项目，不要修改工作区，也不要实现最终任务。',
     `请为项目 ${projectId} 生成恰好两个独立模拟需求，ID 和复杂度依次为：${ids.map((id, index) => `${id}(${complexities[index]})`).join('、')}。`,
-    '每个用例必须来自当前仓库真实结构，不需要登录、真实账号、生产接口、网络或安装依赖。第一项 expectedRoute=fast，必须是边界明确的局部修改；第二项 expectedRoute=full，必须涉及真实共享契约、跨模块边界或需要显式规划的产品决策，不能只靠文件数、补丁行数或复杂度标签伪装。',
-    'seedPatch 必须能应用到当前 HEAD；referencePatch、equivalentPatch 和 mutantPatch 必须各自能独立应用到 HEAD + seed；evaluatorPatch 必须能应用到上述四种状态。所有补丁都使用行号与行数准确、没有省略内容的完整 unified diff，evaluator 只能新增 .benchmark-evaluator/ 下的 Node.js 标准库测试。',
+    '每个用例必须来自当前仓库真实结构，不需要登录、真实账号、生产接口、网络或安装依赖。第一项 expectedRoute=direct，必须是边界明确的局部修改；第二项必须按真实风险选择 expectedRoute=light 或 expectedRoute=complex：有清晰有界调用链时选 light，涉及架构、公共契约、权限、安全、依赖、构建、部署、CI、平台兼容或影响不可界定时选 complex，不能只靠文件数、补丁行数或复杂度标签伪装。',
+    'seedPatch 必须能应用到当前 HEAD；referencePatch、equivalentPatch 和 mutantPatch 必须各自能独立应用到 HEAD + seed；evaluatorPatch 必须能应用到上述四种状态。所有补丁都使用行号与行数准确、没有省略内容的完整 unified diff，并按 git apply --check --ignore-space-change --ignore-whitespace 的等价规则自检；evaluator 只能新增 .benchmark-evaluator/ 下的 Node.js 标准库测试。',
     'equivalentPatch 必须使用与 referencePatch 不同的局部结构或实现路径但满足同一公开行为，禁止复制参考补丁；mutantPatch 只破坏一个公开验收点并保持其余条件。acceptance.command 固定为 node，args 使用 ["--test", ".benchmark-evaluator/<case>.test.mjs"]；seed 和 mutant 必须失败，reference 和 equivalent 必须通过。',
-    'evaluator 必须是 Node.js 可直接运行的纯 JavaScript ESM；不得把 .ts 或 .vue 原文直接交给 eval、new Function 或 vm 执行，也不得直接 import 依赖 Vite/TypeScript 转换的模块。需要观察这类源码时只能读取文本并验证公开行为或稳定公共契约；不得断言局部变量名、表达式顺序、分号、格式或完整参考源码文本。',
+    'evaluator 必须是 Node.js 可直接运行的纯 JavaScript ESM；不得把 .ts 或 .vue 原文交给 eval、new Function 或 vm 执行，不得用 slice、substring 或 substr 截取源码片段，也不得启动子进程探测命令；不得直接 import 依赖 Vite/TypeScript 转换的模块。需要观察这类源码时只能读取完整文本并验证公开行为或稳定公共契约；不得断言局部变量名、表达式顺序、分号、格式或完整参考源码文本。',
     '返回前必须逐项交叉检查 seed、reference、equivalent、mutant 四种状态：seed 和 mutant 应失败，reference 和 equivalent 应通过。尤其要把 evaluatorPatch 的每条断言同时对照 referencePatch 与 equivalentPatch，语义等价的链式赋值、中间变量、属性顺序或控制流差异不得被误判。',
-    'allowedPaths 只列业务源码或测试相关的项目相对路径，不得包含 AGENTS.md、requirements、openspec、wayfinder、outputs、package manifest 或锁文件；seedPatch、referencePatch、equivalentPatch 和 mutantPatch 的每个业务目标都必须由 allowedPaths 中的文件或目录覆盖。',
+    'allowedPaths 只列执行代理可修改的业务源码或项目测试相对路径，严禁包含 .benchmark-evaluator 或其子路径，也不得包含 AGENTS.md、requirements、openspec、wayfinder、outputs、package manifest 或锁文件；冻结 evaluatorPatch 由基准隔离管理，不向执行代理公开；seedPatch、referencePatch、equivalentPatch 和 mutantPatch 的每个业务目标都必须由 allowedPaths 中的文件或目录覆盖。',
     'publicRequirement 至少 80 个字符，描述可观察目标、边界和公开验证方式，但不得出现 evaluator、reference.patch、隐藏验收或参考实现等泄露词。',
     'publicRequirement 中“仅修改”“保持不变”“不得影响”等范围限制必须与 referencePatch 和 equivalentPatch 完全一致；seedPatch 不得制造只能通过违反这些公开限制才能修复的矛盾起点。',
     'clarifications 仅包含公开需求确实可能触发的问题与冻结答案；availabilityChecks 只列实现所依赖的已存在项目文件，并且每个 target 都必须由 allowedPaths 中的文件或目录覆盖。maxReworks 和 maxClarifications 均不超过 2。',
     '最终仅返回符合给定 JSON schema 的对象；成功时 status=ready 且 cases 恰好两项，无法满足时 status=blocked 且 cases=[]。',
   ];
+  if (routeCoverage) prompt.push(routeCoverage);
   if (correction) {
     prompt.push(`上一次候选校验失败，请只纠正该合同错误：code=${correction.code}${correction.target ? `，target=${correction.target}` : ''}。${authorCorrectionGuidance(correction.code)}`);
   }
   return prompt.join('\n');
 }
 
-function executionPrompt(candidate, mode) {
+export function executionPrompt(candidate, mode, comparison = 'no-plugin') {
   const common = [
     `任务 ID：${candidate.id}`,
     candidate.publicRequirement,
     `只允许修改这些业务范围：${candidate.allowedPaths.join('、')}。`,
-    '不要访问网络、真实账号或生产系统，不要安装依赖。请完成实现并运行你能执行的聚焦验证。',
+    '不要访问网络、真实账号或生产系统，不要安装依赖。请完成实现并运行你能执行的聚焦验证；只能使用项目已有入口、直接模块导入或可重复的人工检查，不得通过 eval、new Function、vm 或截取、改写源码临时构造执行器。若缺少可靠入口，记录人工检查后返回 delivered，由独立验收判断结果。',
     '若公开需求存在真正影响实现的空白，请返回 needs_clarification；无法继续时返回 blocked；完成可验收实现时返回 delivered。',
     '最终只返回符合 JSON schema 的对象，question、blockerCode、blockerCategory 不适用时使用空字符串。',
   ];
   if (mode === 'plugin') {
-    common.unshift(`请根据项目 AGENTS 和当前已安装的 frontend-ai-workflow 插件准入规则处理任务，本用例冻结预期路线为 ${candidate.expectedRoute}；必须按该路线执行并返回一致的 route。完整通道若本轮只完成规划，请返回 status=planned、route=full。`);
+    common.push('本基准的 delivered 只表示业务实现已可交给独立验收，不要求在隔离样本内完成生命周期；完成业务修改和一次可靠检查或人工复核后直接返回 delivered，不为 Direct 或 Light 创建管理产物，也不伪造 Complex 完成状态。');
+    const lifecycle = candidate.expectedRoute === 'complex'
+      ? '本轮已明确授权在隔离副本内写入管理产物；必须在业务实现前使用插件 workflow-cli create --write 建立恰好一个 OpenSpec change，并把它保留为活动 change 直到返回 delivered，本基准内不要执行 complete。'
+      : 'Direct 与 Light 不得创建 OpenSpec change 或其他管理产物。';
+    common.unshift(`请根据项目 AGENTS 和当前已安装的 frontend-ai-workflow 插件准入规则处理任务，本用例冻结预期路线为 ${candidate.expectedRoute}。必须返回一致的原生 route。${lifecycle}`);
+  } else if (comparison === 'old-plugin') {
+    common.push('按旧版原生流程达到可交给独立业务验收的状态后返回 delivered；旧版若要求需求或 OpenSpec 管理产物，允许按其合同建立，并单独记录这些额外输入与产物。');
+    common.unshift('请使用当前隔离加载的改造前 frontend-ai-workflow 插件，按旧版 Skill 的原生准入规则处理任务。走 frontend-fast-change 时 route 返回 legacy-fast-change；走 frontend-change 时返回 legacy-managed-change。不要使用新版 frontend-delivery，也不要为满足新版路线人为改变旧版流程。');
   } else {
     common.unshift('直接实现并验证下面的需求，不创建需求文档、OpenSpec 变更、Wayfinder 或其他工作流管理文件；route 固定返回 baseline。');
   }
   return common.join('\n\n');
 }
 
-function workflowContinuationPrompt(candidate) {
-  return `继续实施并完成任务 ${candidate.id}。沿用已经建立的受管计划，完成业务代码和聚焦验证；可验收时返回 delivered，最终仍只返回 JSON schema 对象。`;
+function workflowContinuationPrompt(candidate, route) {
+  return `继续任务 ${candidate.id}。沿用已经建立的 ${route} 路线；若 Complex 规划尚未完整，先补齐必要事实并可再返回一次 planned，不要重建身份；随后完成业务代码和充分验证，可验收时返回 delivered，最终仍只返回 JSON schema 对象。`;
+}
+
+export function assessWorkflowRouteHistory(routes = []) {
+  const routeHistory = routes.filter((route) => ['direct', 'light', 'complex'].includes(route));
+  const uniqueRoutes = [...new Set(routeHistory)];
+  return {
+    valid: uniqueRoutes.length <= 1,
+    code: uniqueRoutes.length <= 1 ? 'workflow_route_history_consistent' : 'workflow_route_transition_mismatch',
+    routeHistory,
+  };
 }
 
 function clarificationPrompt(answer) {
@@ -199,6 +159,8 @@ export async function runAcceptance({ config, candidate, workspace, baselines, o
   }
   return {
     passed: !processResult.launchError && !processResult.timedOut && !processResult.interrupted && processResult.exitCode === 0,
+    infrastructureFailed: Boolean(processResult.launchError || processResult.timedOut || processResult.interrupted
+      || processResult.stdoutTruncated || processResult.stderrTruncated),
     exitCode: processResult.exitCode,
     launchError: processResult.launchError,
     timedOut: processResult.timedOut,
@@ -260,6 +222,9 @@ export async function executeCaseRun({
   operations,
 }) {
   const runName = `${candidate.id.toLowerCase()}-${mode}`;
+  // 准备耗时从创建隔离副本前开始，避免遗漏 Git 克隆与固定提交检出。
+  const startedAt = isoNow(operations);
+  const preparationStartedTick = performance.now();
   const prepared = prepareCommittedWorkspace({
     project: runSource.project,
     baseline: runSource.baseline,
@@ -280,22 +245,43 @@ export async function executeCaseRun({
   let reworkCount = 0;
   let blockerCount = 0;
   let falseBlockerStatus = 'none';
-  let route = mode === 'baseline' ? 'baseline' : 'unknown';
+  let route = mode === 'baseline' && config.comparison !== 'old-plugin' ? 'baseline' : 'unknown';
   let routeValid = false;
   let sessionId = null;
-  let prompt = executionPrompt(candidate, mode);
+  let prompt = executionPrompt(candidate, mode, config.comparison);
   let eventText = '';
   let turnIndex = 0;
   let workflowTransitions = 0;
+  const workflowRouteHistory = [];
+  let routeEvidenceCode = null;
   let latestChanges = { patch: '', changedPaths: [], diffstat: { files: 0, insertions: 0, deletions: 0 } };
-  const startedAt = isoNow(operations);
+  let preparationMs = null;
+  let deliveryCycleMs = null;
+  let firstDeliveryCycleMs = null;
+  let reworkCycleMs = 0;
+  let firstFailedAcceptanceTick = null;
+  let agentExecutionMs = 0;
+  let acceptanceMs = 0;
+  let cleanupMs = 0;
+  const acceptanceDurationsMs = [];
+  const phaseTimes = {
+    preparation: { startedAt, endedAt: null },
+    delivery: { startedAt: null, endedAt: null },
+    acceptance: [],
+    cleanup: { startedAt: null, endedAt: null },
+  };
   try {
     applyUnifiedPatch(prepared.workspace, candidate.seedPatch, `${candidate.id}.seed`, { env: prepared.environment });
     commitWorkspaceBaseline(prepared.workspace, `benchmark seed ${candidate.id}`, { env: prepared.environment });
+    preparationMs = performance.now() - preparationStartedTick;
+    phaseTimes.preparation.endedAt = isoNow(operations);
+    phaseTimes.delivery.startedAt = phaseTimes.preparation.endedAt;
+    const deliveryStartedTick = performance.now();
     while (turnIndex < 12) {
       turnIndex += 1;
       const temporaryOutputPath = path.join(config.runRoot, 'tmp', `${runName}-${turnIndex}-final.json`);
       const eventOutputPath = path.join(runRoot, `turn-${String(turnIndex).padStart(2, '0')}.events.ndjson`);
+      const turnStartedTick = performance.now();
       const turn = await runCodexTurn({
         config,
         workspace: prepared.workspace,
@@ -309,17 +295,30 @@ export async function executeCaseRun({
         baselines,
         operations,
       });
+      const turnDurationMs = performance.now() - turnStartedTick;
+      agentExecutionMs += turnDurationMs;
       evidence.push(...turn.eventPaths);
       eventText += `\n${turn.processResult.stdout || ''}`;
       sessionId ||= turn.parsed.sessionId;
       turns.push({
         index: turnIndex,
+        startedAt: turn.startedAt || null,
+        endedAt: turn.endedAt || null,
         exitCode: turn.processResult.exitCode,
         launchError: turn.processResult.launchError,
         timedOut: turn.processResult.timedOut,
         interrupted: turn.processResult.interrupted,
         invalidEventLines: turn.parsed.invalidLineCount,
-        tokenUsage: turn.parsed.tokenUsage,
+        stdoutTruncated: turn.processResult.stdoutTruncated === true,
+        stderrTruncated: turn.processResult.stderrTruncated === true,
+        durationMs: turnDurationMs,
+        tokenUsage: {
+          ...turn.parsed.tokenUsage,
+          // 非缓存输入只在逐轮用量完整时计算，不用文本长度估算。
+          nonCachedInputTokens: turn.parsed.tokenUsage.status === 'available'
+            ? turn.parsed.tokenUsage.inputTokens - turn.parsed.tokenUsage.cachedInputTokens : null,
+        },
+        activity: turn.parsed.activity,
         response: turn.finalResponse,
         eventPaths: turn.eventPaths,
       });
@@ -333,13 +332,16 @@ export async function executeCaseRun({
         break;
       }
       const response = turn.finalResponse;
+      if (mode === 'plugin' && ['direct', 'light', 'complex'].includes(response.route)) {
+        workflowRouteHistory.push(response.route);
+      }
       if (response.status === 'planned') {
         if (mode !== 'plugin' || workflowTransitions >= 2) {
           finalStatus = 'failed';
           break;
         }
         workflowTransitions += 1;
-        prompt = workflowContinuationPrompt(candidate);
+        prompt = workflowContinuationPrompt(candidate, response.route);
         continue;
       }
       if (response.status === 'needs_clarification') {
@@ -355,15 +357,19 @@ export async function executeCaseRun({
         continue;
       }
       latestChanges = captureWorkspaceChanges(prepared.workspace, { env: prepared.environment });
+      validateDeliveryScope({ candidate, mode, comparison: config.comparison, route: response.route, changedPaths: latestChanges.changedPaths });
       const routeResult = detectExecutionRoute({
         mode,
+        comparison: config.comparison,
         eventText,
         finalRoute: response.route,
         changedPaths: latestChanges.changedPaths,
         expectedRoute: candidate.expectedRoute,
       });
       route = routeResult.route;
-      routeValid = routeResult.valid;
+      const routeHistory = assessWorkflowRouteHistory(workflowRouteHistory);
+      routeValid = routeResult.valid && routeHistory.valid;
+      routeEvidenceCode = routeHistory.valid ? routeResult.code : routeHistory.code;
       if (response.status === 'blocked') {
         blockerCount += 1;
         finalStatus = 'blocked';
@@ -379,7 +385,12 @@ export async function executeCaseRun({
         finalStatus = 'failed';
         break;
       }
-      firstDeliveredAt ||= isoNow(operations);
+      if (!firstDeliveredAt) {
+        firstDeliveredAt = isoNow(operations);
+        firstDeliveryCycleMs = performance.now() - deliveryStartedTick;
+      }
+      const acceptanceStartedAt = isoNow(operations);
+      const acceptanceStartedTick = performance.now();
       const acceptance = await evaluateDelivery({
         config,
         project: sourceProject,
@@ -390,10 +401,22 @@ export async function executeCaseRun({
         baselines,
         operations,
       });
+      const acceptanceDurationMs = performance.now() - acceptanceStartedTick;
+      acceptanceMs += acceptanceDurationMs;
+      acceptanceDurationsMs.push(acceptanceDurationMs);
+      phaseTimes.acceptance.push({
+        startedAt: acceptanceStartedAt,
+        endedAt: isoNow(operations),
+        durationMs: acceptanceDurationMs,
+        passed: acceptance.passed,
+      });
       const acceptancePath = path.join(runRoot, `acceptance-${String(acceptanceAttempts.length + 1).padStart(2, '0')}.json`);
       writeJsonAtomic(config.repositoryRoot, acceptancePath, acceptance, { mustNotExist: true });
       evidence.push(path.relative(config.repositoryRoot, acceptancePath).replaceAll('\\', '/'));
       acceptanceAttempts.push(acceptance);
+      if (acceptance.infrastructureFailed) {
+        throw new DeveloperEffectivenessBenchmarkError('acceptance_infrastructure_failed', '独立验收器异常，不能把该次失败当作业务返工', candidate.id);
+      }
       if (acceptanceAttempts.length === 1) firstAcceptancePassed = acceptance.passed;
       if (acceptance.passed) {
         finalAcceptancePassed = true;
@@ -405,17 +428,25 @@ export async function executeCaseRun({
         break;
       }
       reworkCount += 1;
+      firstFailedAcceptanceTick ||= performance.now();
       prompt = reworkPrompt(acceptance);
     }
+    deliveryCycleMs = performance.now() - deliveryStartedTick;
+    if (firstFailedAcceptanceTick !== null) reworkCycleMs = performance.now() - firstFailedAcceptanceTick;
+    phaseTimes.delivery.endedAt = isoNow(operations);
   } finally {
+    phaseTimes.cleanup.startedAt = isoNow(operations);
+    const cleanupStartedTick = performance.now();
     const cleanup = config.keepWorkspaces
       ? { status: 'limited', code: 'workspace_retained_by_request', target: runName }
       : cleanupBoundedWorkspace({ runRoot: config.runRoot, workspace: prepared.workspace });
     const cleanupPath = path.join(runRoot, 'cleanup.json');
     writeJsonAtomic(config.repositoryRoot, cleanupPath, cleanup, { mustNotExist: true });
     evidence.push(path.relative(config.repositoryRoot, cleanupPath).replaceAll('\\', '/'));
+    cleanupMs = performance.now() - cleanupStartedTick;
+    phaseTimes.cleanup.endedAt = isoNow(operations);
   }
-  const endedAt = isoNow(operations);
+  const endedAt = phaseTimes.cleanup.endedAt;
   const runResult = {
     schemaVersion: BENCHMARK_SCHEMA_VERSION,
     synthetic: true,
@@ -442,6 +473,15 @@ export async function executeCaseRun({
     finalAcceptancePassed,
     diffstat: latestChanges.diffstat,
     workflowTransitions,
+    workflowRouteHistory,
+    routeEvidenceCode,
+    telemetryContract: 'complete-turn-usage-v1',
+    // 主交付周期从首轮代理调用开始，到最终独立验收或停止为止；种子准备与清理单列。
+    duration: {
+      deliveryCycleMs, firstDeliveryCycleMs, reworkCycleMs, preparationMs,
+      agentExecutionMs, acceptanceMs, cleanupMs, acceptanceDurationsMs,
+    },
+    phaseTimes,
     tokenUsage: aggregateCodexTokenUsage(turns.map((turn) => turn.tokenUsage)),
     turns,
     evidence,

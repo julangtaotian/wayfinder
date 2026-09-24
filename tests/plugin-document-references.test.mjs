@@ -6,7 +6,7 @@ import { validatePluginDocumentReferences } from '../plugins/frontend-ai-workflo
 import { writeFixtureFile } from './helpers/workflow-fixtures.mjs';
 
 function fixture(context) {
-  const outputs = path.resolve('outputs/skill-optimization/document-fixtures');
+  const outputs = path.resolve('.frontend-ai-workflow/runs/skill-optimization/document-fixtures');
   fs.mkdirSync(outputs, { recursive: true });
   const root = fs.mkdtempSync(path.join(outputs, '文档 case-'));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));

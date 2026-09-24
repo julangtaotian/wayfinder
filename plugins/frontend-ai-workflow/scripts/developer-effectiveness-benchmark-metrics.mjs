@@ -28,10 +28,14 @@ function nonNegativeInteger(value) {
   return Number.isInteger(value) && value >= 0;
 }
 
+function nonNegativeDuration(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
 function normalizedTokenUsage(value) {
   const fields = ['turnCount', 'inputTokens', 'cachedInputTokens', 'outputTokens', 'reasoningOutputTokens', 'totalTokens'];
   if (value?.status !== 'available' || fields.some((field) => !nonNegativeInteger(value[field]))) {
-    const reason = value?.status === 'invalid' ? 'invalid-token-usage' : 'missing-token-usage';
+    const reason = value?.status === 'invalid' ? (value.reason || 'invalid-token-usage') : 'missing-token-usage';
     return {
       status: value?.status === 'invalid' ? 'invalid' : 'missing',
       reason,
@@ -88,6 +92,30 @@ export function buildRunMetrics(run) {
   if (!Array.isArray(run.evidence) || run.evidence.length === 0) reasons.push('missing-evidence');
   if (['timeout', 'launch-failed', 'interrupted'].includes(run.status)) reasons.push(`infrastructure-${run.status}`);
   const tokenUsage = normalizedTokenUsage(run.tokenUsage);
+  const activityFields = ['commandCount', 'observedSkillReadCommands', 'observedAgentsReadCommands', 'observedTestCommands'];
+  const activity = Array.isArray(run.turns)
+    ? Object.fromEntries(activityFields.map((field) => [field, run.turns.reduce((sum, turn) => sum + (turn.activity?.[field] || 0), 0)]))
+    : null;
+  if (run.telemetryContract === 'complete-turn-usage-v1') {
+    if (tokenUsage.status !== 'available') reasons.push(tokenUsage.reason);
+    if (!Array.isArray(run.turns) || run.turns.length === 0) reasons.push('missing-turn-evidence');
+    else if (run.turns.some((turn) => turn.stdoutTruncated || turn.stderrTruncated || turn.invalidEventLines > 0)) {
+      reasons.push('incomplete-event-stream');
+    }
+    if (!nonNegativeDuration(run.duration?.deliveryCycleMs)
+      || !nonNegativeDuration(run.duration?.agentExecutionMs)
+      || !nonNegativeDuration(run.duration?.acceptanceMs)
+      || !nonNegativeDuration(run.duration?.preparationMs)
+      || !nonNegativeDuration(run.duration?.cleanupMs)) reasons.push('missing-duration-segments');
+    const phases = run.phaseTimes;
+    const ordered = (segment) => timestamp(segment?.startedAt) !== null
+      && timestamp(segment?.endedAt) !== null
+      && timestamp(segment.endedAt) >= timestamp(segment.startedAt);
+    if (!ordered(phases?.preparation) || !ordered(phases?.delivery) || !ordered(phases?.cleanup)
+      || !Array.isArray(phases?.acceptance)
+      || phases.acceptance.length !== run.duration?.acceptanceDurationsMs?.length
+      || phases.acceptance.some((segment) => !ordered(segment))) reasons.push('missing-phase-timestamps');
+  }
   return {
     schemaVersion: BENCHMARK_SCHEMA_VERSION,
     synthetic: true,
@@ -105,6 +133,10 @@ export function buildRunMetrics(run) {
     endedAt: run.endedAt || null,
     firstDeliveryMs: startedMs !== null && firstDeliveredMs !== null ? firstDeliveredMs - startedMs : null,
     totalCycleMs: startedMs !== null && endedMs !== null ? endedMs - startedMs : null,
+    duration: run.duration || null,
+    phaseTimes: run.phaseTimes || null,
+    activity,
+    telemetryContract: run.telemetryContract || null,
     clarificationCount: nonNegativeInteger(run.clarificationCount) ? run.clarificationCount : null,
     reworkCount: nonNegativeInteger(run.reworkCount) ? run.reworkCount : null,
     blockerCount: nonNegativeInteger(run.blockerCount) ? run.blockerCount : null,
@@ -162,14 +194,19 @@ function tokenDelta(plugin, baseline) {
 
 function normalizePersistedMetrics(item) {
   const tokenUsage = normalizedTokenUsage(item.tokenUsage);
+  const dataQualityReasons = [...(Array.isArray(item.dataQualityReasons) ? item.dataQualityReasons : [])];
+  if (item.telemetryContract === 'complete-turn-usage-v1' && tokenUsage.status !== 'available'
+    && !dataQualityReasons.includes(tokenUsage.reason)) dataQualityReasons.push(tokenUsage.reason);
   return {
     ...item,
     tokenUsage,
     tokenDataQualityReasons: tokenUsage.reason ? [tokenUsage.reason] : [],
+    effective: item.effective === true && dataQualityReasons.length === 0,
+    dataQualityReasons,
   };
 }
 
-export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CASE_COUNT } = {}) {
+export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CASE_COUNT, comparison = 'no-plugin' } = {}) {
   const metrics = runResults.map((item) => (
     item.synthetic === true && 'effective' in item ? normalizePersistedMetrics(item) : buildRunMetrics(item)
   ));
@@ -192,6 +229,8 @@ export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CAS
         firstDeliveryMs: plugin.firstDeliveryMs === null || baseline.firstDeliveryMs === null
           ? null : plugin.firstDeliveryMs - baseline.firstDeliveryMs,
         totalCycleMs: plugin.totalCycleMs - baseline.totalCycleMs,
+        deliveryCycleMs: plugin.duration?.deliveryCycleMs == null || baseline.duration?.deliveryCycleMs == null
+          ? null : plugin.duration.deliveryCycleMs - baseline.duration.deliveryCycleMs,
         clarifications: plugin.clarificationCount - baseline.clarificationCount,
         reworks: plugin.reworkCount - baseline.reworkCount,
         tokenUsage: tokenDelta(plugin, baseline),
@@ -206,6 +245,7 @@ export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CAS
   return {
     schemaVersion: BENCHMARK_SCHEMA_VERSION,
     synthetic: true,
+    comparison,
     conclusionStatus: validPairCount === expectedPairs ? 'descriptive-comparison' : 'insufficient-pairs',
     expectedPairCount: expectedPairs,
     validPairCount,
@@ -219,6 +259,7 @@ export function buildBenchmarkSummary(runResults, { expectedPairs = EXPECTED_CAS
       '需求作者与执行代理可能来自同类模型，结果存在任务风格偏置。',
       '误阻断只有确定性反证时自动确认，其余候选需要人工复核。',
       'Token 只来自 Codex turn.completed.usage；缺失或非法事件保持未知，不按字符或价格推断。',
+      '主交付周期从首轮代理调用到最终独立验收或停止；种子准备与工作区清理分别报告，不混入主耗时。',
     ],
   };
 }
@@ -236,17 +277,31 @@ export function buildWorkbookImportCsv(summary) {
     'false_blocker_status', 'first_acceptance_passed', 'final_acceptance_passed', 'status', 'effective',
     'first_delivery_hours', 'total_cycle_hours', 'input_tokens', 'cached_input_tokens', 'output_tokens',
     'reasoning_output_tokens', 'total_tokens', 'token_data_quality', 'synthetic', 'data_quality',
+    'comparison', 'delivery_cycle_hours', 'agent_execution_hours', 'acceptance_hours', 'preparation_hours', 'cleanup_hours',
+    'first_delivery_cycle_hours', 'rework_cycle_hours', 'command_count', 'observed_skill_read_commands',
+    'observed_agents_read_commands', 'observed_test_commands', 'uncached_input_tokens',
+    'preparation_started_at', 'preparation_ended_at', 'delivery_started_at', 'delivery_ended_at',
+    'cleanup_started_at', 'cleanup_ended_at', 'acceptance_attempt_count',
   ];
   const rows = summary.runs.map((item) => [
     `${item.caseId}-${item.mode}`, item.projectId, item.projectName,
-    item.mode === 'plugin' ? 'synthetic-plugin' : 'synthetic-baseline', item.route, item.complexity, item.taskType,
+    item.mode === 'plugin' ? 'synthetic-plugin' : (summary.comparison === 'old-plugin' ? 'synthetic-old-plugin' : 'synthetic-baseline'), item.route, item.complexity, item.taskType,
     item.startedAt, item.firstDeliveredAt, item.endedAt, item.clarificationCount, item.reworkCount, item.blockerCount,
     item.falseBlockerStatus, item.firstAcceptancePassed, item.finalAcceptancePassed, item.status, item.effective,
     item.firstDeliveryMs === null ? null : item.firstDeliveryMs / 3_600_000,
     item.totalCycleMs === null ? null : item.totalCycleMs / 3_600_000,
     item.tokenUsage.inputTokens, item.tokenUsage.cachedInputTokens, item.tokenUsage.outputTokens,
     item.tokenUsage.reasoningOutputTokens, item.tokenUsage.totalTokens, item.tokenDataQualityReasons.join('|'),
-    true, item.dataQualityReasons.join('|'),
+    true, item.dataQualityReasons.join('|'), summary.comparison,
+    ...['deliveryCycleMs', 'agentExecutionMs', 'acceptanceMs', 'preparationMs', 'cleanupMs', 'firstDeliveryCycleMs', 'reworkCycleMs']
+      .map((field) => item.duration?.[field] == null ? null : item.duration[field] / 3_600_000),
+    ...['commandCount', 'observedSkillReadCommands', 'observedAgentsReadCommands', 'observedTestCommands']
+      .map((field) => item.activity?.[field] ?? null),
+    item.tokenUsage.status === 'available' ? item.tokenUsage.inputTokens - item.tokenUsage.cachedInputTokens : null,
+    item.phaseTimes?.preparation?.startedAt, item.phaseTimes?.preparation?.endedAt,
+    item.phaseTimes?.delivery?.startedAt, item.phaseTimes?.delivery?.endedAt,
+    item.phaseTimes?.cleanup?.startedAt, item.phaseTimes?.cleanup?.endedAt,
+    item.phaseTimes?.acceptance?.length ?? null,
   ]);
   return `${[headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\n')}\n`;
 }
@@ -260,6 +315,7 @@ export function buildBenchmarkReviewMarkdown(summary) {
     '> 本报告只描述合成模拟任务，不能替代真实开发者或团队交付数据。',
     '',
     `- 结论状态：${summary.conclusionStatus}`,
+    `- 对照类型：${summary.comparison === 'old-plugin' ? '改造前旧插件' : '无插件辅助诊断'}`,
     `- 运行数：${summary.runCount}`,
     `- 有效运行：${summary.validRunCount}`,
     `- 有效配对：${summary.validPairCount}/${summary.expectedPairCount}`,
@@ -318,7 +374,7 @@ export function isFatalBenchmarkFailure(error) {
   return code === 'resume_input_mismatch'
     || code === 'source_baseline_drifted'
     || code === 'frozen_manifest_drifted'
-    || /(?:^agent_process|^codex_|^sensitive|^unsafe|cleanup|^disk_reserve)/u.test(code);
+    || /(?:^agent_(?:process|scope)|^codex_|^sensitive|^unsafe|cleanup|^disk_reserve)/u.test(code);
 }
 
 export function buildFailedRunEvidence({ candidate, mode, projectName, error, evidencePath, timestamp }) {
@@ -374,7 +430,7 @@ export const AUTHOR_RESPONSE_SCHEMA = Object.freeze({
           id: { type: 'string' }, projectId: { type: 'string' }, title: { type: 'string' },
           complexity: { type: 'string', enum: ['small', 'medium', 'large'] },
           taskType: { type: 'string', enum: ['bug', 'feature', 'refactor'] },
-          expectedRoute: { type: 'string', enum: ['fast', 'full'] },
+          expectedRoute: { type: 'string', enum: ['direct', 'light', 'complex'] },
           publicRequirement: { type: 'string' },
           allowedPaths: { type: 'array', items: { type: 'string' } },
           seedPatch: { type: 'string' }, evaluatorPatch: { type: 'string' }, referencePatch: { type: 'string' },
@@ -415,7 +471,7 @@ export const EXECUTION_RESPONSE_SCHEMA = Object.freeze({
   properties: {
     status: { type: 'string', enum: ['planned', 'delivered', 'needs_clarification', 'blocked'] },
     summary: { type: 'string' },
-    route: { type: 'string', enum: ['fast', 'full', 'baseline', 'unknown'] },
+    route: { type: 'string', enum: ['direct', 'light', 'complex', 'baseline', 'legacy-fast-change', 'legacy-managed-change', 'unknown'] },
     question: { type: 'string' }, blockerCode: { type: 'string' }, blockerCategory: { type: 'string' },
   },
 });

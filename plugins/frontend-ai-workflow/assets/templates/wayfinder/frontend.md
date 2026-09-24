@@ -1,6 +1,6 @@
 # {{PROJECT_NAME}} Wayfinder
 
-Wayfinder 是项目的稳定导航资料：它只记录可追溯的项目事实、边界与验证基线。业务需求保存为 `requirements/REQ-*.md`，OpenSpec 变更保存为 `openspec/changes/`，不要将一次性任务记录持续堆入本文。
+Wayfinder 是项目的稳定导航资料：它只记录可追溯的项目事实、边界与验证基线。复杂变更的活动规划保存于 `openspec/changes/`，完成事实投影到 `.workflow-history/`；普通任务不创建需求台账或 OpenSpec 资产，也不要将一次性记录持续堆入本文。
 
 <!-- frontend-ai-workflow:meta:start version={{WORKFLOW_VERSION}} -->
 version: "{{WORKFLOW_VERSION}}"

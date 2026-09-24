@@ -31,6 +31,15 @@ export default async function captureUiEvidence({ playwright, runtime, executeIn
       deviceScaleFactor: scenario.viewport.deviceScaleFactor,
     });
     const page = await context.newPage();
+    const consoleErrors = [];
+    const recordConsoleError = (message) => {
+      // 默认结果只保留有界错误摘要，完整调试信息由失败后的按需诊断承担。
+      if (consoleErrors.length < 20) consoleErrors.push(String(message || '').slice(0, 500));
+    };
+    page.on('console', (message) => {
+      if (message.type() === 'error') recordConsoleError(message.text());
+    });
+    page.on('pageerror', (error) => recordConsoleError(error.message));
     await page.goto(scenario.url, { waitUntil: 'domcontentloaded' });
     await stabilizePage({ page });
     const interactions = scenario.interactionMode === 'structured'
@@ -135,6 +144,7 @@ export default async function captureUiEvidence({ playwright, runtime, executeIn
         scale: 1,
       },
       interactions,
+      consoleErrors,
       domObservations,
       checkedNodes,
     };

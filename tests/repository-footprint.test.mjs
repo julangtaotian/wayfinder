@@ -13,11 +13,12 @@ import {
 const repositoryRoot = path.resolve('.');
 
 function createFixture(context) {
-  const root = fs.mkdtempSync(path.join(repositoryRoot, 'outputs', 'repository-footprint-test-'));
+  const parent = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'repository-footprint-tests');
+  fs.mkdirSync(parent, { recursive: true });
+  const root = fs.mkdtempSync(path.join(parent, 'case-'));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'requirements'), { recursive: true });
   fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
-  fs.mkdirSync(path.join(root, 'plugins', 'frontend-ai-workflow', 'scripts'), { recursive: true });
   return root;
 }
 
@@ -33,17 +34,16 @@ test('仓库体积审计返回稳定预算、计数和通过状态', (context) =
   write(root, 'requirements/REQ-2026-001-active.md', '# 活跃需求\n\n- 状态：实施中\n');
   write(root, 'tests/feature.test.mjs', 'test();\n');
   write(root, 'plugins/frontend-ai-workflow/scripts/feature.mjs', 'export {};\n');
-  write(root, 'outputs/spec/readme.md', '# spec\n');
-
+  write(root, 'package.json', '{"scripts":{"feature":"node plugins/frontend-ai-workflow/scripts/feature.mjs"}}\n');
   const result = auditRepositoryFootprint({
     root,
-    trackedFiles: ['outputs/spec/readme.md'],
+    trackedFiles: [],
   });
   assert.equal(result.ok, true);
   assert.equal(result.code, 'repository_footprint_ok');
   assert.deepEqual(result.budgets, REPOSITORY_FOOTPRINT_BUDGETS);
   assert.equal(result.counts.activeFullRequirements, 1);
-  assert.equal(result.counts.trackedOutputFiles, 1);
+  assert.equal(result.counts.trackedOutputFiles, 0);
   assert.deepEqual(result.retirementLimits, REPOSITORY_RETIREMENT_LIMITS);
   assert.equal(result.diagnostics.length, 0);
 });
@@ -91,6 +91,40 @@ test('[TC-07] 平台资产、生成清单和 LFS 规则使用不可放宽的零�
   );
 });
 
+test('[TC-22] 退役资产与空目录不回流', (context) => {
+  const root = createFixture(context);
+  write(root, 'outputs/legacy.txt');
+  fs.mkdirSync(path.join(root, '.frontend-ui-review'), { recursive: true });
+  write(root, '.workflow-history/evidence/event.json', '{}\n');
+  write(root, '.workflow-history/2026.jsonl', '{"schemaVersion":2,"requirementId":"REQ-legacy","checks":[]}\n');
+  write(root, 'tests/.DS_Store', 'junk');
+  write(root, 'plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs', 'export {};\n');
+  write(root, 'plugins/frontend-ai-workflow/scripts/verification-evidence.mjs', 'export {};\n');
+  write(root, 'openspec/changes/demo/evidence/V-01.json', '{}\n');
+  write(root, 'openspec/changes/demo/test-plan.md', '# 退役测试方案\n');
+  write(root, 'package.json', '{"scripts":{"verify:receipt":"node legacy.mjs"}}\n');
+  write(root, 'plugins/frontend-ai-workflow/scripts/orphan.mjs', 'export {};\n');
+  fs.mkdirSync(path.join(root, 'plugins/frontend-ai-workflow/references/empty'), { recursive: true });
+
+  const result = auditRepositoryFootprint({ root, trackedFiles: [] });
+  assert.equal(result.ok, false);
+  const byCode = new Map(result.diagnostics.map((item) => [`${item.code}:${item.target}`, item]));
+  for (const expected of [
+    'retired_path_present:outputs',
+    'retired_path_present:.workflow-history/evidence',
+    'empty_project_directory:.frontend-ui-review',
+    'system_junk_present:tests/.DS_Store',
+    'empty_managed_directory:plugins/frontend-ai-workflow/references/empty',
+    'retired_source_present:plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs',
+    'retired_source_present:plugins/frontend-ai-workflow/scripts/verification-evidence.mjs',
+    'retired_package_script:package.json#scripts.verify:receipt',
+    'retired_change_evidence:openspec/changes/demo/evidence/V-01.json',
+    'retired_change_evidence:openspec/changes/demo/test-plan.md',
+    'retired_lifecycle_field:.workflow-history/2026.jsonl:1:requirementId,checks',
+    'unreachable_plugin_script:plugins/frontend-ai-workflow/scripts/orphan.mjs',
+  ]) assert.equal(byCode.has(expected), true, expected);
+});
+
 test('[V-03] 仓库体积与统一验证治理合同：各类预算违规稳定失败', (context) => {
   const root = createFixture(context);
   write(root, 'outputs/lanhu-design-spec/legacy.png', 'legacy');
@@ -124,7 +158,7 @@ test('[V-03] 仓库体积与统一验证治理合同：各类预算违规稳定�
   }
 });
 
-test('仓库体积审计按字节统计受跟踪 outputs 并忽略历史正文与固定运行时', (context) => {
+test('仓库体积审计按字节统计并阻断受跟踪 outputs', (context) => {
   const root = createFixture(context);
   write(root, 'requirements/archive/2026/REQ-2026-001.md', 'history\n'.repeat(2000));
   write(root, 'openspec/changes/archive/2026-08-01-old/tasks.md', 'history\n'.repeat(2000));
@@ -133,7 +167,12 @@ test('仓库体积审计按字节统计受跟踪 outputs 并忽略历史正文�
 
   const result = auditRepositoryFootprint({ root, trackedFiles: ['outputs/large.bin'] });
   assert.equal(result.ok, false);
-  assert.deepEqual(result.diagnostics.map((item) => item.code), ['tracked_outputs_byte_budget_exceeded']);
+  assert.deepEqual(result.diagnostics.map((item) => item.code), [
+    'retired_lifecycle_path',
+    'retired_path_present',
+    'tracked_outputs_byte_budget_exceeded',
+    'tracked_outputs_file_budget_exceeded',
+  ]);
   assert.equal(result.counts.trackedOutputBytes, 11 * 1024 * 1024);
 });
 
@@ -145,7 +184,6 @@ test('v2 以零上限拒绝旧归档和受跟踪运行时', (context) => {
     lifecycleMode: 'v2',
     eventDirectory: '.workflow-history',
     runtimeDirectory: '.frontend-ai-workflow',
-    strictEvidenceMaxBytes: 4096,
     eventMaxBytes: 4096,
   })}\n`);
   const files = [
@@ -214,41 +252,19 @@ test('[TC-04] 仓库体积与统一验证治理合同保持一致', () => {
   assert.match(pluginManifest.version, /^0\.19\.0\+codex\.\d{14}$/u);
   assert.match(verifyScript, /id:\s*'footprint'/u);
   assert.match(repositoryRules, /不再依赖定期人工瘦身/u);
-  assert.match(repositoryRules, /默认验证不产生长期 tracked outputs/u);
-  assert.match(readme, /预算调整必须先形成正式需求和设计决策/u);
+  assert.match(repositoryRules, /默认验证不产生长期受跟踪输出/u);
+  assert.match(readme, /需要改变体积预算、运行时版本或公共合同，必须先建立 Complex 变更和可复现回归依据/u);
 });
 
 test('[V-03] 核心入口职责边界：公开导出、依赖方向与行数预算稳定', async () => {
   const entryContracts = {
-    'finalize-change.mjs': [
-      'buildEvidenceReferenceRewrites',
-      'finalizeChange',
-      'rewriteRequirementForArchive',
-      'rewriteTestPlanForArchive',
+    'finalize-change.mjs': ['finalizeChange'],
+    'check-change.mjs': [
+      'archiveTarget',
+      'checkChange',
+      'readTemporaryVerificationSummary',
+      'verificationSummaryTarget',
     ],
-    'validate-requirement-decisions.mjs': ['validateRequirementDecisions'],
-    'verification-evidence.mjs': [
-      'EVIDENCE_SCHEMA_VERSION',
-      'EvidenceError',
-      'LEGACY_EVIDENCE_SCHEMA_VERSION',
-      'auditProjectVerificationEvidence',
-      'computeVerificationSemanticBinding',
-      'computeWorkspaceFingerprint',
-      'createEvidenceFileDescriptor',
-      'extractEvidenceReferences',
-      'normalizeEvidenceCommand',
-      'runVerificationEvidence',
-      'stableJson',
-      'validateEvidenceManifest',
-      'validateVerificationEvidenceRecords',
-      'verificationEvidenceRequired',
-    ],
-  };
-  const helperOwners = {
-    'finalize-change-archive.mjs': 'finalize-change.mjs',
-    'requirement-decision-parser.mjs': 'validate-requirement-decisions.mjs',
-    'requirement-delivery-validation.mjs': 'validate-requirement-decisions.mjs',
-    'verification-evidence-validation.mjs': 'verification-evidence.mjs',
   };
   const scriptsRoot = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
 
@@ -258,13 +274,6 @@ test('[V-03] 核心入口职责边界：公开导出、依赖方向与行数预�
     assert.equal(lineCount <= 600, true, `${fileName} 超过 600 行入口预算`);
     const module = await import(pathToFileURL(absolutePath).href);
     assert.deepEqual(Object.keys(module).sort(), [...expectedExports].sort(), `${fileName} 公开导出发生漂移`);
-  }
-
-  for (const [fileName, owner] of Object.entries(helperOwners)) {
-    const content = fs.readFileSync(path.join(scriptsRoot, fileName), 'utf8');
-    const lineCount = content.split(/\r?\n/u).length;
-    assert.equal(lineCount <= REPOSITORY_FOOTPRINT_BUDGETS.pluginScriptFileLines, true, fileName);
-    assert.doesNotMatch(content, new RegExp(`from ['"]\\./${owner.replace('.', '\\.')}['"]`, 'u'));
   }
 
   const packageManifest = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));

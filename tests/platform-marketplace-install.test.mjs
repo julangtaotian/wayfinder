@@ -4,17 +4,19 @@ import path from 'node:path';
 import test from 'node:test';
 
 import {
-  CODEX_INSTALL_EVIDENCE_CLI_VERSION,
+  CODEX_INSTALL_SMOKE_CLI_VERSION,
   compactInstallStageName,
   createInstalledRuntimeView,
   verifyPlatformMarketplaceInstall,
 } from '../plugins/frontend-ai-workflow/scripts/verify-platform-marketplace-install.mjs';
 
 const NATIVE_PLATFORM_KEY = `${process.platform}-${process.arch}`;
+const FIXTURE_REVISION = 'a'.repeat(40);
 
 function createMarketplaceFixture(context) {
-  fs.mkdirSync(path.resolve('outputs'), { recursive: true });
-  const repositoryRoot = fs.mkdtempSync(path.resolve('outputs', 'platform-install-fixture-'));
+  const parent = path.resolve('.frontend-ai-workflow', 'runs', 'platform-install-tests');
+  fs.mkdirSync(parent, { recursive: true });
+  const repositoryRoot = fs.mkdtempSync(path.join(parent, 'platform-install-fixture-'));
   context.after(() => fs.rmSync(repositoryRoot, { recursive: true, force: true }));
   const marketplaceName = `frontend-ai-workflow-${NATIVE_PLATFORM_KEY}`;
   const marketplaceRoot = path.join(repositoryRoot, 'dist', marketplaceName);
@@ -45,7 +47,8 @@ function createMarketplaceFixture(context) {
     repositoryRoot,
     marketplaceRoot,
     marketplaceName,
-    outputPath: path.join(repositoryRoot, 'outputs', 'platform-install-evidence', `${NATIVE_PLATFORM_KEY}.json`),
+    outputPath: path.join(repositoryRoot, 'outputs', 'platform-install-smoke', `${NATIVE_PLATFORM_KEY}.json`),
+    revision: FIXTURE_REVISION,
   };
 }
 
@@ -56,7 +59,7 @@ function createCodexFixtureExecutor(fixture, calls) {
     calls.push({ args, env: options.env });
     const commandArgs = args.slice(1);
     if (commandArgs[0] === '--version') {
-      return { status: 0, stdout: `codex-cli ${CODEX_INSTALL_EVIDENCE_CLI_VERSION}\n`, stderr: '' };
+      return { status: 0, stdout: `codex-cli ${CODEX_INSTALL_SMOKE_CLI_VERSION}\n`, stderr: '' };
     }
     if (commandArgs.join(' ').startsWith('plugin marketplace add')) {
       return {
@@ -126,7 +129,7 @@ function createCodexFixtureExecutor(fixture, calls) {
   };
 }
 
-test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口', async (context) => {
+test('[TC-12] 五平台真实 Codex 安装、加载与断网运行 smoke 入口', async (context) => {
   const fixture = createMarketplaceFixture(context);
   const calls = [];
   const smokeCalls = [];
@@ -138,7 +141,8 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
     execute: createCodexFixtureExecutor(fixture, calls),
   });
   assert.equal(preview.status, 'planned');
-  assert.equal(preview.code, 'platform_install_evidence_plan');
+  assert.equal(preview.code, 'platform_install_smoke_plan');
+  assert.equal(preview.revision, FIXTURE_REVISION);
   assert.equal(fs.existsSync(fixture.outputPath), false);
   assert.equal(calls.length, 0);
 
@@ -161,7 +165,8 @@ test('[TC-12] 五平台真实 Codex 安装、加载与断网运行证据入口',
   });
   assert.equal(report.status, 'passed');
   assert.equal(report.code, 'platform_marketplace_install_verified');
-  assert.equal(report.codex.version, CODEX_INSTALL_EVIDENCE_CLI_VERSION);
+  assert.equal(report.revision, FIXTURE_REVISION);
+  assert.equal(report.codex.version, CODEX_INSTALL_SMOKE_CLI_VERSION);
   assert.equal(report.marketplace.copiedForOfflineInstall, true);
   assert.equal(report.plugin.installed, true);
   assert.equal(report.plugin.enabled, true);
@@ -213,7 +218,7 @@ test('[TC-13] Codex 安装失败保留稳定诊断并清理隔离目录', async 
   const fixture = createMarketplaceFixture(context);
   const execute = (_command, args) => {
     if (args[1] === '--version') {
-      return { status: 0, stdout: `codex-cli ${CODEX_INSTALL_EVIDENCE_CLI_VERSION}\n`, stderr: '' };
+      return { status: 0, stdout: `codex-cli ${CODEX_INSTALL_SMOKE_CLI_VERSION}\n`, stderr: '' };
     }
     return { status: 7, stdout: '', stderr: 'fixture install failed' };
   };
@@ -238,7 +243,7 @@ test('[TC-13] Codex 安装失败保留稳定诊断并清理隔离目录', async 
   );
 });
 
-test('[TC-14] 安装证据写入拒绝伪造的非原生平台', async (context) => {
+test('[TC-14] 安装 smoke 写入拒绝伪造的非原生平台', async (context) => {
   const fixture = createMarketplaceFixture(context);
   await assert.rejects(
     () => verifyPlatformMarketplaceInstall({
@@ -308,22 +313,36 @@ test('[TC-15] Windows 安装缓存通过受控目录联接缩短 Chromium 启动
   ]]);
 });
 
-test('[TC-16] 人工证据收集复用原五平台矩阵且不增加日常成本', () => {
+test('[TC-16] CI 三层结构固定五平台、候选提交与日常成本边界', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
-  const platformJob = workflow.slice(workflow.indexOf('\n  platform:'));
-  assert.match(workflow, /^\s+workflow_dispatch:\r?\n\s+inputs:\r?\n\s+collect_platform_install_evidence:/mu);
+  const nativeStart = workflow.indexOf('\n  native-platform:');
+  const releaseStart = workflow.indexOf('\n  release-install:');
+  const sharedJob = workflow.slice(workflow.indexOf('\n  shared:'), nativeStart);
+  const nativeJob = workflow.slice(nativeStart, releaseStart);
+  const releaseJob = workflow.slice(releaseStart);
+  const platforms = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64', 'win32-x64'];
+
+  assert.ok(nativeStart > 0 && releaseStart > nativeStart);
+  assert.match(workflow, /^\s+workflow_dispatch:\r?\n\s+inputs:\r?\n\s+release_install_smoke:/mu);
+  assert.match(nativeJob, /needs:\s*shared/u);
+  assert.match(releaseJob, /needs:\s*\[shared, native-platform\]/u);
+  assert.match(releaseJob, /if:\s*github\.event_name == 'workflow_dispatch' && inputs\.release_install_smoke/u);
+  for (const platform of platforms) {
+    assert.equal([...nativeJob.matchAll(new RegExp(`platform: ${platform}`, 'gu'))].length, 1, platform);
+    assert.equal([...releaseJob.matchAll(new RegExp(`platform: ${platform}`, 'gu'))].length, 1, platform);
+  }
+  assert.equal([...workflow.matchAll(/node-version:\s*20\.19\.0/gmu)].length, 3);
+  assert.match(nativeJob, /npm run prepare:test-runtime/u);
+  assert.match(nativeJob, /npm run verify:platform/u);
+  assert.doesNotMatch(nativeJob, /verify:shared|@openai\/codex|verify-platform-marketplace-install/u);
+  assert.doesNotMatch(sharedJob, /prepare-platform-marketplace|playwright-runtime --smoke|@openai\/codex/u);
   assert.match(
-    platformJob,
-    /if:\s*github\.event_name == 'workflow_dispatch' && inputs\.collect_platform_install_evidence/u,
+    releaseJob,
+    new RegExp(`@openai/codex@${CODEX_INSTALL_SMOKE_CLI_VERSION.replaceAll('.', '\\.')}`, 'u'),
   );
-  assert.match(
-    platformJob,
-    new RegExp(`@openai/codex@${CODEX_INSTALL_EVIDENCE_CLI_VERSION.replaceAll('.', '\\.')}`, 'u'),
-  );
-  assert.match(platformJob, /verify-platform-marketplace-install\.mjs --write/u);
-  assert.match(platformJob, /--codex-entry \.frontend-ai-workflow\/cache\/platform-install-codex\/node_modules\/@openai\/codex\/bin\/codex\.js/u);
-  assert.match(platformJob, /\.frontend-ai-workflow\/runs\/platform-install-evidence\/\$\{\{ matrix\.platform \}\}\.json/u);
-  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 2);
-  assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 2);
-  assert.doesNotMatch(workflow, /OPENAI_API_KEY|CODEX_API_KEY|openai\/codex-action|^\s*schedule:/gmu);
+  assert.match(releaseJob, /verify-platform-marketplace-install\.mjs --write --revision \$\{\{ github\.sha \}\}/u);
+  assert.match(releaseJob, /release-install-smoke\/\$\{\{ github\.sha \}\}\/\$\{\{ matrix\.platform \}\}\.json/u);
+  assert.equal([...workflow.matchAll(/actions\/upload-artifact@v7/gmu)].length, 2);
+  assert.equal([...workflow.matchAll(/retention-days:\s*14/gmu)].length, 2);
+  assert.doesNotMatch(workflow, /receipt|workflow-history|OPENAI_API_KEY|CODEX_API_KEY|openai\/codex-action|^\s*schedule:/gmu);
 });

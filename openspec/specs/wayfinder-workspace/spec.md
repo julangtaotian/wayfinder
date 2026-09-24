@@ -1,75 +1,67 @@
 # wayfinder-workspace Specification
 
 ## Purpose
-TBD - created by archiving change consolidate-wayfinder-workspace. Update Purpose after archive.
+
+定义当前 schema v2 的精简项目初始化、受管升级、Wayfinder 导航、真实项目健康检查与退役状态边界，确保普通项目只获得必要且可重复维护的工作流入口，同时保护所有项目自定义内容。
 
 ## Requirements
 
-### Requirement: 普通初始化明确标示识别基线边界
+### Requirement: 普通初始化只创建必要受管文件
 
-普通初始化生成的 Wayfinder SHALL 保留未来深度刷新所需的受管区块，并 SHALL 用人类可读文案明确当前只生成可追溯识别基线、深度项目地图尚未启用，不得用裸 `false` 和零值让维护者误以为扫描失败或分析已经完成。
+系统 SHALL 在未初始化项目中只规划 `AGENTS.md`、`wayfinder/frontend.md`、`openspec/config.yaml`、`.frontend-workflow.json` 和 `.gitignore` 五个必要目标。系统 SHALL NOT 创建 `requirements/`、普通任务 OpenSpec change、旧工作流元数据或额外项目分析文档。
 
-#### Scenario: 普通初始化创建 Wayfinder
+#### Scenario: 初始化 Vue 3 与 Vite 项目
 
-- **WHEN** 用户在未请求项目理解或完整项目地图时执行普通初始化
-- **THEN** Wayfinder 元数据保留 `deepAnalysis: false`
-- **AND** 深度扫描范围明确显示“未启用（普通初始化仅生成可追溯的识别基线）”，分析区块继续保持待生成状态
+- **WHEN** 用户预览并确认普通初始化
+- **THEN** 写入计划只包含五个必要目标
+- **AND** 重复执行不会覆盖项目自定义内容或产生额外目录
 
-### Requirement: 新项目使用精简的 Wayfinder 布局
-系统 SHALL 在普通初始化的首次写入中只创建 `AGENTS.md`、`openspec/config.yaml` 和 `wayfinder/frontend.md` 三项工作流产物。系统 SHALL 不创建 `.ai-workflow.yaml`、`requirements/_template.md` 或旧 `docs/ai-context/frontend.md`。
+### Requirement: 初始化默认预览且保护项目内容
 
-#### Scenario: 初始化新的前端项目
-- **WHEN** 用户对未初始化的受支持前端项目确认执行普通初始化
-- **THEN** 系统 SHALL 创建三项 Wayfinder 布局产物，且创建计划中不得出现旧元数据、旧前端上下文或需求模板。
+系统 SHALL 默认只返回 create、update、unchanged、skip 或 conflict 计划；只有显式 `--write` 才可写入。现有文件没有合法受管标记时 SHALL 保留原文并失败关闭，所有目标路径 SHALL 先通过安全边界校验。
 
-### Requirement: Wayfinder 合并元数据与项目导航
-系统 SHALL 在 `wayfinder/frontend.md` 中提供互不重叠且各自恰好成对的 `meta`、`facts`、`scope` 与 `analysis` 受管区块。`meta` SHALL 保存工作流版本、项目识别结果、深度状态与范围统计；`facts` SHALL 保存与同次项目识别一致的人类可读项目概览、平台验证边界和目录职责；`scope` SHALL 保存机器范围摘要；`analysis` SHALL 保存 AI 项目地图。
+#### Scenario: 同名文件由项目自行维护
 
-#### Scenario: 深度初始化 Wayfinder
-- **WHEN** 用户确认对新项目执行深度初始化
-- **THEN** 系统 SHALL 在 Wayfinder 的 `meta`、`facts` 和 `scope` 区块写入同次识别与真实范围元数据，并预留 `analysis` 区块，而不得创建独立工作流 YAML 或额外扫描文档
+- **WHEN** 目标文件已存在但没有成对受管标记
+- **THEN** 系统返回 skip 或 conflict
+- **AND** 文件内容保持逐字节不变
 
-#### Scenario: 升级没有 facts 标记的既有 Wayfinder
-- **WHEN** 合法既有 Wayfinder 包含稳定的项目概览和目录职责标题但尚无 `facts` 受管标记
-- **THEN** 系统 SHALL 将该标题区间安全替换为新的 `facts` 区块，且 SHALL NOT 重复旧内容或修改 `scope`、`analysis` 和标记外项目内容
+### Requirement: 升级只替换受管区块
 
-### Requirement: AGENTS 作为 Wayfinder 的自动发现入口
-系统 SHALL 保持 `AGENTS.md` 位于项目根目录，并在深度模式下要求后续 AI 在架构、接口、权限、路由、风险或测试判断前先读取 `wayfinder/frontend.md` 的范围与项目地图。AGENTS 的项目专属 `deep-guardrails` 区块 SHALL 在升级时被保留。
+系统 SHALL 只替换匹配的 `frontend-ai-workflow:start/end` 区块。Wayfinder SHALL 以 `meta`、`facts`、`scope` 与 `analysis` 四组区块区分机器字段、项目事实、扫描范围与项目地图；普通升级 SHALL 保留 `analysis`、深度扫描快照和所有标记外内容，只有显式深度刷新才重建范围并把地图状态重置为 pending。
 
-#### Scenario: 深度扫描后的后续需求处理
-- **WHEN** 后续 AI 在已完成深度扫描的 Wayfinder 项目中处理需求
-- **THEN** 它 SHALL 先读取 `wayfinder/frontend.md`，再依据其中的事实、推断与待确认项分析影响范围，并保留 AGENTS 中已有的项目专属约束。
+#### Scenario: 项目追加自定义规则后升级
 
-### Requirement: 需求模板按需使用
-系统 SHALL 将需求模板作为插件资产维护。需求编写流程 SHALL 优先使用已存在的 `requirements/_template.md`，在其不存在时使用内置模板，并只在创建实际 `requirements/REQ-*.md` 时创建需求目录。
+- **WHEN** 用户在受管区块外追加项目说明并执行升级
+- **THEN** 系统只更新公共受管字段
+- **AND** 项目说明与深度项目地图保持不变
 
-#### Scenario: 未初始化需求目录时编写需求
-- **WHEN** 项目不存在 `requirements/_template.md` 且用户要求创建正式需求
-- **THEN** 系统 SHALL 以插件内置模板生成 `requirements/REQ-*.md`，且不得先创建孤立的模板文件。
+### Requirement: Wayfinder 明确识别与分析边界
 
-### Requirement: 三个工作流文件必须同步受管项目事实
-系统 SHALL 在显式升级中使用当前项目识别结果刷新 AGENTS、Wayfinder 受管事实和 OpenSpec 配置。三份上下文 SHALL 同步同一次动态直接依赖画像的总数、可读摘要、截断状态和完整事实边界，并 SHALL 将 preset、终端画像和平台画像描述为有限兼容或安全信号。深度初始化 SHALL 同步已有三个受管文件，且所有写入仍 SHALL 要求显式确认。
+普通初始化 SHALL 记录真实项目命令、直接依赖摘要、目录导航和有限平台画像，并 SHALL 明确 `deepAnalysis: false` 只表示尚未请求完整项目地图。深度分析只有在全部纳入文件完成阅读、覆盖数一致且五个稳定维度齐全时才可标记 complete。
 
-#### Scenario: 深度刷新已有项目
-- **WHEN** 已初始化项目的受管文件仍包含旧预设、技术栈、依赖摘要、命令状态或目录职责，且用户执行深度刷新预览
-- **THEN** 预览 SHALL 将三个文件列为准确的 update 或 unchanged 动作，并 SHALL NOT 修改目标项目
+#### Scenario: 普通初始化生成识别基线
 
-#### Scenario: 确认刷新并重复执行
-- **WHEN** 用户显式写入深度刷新并在相同项目快照上再次执行
-- **THEN** 三个文件 SHALL 使用一致项目事实，重复深度刷新 MAY 更新扫描时间和范围元数据但 SHALL NOT 重复 facts，普通升级在事实不变时 SHALL 返回 unchanged，未受管同名文件仍 SHALL 保持 conflict
+- **WHEN** 用户没有请求深度项目分析
+- **THEN** Wayfinder 显示识别基线和 `analysisStatus: not-requested`
+- **AND** 不把零覆盖解释为扫描失败或完整架构结论
 
-#### Scenario: 动态依赖超过摘要上限
-- **WHEN** 完整直接依赖数量超过受管上下文展示上限
-- **THEN** 三份受管上下文 SHALL 显示一致的总数、展示数和遗漏数，并 SHALL 指示 AI 读取完整机器画像或根 package 后再总结
-- **AND** 受管上下文 SHALL NOT 将截断摘要描述为完整技术栈
+### Requirement: 当前版本对退役工作流失败关闭
 
-### Requirement: 项目检查必须报告受管内容漂移
-系统 SHALL 只读比较当前项目识别结果与可升级受管内容，返回稳定的受管内容新鲜度结果；存在差异时 SHALL 列出具体文件并给出非阻断刷新警告，不得把预览差异描述为已修复。
+系统 SHALL 只按路径识别 `.ai-workflow.yaml`、`docs/ai-context/frontend.md` 和 `requirements/_template.md` 等退役状态，不得读取、解释、迁移或自动删除其内容。初始化、升级和检查 SHALL 返回稳定 `retired_workflow_state`，列出实际路径，并指导用户使用匹配的历史插件版本处理或在确认后显式删除。
 
-#### Scenario: 受管内容与当前项目事实不一致
-- **WHEN** AGENTS、Wayfinder 或 OpenSpec 受管内容仍使用旧项目事实
-- **THEN** 检查结果 SHALL 标记受管内容 stale、列出实际漂移文件并返回刷新警告，且 SHALL NOT 写入任何文件
+#### Scenario: 旧格式内容不可解析
 
-#### Scenario: 受管内容已同步
-- **WHEN** 三个受管文件与当前项目事实一致
-- **THEN** 检查结果 SHALL 返回空漂移列表且 SHALL NOT 产生受管内容过期警告
+- **WHEN** 项目包含任意退役路径且其内容不是合法旧格式
+- **THEN** 当前版本仍只返回相同的路径级失败关闭结果
+- **AND** 不修改任何退役文件或创建新 Wayfinder
+
+### Requirement: 项目检查只读报告当前健康事实
+
+检查 SHALL 报告真实命令发现状态、Wayfinder 结构与新鲜度、内置 OpenSpec 健康、schema v2 生命周期、运行时忽略规则、活动 Complex change 和退役路径。检查 SHALL NOT 执行项目命令、审计旧证据链或修复文件。
+
+#### Scenario: 已同步项目重复检查
+
+- **WHEN** 五个必要目标有效且受管事实与当前项目一致
+- **THEN** 检查返回空漂移列表和健康运行时状态
+- **AND** 重复检查不改变工作区

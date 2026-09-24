@@ -21,10 +21,10 @@ Revise a change's existing planning artifacts and keep them coherent. Never edit
 
 Before following this planning-only reference, classify the revision:
 
-- If scope, visible behavior, interface, permission, security, data, or compatibility semantics change, first revise the linked requirement ledger, acceptances, evidence mapping, interaction matrix, change-scope row, and R-* history. Reset invalidated V-* records and reopen affected completed tasks.
-- If no D-* semantics change, record the requirement basis and continue with planning artifacts only.
+- If scope, visible behavior, interface, permission, security, data, or compatibility semantics change, revise the same OpenSpec proposal, delta specs, design when needed, and affected tasks before implementation continues.
+- If the change is only a technical refinement that preserves the accepted behavior, update design and tasks without duplicating the proposal or specification text.
 
-Run the plan-stage requirement validator after any fact-source revision. This reference never authorizes a planning artifact, context, or operation guidance to invent or override a business decision.
+After any fact-source revision, run the current change status and strict validation before implementation resumes. This reference never authorizes a planning artifact, context, or operation guidance to invent or override a business decision.
 
 **Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`, `view`). Once selected, treat `--store <id>` as sticky for the rest of the workflow and append it to every applicable unscoped example below. Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
 

@@ -1,6 +1,6 @@
 ---
 name: frontend-workflow-bootstrap
-description: Inspect and initialize a frontend repository with shared Codex guidance, a Wayfinder project navigator, OpenSpec configuration, and safe workflow migration. Use when a user asks to onboard a new or existing frontend project, apply the shared AI workflow, or avoid manually recreating AGENTS.md and OpenSpec setup in each repository.
+description: Initialize or deeply map a frontend repository only when the user explicitly asks to onboard the project, apply the shared workflow, or produce a complete project map. Do not use for ordinary code explanation or implementation.
 ---
 
 # Frontend project understanding and initialization

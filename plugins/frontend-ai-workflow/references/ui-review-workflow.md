@@ -57,7 +57,7 @@ DOM、几何与图片比较都产生可追溯 `observations`。几何比较读�
 
 首次验收与复验的 Markdown 报告必须从完成状态投影同一份上下文，并展示 `schemaVersion`、`runId`、`scenarioFingerprint`、实际 `capture`、可空 `baselineRunId`、`statePath`、证据路径及观察/问题摘要。缺少必需身份字段时拒绝生成报告；Markdown 不得自行猜测或覆盖状态 JSON。
 
-确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。用户要求修复时，按 [ui-repair-context.md](ui-repair-context.md) 使用 `prepare-repair` 补齐，默认预览，显式写入仅更新候选并保留原始发现。
+确定性图片或 DOM 问题可以进入报告，但默认 `repairable: false`。只有同时具备源码文件、稳定锚点、允许和禁止范围、验证命令与断言的问题才进入 `repairCandidates` 和 `repair-gate`。无候选时自动修复必须阻塞。用户要求修复时，把当前报告作为输入交回 `frontend-delivery`，由日常交付入口重新确认范围并实施。
 
 Browser 或同类视觉能力只在结论为 `inconclusive`、配置已经声明 Browser 兜底且当前 AI 工具具备能力时使用。统一入口只返回 `fallbackRequired: true`，不会自行控制某个 AI 工具。兜底必须使用新运行 ID，不能在原运行或复验中静默切换采集器。
 
@@ -71,7 +71,7 @@ Browser 或同类视觉能力只在结论为 `inconclusive`、配置已经声明
 
 交付证据必须记录业务项目根、实际执行目标、页面环境类型、受信适配器摘要、场景指纹和运行 ID。证据可从隔离环境复制到项目允许的持久目录，但必须公开隔离关系，不能把临时目标描述成直接项目运行。
 
-UI Review 作为严格 V-* 机器证据时，schema v2 清单必须绑定状态文件本身和 `actualScreenshot`、`annotatedScreenshot`、`report` 三项关键产物的路径、大小与 SHA-256，并与状态中的 runId、scenarioId、scenarioFingerprint、实际 capture 和 `status: passed` 双向一致。仅存在 JSON、报告文字或 `inconclusive/needs-fix` 状态都不能形成可信通过。
+UI Review 被交付流程采用时，临时验证摘要只记录运行身份、场景、实际采集器、最终状态和必要产物位置；完整状态与截图继续留在受管运行目录，不复制进 OpenSpec 或生命周期事件。仅存在报告文字或 `inconclusive/needs-fix` 状态不能形成通过结论。
 
 通过外部代理、样式注入或固定响应构造的失败基线统一标记为“受控故障”，只证明发现与复验机制；同时保留真实源码当前态独立验收。适配器、配置、页面环境和受控注入问题不得进入业务源码 `repairCandidates`，不得通过修改业务代码迁就验收环境。
 

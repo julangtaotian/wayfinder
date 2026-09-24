@@ -1,7 +1,7 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.19.0+codex.20260915085236",
-  "description": "Reusable frontend delivery with traceable planning, project-native verification, measurable developer evidence, and deterministic UI review.",
+  "version": "0.19.0+codex.20260924084955",
+  "description": "Lightweight frontend delivery with bounded project context, risk-based implementation, sufficient verification, and optional OpenSpec planning for complex work.",
   "author": {
     "name": "lvshuai"
   },
@@ -10,7 +10,7 @@
     "frontend",
     "workflow",
     "openspec",
-    "requirements",
+    "delivery",
     "testing",
     "ui-review",
     "codex"
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Frontend AI Workflow",
-    "shortDescription": "Bootstrap and govern reusable AI workflows for frontend repositories.",
-    "longDescription": "Inspect frontend repositories with dynamic root dependency context, create governed requirements, drive an OpenSpec 1.9 change lifecycle, form traceable TC test plans, produce revision-bound local, real-project, CI, and real-developer effectiveness evidence, gate completion on verified facts, and run portable deterministic UI review without a separate management platform.",
+    "shortDescription": "Deliver frontend changes with bounded context and sufficient verification.",
+    "longDescription": "Understand the relevant frontend call chain, implement explicit changes through Direct or Light delivery without management files, use bundled OpenSpec 1.9 only for Complex work, route verification independently by actual impact, and support explicit testing, UI review, initialization, health checks, and upgrades.",
     "developerName": "lvshuai",
     "category": "Productivity",
     "capabilities": [
@@ -27,9 +27,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Initialize this frontend repository with the shared AI workflow.",
-      "Turn my feature description into a reviewable requirement document.",
-      "Analyze the selected change, form traceable frontend test cases, and implement or verify them only when requested."
+      "Implement this explicit frontend change with bounded context and sufficient verification.",
+      "Initialize this frontend repository with the lightweight shared workflow.",
+      "Run an explicit frontend test or UI verification task without changing unrelated product code."
     ]
   }
 }

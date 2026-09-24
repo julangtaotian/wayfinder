@@ -1,0 +1,6 @@
+interface:
+  display_name: "前端交付"
+  short_description: "理解、实施并验证明确授权的前端改动"
+  default_prompt: "Use $frontend-delivery to implement this explicit frontend change with bounded context and sufficient verification. Do not repeat a passing focused check without relevant edits."
+policy:
+  allow_implicit_invocation: true

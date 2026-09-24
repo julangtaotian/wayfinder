@@ -242,11 +242,11 @@ test('[TC-03] CI 共享验证前置门禁', (context) => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   const packageJson = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8'));
   const sharedStart = workflow.indexOf('\n  shared:');
-  const platformStart = workflow.indexOf('\n  platform:');
+  const platformStart = workflow.indexOf('\n  native-platform:');
   assert.notEqual(sharedStart, -1);
   assert.ok(platformStart > sharedStart);
   const sharedJob = workflow.slice(sharedStart, platformStart);
-  const platformJob = workflow.slice(platformStart);
+  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
   assert.match(sharedJob, /runs-on:\s*ubuntu-24\.04/u);
   assert.match(sharedJob, /lfs:\s*false/u);
   assert.match(sharedJob, /node-version:\s*20\.19\.0/u);
@@ -255,7 +255,7 @@ test('[TC-03] CI 共享验证前置门禁', (context) => {
   assert.match(sharedJob, /run:\s*npm run cleanup:test-runtime/u);
   assert.doesNotMatch(sharedJob, /git lfs pull|UI_REVIEW_EXPECT_PLATFORM/u);
   assert.match(platformJob, /needs:\s*shared/u);
-  assert.equal([...workflow.matchAll(/run:\s*npm run verify:shared/gmu)].length, 2);
+  assert.equal([...workflow.matchAll(/run:\s*npm run verify:shared/gmu)].length, 1);
   assert.equal(packageJson.scripts.verify, 'node scripts/verify.mjs');
   assert.equal(packageJson.scripts['verify:shared'], 'node scripts/verify.mjs --scope shared');
   assert.equal(packageJson.scripts['verify:platform'], 'node scripts/verify.mjs --scope platform');
@@ -274,9 +274,9 @@ test('[TC-03] CI 共享验证前置门禁', (context) => {
 test('[TC-04] CI 五平台专属验证与产物合同', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   const attributes = fs.readFileSync(path.resolve('.gitattributes'), 'utf8');
-  const platformStart = workflow.indexOf('\n  platform:');
+  const platformStart = workflow.indexOf('\n  native-platform:');
   assert.notEqual(platformStart, -1);
-  const platformJob = workflow.slice(platformStart);
+  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
   assert.match(workflow, /lfs:\s*false/u);
   assert.doesNotMatch(workflow, /lfs:\s*true/u);
   assert.match(platformJob, /needs:\s*shared/u);
@@ -314,25 +314,22 @@ test('[TC-04] CI 五平台专属验证与产物合同', () => {
 
 test('[TC-06] CI 平台矩阵验证运行时离线复验', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
-  const platformStart = workflow.indexOf('\n  platform:');
+  const platformStart = workflow.indexOf('\n  native-platform:');
   assert.notEqual(platformStart, -1);
-  const platformJob = workflow.slice(platformStart);
+  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
   const setupNode = platformJob.indexOf('actions/setup-node@v6');
-  const warmCache = platformJob.indexOf('Warm frontend test cache');
-  const clearRuntime = platformJob.indexOf('Remove frontend test runtime before offline recheck');
-  const platformPrepare = platformJob.indexOf('Prepare platform marketplace outside source runtime');
-  const offlineVerify = platformJob.indexOf('Verify frontend test runtime offline');
+  const warmCache = platformJob.indexOf('Warm locked frontend test cache');
+  const clearRuntime = platformJob.indexOf('Remove online frontend test runtime');
+  const platformPrepare = platformJob.indexOf('Prepare native marketplace outside source runtime');
+  const platformVerify = platformJob.indexOf('Verify native contracts and offline runtimes');
 
   assert.ok(setupNode < warmCache);
   assert.ok(warmCache < clearRuntime);
-  assert.ok(clearRuntime < offlineVerify);
-  assert.ok(offlineVerify < platformPrepare);
+  assert.ok(clearRuntime < platformPrepare);
+  assert.ok(platformPrepare < platformVerify);
   assert.equal([...platformJob.matchAll(/run:\s*npm run prepare:test-runtime/gmu)].length, 1);
-  assert.equal([...platformJob.matchAll(/run:\s*npm run verify:shared -- --offline/gmu)].length, 1);
-  assert.match(
-    platformJob,
-    /name:\s*Verify frontend test runtime offline\r?\n\s*#.*\r?\n\s*env:\r?\n\s*UI_REVIEW_EXPECT_PLATFORM:\s*''\r?\n\s*UI_REVIEW_RUNTIME_ROOT:\s*''\r?\n\s*run:\s*npm run verify:shared -- --offline/u,
-  );
+  assert.equal([...platformJob.matchAll(/run:\s*npm run verify:platform/gmu)].length, 1);
+  assert.doesNotMatch(platformJob, /verify:shared/u);
   assert.match(
     platformJob,
     /name:\s*Clean frontend test runtime\r?\n\s*if:\s*always\(\)\r?\n\s*run:\s*npm run cleanup:test-runtime/u,

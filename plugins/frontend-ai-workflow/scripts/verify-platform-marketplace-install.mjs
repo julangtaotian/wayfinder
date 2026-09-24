@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { SUPPORTED_PLAYWRIGHT_PLATFORMS } from './playwright-runtime.mjs';
 
-export const CODEX_INSTALL_EVIDENCE_CLI_VERSION = '0.150.0-alpha.8';
+export const CODEX_INSTALL_SMOKE_CLI_VERSION = '0.150.0-alpha.8';
 const OFFLINE_PROXY = 'http://127.0.0.1:9';
 const PROXY_KEYS = [
   'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY',
@@ -19,7 +19,7 @@ const defaultPluginRoot = path.resolve(scriptDir, '..');
 const defaultRepositoryRoot = path.resolve(defaultPluginRoot, '..', '..');
 
 function fail(message, {
-  code = 'platform_install_evidence_failed',
+  code = 'platform_install_smoke_failed',
   target = null,
   exitCode = null,
   signal = null,
@@ -66,13 +66,13 @@ function validateOutputPath(outputPath, allowedOutputRoots) {
   const resolved = canonicalPotentialPath(outputPath);
   const allowed = allowedOutputRoots.map((item) => canonicalPotentialPath(item));
   if (!allowed.some((root) => isInside(root, resolved))) {
-    fail(`安装证据必须写入允许的受管运行范围：${outputPath}`, {
+    fail(`安装 smoke 报告必须写入允许的受管运行范围：${outputPath}`, {
       code: 'platform_install_output_unsafe',
       target: outputPath,
     });
   }
   if (fs.existsSync(resolved)) {
-    fail(`安装证据已存在，拒绝覆盖：${resolved}`, {
+    fail(`安装 smoke 报告已存在，拒绝覆盖：${resolved}`, {
       code: 'platform_install_output_exists',
       target: resolved,
     });
@@ -184,8 +184,8 @@ function codexCommandSpec({ codexEntry, codexExecutable, execute }) {
 
 function parseCodexVersion(stdout) {
   const match = stdout.match(/^codex-cli\s+([^\s]+)$/u);
-  if (!match || match[1] !== CODEX_INSTALL_EVIDENCE_CLI_VERSION) {
-    fail(`Codex CLI 版本不匹配：期望 ${CODEX_INSTALL_EVIDENCE_CLI_VERSION}，实际 ${stdout || '未知'}`, {
+  if (!match || match[1] !== CODEX_INSTALL_SMOKE_CLI_VERSION) {
+    fail(`Codex CLI 版本不匹配：期望 ${CODEX_INSTALL_SMOKE_CLI_VERSION}，实际 ${stdout || '未知'}`, {
       code: 'platform_install_codex_version_mismatch',
       target: stdout || null,
     });
@@ -200,7 +200,7 @@ function validatePackageReport(marketplaceRoot, platformKey) {
     || report.smoke?.skipped
     || report.smoke?.platformKey !== platformKey
     || report.smoke?.screenshotBytes <= 100) {
-    fail(`平台成品报告不能作为安装证据前置：${platformKey}`, {
+    fail(`平台成品报告不能作为安装 smoke 前置：${platformKey}`, {
       code: 'platform_install_package_report_invalid',
       target: platformKey,
     });
@@ -228,7 +228,7 @@ export function compactInstallStageName({
   timestamp = Date.now(),
 } = {}) {
   if (!Number.isSafeInteger(processId) || processId < 0 || !Number.isSafeInteger(timestamp) || timestamp < 0) {
-    fail('安装证据暂存标识必须是非负安全整数', {
+    fail('安装 smoke 暂存标识必须是非负安全整数', {
       code: 'platform_install_stage_identity_invalid',
       target: null,
     });
@@ -297,6 +297,7 @@ export async function verifyPlatformMarketplaceInstall({
   currentArch = process.arch,
   codexEntry,
   codexExecutable,
+  revision,
   environment = process.env,
   execute = spawnSync,
   runOfflineSmoke = defaultOfflineSmoke,
@@ -311,13 +312,19 @@ export async function verifyPlatformMarketplaceInstall({
     });
   }
   const nativePlatformKey = `${currentPlatform}-${currentArch}`;
+  if (!/^[a-f0-9]{40}$/u.test(revision || '')) {
+    fail('Release Install Smoke 必须绑定 40 位小写 Git 提交', {
+      code: 'platform_install_revision_invalid',
+      target: revision || null,
+    });
+  }
   const sourceRepositoryRoot = fs.realpathSync(path.resolve(repositoryRoot));
   const sourceMarketplaceRoot = validateMarketplaceRoot(marketplaceRoot, sourceRepositoryRoot);
   const managedRunsRoot = path.join(sourceRepositoryRoot, '.frontend-ai-workflow', 'runs');
   const effectiveAllowedRoots = allowedOutputRoots || [managedRunsRoot];
   const effectiveOutput = outputPath || path.join(
     managedRunsRoot,
-    'platform-install-evidence',
+    'release-install-smoke',
     `${platformKey}.json`,
   );
   const finalOutput = validateOutputPath(effectiveOutput, effectiveAllowedRoots);
@@ -326,12 +333,13 @@ export async function verifyPlatformMarketplaceInstall({
   const plan = {
     ok: true,
     status: 'planned',
-    code: 'platform_install_evidence_plan',
+    code: 'platform_install_smoke_plan',
     write,
     platformKey,
     nativePlatformKey,
+    revision,
     output: finalOutput,
-    codexVersion: CODEX_INSTALL_EVIDENCE_CLI_VERSION,
+    codexVersion: CODEX_INSTALL_SMOKE_CLI_VERSION,
     usesModel: false,
     requiresAuthentication: false,
     downloadsAtRuntime: false,
@@ -339,7 +347,7 @@ export async function verifyPlatformMarketplaceInstall({
   };
   if (!write) return plan;
   if (nativePlatformKey !== platformKey) {
-    fail(`安装证据必须在原生平台执行：期望 ${nativePlatformKey}，实际 ${platformKey}`, {
+    fail(`安装 smoke 必须在原生平台执行：期望 ${nativePlatformKey}，实际 ${platformKey}`, {
       code: 'platform_install_non_native_write',
       target: platformKey,
     });
@@ -349,7 +357,7 @@ export async function verifyPlatformMarketplaceInstall({
   const offlineMarketplaceRoot = path.join(workRoot, 'm');
   const codexHome = path.join(workRoot, 'c');
   if (fs.existsSync(workRoot)) {
-    fail(`安装证据暂存目录已存在：${workRoot}`, {
+    fail(`安装 smoke 暂存目录已存在：${workRoot}`, {
       code: 'platform_install_stage_exists',
       target: workRoot,
     });
@@ -452,6 +460,7 @@ export async function verifyPlatformMarketplaceInstall({
       status: 'passed',
       code: 'platform_marketplace_install_verified',
       platformKey,
+      revision,
       codex: {
         version,
         usesModel: false,
@@ -501,7 +510,7 @@ export async function verifyPlatformMarketplaceInstall({
       error.cleanupError = redact(cleanupError.message, environment);
       if (!error.code) error.code = 'platform_install_cleanup_failed';
     }
-    if (!error.code) error.code = 'platform_install_evidence_failed';
+    if (!error.code) error.code = 'platform_install_smoke_failed';
     if (!error.status) error.status = 'failed';
     if (!error.target) error.target = platformKey;
     error.message = redact(error.message, environment);
@@ -514,7 +523,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--write') options.write = true;
-    else if (['--marketplace', '--platform', '--output', '--codex-entry', '--codex'].includes(value)) {
+    else if (['--marketplace', '--platform', '--output', '--codex-entry', '--codex', '--revision'].includes(value)) {
       if (!argv[index + 1]) fail(`参数 ${value} 缺少值`, {
         code: 'platform_install_argument_missing',
         target: value,
@@ -525,6 +534,7 @@ function parseArgs(argv) {
         '--output': 'outputPath',
         '--codex-entry': 'codexEntry',
         '--codex': 'codexExecutable',
+        '--revision': 'revision',
       }[value];
       options[key] = argv[++index];
     } else {
@@ -575,12 +585,12 @@ if (isEntryPoint()) {
     console.error(JSON.stringify({
       ok: false,
       status: error.status || 'failed',
-      code: error.code || 'platform_install_evidence_failed',
+      code: error.code || 'platform_install_smoke_failed',
       target: error.target || null,
       exitCode: error.exitCode ?? null,
       signal: error.signal || null,
       cleanupError: error.cleanupError || null,
-      message: `平台安装证据验证失败：${error.message}`,
+      message: `平台安装 smoke 失败：${error.message}`,
     }));
     process.exitCode = 1;
   }

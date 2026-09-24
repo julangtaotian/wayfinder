@@ -9,16 +9,14 @@ import {
   resolveSafeProjectPath,
 } from './project-path-safety.mjs';
 import {
-  LEGACY_WORKFLOW_PATH,
   WAYFINDER_PATH,
-  readLegacyWorkflowSettings,
   readWayfinderSettings,
 } from './workflow-layout.mjs';
 
 // 普通升级保留既有扫描快照，只有显式 deep 才重新读取项目并刷新分析基线。
 function preservedScopeSettings(target, requestedDeep) {
   if (requestedDeep) return null;
-  const settings = readWayfinderSettings(target) || readLegacyWorkflowSettings(target);
+  const settings = readWayfinderSettings(target);
   return settings?.deepAnalysis === 'true' ? settings : null;
 }
 
@@ -27,7 +25,6 @@ export function runUpdate({ target = process.cwd(), write = false, deep = false 
   assertSafeProjectRoot(root);
   try {
     resolveSafeProjectPath(root, WAYFINDER_PATH, 'Wayfinder 元数据');
-    resolveSafeProjectPath(root, LEGACY_WORKFLOW_PATH, '旧工作流元数据');
     const preservedSettings = preservedScopeSettings(root, deep);
     return runBootstrap({
       target: root,

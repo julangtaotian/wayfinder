@@ -5,65 +5,35 @@ context: |
   项目：{{PROJECT_NAME}}
   预设：{{PRESET}}
   技术栈：{{DEPENDENCY_SUMMARY}}
-  依赖事实：schema {{DEPENDENCY_PROFILE_SCHEMA}}，来源 {{DEPENDENCY_PROFILE_SOURCE}}，摘要展示 {{DEPENDENCY_SUMMARY_DISPLAYED}}/{{DEPENDENCY_PACKAGE_COUNT}} 项，遗漏 {{DEPENDENCY_SUMMARY_OMITTED}} 项
-  依赖分析边界：依赖声明不证明已安装、已使用、安全或兼容；总结前必须读取完整 `dependencyProfile.packages` 或根 `package.json`，并结合配置、入口、导入和调用证据
-  终端画像：{{TARGET_FORM_FACTOR}}（来源：{{TARGET_PROFILE_SOURCE}}；证据：{{TARGET_PROFILE_EVIDENCE}}；有限兼容信号，unknown 不表示框架不存在）
-  平台框架画像：{{TARGET_PLATFORM_KIND}}（框架：{{TARGET_PLATFORM_FRAMEWORKS}}；来源：{{TARGET_PLATFORM_SOURCE}}；证据：{{TARGET_PLATFORM_EVIDENCE}}；有限安全信号，不证明目标已构建或发布）
-  平台命令证据：{{PLATFORM_COMMAND_SUMMARY}}（状态：{{PLATFORM_COMMAND_STATUS}}；证据：{{PLATFORM_COMMAND_EVIDENCE}}；发现不代表已执行）
-  平台验证边界：{{PLATFORM_VERIFICATION_GUIDANCE}}
-  页面目录：{{VIEWS_PATH}}
-  公共组件目录：{{COMPONENTS_PATH}}
-  请求与接口：{{REQUEST_PATH}}
-  路由与页面注册：{{ROUTER_PATH}}
-  状态管理或全局数据：{{STORE_PATH}}
-  默认构建命令：{{BUILD_COMMAND}}
-  交付构建命令：{{RELEASE_BUILD_COMMAND}}
-  静态检查命令：{{LINT_COMMAND}}（语义：{{LINT_STATUS}}）
-  测试命令：{{TEST_COMMAND}}（状态：{{TEST_STATUS}}）
-  项目地图状态：{{ANALYSIS_STATUS}}（已覆盖深度范围文件：{{ANALYSIS_COVERED_FILES}}/{{SCOPE_INCLUDED_FILES}}；最后更新：{{ANALYSIS_UPDATED_AT}}）
-  实现必须遵守根目录 AGENTS.md。
-
-operations:
-  apply:
-    guidance:
-      - 将 context 和本区块视为补充约束；需求决策、用户选择、仓库规则和 OpenSpec 阻断状态优先
-      - 项目地图为 pending 或 partial 时，不把它当作完整架构事实；先回到关联源码补齐本次影响链路和验证边界
-      - 只按 tasks 与关联验收实施并记录证据，不把动态指导当作任务完成证明或额外写入授权
-  archive:
-    guidance:
-      - 完成前必须通过插件预览；不得确认跳过未完成 artifact、任务、验证、规格同步、生命周期或根目录检查
-      - 原生归档只作为规格同步事务的临时步骤；使用运行时返回的具体规格路径和 warnings，不手工移动变更或保留归档副本
+  依赖事实：根 package.json 直接依赖共 {{DEPENDENCY_PACKAGE_COUNT}} 项；摘要展示 {{DEPENDENCY_SUMMARY_DISPLAYED}} 项，遗漏 {{DEPENDENCY_SUMMARY_OMITTED}} 项
+  依赖边界：声明不证明已安装、已使用、安全或兼容；结论必须结合配置、入口、导入和调用关系
+  终端与平台：{{TARGET_FORM_FACTOR}} / {{TARGET_PLATFORM_KIND}}（{{TARGET_PLATFORM_FRAMEWORKS}}）
+  平台命令：{{PLATFORM_COMMAND_SUMMARY}}（发现不代表已执行）
+  页面：{{VIEWS_PATH}}
+  组件：{{COMPONENTS_PATH}}
+  请求：{{REQUEST_PATH}}
+  路由：{{ROUTER_PATH}}
+  状态：{{STORE_PATH}}
+  构建：{{BUILD_COMMAND}}
+  交付构建：{{RELEASE_BUILD_COMMAND}}
+  测试：{{TEST_COMMAND}}（{{TEST_STATUS}}）
+  Lint：{{LINT_COMMAND}}（{{LINT_STATUS}}）
+  项目地图：{{ANALYSIS_STATUS}}（{{ANALYSIS_COVERED_FILES}}/{{SCOPE_INCLUDED_FILES}}）
+  实现必须遵守根目录 AGENTS.md 和 wayfinder/frontend.md。
 
 rules:
   proposal:
-    - 说明业务目标、非目标、受影响模块和可观察的成功结果
-    - 列出接口、权限、公共组件、路由、构建和部署相关风险
-    - 信息不足时列为待确认问题，不自行补造需求
-    - 读取关联需求的决策台账；业务边界只引用已确认或项目默认的 D-* 决策
-    - 读取交互状态矩阵；初始、用户操作、刷新、空态、错误态和卸载均明确覆盖或不适用
-    - 将覆盖状态关联到可观察验收，不用刷新或空态替代初始数据和真实用户操作验证
-    - 创建变更后在关联需求的“关联变更范围”中分配本变更适用的 D-* 与 A-*
+    - 写清目标、非目标、可观察成功结果、影响范围和待确认问题
+    - 接口、权限、公共契约、路由、构建、部署和数据变更必须显式列为风险
   specs:
-    - 每项需求至少包含一个可验证场景
-    - 明确角色差异以及加载态、空态、错误态和禁用态
-    - 涉及接口时写清字段、状态码和空值语义
-    - 场景引用关联的 D-* 与 A-*；不得把暂定或待确认决策升级为规范行为
+    - 每项规范至少包含一个可验证场景，覆盖本次适用的主流程和边界状态
+    - 接口行为写清字段、错误、空值和兼容语义，不从依赖名或目录名猜测
   design:
-    - 优先使用仓库现有目录、组件、状态和请求封装
-    - 记录数据流、接口映射、兼容策略和受影响调用方
-    - 涉及共享基础设施时说明风险控制与回滚方式
-    - 技术选择不得改变需求决策台账中的用户可见行为；冲突时先修订需求
+    - 复用现有组件、状态、请求与目录约定，并记录调用方、回滚方式和跨平台风险
+    - 用户可见行为与正式规格冲突时先修订规格，不用实现细节覆盖产品事实
   tasks:
-    - 拆成可独立验证的步骤并标明主要文件
-    - 行为变化包含相应测试或无法自动测试的原因
-    - 局部页面、组件、表单和独立交互默认安排聚焦测试与必要构建；全量测试或 coverage 必须注明公共影响、缺少聚焦测试、用户明确要求或发布级理由
-    - 业务实现任务引用已确认或项目默认的 D-*，验证任务引用 A-*；暂定和待确认决策不得进入任务
-    - 每个任务复选行至少引用一个有效 D-* 或 A-*，且任务全集覆盖关联变更范围
-    - 最后包含构建、测试和必要的页面检查
-    - 完成前将实际命令、人工环境与证据更新到关联 V-* 验证记录
-    - 行为修订先更新需求事实源、失效旧 V-* 并重新打开受影响任务；纯技术选择才可只修订规划
-    - 完成前活动需求状态为待验证；未达到状态、验收、任务、证据或验证记录门槛时不得同步规格或追加生命周期事件，完成终态由事件投影
-    - 不混入依赖升级、整仓格式化或无关重构
+    - 拆成可独立验证的步骤并标明主要文件；行为变化包含测试或无法自动化的原因
+    - 最后一批任务包含最窄验证、必要构建和交付验证；不混入无关重构
 # frontend-ai-workflow:end
 
 # 项目可在受管区块之后追加 OpenSpec 规则，升级工具不会覆盖。

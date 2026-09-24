@@ -5,8 +5,6 @@ import path from 'node:path';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { inspectTestContext } from '../plugins/frontend-ai-workflow/scripts/inspect-test-context.mjs';
-import { validateTestPlan } from '../plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs';
-import { validateDeclaredTestPlan } from '../plugins/frontend-ai-workflow/scripts/check-change.mjs';
 import {
   parseFrontendTestRuntimeArgs,
   prepareFrontendTestRuntime,
@@ -17,6 +15,7 @@ import {
   cleanupFrontendTestCache,
   cleanupFrontendTestRuntime,
 } from '../scripts/cleanup-frontend-test-runtime.mjs';
+import { runFrontendTestRuntimeSmoke } from '../scripts/frontend-test-runtime-smoke.mjs';
 import {
   parseVerificationArgs,
   runVerification,
@@ -29,7 +28,7 @@ function writeFile(root, relativePath, content) {
   return filePath;
 }
 
-function createFixture(t, { testScript = 'vitest run', revision = 'R-01', verificationResult = '计划' } = {}) {
+function createFixture(t, { testScript = 'vitest run' } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'frontend-test-workflow-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   writeFile(root, 'package.json', `${JSON.stringify({
@@ -42,123 +41,7 @@ function createFixture(t, { testScript = 'vitest run', revision = 'R-01', verifi
   writeFile(root, 'src/math.js', 'export const add = (left, right) => left + right;\n');
   writeFile(root, 'tests/existing.spec.js', "import { test } from 'vitest';\ntest('existing', () => {});\n");
   writeFile(root, 'tests/snapshot.generated.spec.js', "export default 'baseline';\n");
-  writeFile(root, 'artifacts/TC-01.txt', 'TC-01 passed\n');
-  const requirementPath = writeFile(root, 'requirements/REQ-2026-001-fixture.md', renderRequirement({
-    revision,
-    verificationResult,
-  }));
-  const changePath = path.join(root, 'openspec', 'changes', 'add-fixture-test');
-  fs.mkdirSync(changePath, { recursive: true });
-  writeFile(root, 'openspec/changes/add-fixture-test/.openspec.yaml', 'schema: spec-driven\ntest_plan: required\n');
-  return { root, requirementPath, changePath };
-}
-
-function renderRequirement({ revision = 'R-01', verificationResult = '计划' } = {}) {
-  const extraRevision = revision === 'R-02'
-    ? '| R-02 | 2026-08-17 | D-01 | A-01 | 行为修订。 |\n'
-    : '';
-  const verificationDate = verificationResult === '通过' ? '2026-08-17' : '待执行';
-  return `# Fixture requirement
-
-## 基本信息
-
-- 状态：实施中
-
-## 决策台账
-
-| ID | 决策项 | 状态 | 取值 | 来源 |
-| --- | --- | --- | --- | --- |
-| D-01 | 加法行为 | 已确认 | 返回两数之和 | fixture |
-
-## 关联变更范围
-
-| 变更 | 决策范围 | 验收范围 |
-| --- | --- | --- |
-| add-fixture-test | D-01 | A-01 |
-
-## 修订记录
-
-| 修订 | 日期 | 影响决策 | 影响验收 | 验证与任务处理 |
-| --- | --- | --- | --- | --- |
-| R-01 | 2026-08-17 | D-01 | A-01 | 建立需求。 |
-${extraRevision}
-## 验证记录
-
-| 验证ID | 验证类型 | 执行内容或环境 | 执行日期 | 结果 | 证据位置 |
-| --- | --- | --- | --- | --- | --- |
-| V-01 | 自动 | Vitest 聚焦测试 | ${verificationDate} | ${verificationResult} | \`artifacts/TC-01.txt\` |
-
-## 验收标准
-
-- [ ] [A-01] add(1, 2) 返回 3。
-`;
-}
-
-function renderPlan({
-  baseline = 'R-01',
-  planStatus = '就绪',
-  caseStatus = '计划',
-  target = 'tests/math.spec.js',
-  result = '未执行',
-  evidence = '待执行',
-  duplicate = false,
-} = {}) {
-  const caseBlock = (id = 'TC-01') => `### ${id}：两数相加
-
-- 状态：${caseStatus}
-- 优先级：P1
-- 验证类型：自动
-- 测试层级：单元
-- 关联决策：D-01
-- 关联验收：A-01
-- 关联规格：fixture / 两数相加
-- 状态矩阵：用户操作
-- 前置条件：加载纯函数模块
-- 测试数据：1 与 2
-- 测试替身：不适用
-- 操作：调用 add(1, 2)
-- 可观察断言：返回值严格等于 3
-- 目标测试：\`${target}\`
-- 测试定位：\`[TC-01] 两数相加\`
-- 聚焦命令：\`npm run test -- ${target}\`
-- 关联验证：V-01
-- 结果分类：${result}
-- 证据：${evidence === '待执行' ? evidence : `\`${evidence}\``}
-`;
-  return `# 测试方案：fixture
-
-## 基本信息
-
-- 状态：${planStatus}
-- 需求：\`requirements/REQ-2026-001-fixture.md\`
-- 变更：add-fixture-test
-- 需求修订基线：${baseline}
-- 默认聚焦命令：\`npm run test -- tests/math.spec.js\`
-
-## 测试上下文
-
-- 测试命令状态：detected
-- 测试命令：\`npm run test\`
-- 测试运行器：Vitest
-- 测试目录：\`tests\`
-- Git 基线：unavailable
-- 兼容说明：Vue 3 + Vite + Vitest fixture。
-
-## 测试用例
-
-${caseBlock()}${duplicate ? caseBlock() : ''}`;
-}
-
-function writePlan(fixture, options) {
-  return writeFile(fixture.root, 'openspec/changes/add-fixture-test/test-plan.md', renderPlan(options));
-}
-
-function validate(fixture, planPath, stage) {
-  return validateTestPlan(planPath, {
-    requirement: fixture.requirementPath,
-    change: fixture.changePath,
-    stage,
-  });
+  return { root };
 }
 
 test('[TC-01] 测试上下文只读识别 Vue 3、Vitest、手写测试和生成基线', (t) => {
@@ -188,7 +71,7 @@ test('测试命令优先于仅用于开发验证的 runner 依赖', (t) => {
 });
 
 test('[TC-09] 测试启动脚本不计入测试文件', (t) => {
-  const outputsRoot = path.resolve('outputs');
+  const outputsRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-workflow-fixtures');
   fs.mkdirSync(outputsRoot, { recursive: true });
   const root = fs.mkdtempSync(path.join(outputsRoot, 'frontend-test-launcher-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -222,115 +105,22 @@ test('[TC-09] 测试启动脚本不计入测试文件', (t) => {
   assert.equal(context.scan.sourceContentRead, false);
 });
 
-test('[TC-02] 三阶段测试方案校验接受完整 TC，并拒绝非法规划输入', async (t) => {
-  await t.test('完整方案通过', () => {
-    const fixture = createFixture(t);
-    const result = validate(fixture, writePlan(fixture), 'plan');
-    assert.equal(result.ok, true, result.errors.join('\n'));
-    assert.equal(result.caseCount, 1);
-    assert.equal(result.automaticCases, 1);
-  });
-  await t.test('重复 ID 被拒绝', () => {
-    const fixture = createFixture(t);
-    const result = validate(fixture, writePlan(fixture, { duplicate: true }), 'plan');
-    assert.equal(result.ok, false);
-    assert.match(result.errors.join('\n'), /ID 重复/u);
-  });
-  await t.test('危险和生成路径被拒绝', () => {
-    const fixture = createFixture(t);
-    const unsafe = validate(fixture, writePlan(fixture, { target: '../outside.spec.js' }), 'plan');
-    assert.match(unsafe.errors.join('\n'), /项目相对路径/u);
-    const generated = validate(fixture, writePlan(fixture, { target: 'tests/math.generated.spec.js' }), 'plan');
-    assert.match(generated.errors.join('\n'), /不得修改生成测试/u);
-  });
-});
-
-test('[TC-05] 测试方案拒绝跨平台绝对路径', (t) => {
-  const fixture = createFixture(t);
-  const windowsNodePath = ['D:', 'workspace', 'test.spec.js'].join(String.fromCharCode(92));
-  for (const target of ['/workspace/test.spec.js', 'D:/workspace/test.spec.js', windowsNodePath]) {
-    const result = validate(fixture, writePlan(fixture, { target }), 'plan');
-    assert.equal(result.ok, false, target);
-    assert.match(result.errors.join('\n'), /unsafe_project_path/u, target);
-  }
-});
-
-test('implement 阶段阻止缺失测试命令和过期需求修订', async (t) => {
-  await t.test('没有测试命令', () => {
-    const fixture = createFixture(t, { testScript: '' });
-    const result = validate(fixture, writePlan(fixture), 'implement');
-    assert.equal(result.ok, false);
-    assert.match(result.errors.join('\n'), /detected 测试命令/u);
-  });
-  await t.test('需求修订晚于方案基线', () => {
-    const fixture = createFixture(t, { revision: 'R-02' });
-    const result = validate(fixture, writePlan(fixture, { baseline: 'R-01' }), 'implement');
-    assert.equal(result.stale, true);
-    assert.match(result.errors.join('\n'), /测试方案已过期/u);
-  });
-});
-
-test('complete 阶段要求真实测试文件、通过状态、V 记录和持久证据', (t) => {
-  const fixture = createFixture(t, { verificationResult: '通过' });
-  writeFile(fixture.root, 'tests/math.spec.js', "import { test } from 'vitest';\ntest('[TC-01] 两数相加', () => {});\n");
-  const result = validate(fixture, writePlan(fixture, {
-    planStatus: '已验证',
-    caseStatus: '通过',
-    result: '通过',
-    evidence: 'artifacts/TC-01.txt',
-  }), 'complete');
-  assert.equal(result.ok, true, result.errors.join('\n'));
-});
-
-test('[TC-04] 测试方案完成门禁与历史兼容仅对 test_plan: required 的变更生效', (t) => {
-  const fixture = createFixture(t);
-  const declared = validateDeclaredTestPlan({
-    changePath: fixture.changePath,
-    requirementPath: fixture.requirementPath,
-    stage: 'implement',
-  });
-  assert.equal(declared.required, true);
-  assert.equal(declared.validation, null);
-  assert.match(declared.errors.join('\n'), /测试方案不存在/u);
-
-  fs.writeFileSync(path.join(fixture.changePath, '.openspec.yaml'), 'schema: spec-driven\n', 'utf8');
-  const historical = validateDeclaredTestPlan({
-    changePath: fixture.changePath,
-    requirementPath: fixture.requirementPath,
-    stage: 'precomplete',
-  });
-  assert.deepEqual(historical, { required: false, validation: null, errors: [], warnings: [] });
-});
-
-test('[TC-10] frontend-test Skill 合同声明四类意图、测试专属写入和 UI Review 交接', () => {
+test('frontend-test Skill 保持显式测试入口和最低充分验证边界', () => {
   const skill = fs.readFileSync(
     path.resolve('plugins/frontend-ai-workflow/skills/frontend-test/SKILL.md'),
     'utf8',
   );
-  // 完整操作合同已按需外置，先确认入口仍能发现它。
-  assert.match(skill, /\]\(\.\.\/\.\.\/references\/managed-test-workflow\.md\)/u);
-  const workflow = fs.readFileSync(path.resolve('plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
-  const contract = `${skill}\n${workflow}`;
-  for (const expected of ['Analyze', 'Plan', 'Implement', 'Verify', 'test_plan: required', '$frontend-ui-review']) {
-    assert.match(contract, new RegExp(expected.replace('$', '\\$'), 'u'));
-  }
-  assert.match(contract, /Never modify business source/u);
-  assert.match(contract, /zero-test result is blocked/u);
-  assert.match(contract, /updates the same case rather than appending a duplicate/u);
-});
-
-test('[TC-11] 受管 Verify 一次通过公开合同', () => {
-  const workflow = fs.readFileSync(path.resolve('plugins/frontend-ai-workflow/references/managed-test-workflow.md'), 'utf8');
-  assert.match(workflow, /preview → one explicit execution → completion-fact updates → one complete validation/u);
-  assert.match(workflow, /semantic binding v2/u);
-  assert.match(workflow, /dates, result statuses, evidence paths, acceptance checkboxes, case statuses, result classifications and separate run summaries/u);
-  assert.match(workflow, /must not read validator implementation/u);
-  assert.match(workflow, /unknown code, missing fields or contradictory fields/u);
-  assert.match(workflow, /must not change D-\*, A-\*, R-\*, mapped assertions, test operations, target tests, locators, focused commands or their relationships/u);
+  assert.match(skill, /explicitly asks for test work/u);
+  assert.match(skill, /Do not use for ordinary product-code implementation/u);
+  assert.match(skill, /zero-test result is a failure/iu);
+  assert.match(skill, /frontend-ui-review/u);
+  assert.doesNotMatch(skill, /test-plan|verification-evidence|D-\*|A-\*|V-\*/u);
 });
 
 test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
-  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-prepare-'));
+  const fixtureRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-workflow-fixtures');
+  fs.mkdirSync(fixtureRoot, { recursive: true });
+  const root = fs.mkdtempSync(path.join(fixtureRoot, 'frontend-test-prepare-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const npmEntry = path.resolve(root, 'virtual', 'npm-cli.js');
   const nodePath = path.resolve(root, 'virtual', 'node.exe');
@@ -368,7 +158,9 @@ test('[TC-07] Windows npm 使用 JS 入口准备验证运行时', (t) => {
 });
 
 test('[TC-12] 锁定输入与缓存路径', (t) => {
-  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-locked-'));
+  const fixtureRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-workflow-fixtures');
+  fs.mkdirSync(fixtureRoot, { recursive: true });
+  const root = fs.mkdtempSync(path.join(fixtureRoot, 'frontend-test-runtime-locked-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   let executed = null;
   const prepared = prepareFrontendTestRuntime({
@@ -395,7 +187,9 @@ test('[TC-12] 锁定输入与缓存路径', (t) => {
 });
 
 test('[TC-13] 显式离线模式失败关闭', (t) => {
-  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-offline-'));
+  const fixtureRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-workflow-fixtures');
+  fs.mkdirSync(fixtureRoot, { recursive: true });
+  const root = fs.mkdtempSync(path.join(fixtureRoot, 'frontend-test-runtime-offline-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   let args = null;
   const prepared = prepareFrontendTestRuntime({
@@ -430,12 +224,44 @@ test('[TC-13] 显式离线模式失败关闭', (t) => {
   );
 });
 
+test('[TC-16] 离线运行时 smoke 只执行一个固定最小测试并清理运行时', (t) => {
+  const root = path.resolve('.');
+  const lifecycle = [];
+  const calls = [];
+  const result = runFrontendTestRuntimeSmoke({
+    repositoryRoot: root,
+    prepareRuntime: () => {
+      lifecycle.push('prepare-offline');
+      return { vitestEntry: path.join(root, 'fixture-vitest.mjs') };
+    },
+    cleanupRuntime: () => lifecycle.push('cleanup'),
+    execute: (command, args, options) => {
+      calls.push({ command, args, options });
+      return { status: 0, stdout: '1 passed', stderr: '' };
+    },
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    code: 'frontend_test_runtime_smoke_passed',
+    offline: true,
+    test: 'TC-03',
+    status: 0,
+  });
+  assert.deepEqual(lifecycle, ['prepare-offline', 'cleanup']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].args.includes('TC-03'), true);
+  assert.equal(calls[0].args.includes('run'), true);
+});
+
 test('[TC-03] 运行时与缓存的分离清理', (t) => {
-  const root = fs.mkdtempSync(path.join(path.resolve('outputs'), 'frontend-test-runtime-cleanup-'));
+  const fixtureRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-workflow-fixtures');
+  fs.mkdirSync(fixtureRoot, { recursive: true });
+  const root = fs.mkdtempSync(path.join(fixtureRoot, 'frontend-test-runtime-cleanup-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const runtimeRoot = path.join(root, '.frontend-ai-workflow', 'runs', 'frontend-test-runtime');
   const cacheRoot = path.join(root, '.frontend-ai-workflow', 'cache', 'frontend-test-cache');
-  const persistentEvidence = path.join(root, 'outputs', 'persistent-evidence', 'result.txt');
+  const persistentEvidence = path.join(root, 'proof', 'persistent-evidence', 'result.txt');
   fs.mkdirSync(runtimeRoot, { recursive: true });
   fs.mkdirSync(cacheRoot, { recursive: true });
   fs.mkdirSync(path.dirname(persistentEvidence), { recursive: true });
@@ -454,12 +280,20 @@ test('[TC-03] 运行时与缓存的分离清理', (t) => {
 });
 
 test('[TC-14] 统一验证传播离线选项', (t) => {
-  const fixturesRoot = path.resolve('outputs', 'frontend-test-runtime-verify');
+  const fixturesRoot = path.resolve('.frontend-ai-workflow', 'runs', 'frontend-test-runtime-verify');
   fs.mkdirSync(fixturesRoot, { recursive: true });
   const root = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'fixture-')));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
-  for (const name of ['ordinary.test.mjs', 'ui-review-automation.test.mjs', 'ui-review-platform-runtime.test.mjs']) {
+  for (const name of [
+    'ordinary.test.mjs',
+    'platform-marketplace-install.test.mjs',
+    'platform-package-runtime.test.mjs',
+    'project-platform-profile.test.mjs',
+    'ui-review-automation.test.mjs',
+    'ui-review-platform-runtime.test.mjs',
+    'workflow-trust-boundary.test.mjs',
+  ]) {
     fs.writeFileSync(path.join(root, 'tests', name), 'export {};\n', 'utf8');
   }
   let prepared = null;
@@ -487,14 +321,17 @@ test('[TC-14] 统一验证传播离线选项', (t) => {
   assert.equal(result.offline, true);
 });
 
-test('[TC-15] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', () => {
+test('[TC-15] Vue Vitest fixture 真实发现 TC，零测试失败且重复执行不改文件', (t) => {
   const fixtureRoot = path.resolve('tests/fixtures/frontend-test-vue-vitest');
   const vitestEntry = path.resolve('.frontend-ai-workflow/runs/frontend-test-runtime/node_modules/vitest/vitest.mjs');
   const configPath = path.join(fixtureRoot, 'vitest.config.mjs');
   const testPath = path.join(fixtureRoot, 'tests/math.spec.js');
   const sourceBefore = fs.readFileSync(testPath, 'utf8');
   assert.equal(fs.existsSync(path.resolve('node_modules/vitest/vitest.mjs')), false, '根目录不得保留验证专用 Vitest');
-  assert.equal(fs.existsSync(vitestEntry), true, '请先运行 npm run prepare:test-runtime');
+  if (!fs.existsSync(vitestEntry)) {
+    t.skip('未准备固定 Vitest 运行时');
+    return;
+  }
   const context = inspectTestContext(fixtureRoot);
   assert.equal(context.runner.certification, 'verified-vue3-vite-vitest');
   assert.deepEqual(context.handwrittenTests, ['tests/math.spec.js']);

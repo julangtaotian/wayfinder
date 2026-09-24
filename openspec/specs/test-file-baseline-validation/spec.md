@@ -1,7 +1,7 @@
 # test-file-baseline-validation Specification
 
 ## Purpose
-TBD - created by archiving change enforce-delivery-evidence. Update Purpose after archive.
+定义测试文件新建或复用策略的 Git 基线、路径存在性与完成前校验，使规划选择对应真实仓库资产，并避免计划文本替代已经执行的测试证据。
 ## Requirements
 ### Requirement: 测试文件策略使用可用基线校验
 
@@ -25,7 +25,6 @@ TBD - created by archiving change enforce-delivery-evidence. Update Purpose afte
 
 #### Scenario: 新建测试文件尚未创建
 
-- **WHEN** 需求状态为“已验收”但“新建”策略的目标测试路径不存在
+- **WHEN** 需求处于“待验证”但“新建”策略的目标测试路径不存在
 - **THEN** 完成阶段校验失败
 - **AND** 错误说明缺少目标测试文件
-

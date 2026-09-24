@@ -5,8 +5,8 @@ import { pathToFileURL } from 'node:url';
 import { readLifecycleConfig } from './lifecycle-contract.mjs';
 
 export const REPOSITORY_FOOTPRINT_BUDGETS = Object.freeze({
-  trackedOutputFiles: 200,
-  trackedOutputBytes: 10 * 1024 * 1024,
+  trackedOutputFiles: 0,
+  trackedOutputBytes: 0,
   activeFullRequirements: 5,
   rootTestFileLines: 750,
   pluginScriptFileLines: 800,
@@ -20,8 +20,46 @@ export const REPOSITORY_RETIREMENT_LIMITS = Object.freeze({
   platformLfsRules: 0,
 });
 
-const RETIRED_PATHS = Object.freeze(['outputs/lanhu-design-spec']);
-const STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
+const RETIRED_PATHS = Object.freeze([
+  'outputs',
+  '.workflow-history/evidence',
+]);
+const RETIRED_SOURCE_PATHS = Object.freeze([
+  'scripts/collect-local-verification-receipt.mjs',
+  'plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs',
+  'plugins/frontend-ai-workflow/scripts/external-ci-receipt.mjs',
+  'plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs',
+  'plugins/frontend-ai-workflow/scripts/finalize-change-references.mjs',
+  'plugins/frontend-ai-workflow/scripts/lifecycle-audit.mjs',
+  'plugins/frontend-ai-workflow/scripts/requirement-archive.mjs',
+  'plugins/frontend-ai-workflow/scripts/lifecycle-migration.mjs',
+  'plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs',
+  'plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs',
+  'plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs',
+  'plugins/frontend-ai-workflow/scripts/real-project-support-evidence.mjs',
+  'plugins/frontend-ai-workflow/scripts/requirement-decision-parser.mjs',
+  'plugins/frontend-ai-workflow/scripts/requirement-delivery-validation.mjs',
+  'plugins/frontend-ai-workflow/scripts/stage-context.mjs',
+  'plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs',
+  'plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs',
+  'plugins/frontend-ai-workflow/scripts/validate-test-plan.mjs',
+  'plugins/frontend-ai-workflow/scripts/verification-evidence-foundation.mjs',
+  'plugins/frontend-ai-workflow/scripts/verification-evidence-validation.mjs',
+  'plugins/frontend-ai-workflow/scripts/verification-evidence.mjs',
+  'plugins/frontend-ai-workflow/scripts/verification-semantics.mjs',
+]);
+const RETIRED_PACKAGE_SCRIPTS = Object.freeze([
+  'verify:receipt',
+  'ci:receipt',
+  'support:project-evidence',
+  'support:matrix',
+  'lifecycle:audit',
+  'lifecycle:status',
+  'lifecycle:transition',
+  'context:stage',
+]);
+const RETIRED_EVENT_FIELDS = new Set(['requirementId', 'checks', 'trust', 'evidence', 'evidencePath']);
+const REQUIREMENT_STUB_MARKER = '<!-- requirement-archive-stub:v1 -->';
 const PLAYWRIGHT_PLATFORM_ASSET_PREFIX = 'plugins/frontend-ai-workflow/runtime/playwright/platform-assets/';
 const PLAYWRIGHT_PLATFORM_INTEGRITY_PATTERN = /^plugins\/frontend-ai-workflow\/runtime\/playwright\/integrity\/(?:darwin-arm64|darwin-x64|linux-arm64|linux-x64|win32-x64)\.json$/u;
 const PLAYWRIGHT_LFS_RULE_PATTERN = /^\s*plugins\/frontend-ai-workflow\/runtime\/playwright\/platform-assets\/\*\*\s+.*\bfilter=lfs\b.*$/gmu;
@@ -133,6 +171,89 @@ function recursiveFiles(directory, predicate) {
   return result.sort();
 }
 
+function repositoryJunkFiles(root) {
+  const result = [];
+  const skippedDirectories = new Set(['.git', '.frontend-ai-workflow', 'dist', 'node_modules']);
+  function visit(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isSymbolicLink()) continue;
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        if (!skippedDirectories.has(entry.name)) visit(target);
+      } else if (entry.isFile() && entry.name === '.DS_Store') {
+        result.push(normalizePath(path.relative(root, target)));
+      }
+    }
+  }
+  visit(root);
+  return result.sort();
+}
+
+function directoryHasFiles(directory) {
+  if (!fs.existsSync(directory)) return false;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (entry.isFile() || entry.isSymbolicLink()) return true;
+    if (entry.isDirectory() && directoryHasFiles(path.join(directory, entry.name))) return true;
+  }
+  return false;
+}
+
+function emptyManagedDirectories(repositoryRoot) {
+  const roots = [
+    'openspec/specs',
+    'plugins/frontend-ai-workflow/scripts',
+    'plugins/frontend-ai-workflow/skills',
+    'plugins/frontend-ai-workflow/references',
+    'plugins/frontend-ai-workflow/assets/templates',
+  ];
+  const result = [];
+  function visit(directory) {
+    const entries = fs.readdirSync(directory, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) visit(path.join(directory, entry.name));
+    }
+    if (entries.length === 0) result.push(normalizePath(path.relative(repositoryRoot, directory)));
+  }
+  for (const relativeRoot of roots) {
+    const absoluteRoot = path.join(repositoryRoot, relativeRoot);
+    if (fs.existsSync(absoluteRoot)) visit(absoluteRoot);
+  }
+  return result.sort();
+}
+
+function unreachablePluginScripts(repositoryRoot, scriptFiles) {
+  const scriptsRoot = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
+  const scriptsByName = new Map(scriptFiles.map((file) => [path.basename(file), file]));
+  const dependencies = new Map();
+  for (const file of scriptFiles) {
+    const content = fs.readFileSync(file, 'utf8');
+    dependencies.set(path.basename(file), [...scriptsByName.keys()].filter((name) => (
+      content.includes(`'./${name}'`) || content.includes(`"./${name}"`)
+    )));
+  }
+
+  const externalFiles = [
+    path.join(repositoryRoot, 'package.json'),
+    ...recursiveFiles(path.join(repositoryRoot, 'scripts'), (name) => name.endsWith('.mjs')),
+    ...recursiveFiles(path.join(repositoryRoot, '.github'), (name) => /\.(?:mjs|json|ya?ml)$/u.test(name)),
+    ...recursiveFiles(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'skills'), (name) => /\.(?:md|json|ya?ml)$/u.test(name)),
+    ...recursiveFiles(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'references'), (name) => /\.(?:md|json|ya?ml)$/u.test(name)),
+    ...recursiveFiles(path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'assets', 'templates'), (name) => /\.(?:md|json|ya?ml|mjs)$/u.test(name)),
+  ].filter((file) => fs.existsSync(file) && !file.startsWith(`${scriptsRoot}${path.sep}`));
+  const externalText = externalFiles.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+  const reachable = new Set([...scriptsByName.keys()].filter((name) => externalText.includes(name)));
+  const queue = [...reachable];
+  while (queue.length) {
+    const current = queue.shift();
+    for (const dependency of dependencies.get(current) || []) {
+      if (reachable.has(dependency)) continue;
+      reachable.add(dependency);
+      queue.push(dependency);
+    }
+  }
+  return [...scriptsByName.keys()].filter((name) => !reachable.has(name)).sort();
+}
+
 export function auditRepositoryFootprint({
   root = process.cwd(),
   trackedFiles = null,
@@ -155,7 +276,11 @@ export function auditRepositoryFootprint({
     path.join(repositoryRoot, 'requirements'),
     (name) => /^REQ-\d{4}-\d+[-\w]*\.md$/u.test(name),
   );
-  const activeFullRequirements = requirementFiles.filter((file) => !fs.readFileSync(file, 'utf8').includes(STUB_MARKER));
+  const activeFullRequirements = [...requirementFiles];
+  const activeChangeFiles = recursiveFiles(
+    path.join(repositoryRoot, 'openspec', 'changes'),
+    () => true,
+  );
   const testFiles = directFiles(path.join(repositoryRoot, 'tests'), (name) => name.endsWith('.test.mjs'));
   const scriptFiles = directFiles(
     path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts'),
@@ -175,19 +300,81 @@ export function auditRepositoryFootprint({
   const platformLfsRules = fs.existsSync(attributesPath)
     ? [...fs.readFileSync(attributesPath, 'utf8').matchAll(PLAYWRIGHT_LFS_RULE_PATTERN)].length
     : 0;
+  const junkFiles = repositoryJunkFiles(repositoryRoot);
+  const emptyUiReviewDirectory = fs.existsSync(path.join(repositoryRoot, '.frontend-ui-review'))
+    && !directoryHasFiles(path.join(repositoryRoot, '.frontend-ui-review'));
+  const emptySourceDirectories = emptyManagedDirectories(repositoryRoot);
+  const unreachableScripts = unreachablePluginScripts(repositoryRoot, scriptFiles);
 
   for (const retiredPath of RETIRED_PATHS) {
     if (fs.existsSync(path.join(repositoryRoot, retiredPath))) diagnostics.push(diagnostic('retired_path_present', retiredPath, 1, 0));
+  }
+  if (emptyUiReviewDirectory) diagnostics.push(diagnostic('empty_project_directory', '.frontend-ui-review', 1, 0));
+  for (const relativePath of emptySourceDirectories) diagnostics.push(diagnostic('empty_managed_directory', relativePath, 1, 0));
+  for (const relativePath of junkFiles) diagnostics.push(diagnostic('system_junk_present', relativePath, 1, 0));
+  for (const fileName of unreachableScripts) {
+    diagnostics.push(diagnostic(
+      'unreachable_plugin_script',
+      path.posix.join('plugins/frontend-ai-workflow/scripts', fileName),
+      1,
+      0,
+    ));
+  }
+  for (const retiredPath of RETIRED_SOURCE_PATHS) {
+    if (fs.existsSync(path.join(repositoryRoot, retiredPath))) diagnostics.push(diagnostic('retired_source_present', retiredPath, 1, 0));
+  }
+  const packagePath = path.join(repositoryRoot, 'package.json');
+  if (fs.existsSync(packagePath)) {
+    const scripts = JSON.parse(fs.readFileSync(packagePath, 'utf8')).scripts || {};
+    for (const name of RETIRED_PACKAGE_SCRIPTS) {
+      if (Object.prototype.hasOwnProperty.call(scripts, name)) {
+        diagnostics.push(diagnostic('retired_package_script', `package.json#scripts.${name}`, 1, 0));
+      }
+    }
+  }
+  for (const file of activeChangeFiles) {
+    const relative = normalizePath(path.relative(repositoryRoot, file));
+    if (relative.endsWith('/test-plan.md') || relative.includes('/evidence/')) {
+      diagnostics.push(diagnostic('retired_change_evidence', relative, 1, 0));
+    }
+  }
+  const lifecycleFiles = directFiles(
+    path.join(repositoryRoot, lifecycle.eventDirectory),
+    (name) => /^\d{4}\.jsonl$/u.test(name),
+  );
+  for (const file of lifecycleFiles) {
+    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    for (const [index, line] of lines.entries()) {
+      if (!line.trim()) continue;
+      let event;
+      try {
+        event = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const fields = Object.keys(event).filter((field) => RETIRED_EVENT_FIELDS.has(field));
+      if (fields.length) {
+        diagnostics.push(diagnostic(
+          'retired_lifecycle_field',
+          `${normalizePath(path.relative(repositoryRoot, file))}:${index + 1}:${fields.join(',')}`,
+          fields.length,
+          0,
+        ));
+      }
+    }
+  }
+  for (const file of requirementFiles) {
+    if (fs.readFileSync(file, 'utf8').includes(REQUIREMENT_STUB_MARKER)) {
+      diagnostics.push(diagnostic('retired_requirement_stub', path.relative(repositoryRoot, file), 1, 0));
+    }
   }
   for (const prefix of trackedRuntimePrefixes) {
     const matches = tracked.filter((relativePath) => relativePath.startsWith(prefix));
     if (matches.length) diagnostics.push(diagnostic('tracked_runtime_artifact', prefix, matches.length, 0));
   }
-  if (lifecycle.lifecycleMode === 'v2') {
-    for (const prefix of ['outputs/', 'requirements/archive/', 'openspec/changes/archive/', '.frontend-ui-review/runs/']) {
-      const matches = tracked.filter((relativePath) => relativePath.startsWith(prefix));
-      if (matches.length) diagnostics.push(diagnostic('retired_lifecycle_path', prefix, matches.length, 0));
-    }
+  for (const prefix of ['outputs/', 'requirements/archive/', 'openspec/changes/archive/', '.frontend-ui-review/runs/', '.workflow-history/evidence/']) {
+    const matches = tracked.filter((relativePath) => relativePath.startsWith(prefix));
+    if (matches.length) diagnostics.push(diagnostic('retired_lifecycle_path', prefix, matches.length, 0));
   }
   if (platformAssetFiles.length > REPOSITORY_RETIREMENT_LIMITS.platformAssetFiles) {
     diagnostics.push(diagnostic(
@@ -274,9 +461,9 @@ export function auditRepositoryFootprint({
   }
   if (localSpecReferences.length) {
     diagnostics.push({
-      code: lifecycle.lifecycleMode === 'v2' ? 'local_spec_reference' : 'legacy_local_spec_reference',
+      code: 'local_spec_reference',
       target: 'openspec/specs',
-      status: lifecycle.lifecycleMode === 'v2' ? 'failed' : 'warning',
+      status: 'failed',
       actual: localSpecReferences.length,
       budget: 0,
       limit: 0,
@@ -313,6 +500,9 @@ export function auditRepositoryFootprint({
     testTotalLines,
     ambiguousTestLocators: [...testLocators.values()].filter((locations) => locations.length > 1).length,
     localSpecReferences: localSpecReferences.length,
+    systemJunkFiles: junkFiles.length,
+    emptyManagedDirectories: emptySourceDirectories.length,
+    unreachablePluginScripts: unreachableScripts.length,
   };
   return {
     ok: blockingDiagnostics.length === 0,

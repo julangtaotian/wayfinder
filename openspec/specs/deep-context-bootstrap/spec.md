@@ -1,7 +1,7 @@
 # deep-context-bootstrap Specification
 
 ## Purpose
-TBD - created by archiving change add-deep-project-analysis. Update Purpose after archive.
+定义深度初始化的预览、授权写入与受管上下文更新边界，使大范围项目理解保持可审查且不覆盖项目自有内容。
 
 ## Requirements
 

@@ -2,9 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const WAYFINDER_PATH = 'wayfinder/frontend.md';
-export const LEGACY_WORKFLOW_PATH = '.ai-workflow.yaml';
-export const LEGACY_FRONTEND_PATH = 'docs/ai-context/frontend.md';
-export const LEGACY_REQUIREMENT_TEMPLATE_PATH = 'requirements/_template.md';
+export const RETIRED_WORKFLOW_PATHS = [
+  '.ai-workflow.yaml',
+  'docs/ai-context/frontend.md',
+  'requirements/_template.md',
+];
 export const WAYFINDER_BLOCKS = ['meta', 'scope', 'analysis'];
 
 export function markerPatterns(kind, block = null) {
@@ -67,14 +69,15 @@ export function readWayfinderSettings(root) {
   return readSettingsFile(path.join(root, WAYFINDER_PATH), 'html', 'meta');
 }
 
-export function readLegacyWorkflowSettings(root) {
-  return readSettingsFile(path.join(root, LEGACY_WORKFLOW_PATH), 'yaml');
+export function detectWorkflowLayout(root) {
+  if (detectRetiredWorkflowPaths(root).length) return 'retired';
+  if (fs.existsSync(path.join(root, WAYFINDER_PATH))) return 'wayfinder';
+  return 'none';
 }
 
-export function detectWorkflowLayout(root) {
-  if (fs.existsSync(path.join(root, WAYFINDER_PATH))) return 'wayfinder';
-  if (fs.existsSync(path.join(root, LEGACY_WORKFLOW_PATH))) return 'legacy';
-  return 'none';
+// 当前版本只识别退役路径的存在，不读取或解释旧格式内容。
+export function detectRetiredWorkflowPaths(root) {
+  return RETIRED_WORKFLOW_PATHS.filter((relativePath) => fs.existsSync(path.join(root, relativePath)));
 }
 
 export function hasManagedBlocks(content, kind, blocks) {
@@ -84,12 +87,4 @@ export function hasManagedBlocks(content, kind, blocks) {
   } catch {
     return false;
   }
-}
-
-export function isOnlyManagedLegacyMetadata(content) {
-  const range = findManagedRange(content, 'yaml');
-  const outside = `${content.slice(0, range.start)}${content.slice(range.end)}`
-    .replace(/# 可在此处追加项目自己的工作流元数据。/g, '')
-    .trim();
-  return outside === '';
 }

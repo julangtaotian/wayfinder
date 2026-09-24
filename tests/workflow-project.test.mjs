@@ -8,8 +8,6 @@ import { inspectProject } from '../plugins/frontend-ai-workflow/scripts/inspect-
 import { runBootstrap } from '../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
 import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-project.mjs';
-import { validateRequirementDecisions } from '../plugins/frontend-ai-workflow/scripts/validate-requirement-decisions.mjs';
-import { previewRequirementUpgrade } from '../plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs';
 import { parseStructureValidationArgs } from '../plugins/frontend-ai-workflow/scripts/validate-structure.mjs';
 import * as verificationRunner from '../scripts/verify.mjs';
 import { buildTestCommand } from '../scripts/test-groups.mjs';
@@ -21,9 +19,6 @@ import {
   SUPPORTED_PROJECT_MATRIX,
   expectedScriptCommand,
   createMatrixFixture,
-  initializeGitBaseline,
-  renderDeliveryRequirement,
-  renderStateMatrixRequirement,
 } from './helpers/workflow-fixtures.mjs';
 
 const {
@@ -137,129 +132,6 @@ test('命令语义区分默认构建、交付构建和未验证 lint', (t) => {
   assert.equal(inspectProject(root).commandSemantics.lint.status, 'verified');
 });
 
-test('完成阶段校验交付证据、人工视觉和测试 Git 基线', (t) => {
-  const root = createVueFixture(t);
-  const requirementPath = path.join(root, 'requirements', 'REQ-2026-001-delivery.md');
-  const changePath = path.join(root, 'openspec', 'changes', 'delivery');
-  initializeGitBaseline(root);
-  writeFixtureFile(root, 'openspec/changes/delivery/tasks.md', '- [x] [D-01] [A-01] 完成交付门槛。\n');
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement());
-
-  const complete = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
-  assert.equal(complete.ok, true);
-  assert.equal(complete.evidenceFormat, 'enhanced');
-  assert.equal(complete.testFileStrategy.baselineAvailable, true);
-  assert.match(complete.warnings.join('\n'), /缺少交互状态矩阵/);
-
-  // 完成门槛必须同时核对需求验收勾选和变更任务，不允许只依赖验证记录。
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
-    acceptanceChecked: false,
-  }));
-  const pendingAcceptance = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
-  assert.equal(pendingAcceptance.ok, false);
-  assert.match(pendingAcceptance.errors.join('\n'), /存在未勾选验收：A-01/);
-
-  writeFixtureFile(root, 'openspec/changes/delivery/tasks.md', '- [ ] [D-01] [A-01] 完成交付门槛。\n');
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement());
-  const pendingTask = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
-  assert.equal(pendingTask.ok, false);
-  assert.match(pendingTask.errors.join('\n'), /存在未完成任务/);
-  writeFixtureFile(root, 'openspec/changes/delivery/tasks.md', '- [x] [D-01] [A-01] 完成交付门槛。\n');
-
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
-    includeManual: true,
-    manualEvidence: 'artifacts/dashboard-note.txt',
-  }));
-  const missingVisual = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
-  assert.equal(missingVisual.ok, false);
-  assert.match(missingVisual.errors.join('\n'), /缺少视口或设备、检查项和截图或录屏证据/);
-
-  // CI、文案和结论边界等非视觉人工复核不应被强制伪造截图，但必须保留具体复核动作与持久证据。
-  writeFixtureFile(root, 'artifacts/review.md', '# 人工复核记录\n');
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
-    includeManual: true,
-    manualEnvironment: '复核项：核对五平台任务名称、提交 SHA 与最终状态',
-    manualEvidence: 'artifacts/review.md',
-  }));
-  const nonVisualManual = validateRequirementDecisions(requirementPath, { changePath, stage: 'complete' });
-  assert.equal(nonVisualManual.ok, true, nonVisualManual.errors.join('\n'));
-
-  writeFixtureFile(root, 'tests/new.spec.js', "export default 'new';\n");
-  writeFixtureFile(root, 'requirements/REQ-2026-001-delivery.md', renderDeliveryRequirement({
-    status: '实施中',
-    testPath: 'tests/new.spec.js',
-  }));
-  const untrackedReuse = validateRequirementDecisions(requirementPath, { changePath, stage: 'implement' });
-  assert.equal(untrackedReuse.ok, false);
-  assert.match(untrackedReuse.errors.join('\n'), /复用测试文件未受 Git 基线跟踪/);
-
-  const noGitRoot = createVueFixture(t);
-  const noGitRequirement = path.join(noGitRoot, 'requirements', 'REQ-2026-001-no-git.md');
-  writeFixtureFile(noGitRoot, 'tests/existing.spec.js', "export default 'existing';\n");
-  writeFixtureFile(noGitRoot, 'openspec/changes/delivery/tasks.md', '- [x] [D-01] [A-01] 完成交付门槛。\n');
-  writeFixtureFile(noGitRoot, 'requirements/REQ-2026-001-no-git.md', renderDeliveryRequirement({
-    status: '实施中',
-  }));
-  const noGit = validateRequirementDecisions(noGitRequirement, {
-    changePath: path.join(noGitRoot, 'openspec', 'changes', 'delivery'),
-    stage: 'implement',
-  });
-  assert.equal(noGit.ok, true);
-  assert.match(noGit.warnings.join('\n'), /无法确认测试文件 Git 基线/);
-});
-
-test('交互状态矩阵覆盖六类状态并兼容历史需求', (t) => {
-  const root = createVueFixture(t);
-  const requirementPath = path.join(root, 'requirements', 'REQ-2026-003-state-matrix.md');
-  writeFixtureFile(root, 'requirements/REQ-2026-003-state-matrix.md', renderStateMatrixRequirement());
-
-  const valid = validateRequirementDecisions(requirementPath, { stage: 'plan' });
-  assert.equal(valid.ok, true);
-  assert.deepEqual(valid.interactionStateMatrix, { present: true, rows: 6 });
-
-  writeFixtureFile(root, 'requirements/REQ-2026-003-state-matrix.md', renderStateMatrixRequirement({
-    unmountReason: '—',
-  }));
-  const missingReason = validateRequirementDecisions(requirementPath, { stage: 'plan' });
-  assert.equal(missingReason.ok, false);
-  assert.match(missingReason.errors.join('\n'), /标记为“不适用”时必须说明理由/);
-
-  writeFixtureFile(root, 'requirements/REQ-2026-003-state-matrix.md', renderStateMatrixRequirement({ includeMatrix: false }));
-  const legacy = validateRequirementDecisions(requirementPath, { stage: 'implement' });
-  assert.equal(legacy.ok, true);
-  assert.deepEqual(legacy.interactionStateMatrix, { present: false, rows: 0 });
-});
-
-test('旧需求升级预览只报告活跃缺口且不改写源文件', (t) => {
-  const root = createVueFixture(t);
-  const legacyPath = path.join(root, 'requirements', 'REQ-2026-001-legacy.md');
-  const completePath = path.join(root, 'requirements', 'REQ-2026-002-complete.md');
-  const legacyContent = '# 历史需求\n\n仅有旧格式内容。\n';
-  const completeContent = '# 已验收需求\n\n## 基本信息\n\n- 状态：已验收\n\n## 决策台账\n\n| ID | 决策项 | 状态 | 取值 | 来源 |\n| --- | --- | --- | --- | --- |\n| D-01 | 示例 | 已确认 | 保持 | 用户确认 |\n\n## 验收—证据映射\n\n| 验收ID | 验收点 | 关联决策 | 验证方式 | 证据位置 | 断言结果 |\n| --- | --- | --- | --- | --- | --- |\n| A-01 | 示例 | D-01 | 自动 | tests/example.spec.js | 通过 |\n';
-  writeFixtureFile(root, 'requirements/REQ-2026-001-legacy.md', legacyContent);
-  writeFixtureFile(root, 'requirements/REQ-2026-002-complete.md', completeContent);
-  writeFixtureFile(root, 'requirements/README.md', '# 忽略的非标准文件\n');
-
-  const preview = previewRequirementUpgrade(root);
-  assert.equal(preview.ok, true);
-  assert.equal(preview.write, false);
-  assert.equal(preview.requirements.length, 2);
-  assert.equal(preview.activeRequirements.length, 1);
-  assert.deepEqual(preview.issues, [{
-    path: 'requirements/REQ-2026-001-legacy.md',
-    status: null,
-    statusKind: 'missing',
-    missing: ['decisionLedger', 'evidenceMapping', 'changeScope', 'revisionHistory', 'requirementStatus'],
-  }]);
-  assert.equal(fs.readFileSync(legacyPath, 'utf8'), legacyContent);
-  assert.equal(fs.readFileSync(completePath, 'utf8'), completeContent);
-
-  const emptyRoot = createVueFixture(t);
-  const empty = previewRequirementUpgrade(emptyRoot);
-  assert.deepEqual(empty.requirements, []);
-  assert.deepEqual(empty.issues, []);
-});
-
 test('插件只公开团队自有技能', () => {
   const skills = fs.readdirSync(path.join(pluginRoot, 'skills'), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -271,7 +143,7 @@ test('插件只公开团队自有技能', () => {
 });
 
 test('[TC-01] 验证作用域测试集合完整分区', (t) => {
-  const fixturesRoot = path.resolve('outputs', 'ci-validation-cost', 'test-fixtures');
+  const fixturesRoot = path.resolve('.frontend-ai-workflow', 'runs', 'ci-validation-cost', 'test-fixtures');
   fs.mkdirSync(fixturesRoot, { recursive: true });
   const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'test-groups-')));
   t.after(() => fs.rmSync(verificationRoot, { recursive: true, force: true }));
@@ -279,8 +151,12 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   for (const name of [
     'ordinary.test.mjs',
     'new-feature.test.mjs',
+    'platform-marketplace-install.test.mjs',
+    'platform-package-runtime.test.mjs',
+    'project-platform-profile.test.mjs',
     'ui-review-automation.test.mjs',
     'ui-review-platform-runtime.test.mjs',
+    'workflow-trust-boundary.test.mjs',
   ]) {
     fs.writeFileSync(path.join(verificationRoot, 'tests', name), 'export {};\n');
   }
@@ -291,13 +167,21 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   assert.deepEqual(all, [
     'tests/new-feature.test.mjs',
     'tests/ordinary.test.mjs',
+    'tests/platform-marketplace-install.test.mjs',
+    'tests/platform-package-runtime.test.mjs',
+    'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',
     'tests/ui-review-platform-runtime.test.mjs',
+    'tests/workflow-trust-boundary.test.mjs',
   ]);
   assert.deepEqual(shared, ['tests/new-feature.test.mjs', 'tests/ordinary.test.mjs']);
   assert.deepEqual(platform, [
+    'tests/platform-marketplace-install.test.mjs',
+    'tests/platform-package-runtime.test.mjs',
+    'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',
     'tests/ui-review-platform-runtime.test.mjs',
+    'tests/workflow-trust-boundary.test.mjs',
   ]);
   assert.deepEqual([...new Set([...shared, ...platform])].sort(), all);
   assert.deepEqual(shared.filter((file) => platform.includes(file)), []);
@@ -312,6 +196,14 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
     (error) => error.code === 'test_group_expected_file_missing' && error.group === 'platform',
   );
   fs.rmSync(path.join(verificationRoot, 'tests', 'ui-review-platform-runtime.test.mjs'));
+  for (const name of [
+    'platform-marketplace-install.test.mjs',
+    'platform-package-runtime.test.mjs',
+    'project-platform-profile.test.mjs',
+    'workflow-trust-boundary.test.mjs',
+  ]) {
+    fs.rmSync(path.join(verificationRoot, 'tests', name));
+  }
   assert.throws(
     () => buildTestCommand({ root: verificationRoot, group: 'platform' }),
     (error) => error.code === 'test_group_empty',
@@ -319,12 +211,20 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
 });
 
 test('[TC-02] 统一验证作用域与生命周期', (t) => {
-  const fixturesRoot = path.resolve('outputs', 'ci-validation-cost', 'test-fixtures');
+  const fixturesRoot = path.resolve('.frontend-ai-workflow', 'runs', 'ci-validation-cost', 'test-fixtures');
   fs.mkdirSync(fixturesRoot, { recursive: true });
   const verificationRoot = fs.realpathSync(fs.mkdtempSync(path.join(fixturesRoot, 'verification-runner-')));
   t.after(() => fs.rmSync(verificationRoot, { recursive: true, force: true }));
   fs.mkdirSync(path.join(verificationRoot, 'tests'), { recursive: true });
-  for (const name of ['ordinary.test.mjs', 'ui-review-automation.test.mjs', 'ui-review-platform-runtime.test.mjs']) {
+  for (const name of [
+    'ordinary.test.mjs',
+    'platform-marketplace-install.test.mjs',
+    'platform-package-runtime.test.mjs',
+    'project-platform-profile.test.mjs',
+    'ui-review-automation.test.mjs',
+    'ui-review-platform-runtime.test.mjs',
+    'workflow-trust-boundary.test.mjs',
+  ]) {
     fs.writeFileSync(path.join(verificationRoot, 'tests', name), 'export {};\n');
   }
 
@@ -332,11 +232,9 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.deepEqual(allSteps.map((step) => step.id), [
     'static',
     'footprint',
-    'lifecycle',
     'tests',
     'structure',
     'openspec',
-    'openspec-archived',
     'runtime-version',
     'runtime-integrity',
   ]);
@@ -344,22 +242,18 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.deepEqual(sharedSteps.map((step) => step.id), [
     'static',
     'footprint',
-    'lifecycle',
     'tests',
     'structure',
     'openspec',
-    'openspec-archived',
     'runtime-version',
     'runtime-integrity',
   ]);
   assert.deepEqual(buildVerificationSteps(verificationRoot, { scope: 'platform' }).map((step) => step.id), [
     'tests',
+    'frontend-test-runtime-smoke',
     'playwright-integrity',
     'playwright-smoke',
   ]);
-  const requiredBaseStep = buildVerificationSteps(verificationRoot, { scope: 'shared', requireLifecycleBase: true })
-    .find((step) => step.id === 'lifecycle');
-  assert.equal(requiredBaseStep.args.includes('--require-base'), true);
   const allStructureArgs = allSteps.find((step) => step.id === 'structure').args;
   const sharedStructureArgs = sharedSteps.find((step) => step.id === 'structure').args;
   assert.equal(path.basename(allStructureArgs[0]), 'validate-structure.mjs');
@@ -414,8 +308,8 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   assert.equal(failed.code, 'verification_step_failed');
   assert.equal(failed.scope, 'all');
   assert.equal(failed.failedStep, 'openspec');
-  assert.deepEqual(failed.completed, ['static', 'footprint', 'lifecycle', 'tests', 'structure']);
-  assert.deepEqual(executed, ['static', 'footprint', 'lifecycle', 'tests', 'structure', 'openspec']);
+  assert.deepEqual(failed.completed, ['static', 'footprint', 'tests', 'structure']);
+  assert.deepEqual(executed, ['static', 'footprint', 'tests', 'structure', 'openspec']);
   assert.deepEqual(lifecycle, ['prepare', 'cleanup']);
   const expectedTempRoot = path.join(verificationRoot, '.frontend-ai-workflow', 'runs', 'verify-runtime', 'tmp');
   assert.ok(tempRoots.every((tempRoot) => tempRoot === expectedTempRoot));
@@ -437,7 +331,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     ok: true,
     code: 'verification_passed',
     scope: 'platform',
-    completed: ['tests', 'playwright-integrity', 'playwright-smoke'],
+    completed: ['tests', 'frontend-test-runtime-smoke', 'playwright-integrity', 'playwright-smoke'],
     failedStep: null,
     status: 0,
   });
@@ -446,7 +340,7 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
 });
 
 test('[TC-06] 统一验证隔离仓库内临时 fixture 的父 Git 状态', (t) => {
-  const outputsRoot = path.resolve('outputs');
+  const outputsRoot = path.resolve('.frontend-ai-workflow', 'runs', 'workflow-project-fixtures');
   fs.mkdirSync(outputsRoot, { recursive: true });
   const ceilingRoot = fs.mkdtempSync(path.join(outputsRoot, 'verify-git-ceiling-'));
   t.after(() => fs.rmSync(ceilingRoot, { recursive: true, force: true }));
@@ -493,10 +387,10 @@ test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /sample-vue-app/);
   assert.match(agents, /npm run build/);
-  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /交付构建命令：npm run build/);
-  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /静态检查命令：未配置（语义：missing）/);
-  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /operations:/);
-  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /完成前必须通过插件预览/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /交付构建：npm run build/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /Lint：未配置（missing）/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /rules:/);
+  assert.match(fs.readFileSync(path.join(root, 'openspec/config.yaml'), 'utf8'), /最后一批任务包含最窄验证/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /openspecVersion: "1\.9\.0"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /layout: "wayfinder"/);
   assert.match(fs.readFileSync(path.join(root, 'wayfinder/frontend.md'), 'utf8'), /frontend-ai-workflow:facts:start/);

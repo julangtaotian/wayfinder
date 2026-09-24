@@ -1,173 +1,81 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
-import { runOpenSpecSync } from './openspec-cli.mjs';
-import { validateRequirementDecisions } from './validate-requirement-decisions.mjs';
-import { validateTestPlan } from './validate-test-plan.mjs';
 
-const CHECK_STAGES = new Set(['implement', 'precomplete']);
+import { statusComplexChange, validateComplexChange } from './complex-change.mjs';
+import { resolveSafeProjectPath } from './project-path-safety.mjs';
 
-function parseEngineJson(output) {
-  const start = String(output || '').indexOf('{');
-  if (start < 0) return null;
-  try {
-    return JSON.parse(output.slice(start));
-  } catch {
-    return null;
-  }
+const VERIFICATION_LEVELS = new Set(['None', 'Focused', 'Targeted UI', 'Full UI']);
+const VERIFICATION_SUMMARY_MAX_BYTES = 16 * 1024;
+
+export function verificationSummaryTarget(root, changeName) {
+  return path.join(root, '.frontend-ai-workflow', 'runs', changeName, 'verification-summary.json');
 }
 
-function resolveInsideRoot(root, target, label) {
-  const resolved = path.resolve(root, target);
-  const relative = path.relative(root, resolved);
-  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
-    throw new Error(`${label}越出项目范围：${target}`);
-  }
-  return resolved;
+function summaryFailure(code, target, message) {
+  return { ok: false, code, status: 'blocked', target, message };
 }
 
-function resolveChangePath(root, change) {
-  if (!change) throw new Error('必须提供变更名称或路径');
-  const candidate = change.includes(path.sep)
-    ? resolveInsideRoot(root, change, '变更路径')
-    : path.join(root, 'openspec', 'changes', change);
-  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) {
-    throw new Error(`变更目录不存在：${candidate}`);
-  }
-  return candidate;
-}
-
-function comparableFilesystemPath(value) {
-  let resolved = path.resolve(value);
-  try {
-    resolved = fs.realpathSync.native(resolved);
-  } catch {
-    try {
-      resolved = fs.realpathSync(resolved);
-    } catch {
-      // 路径不存在时仍保留绝对路径比较，由后续安全边界和存在性检查负责阻塞。
-    }
-  }
-  return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
-}
-
-function taskProgress(changePath) {
-  const tasksPath = path.join(changePath, 'tasks.md');
-  if (!fs.existsSync(tasksPath)) return { total: 0, complete: 0, remaining: 0 };
-  const tasks = [...fs.readFileSync(tasksPath, 'utf8').matchAll(/^\s*-\s*\[([ xX])\]\s+(.+)$/gmu)];
-  const complete = tasks.filter((match) => match[1].toLowerCase() === 'x').length;
-  return { total: tasks.length, complete, remaining: tasks.length - complete };
-}
-
-function runEngineCheck(root, args, label, errors) {
-  const result = runOpenSpecSync(args, { cwd: root, encoding: 'utf8' });
-  if (!result.available || result.status !== 0) {
-    errors.push(`${label}失败：${(result.stderr || result.stdout || result.error?.message || '未知错误').trim()}`);
-    return { ok: false, executed: true, data: parseEngineJson(result.stdout || result.stderr) };
-  }
-  return { ok: true, executed: true, data: parseEngineJson(result.stdout) };
-}
-
-// OpenSpec 的 JSON 根信息属于安全边界，不能只把它当作展示字段。
-export function validatePlanningRoot(root, data, label, errors) {
-  if (!data?.root || typeof data.root.path !== 'string' || typeof data.root.source !== 'string') {
-    errors.push(`${label}缺少可核验的规划根信息`);
-    return;
-  }
-  if (data.root.source === 'global_default') {
-    errors.push(`${label}解析到未经明确选择的机器默认 Store：${data.root.path}`);
-    return;
-  }
-  if (comparableFilesystemPath(data.root.path) !== comparableFilesystemPath(root)) {
-    errors.push(`${label}规划根与当前项目不一致：${data.root.path}`);
-  }
-}
-
-function hasSkipSpecsMetadata(changePath) {
-  const metadataPath = path.join(changePath, '.openspec.yaml');
-  if (!fs.existsSync(metadataPath)) return false;
-  return /^skip_specs:\s*true\s*(?:#.*)?$/mu.test(fs.readFileSync(metadataPath, 'utf8'));
-}
-
-export function requiresTestPlan(changePath) {
-  const metadataPath = path.join(changePath, '.openspec.yaml');
-  if (!fs.existsSync(metadataPath)) return false;
-  return /^test_plan:\s*required\s*(?:#.*)?$/mu.test(fs.readFileSync(metadataPath, 'utf8'));
-}
-
-export function validateDeclaredTestPlan({ changePath, requirementPath, stage }) {
-  const required = requiresTestPlan(changePath);
-  if (!required) return { required, validation: null, errors: [], warnings: [] };
-  const planPath = path.join(changePath, 'test-plan.md');
-  if (!fs.existsSync(planPath)) {
-    return {
-      required,
-      validation: null,
-      errors: [`变更声明 test_plan: required，但测试方案不存在：${planPath}`],
-      warnings: [],
-    };
-  }
-  const validation = validateTestPlan(planPath, {
-    requirement: requirementPath,
-    change: changePath,
-    stage: stage === 'precomplete' ? 'complete' : 'implement',
+// 完成门禁只读取单个有界临时摘要，不把命令日志、截图或证据路径复制进生命周期事件。
+export function readTemporaryVerificationSummary(root, changeName) {
+  const target = verificationSummaryTarget(root, changeName);
+  const checked = resolveSafeProjectPath(root, target, '临时验证摘要', {
+    allowAbsolute: true,
+    allowDirectory: false,
   });
-  return { required, validation, errors: validation.errors, warnings: validation.warnings };
-}
-
-function hasSkipSpecsDecision(requirementPath) {
-  const content = fs.readFileSync(requirementPath, 'utf8');
-  const heading = /^##\s+决策台账\s*$/mu.exec(content);
-  if (!heading) return false;
-  const afterHeading = content.slice(heading.index + heading[0].length);
-  const nextHeading = afterHeading.search(/^##\s+/mu);
-  const section = nextHeading < 0 ? afterHeading : afterHeading.slice(0, nextHeading);
-  return section.split(/\r?\n/u).some((line) => (
-    line.trim().startsWith('|')
-    && /skip_specs:\s*true/iu.test(line)
-    && /(不改变可观察行为|不影响可观察行为|no observable behavior)/iu.test(line)
-    && /(已确认|项目默认)/u.test(line)
-  ));
-}
-
-export function validatePlanningArtifacts(statusData, changePath, requirementPath, errors) {
-  const skipSpecsMetadata = hasSkipSpecsMetadata(changePath);
-  const skipSpecsAuthorized = skipSpecsMetadata && hasSkipSpecsDecision(requirementPath);
-  const artifacts = Array.isArray(statusData?.artifacts) ? statusData.artifacts : [];
-  // 1.8.0 将规划完成与实施进度分开；旧响应继续通过兼容别名读取。
-  const isPlanningComplete = statusData?.isPlanningComplete ?? statusData?.isComplete;
-  if (!statusData) {
-    errors.push('规划状态没有返回可解析的 JSON');
-  } else if (isPlanningComplete !== true) {
-    errors.push('规划尚未完成：OpenSpec isPlanningComplete 必须为 true');
+  if (!checked.exists) {
+    return summaryFailure('verification_summary_missing', checked.projectPath, '缺少临时验证摘要');
   }
-  if (!artifacts.length) errors.push('规划状态没有返回 artifact 列表');
-  if (skipSpecsMetadata && !skipSpecsAuthorized) {
-    errors.push('skip_specs: true 缺少需求决策台账中“已确认且不改变可观察行为”的授权');
+  const bytes = fs.statSync(checked.absolutePath).size;
+  if (bytes > VERIFICATION_SUMMARY_MAX_BYTES) {
+    return summaryFailure(
+      'verification_summary_too_large',
+      checked.projectPath,
+      `临时验证摘要超过 ${VERIFICATION_SUMMARY_MAX_BYTES} 字节`,
+    );
   }
-  const specPaths = statusData?.artifactPaths?.specs?.existingOutputPaths;
-  if (skipSpecsMetadata && Array.isArray(specPaths) && specPaths.length > 0) {
-    errors.push('skip_specs: true 与已存在的 delta specs 冲突');
+  let value;
+  try {
+    value = JSON.parse(fs.readFileSync(checked.absolutePath, 'utf8'));
+  } catch (error) {
+    return summaryFailure('verification_summary_invalid', checked.projectPath, `临时验证摘要无法解析：${error.message}`);
   }
-  for (const artifact of artifacts) {
-    if (artifact?.status === 'done') continue;
-    if (
-      artifact?.id === 'specs'
-      && artifact.status === 'skipped'
-      && skipSpecsMetadata
-      && skipSpecsAuthorized
-    ) {
-      continue;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return summaryFailure('verification_summary_invalid', checked.projectPath, '临时验证摘要必须是对象');
+  }
+  if (value.schemaVersion !== 1 || value.changeId !== changeName || !VERIFICATION_LEVELS.has(value.verificationLevel)) {
+    return summaryFailure('verification_summary_invalid', checked.projectPath, '临时验证摘要的版本、变更标识或验证级别无效');
+  }
+  if (!Array.isArray(value.outcomes) || value.outcomes.length === 0 || value.outcomes.length > 64) {
+    return summaryFailure('verification_summary_invalid', checked.projectPath, 'Outcome Gate 必须包含 1 到 64 个验收结果');
+  }
+  for (const [index, outcome] of value.outcomes.entries()) {
+    const valid = outcome
+      && typeof outcome === 'object'
+      && !Array.isArray(outcome)
+      && typeof outcome.acceptance === 'string'
+      && outcome.acceptance.trim().length > 0
+      && outcome.acceptance.length <= 300
+      && outcome.status === 'passed'
+      && typeof outcome.observation === 'string'
+      && outcome.observation.trim().length > 0
+      && outcome.observation.length <= 500;
+    if (!valid) {
+      return summaryFailure(
+        'outcome_gate_failed',
+        `${checked.projectPath}#outcomes[${index}]`,
+        `Outcome Gate 第 ${index + 1} 项未通过或缺少可观察结果`,
+      );
     }
-    errors.push(`规划 artifact 未完成或状态非法：${artifact?.id || 'unknown'}=${artifact?.status || 'missing'}`);
   }
   return {
-    isPlanningComplete: isPlanningComplete === true,
-    isComplete: isPlanningComplete === true,
-    artifacts: artifacts.map((artifact) => ({ id: artifact?.id, status: artifact?.status })),
-    skipSpecsMetadata,
-    skipSpecsAuthorized,
+    ok: true,
+    code: 'verification_summary_valid',
+    status: 'passed',
+    path: checked.absolutePath,
+    projectPath: checked.projectPath,
+    verificationLevel: value.verificationLevel,
+    outcomeCount: value.outcomes.length,
   };
 }
 
@@ -177,121 +85,57 @@ export function archiveTarget(root, changeName) {
   return path.join(root, 'openspec', 'changes', 'archive', archiveName);
 }
 
-// 变更检查只组合已有事实和内置严格校验，不执行目标项目测试或构建。
-export function checkChange({
-  target = process.cwd(),
-  requirement,
-  change,
-  stage = 'implement',
-} = {}) {
-  if (!CHECK_STAGES.has(stage)) throw new Error(`检查阶段无效：${stage}`);
-  const root = resolveProjectRoot(target);
-  assertSafeProjectRoot(root);
-  const requirementPath = resolveInsideRoot(root, requirement, '需求路径');
-  if (!fs.existsSync(requirementPath)) throw new Error(`需求文件不存在：${requirementPath}`);
-  const changePath = resolveChangePath(root, change);
-  const changeName = path.basename(changePath);
-  const errors = [];
-  const warnings = [];
-  const requirementValidation = validateRequirementDecisions(requirementPath, { changePath, stage });
-  errors.push(...requirementValidation.errors);
-  warnings.push(...requirementValidation.warnings);
-  const declaredTestPlan = validateDeclaredTestPlan({ changePath, requirementPath, stage });
-  const testPlanRequired = declaredTestPlan.required;
-  const testPlanValidation = declaredTestPlan.validation;
-  errors.push(...declaredTestPlan.errors);
-  warnings.push(...declaredTestPlan.warnings);
-
-  const status = runEngineCheck(root, ['status', '--change', changeName, '--json'], '规划状态检查', errors);
-  if (status.ok) validatePlanningRoot(root, status.data, '规划状态检查', errors);
-  const planningArtifacts = validatePlanningArtifacts(status.data, changePath, requirementPath, errors);
-  const strictValidation = runEngineCheck(
-    root,
-    ['validate', changeName, '--type', 'change', '--strict', '--json', '--no-interactive'],
-    '严格 OpenSpec 校验',
-    errors,
-  );
-  if (strictValidation.ok) validatePlanningRoot(root, strictValidation.data, '严格 OpenSpec 校验', errors);
-  const progress = taskProgress(changePath);
+// 复杂通道只检查一个 OpenSpec 身份；需求正文、测试计划和证据文件不再是前置条件。
+export function checkChange({ target = process.cwd(), change, stage = 'implement' } = {}, injected = {}) {
+  if (!['implement', 'precomplete'].includes(stage)) throw new Error(`检查阶段无效：${stage}`);
+  const status = statusComplexChange({ target, change }, injected);
+  const validation = validateComplexChange({ target, change }, injected);
+  const archivePath = archiveTarget(validation.root, change);
+  const errors = [
+    ...status.blockers.map((item) => item.message),
+    ...validation.diagnostics.map((item) => item.message),
+  ];
   let archive = null;
-  let archiveInstructions = null;
+  let verificationSummary = null;
   if (stage === 'precomplete') {
-    const instructionResult = runEngineCheck(
-      root,
-      ['instructions', 'archive', '--change', changeName, '--json'],
-      '归档指令检查',
-      errors,
-    );
-    if (instructionResult.ok) validatePlanningRoot(root, instructionResult.data, '归档指令检查', errors);
-    archiveInstructions = instructionResult.data;
-    const targetPath = archiveTarget(root, changeName);
-    const available = !fs.existsSync(targetPath);
-    if (!available) errors.push(`归档目标已存在：${targetPath}`);
-    archive = { available, targetPath };
+    const available = !fs.existsSync(archivePath);
+    if (!available) errors.push(`临时归档目标已存在：${archivePath}`);
+    if (validation.progress.remaining > 0) errors.push(`仍有 ${validation.progress.remaining} 项任务未完成`);
+    verificationSummary = (injected.readTemporaryVerificationSummary || readTemporaryVerificationSummary)(validation.root, change);
+    if (!verificationSummary.ok) errors.push(verificationSummary.message);
+    archive = { available, targetPath: archivePath };
   }
-
   return {
     ok: errors.length === 0,
-    level: stage === 'precomplete' ? 'delivery' : 'change',
-    root,
-    requirementPath,
-    changePath,
-    changeName,
+    code: errors.length ? 'complex_check_failed' : 'complex_check_passed',
+    status: errors.length ? 'blocked' : 'passed',
+    root: validation.root,
+    changePath: validation.changePath,
+    changeName: change,
     stage,
-    commandEvidence: {
-      projectCommands: { status: 'detected', executed: false },
-      verificationRecords: {
-        status: 'recorded',
-        executed: false,
-        persistentFilesVerified: requirementValidation.evidenceFiles?.verifiedFiles || 0,
-      },
-      verificationEvidence: {
-        status: requirementValidation.evidenceFiles?.required
-          ? (requirementValidation.evidenceFiles?.diagnostics?.some((item) => item.status === 'failed') ? 'failed' : 'passed')
-          : 'legacy-compatible',
-        required: requirementValidation.evidenceFiles?.required === true,
-        executed: false,
-        diagnostics: requirementValidation.evidenceFiles?.diagnostics || [],
-      },
-      openSpecStatus: { status: status.ok ? 'passed' : 'failed', executed: true },
-      openSpecStrictValidation: { status: strictValidation.ok ? 'passed' : 'failed', executed: true },
-      testPlan: {
-        status: !testPlanRequired ? 'not-required' : (testPlanValidation?.ok ? 'passed' : 'failed'),
-        executed: testPlanRequired && Boolean(testPlanValidation),
-      },
-      archiveInstructions: {
-        status: stage !== 'precomplete' ? 'not-run' : archiveInstructions ? 'passed' : 'failed',
-        executed: stage === 'precomplete',
-      },
-    },
-    requirementValidation,
-    testPlanRequired,
-    testPlanValidation,
-    planningStatus: status.data,
-    planningArtifacts,
-    archiveInstructions,
-    strictValidation: strictValidation.data,
-    progress,
+    progress: validation.progress,
+    artifacts: status.artifacts,
+    blockers: status.blockers,
+    diagnostics: validation.diagnostics,
+    verificationSummary,
     archive,
     errors,
-    warnings,
+    warnings: [],
   };
 }
 
 function parseArgs(argv) {
-  const args = { target: process.cwd(), requirement: null, change: null, stage: 'implement' };
+  const args = { target: process.cwd(), change: null, stage: 'implement' };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (['--target', '--requirement', '--change', '--stage'].includes(value)) {
-      const key = value.slice(2);
+    if (['--target', '--change', '--stage'].includes(value)) {
       if (!argv[index + 1]) throw new Error(`参数 ${value} 缺少值`);
-      args[key] = argv[index + 1];
+      args[value.slice(2)] = argv[index + 1];
       index += 1;
     } else {
       throw new Error(`不支持的参数：${value}`);
     }
   }
-  if (!args.requirement) throw new Error('必须提供 --requirement');
   if (!args.change) throw new Error('必须提供 --change');
   return args;
 }

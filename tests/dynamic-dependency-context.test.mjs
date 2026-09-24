@@ -12,7 +12,7 @@ import { runBootstrap } from '../plugins/frontend-ai-workflow/scripts/bootstrap-
 import { checkProject } from '../plugins/frontend-ai-workflow/scripts/check-project.mjs';
 import { runUpdate } from '../plugins/frontend-ai-workflow/scripts/update-project.mjs';
 
-const validationRoot = path.resolve('outputs/dynamic-dependency-context');
+const validationRoot = path.resolve('.frontend-ai-workflow/runs/dynamic-dependency-context');
 
 function cleanupValidationRoot() {
   try {
@@ -167,7 +167,7 @@ test('[TC-01] 动态直接依赖事实合同', (t) => {
   assert.equal(packageNames(inspected.dependencyProfile).includes('installed-only'), false);
 });
 
-test('[TC-02] 共享上下文与有限兼容信号', (t) => {
+test('[TC-02] 共享上下文与依赖事实边界', (t) => {
   const extraDependencies = Object.fromEntries(
     Array.from({ length: DEPENDENCY_SUMMARY_LIMIT }, (_, index) => [
       `tool-${String(index + 1).padStart(2, '0')}`,
@@ -205,13 +205,15 @@ test('[TC-02] 共享上下文与有限兼容信号', (t) => {
     assert.match(content, new RegExp(`共 ${DEPENDENCY_SUMMARY_LIMIT + 3} 项`));
     assert.match(content, /遗漏 3 项/u);
     assert.match(content, /完整事实/u);
-    assert.match(content, /有限兼容/u);
   }
+  assert.match(initialContent.agents, /声明须由源码验证/u);
+  assert.match(initialContent.wayfinder, /有限兼容/u);
+  assert.match(initialContent.openspec, /依赖边界：声明不证明已安装、已使用、安全或兼容/u);
   assert.match(initialContent.agents, /@private\/ui/u);
   assert.match(initialContent.wayfinder, /dependencyProfileSchema: "1\.0\.0"/u);
   assert.match(initialContent.wayfinder, new RegExp(`dependencyPackageCount: ${DEPENDENCY_SUMMARY_LIMIT + 3}`));
   assert.match(initialContent.wayfinder, /dependencySummaryStatus: "truncated"/u);
-  assert.match(initialContent.openspec, /必须读取完整 `dependencyProfile\.packages` 或根 `package\.json`/u);
+  assert.match(initialContent.openspec, /完整事实：dependencyProfile\.packages 或根 package\.json/u);
   assert.deepEqual(checkProject(root).dependencyProfile, initialized.inspection.dependencyProfile);
   assert.deepEqual(checkProject(root).managedContentFreshness, { checked: true, stale: false, files: [] });
 

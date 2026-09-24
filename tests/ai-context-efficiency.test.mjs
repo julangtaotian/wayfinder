@@ -5,18 +5,16 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import {
-  CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE,
   CHECK_PROJECT_OBSERVATION_SAMPLE_LIMIT,
   formatProjectCheckOutput,
-  queryProjectCheckDiagnostics,
   summarizeProjectCheck,
 } from '../plugins/frontend-ai-workflow/scripts/check-project-output.mjs';
+import {
+  AUTOMATIC_CONTEXT_BUDGETS,
+  validateAutomaticContextBudgets,
+} from '../plugins/frontend-ai-workflow/scripts/context-budget.mjs';
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-
-function diagnostic(code, target) {
-  return { code, status: 'warning', target, message: `${code}:${target}` };
-}
 
 function completeResult() {
   const observations = Array.from({ length: 8 }, (_, index) => ({
@@ -37,18 +35,6 @@ function completeResult() {
       ],
     },
     commands: { test: 'npm run test' },
-    verificationEvidenceAudit: {
-      checked: true,
-      executed: false,
-      requirements: 3,
-      records: 4,
-      counts: { legacy_markdown_evidence: 2, stale_active_evidence_path: 1 },
-      diagnostics: [
-        diagnostic('legacy_markdown_evidence', 'requirements/REQ-001.md#V-01'),
-        diagnostic('stale_active_evidence_path', 'openspec/changes/old/verification.md'),
-        diagnostic('legacy_markdown_evidence', 'requirements/REQ-002.md#V-02'),
-      ],
-    },
     deepAnalysis: {
       enabled: true,
       observations,
@@ -82,7 +68,7 @@ function pluginRepositoryResult() {
       },
     },
     lifecycle: { schemaVersion: 2, mode: 'v2', eventCount: 68, diagnostics: [], runtimeIgnored: true },
-    migrationRequired: false,
+    retiredWorkflowState: null,
     planningEngine: { available: true, healthy: true, source: 'bundled', version: '1.9.0' },
     activeChanges: { available: true, total: 0, completedNotArchived: [] },
     dependencyProfile: { schemaVersion: '1.0.0', totalPackages: 0, packages: [] },
@@ -109,7 +95,7 @@ test('[TC-01] 插件仓库摘要有界且完整输出兼容', () => {
     'repositoryKind',
     'pluginRepository',
     'lifecycle',
-    'migrationRequired',
+    'retiredWorkflowState',
     'planningEngine',
     'activeChanges',
     'errors',
@@ -119,7 +105,6 @@ test('[TC-01] 插件仓库摘要有界且完整输出兼容', () => {
   assert.equal(summary.pluginRepository.plugins[0].manifestVersion, '0.19.0+codex.20260914072507');
   assert.equal(summary.pluginRepository.commands.validate.command, 'npm run validate');
   assert.equal('dependencyProfile' in summary, false);
-  assert.equal('verificationEvidenceAudit' in summary, false);
   assert.equal('deepAnalysis' in summary, false);
   assert.equal(summaryBytes <= 2500, true, `插件 summary 为 ${summaryBytes} 字节`);
   assert.equal(summaryBytes / fullBytes <= 0.65, true, `插件 summary/full 比例为 ${summaryBytes / fullBytes}`);
@@ -136,12 +121,6 @@ test('[TC-06] 普通项目精简检查输出保留必要事实并限制可恢复
   assert.equal(summary.schemaVersion, '1.0.0');
   assert.equal(summary.mode, 'summary');
   assert.deepEqual(summary.dependencyProfile, full.dependencyProfile, '完整直接依赖画像不得截断');
-  assert.equal('diagnostics' in summary.verificationEvidenceAudit, false);
-  assert.equal(summary.verificationEvidenceAudit.diagnosticsIncluded, false);
-  assert.deepEqual(summary.verificationEvidenceAudit.availableCodes, [
-    'legacy_markdown_evidence',
-    'stale_active_evidence_path',
-  ]);
   assert.equal(summary.deepAnalysis.totalObservations, 8);
   assert.equal(summary.deepAnalysis.observations.length, CHECK_PROJECT_OBSERVATION_SAMPLE_LIMIT);
   assert.equal(summary.deepAnalysis.omittedObservations, 3);
@@ -151,33 +130,6 @@ test('[TC-06] 普通项目精简检查输出保留必要事实并限制可恢复
   });
   assert.deepEqual(full, snapshot, '格式化不得修改完整检查结果');
   assert.equal(formatProjectCheckOutput(full), full, '无显式模式必须保持完整结果兼容');
-});
-
-test('[TC-02] 历史诊断查询按稳定 code 返回有界结果', () => {
-  const full = completeResult();
-  const matched = queryProjectCheckDiagnostics(full, 'legacy_markdown_evidence', { limit: 1 });
-
-  assert.equal(matched.schemaVersion, '1.0.0');
-  assert.equal(matched.mode, 'diagnostics');
-  assert.equal(matched.code, 'legacy_markdown_evidence');
-  assert.equal(matched.count, 1);
-  assert.equal(matched.totalCount, 2);
-  assert.equal(matched.nextOffset, 1);
-  assert.equal(matched.remainingCount, 1);
-  assert.ok(matched.diagnostics.every((item) => item.code === matched.code));
-  assert.deepEqual(matched.availableCodes, [
-    'legacy_markdown_evidence',
-    'stale_active_evidence_path',
-  ]);
-
-  const missing = formatProjectCheckOutput(full, { diagnosticCode: 'unknown_code' });
-  assert.equal(missing.mode, 'diagnostics');
-  assert.equal(missing.count, 0);
-  assert.equal(missing.totalCount, 0);
-  assert.equal(missing.limit, CHECK_PROJECT_DIAGNOSTIC_PAGE_SIZE);
-  assert.equal(missing.nextOffset, null);
-  assert.deepEqual(missing.diagnostics, []);
-  assert.deepEqual(missing.availableCodes, matched.availableCodes);
 });
 
 test('[TC-04] Skill、仓库读取路由与版本保持一致', async () => {
@@ -192,8 +144,6 @@ test('[TC-04] Skill、仓库读取路由与版本保持一致', async () => {
   ]);
 
   assert.match(skill, /check-project\.mjs[^\n]+--summary/u);
-  assert.match(skill, /--diagnostic-code/u);
-  assert.match(skill, /--diagnostic-offset/u);
   assert.match(agents, /## AI 读取路由/u);
   assert.match(agents, /runtime\/\*\*\/node_modules/u);
   assert.match(agents, /outputs/u);
@@ -203,4 +153,23 @@ test('[TC-04] Skill、仓库读取路由与版本保持一致', async () => {
   assert.match(managedFiles, /0\.19\.0/u);
   assert.match(bootstrap, /WORKFLOW_VERSION\s*=\s*'0\.19\.0'/u);
   assert.match(readme, /0\.19\.0/u);
+});
+
+test('[TC-08] 真实自动上下文资产满足硬预算且统一验证已接线', async () => {
+  const [frontendDeliverySkill, managedAgents, structureValidator] = await Promise.all([
+    readFile(path.join(PROJECT_ROOT, 'plugins/frontend-ai-workflow/skills/frontend-delivery/SKILL.md'), 'utf8'),
+    readFile(path.join(PROJECT_ROOT, 'plugins/frontend-ai-workflow/assets/templates/AGENTS.md'), 'utf8'),
+    readFile(path.join(PROJECT_ROOT, 'plugins/frontend-ai-workflow/scripts/validate-structure.mjs'), 'utf8'),
+  ]);
+  const result = validateAutomaticContextBudgets({ frontendDeliverySkill, managedAgents });
+
+  assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  assert.equal(result.assets.frontendDeliverySkill.bytes <= AUTOMATIC_CONTEXT_BUDGETS.frontendDeliverySkill.bytes, true);
+  assert.equal(result.assets.frontendDeliverySkill.nonEmptyLines <= AUTOMATIC_CONTEXT_BUDGETS.frontendDeliverySkill.nonEmptyLines, true);
+  assert.equal(result.assets.managedAgents.bytes <= AUTOMATIC_CONTEXT_BUDGETS.managedAgents.bytes, true);
+  assert.equal(result.assets.managedAgents.listItems <= AUTOMATIC_CONTEXT_BUDGETS.managedAgents.listItems, true);
+  assert.match(frontendDeliverySkill, /workflow-cli\.mjs/u);
+  assert.doesNotMatch(frontendDeliverySkill, /\.\.\/\.\.\/references\//u);
+  assert.match(structureValidator, /validateAutomaticContextBudgets/u);
+  assert.match(structureValidator, /diagnostic\.code.*diagnostic\.target.*diagnostic\.actual.*diagnostic\.limit/su);
 });

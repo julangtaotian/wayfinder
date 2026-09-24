@@ -12,16 +12,12 @@ export const TEST_GROUPS = Object.freeze({
     'tests/lanhu-ai-spec.test.mjs',
     'tests/repository-footprint.test.mjs',
     'tests/repository-hygiene.test.mjs',
-    'tests/requirement-archive.test.mjs',
     'tests/lifecycle-history.test.mjs',
-    'tests/lifecycle-migration.test.mjs',
-    'tests/stage-context.test.mjs',
     'tests/test-entrypoints.test.mjs',
   ],
   workflow: [
     'tests/workflow*.test.mjs',
     'tests/frontend-test-workflow.test.mjs',
-    'tests/verification-evidence-integrity.test.mjs',
     'tests/dynamic-dependency-context.test.mjs',
     'tests/developer-effectiveness-benchmark-authoring.test.mjs',
     'tests/developer-effectiveness-benchmark-validity.test.mjs',
@@ -32,8 +28,12 @@ export const TEST_GROUPS = Object.freeze({
     'tests/real-project-validation.test.mjs',
   ],
   platform: [
+    'tests/platform-marketplace-install.test.mjs',
+    'tests/platform-package-runtime.test.mjs',
+    'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',
     'tests/ui-review-platform-runtime.test.mjs',
+    'tests/workflow-trust-boundary.test.mjs',
   ],
 });
 

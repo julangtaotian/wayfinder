@@ -4,6 +4,5 @@
   "lifecycleMode": "v2",
   "eventDirectory": ".workflow-history",
   "runtimeDirectory": ".frontend-ai-workflow",
-  "strictEvidenceMaxBytes": 4096,
   "eventMaxBytes": 4096
 }

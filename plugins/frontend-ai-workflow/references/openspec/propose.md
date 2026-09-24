@@ -17,7 +17,7 @@ For a plugin-managed local project, inspect `root` in every JSON response. If `r
 
 Propose a new change - create the change and generate all artifacts in one step.
 
-**Planning boundary:** Create planning artifacts first. Stop after the plan when the user requested planning only. When the conversation already authorizes implementation, continue through frontend-change once its implementation gates pass; do not require a repeated start request.
+**Planning boundary:** Create planning artifacts first. Stop after the plan when the user requested planning only. When the conversation already authorizes implementation, continue through frontend-delivery and its Complex route; do not require a repeated start request.
 
 I'll create a change with the artifacts your schema defines. With the default spec-driven schema that is:
 - proposal.md (what & why)
@@ -127,7 +127,7 @@ After completing all artifacts, summarize:
 **Guardrails**
 - Respect the actual request: planning alone does not authorize source edits; existing implementation authorization remains valid after planning
 - Create every artifact the apply phase transitively depends on, not just the ids listed in `apply.requires`
-- Set `skip_specs: true` only when the linked requirement decision ledger explicitly confirms no observable behavior change; never infer it from missing deltas, technical convenience, or dynamic guidance
+- Set `skip_specs: true` only when the user explicitly authorizes a planning-only internal change with no observable behavior change; never infer it from missing deltas, technical convenience, or dynamic guidance
 - Accept `skipped` only when status reports it for specs and the authorized metadata is present; ready, blocked, unknown, or other skipped artifacts remain incomplete
 - Always read dependency artifacts before creating a new one - re-read from disk, not from conversation memory (files may have changed since you last saw them)
 - If context is critically unclear, ask the user - but prefer making reasonable decisions to keep momentum

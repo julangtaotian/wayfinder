@@ -14,16 +14,14 @@ import { PLATFORM_PLUGIN_SIZE_BUDGETS, measureLogicalSize } from './package-plug
 import { validateManagedMarkdownReferenceLabels } from './markdown-reference-safety.mjs';
 import { WORKFLOW_VERSION } from './bootstrap-project.mjs';
 import { validatePluginDocumentReferences } from './plugin-document-references.mjs';
+import { validateAutomaticContextBudgets } from './context-budget.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(scriptDir, '..');
 const repositoryRoot = path.resolve(pluginRoot, '..', '..');
 const PUBLIC_SKILLS = [
-  'frontend-change',
-  'frontend-fast-change',
-  'frontend-requirement-write',
+  'frontend-delivery',
   'frontend-test',
-  'frontend-ui-fix',
   'frontend-ui-review',
   'frontend-ui-verify',
   'frontend-workflow-bootstrap',
@@ -32,8 +30,6 @@ const PUBLIC_SKILLS = [
 ];
 const INTERNAL_WORKFLOW_REFERENCES = [
   'apply-change.md',
-  'archive-change.md',
-  'explore.md',
   'propose.md',
   'sync-specs.md',
   'update-change.md',
@@ -41,32 +37,22 @@ const INTERNAL_WORKFLOW_REFERENCES = [
 // 深度模式依赖这些固定资产，缺失时插件不能承诺可审计的项目分析。
 const DEEP_ANALYSIS_ASSETS = [
   'scripts/collect-project-scope.mjs',
-  'scripts/migrate-wayfinder-project.mjs',
   'assets/templates/wayfinder/frontend.md',
   'references/deep-project-analysis.md',
 ];
-// 需求决策校验器是跨文档一致性的固定能力，必须随插件一起发布。
-const REQUIREMENT_DECISION_ASSETS = [
-  'scripts/validate-requirement-decisions.mjs',
-];
-// 旧需求预览与矩阵校验共同构成 P2 的安全迁移能力，发布时必须齐备。
-const REQUIREMENT_MIGRATION_ASSETS = [
-  'scripts/preview-requirement-upgrade.mjs',
-  'scripts/requirement-archive.mjs',
+// 当前 v2 生命周期只保留紧凑事件、事务、完成与恢复所需资产。
+const LIFECYCLE_ASSETS = [
   'scripts/lifecycle-contract.mjs',
   'scripts/lifecycle-history.mjs',
   'scripts/lifecycle-runtime.mjs',
-  'scripts/lifecycle-status.mjs',
-  'scripts/lifecycle-transition.mjs',
-  'scripts/external-ci-receipt.mjs',
   'scripts/lifecycle-transaction.mjs',
   'scripts/lifecycle-finalize.mjs',
-  'scripts/lifecycle-audit.mjs',
-  'scripts/lifecycle-migration.mjs',
-  'scripts/stage-context.mjs',
-  'references/requirement-guidelines.md',
+  'scripts/context-budget.mjs',
+  'scripts/workflow-cli.mjs',
+  'scripts/complex-change.mjs',
 ];
 const DELIVERY_GUARD_ASSETS = [
+  'scripts/delivery-verification.mjs',
   'scripts/check-change.mjs',
   'scripts/check-project-output.mjs',
   'scripts/plugin-repository-health.mjs',
@@ -82,13 +68,15 @@ const PROJECT_PROFILE_ASSETS = [
 ];
 const TEST_WORKFLOW_ASSETS = [
   'scripts/inspect-test-context.mjs',
-  'scripts/validate-test-plan.mjs',
-  'scripts/verification-evidence.mjs',
-  'scripts/verification-evidence-foundation.mjs',
-  'scripts/verification-semantics.mjs',
-  'assets/templates/openspec/test-plan.md',
-  'references/test-case-guidelines.md',
 ];
+const ROOT_VALIDATION_FILE_LIMITS = new Map([
+  ['scripts/prepare-frontend-test-runtime.mjs', 190],
+  ['scripts/frontend-test-runtime-smoke.mjs', 130],
+  ['scripts/cleanup-frontend-test-runtime.mjs', 130],
+  ['scripts/test-groups.mjs', 170],
+  ['scripts/verify.mjs', 240],
+  ['.github/workflows/validate.yml', 150],
+]);
 const CORE_MODULAR_ASSETS = [
   'scripts/real-project-validation.mjs',
   'scripts/real-project-validation-foundation.mjs',
@@ -103,7 +91,6 @@ const DEVELOPER_BENCHMARK_FILE_LIMITS = new Map([
 const REAL_EFFECTIVENESS_FILE_LIMITS = new Map([
   ['scripts/real-developer-effectiveness-statistics.mjs', 450],
   ['scripts/real-developer-effectiveness-evidence.mjs', 260],
-  ['scripts/support-evidence-matrix.mjs', 450],
 ]);
 // 完整性脚本与受管清单必须共同发布，避免安装后只能生成却无法复核运行时。
 const RUNTIME_INTEGRITY_ASSETS = [
@@ -301,14 +288,29 @@ function validateSkills(errors) {
     if (!fs.existsSync(metadataPath)) errors.push(`技能缺少 agents/openai.yaml：${entry.name}`);
   }
 
-  const fixMetadata = path.join(skillsRoot, 'frontend-ui-fix', 'agents', 'openai.yaml');
-  if (fs.existsSync(fixMetadata) && !fs.readFileSync(fixMetadata, 'utf8').includes('allow_implicit_invocation: false')) {
-    errors.push('frontend-ui-fix 必须禁止隐式调用');
+  for (const entry of skillDirs) {
+    const metadataPath = path.join(skillsRoot, entry.name, 'agents', 'openai.yaml');
+    if (!fs.existsSync(metadataPath)) continue;
+    const metadata = fs.readFileSync(metadataPath, 'utf8');
+    const expected = entry.name === 'frontend-delivery' ? 'true' : 'false';
+    if (!metadata.includes(`allow_implicit_invocation: ${expected}`)) {
+      errors.push(`${entry.name} 的隐式调用策略必须为 ${expected}`);
+    }
   }
 
   const referenceRoot = path.join(pluginRoot, 'references', 'openspec');
   for (const file of INTERNAL_WORKFLOW_REFERENCES) {
     if (!fs.existsSync(path.join(referenceRoot, file))) errors.push(`缺少内部流程参考：${file}`);
+  }
+}
+
+function validateAutomaticContextAssets(errors) {
+  const result = validateAutomaticContextBudgets({
+    frontendDeliverySkill: fs.readFileSync(path.join(pluginRoot, 'skills', 'frontend-delivery', 'SKILL.md'), 'utf8'),
+    managedAgents: fs.readFileSync(path.join(pluginRoot, 'assets', 'templates', 'AGENTS.md'), 'utf8'),
+  });
+  for (const diagnostic of result.diagnostics) {
+    errors.push(`${diagnostic.code}：${diagnostic.target} ${diagnostic.metric}=${diagnostic.actual}/${diagnostic.limit}`);
   }
 }
 
@@ -318,15 +320,9 @@ function validateDeepAnalysisAssets(errors) {
   }
 }
 
-function validateRequirementDecisionAssets(errors) {
-  for (const file of REQUIREMENT_DECISION_ASSETS) {
-    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少需求决策资产：${file}`);
-  }
-}
-
-function validateRequirementMigrationAssets(errors) {
-  for (const file of REQUIREMENT_MIGRATION_ASSETS) {
-    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少需求迁移资产：${file}`);
+function validateLifecycleAssets(errors) {
+  for (const file of LIFECYCLE_ASSETS) {
+    if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少生命周期资产：${file}`);
   }
 }
 
@@ -351,6 +347,24 @@ function validateProjectProfileAssets(errors) {
 function validateTestWorkflowAssets(errors) {
   for (const file of TEST_WORKFLOW_ASSETS) {
     if (!fs.existsSync(path.join(pluginRoot, file))) errors.push(`缺少测试用例工作流资产：${file}`);
+  }
+}
+
+export function shouldValidateRootVerificationStructure(distribution) {
+  // 平台 marketplace 只发布插件本体，仓库级编排资产只属于规范源码校验。
+  return distribution?.kind !== 'platform';
+}
+
+function validateRootVerificationStructure(errors, distribution) {
+  if (!shouldValidateRootVerificationStructure(distribution)) return;
+  for (const [file, limit] of ROOT_VALIDATION_FILE_LIMITS) {
+    const absolutePath = path.join(repositoryRoot, file);
+    if (!fs.existsSync(absolutePath)) {
+      errors.push(`缺少仓库验证资产：${file}`);
+      continue;
+    }
+    const lines = fs.readFileSync(absolutePath, 'utf8').trimEnd().split(/\r?\n/u).length;
+    if (lines > limit) errors.push(`仓库验证资产超过 ${limit} 行：${file}（${lines} 行）`);
   }
 }
 
@@ -492,13 +506,14 @@ export async function validateStructure({ scope = 'all' } = {}) {
     validateRuntime(errors);
     validateMarketplace(errors);
     validateSkills(errors);
+    validateAutomaticContextAssets(errors);
     validateDeepAnalysisAssets(errors);
-    validateRequirementDecisionAssets(errors);
-    validateRequirementMigrationAssets(errors);
+    validateLifecycleAssets(errors);
     validateDeliveryGuardAssets(errors);
     validateManagedMarkdownReferences(errors);
     validateProjectProfileAssets(errors);
     validateTestWorkflowAssets(errors);
+    validateRootVerificationStructure(errors, distribution);
     validateCoreModularAssets(errors);
     validateDeveloperBenchmarkStructure(errors);
     validateRealEffectivenessStructure(errors);

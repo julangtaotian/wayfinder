@@ -1,8 +1,8 @@
 import {
   BENCHMARK_SCHEMA_VERSION, CASE_ID_PATTERN, COMPLEXITY_CODES, COMPLEXITY_MATRIX,
-  EXPECTED_PROJECT_IDS, FORBIDDEN_CASE_PATHS, MANAGEMENT_PATHS, TASK_TYPES,
+  EXPECTED_PROJECT_IDS, FORBIDDEN_CASE_PATHS, TASK_TYPES,
   assertContent, assertPlainObject, assertSafeRelativePath, assertString, fail,
-  normalizeMachinePath, sha256, sha256Json,
+  sha256, sha256Json,
 } from './developer-effectiveness-benchmark-contract.mjs';
 
 const HUNK_HEADER_PATTERN = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/u;
@@ -32,7 +32,9 @@ export function normalizeUnifiedPatchHunkCounts(content) {
     }
     lines[index] = `@@ -${header[1]},${oldCount} +${header[3]},${newCount} @@${header[5]}`;
   }
-  return lines.join('\n');
+  const normalized = lines.join('\n');
+  // Git unified diff 需要末尾换行；补齐分隔符不改变任何补丁行的内容。
+  return normalized.endsWith('\n') ? normalized : `${normalized}\n`;
 }
 
 function patchPaths(patchContent) {
@@ -63,6 +65,24 @@ function validatePatchTargets(content, label, allowedPaths, { evaluator = false 
     }
   }
   return paths;
+}
+
+function validateEvaluatorSource(content, caseId) {
+  const addedSource = String(content || '')
+    .split('\n')
+    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    .map((line) => line.slice(1))
+    .join('\n');
+  const forbidden = [
+    /\beval\s*\(/u,
+    /\bnew\s+Function\s*\(/u,
+    /(?:from\s+['"](?:node:)?vm['"]|require\s*\(\s*['"](?:node:)?vm['"]\s*\))/u,
+    /\b(?:source|content|text|code)\s*\.\s*(?:slice|substring|substr)\s*\(/iu,
+    /(?:from\s+['"](?:node:)?child_process['"]|require\s*\(\s*['"](?:node:)?child_process['"]\s*\))/u,
+  ];
+  if (forbidden.some((pattern) => pattern.test(addedSource))) {
+    fail('unsafe_evaluator_source', `用例 ${caseId} 的验收器使用了源码切片或动态执行`, caseId);
+  }
 }
 
 function validateAcceptance(acceptance, caseId) {
@@ -119,7 +139,7 @@ export function validateSyntheticCase(candidate) {
   const taskType = assertString(candidate.taskType, 'invalid_case_type', `用例 ${id} 缺少任务类型`, id);
   if (!TASK_TYPES.has(taskType)) fail('invalid_case_type', `用例 ${id} 的任务类型非法`, id);
   const expectedRoute = assertString(candidate.expectedRoute, 'invalid_expected_route', `用例 ${id} 缺少预期工作流路线`, id);
-  if (!['fast', 'full'].includes(expectedRoute)) {
+  if (!['direct', 'light', 'complex'].includes(expectedRoute)) {
     fail('invalid_expected_route', `用例 ${id} 的预期工作流路线非法`, id);
   }
   const publicRequirement = assertString(candidate.publicRequirement, 'invalid_public_requirement', `用例 ${id} 缺少公开需求`, id);
@@ -134,12 +154,16 @@ export function validateSyntheticCase(candidate) {
     fail('case_allowed_paths_missing', `用例 ${id} 缺少允许路径`, id);
   }
   const allowedPaths = [...new Set(candidate.allowedPaths.map((item) => assertSafeRelativePath(item, '用例允许路径')))];
+  if (allowedPaths.some((item) => item === '.benchmark-evaluator' || item.startsWith('.benchmark-evaluator/'))) {
+    fail('case_allowed_paths_include_evaluator', `用例 ${id} 不得向执行代理公开验收器路径`, id);
+  }
   // 补丁末尾换行属于 unified diff 语法，校验时不能像普通文本一样 trim。
   const seedPatch = normalizeUnifiedPatchHunkCounts(assertContent(candidate.seedPatch, 'empty_patch', `用例 ${id} 缺少 seed patch`, id));
   const evaluatorPatch = normalizeUnifiedPatchHunkCounts(assertContent(candidate.evaluatorPatch, 'empty_patch', `用例 ${id} 缺少 evaluator patch`, id));
   const referencePatch = normalizeUnifiedPatchHunkCounts(assertContent(candidate.referencePatch, 'empty_patch', `用例 ${id} 缺少 reference patch`, id));
   const equivalentPatch = normalizeUnifiedPatchHunkCounts(assertContent(candidate.equivalentPatch, 'empty_patch', `用例 ${id} 缺少 equivalent patch`, id));
   const mutantPatch = normalizeUnifiedPatchHunkCounts(assertContent(candidate.mutantPatch, 'empty_patch', `用例 ${id} 缺少 mutant patch`, id));
+  validateEvaluatorSource(evaluatorPatch, id);
   const seedPaths = validatePatchTargets(seedPatch, `${id}.seed`, allowedPaths);
   const evaluatorPaths = validatePatchTargets(evaluatorPatch, `${id}.evaluator`, allowedPaths, { evaluator: true });
   const referencePaths = validatePatchTargets(referencePatch, `${id}.reference`, allowedPaths);
@@ -250,8 +274,8 @@ export function freezeSyntheticCases(candidates, frozenAt = new Date().toISOStri
   }
   if (expectedProjectIds.length === EXPECTED_PROJECT_IDS.length) {
     const routes = new Set(cases.map((item) => item.expectedRoute));
-    if (!routes.has('fast') || !routes.has('full')) {
-      fail('case_route_matrix_incomplete', '完整用例矩阵必须同时包含 fast 与 full 预期路线', 'cases');
+    if (!['direct', 'light', 'complex'].every((route) => routes.has(route))) {
+      fail('case_route_matrix_incomplete', '完整用例矩阵必须同时包含 direct、light 与 complex', 'cases');
     }
   }
   const frozenCases = cases.sort((left, right) => left.id.localeCompare(right.id)).map((item) => ({
@@ -279,39 +303,4 @@ export function verifyFrozenCases(manifest) {
     fail('frozen_manifest_drifted', '冻结清单内容摘要发生变化', 'manifest', 'defect');
   }
   return rebuilt;
-}
-
-export function detectExecutionRoute({ mode, eventText = '', finalRoute = 'unknown', changedPaths = [], expectedRoute = null }) {
-  if (!['plugin', 'baseline'].includes(mode)) fail('invalid_execution_mode', `未知执行组：${mode}`, mode);
-  const normalizedPaths = changedPaths.map(normalizeMachinePath);
-  const managementPaths = normalizedPaths.filter((candidate) => MANAGEMENT_PATHS.some((prefix) => (
-    candidate === prefix.replace(/\/$/u, '') || candidate.startsWith(prefix)
-  )));
-  if (mode === 'baseline') {
-    const pluginSkillEvidence = /frontend-ai-workflow:(?:frontend-change|frontend-fast-change)|frontend-(?:change|fast-change)\/SKILL\.md/iu.test(eventText);
-    const valid = finalRoute === 'baseline' && managementPaths.length === 0 && !pluginSkillEvidence;
-    return {
-      route: 'baseline',
-      valid,
-      code: valid ? 'baseline_route_confirmed' : (pluginSkillEvidence ? 'baseline_plugin_contamination' : 'baseline_route_contaminated'),
-      evidence: { finalRoute, managementPaths, pluginSkillEvidence },
-    };
-  }
-  const fastEvent = /frontend-fast-change/iu.test(eventText);
-  const fullEvent = /(?:frontend-change\/SKILL\.md|frontend-ai-workflow:frontend-change)/iu.test(eventText);
-  const fullArtifacts = managementPaths.some((candidate) => candidate.startsWith('requirements/') || candidate.startsWith('openspec/'));
-  if (finalRoute === 'fast' && expectedRoute === 'fast' && fastEvent && !fullArtifacts) {
-    return { route: 'fast', valid: true, code: 'plugin_fast_route_confirmed', evidence: { fastEvent, fullEvent, managementPaths } };
-  }
-  if (finalRoute === 'full' && expectedRoute === 'full' && fullArtifacts && (fullEvent || managementPaths.length >= 2)) {
-    return { route: 'full', valid: true, code: 'plugin_full_route_confirmed', evidence: { fastEvent, fullEvent, managementPaths } };
-  }
-  return {
-    route: ['fast', 'full'].includes(finalRoute) ? finalRoute : 'unknown',
-    valid: false,
-    code: ['fast', 'full'].includes(finalRoute) && ['fast', 'full'].includes(expectedRoute) && finalRoute !== expectedRoute
-      ? 'plugin_route_mismatch'
-      : 'plugin_route_evidence_missing',
-    evidence: { fastEvent, fullEvent, managementPaths, finalRoute, expectedRoute },
-  };
 }

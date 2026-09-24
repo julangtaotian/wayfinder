@@ -29,6 +29,7 @@ import {
   packagePluginPlatform,
 } from '../plugins/frontend-ai-workflow/scripts/package-plugin-platform.mjs';
 import { preparePlatformMarketplace } from '../plugins/frontend-ai-workflow/scripts/prepare-platform-marketplace.mjs';
+import { shouldValidateRootVerificationStructure } from '../plugins/frontend-ai-workflow/scripts/validate-structure.mjs';
 import {
   EXPECTED_PLATFORMS,
   createPluginFixture,
@@ -50,6 +51,10 @@ test('平台插件成品预览保持零写入并公开带余量预算', async (c
   assert.equal(result.budgetBytes, PLATFORM_PLUGIN_SIZE_BUDGETS['darwin-arm64']);
   assert.deepEqual(result.excludedPlatforms.sort(), EXPECTED_PLATFORMS.filter((key) => key !== 'darwin-arm64'));
   assert.equal(fs.existsSync(options.outputRoot), false);
+});
+test('平台成品结构校验不要求源码仓库级编排资产', () => {
+  assert.equal(shouldValidateRootVerificationStructure({ kind: 'source' }), true);
+  assert.equal(shouldValidateRootVerificationStructure({ kind: 'platform', platformKey: 'darwin-arm64' }), false);
 });
 test('平台插件 CLI 缺省参数继承矩阵平台且保持预览零写入', (context) => {
   const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-platform-cli-'));
@@ -448,15 +453,17 @@ test('[TC-04] 平台 marketplace 原子升级与旧包保留', async (context) =
 });
 test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
-  const platformJob = workflow.slice(workflow.indexOf('\n  platform:'));
+  const platformJob = workflow.slice(
+    workflow.indexOf('\n  native-platform:'),
+    workflow.indexOf('\n  release-install:'),
+  );
   assert.match(platformJob, /prepare-platform-marketplace\.mjs --write --platform \$\{\{ matrix\.platform \}\}/u);
   assert.match(platformJob, /UI_REVIEW_RUNTIME_ROOT:/u);
   assert.equal([...platformJob.matchAll(/npm run verify:platform/gmu)].length, 1);
   assert.doesNotMatch(platformJob, /build-playwright-platform\.mjs|package-plugin-platform\.mjs|--replace-lfs-pointers|git lfs pull/u);
   assert.doesNotMatch(workflow, /^\s*schedule:|actions\/cache|cache:|permissions:\s*write/gmu);
-  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 2);
-  assert.match(platformJob, /Upload optional platform install evidence[\s\S]*collect_platform_install_evidence/u);
-  assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 2);
+  assert.equal([...platformJob.matchAll(/actions\/upload-artifact@v7/gmu)].length, 1);
+  assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 1);
   assert.match(platformJob, /dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
   assert.doesNotMatch(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\s*$/mu);
   const previewRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-marketplace-preview-'));

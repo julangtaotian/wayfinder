@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { parseCliArgs } from './cli-arguments.mjs';
 import { assertSafeProjectRoot, resolveProjectRoot } from './collect-project-scope.mjs';
+import { decideProjectVerification } from './delivery-verification.mjs';
 import { inspectProject } from './inspect-project.mjs';
 
 const EXCLUDED_DIRECTORIES = new Set([
@@ -149,6 +150,9 @@ export function inspectTestContext(target = process.cwd()) {
       command: testCommand.command,
       executed: false,
     },
+    execution: decideProjectVerification({
+      entryStatus: testCommand.status === 'detected' ? 'detected' : 'missing',
+    }),
     runner: {
       ...runner,
       certification: certified ? 'verified-vue3-vite-vitest' : 'project-evidence-only',

@@ -13,7 +13,7 @@ import {
 } from '../scripts/official-validator-preflight.mjs';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const fixtureParent = path.join(repositoryRoot, 'outputs', 'official-validator-preflight-tests');
+const fixtureParent = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'official-validator-preflight-tests');
 const fakeArchiveFilename = 'PyYAML-1.2.3-cp310-test.whl';
 const fakeArchiveSha256 = 'a'.repeat(64);
 const fakeDependencyLock = {

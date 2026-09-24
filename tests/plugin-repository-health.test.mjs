@@ -119,10 +119,9 @@ test('插件仓库健康摘要包含生命周期状态', (t) => {
   writeJson(root, '.frontend-workflow.json', {
     schemaVersion: 2,
     minimumWriterVersion: '0.19.0',
-    lifecycleMode: 'legacy-readonly',
+    lifecycleMode: 'v2',
     eventDirectory: '.workflow-history',
     runtimeDirectory: '.frontend-ai-workflow',
-    strictEvidenceMaxBytes: 4096,
     eventMaxBytes: 4096,
   });
   writeFixtureFile(root, '.gitignore', '/.frontend-ai-workflow/\n');
@@ -130,20 +129,12 @@ test('插件仓库健康摘要包含生命周期状态', (t) => {
   const result = checkProject(root);
   const summary = formatProjectCheckOutput(result, { summary: true });
   assert.equal(result.ok, true);
-  assert.equal(result.lifecycle.mode, 'legacy-readonly');
+  assert.equal(result.lifecycle.mode, 'v2');
   assert.equal(result.lifecycle.eventCount, 0);
   assert.equal(result.lifecycle.runtimeIgnored, true);
-  assert.equal(result.migrationRequired, true);
-  assert.equal(summary.lifecycle.mode, 'legacy-readonly');
-  assert.equal(summary.migrationRequired, true);
-
-  writeJson(root, '.frontend-workflow.json', {
-    ...JSON.parse(fs.readFileSync(path.join(root, '.frontend-workflow.json'), 'utf8')),
-    lifecycleMode: 'v2',
-  });
-  const upgraded = checkProject(root);
-  assert.equal(upgraded.lifecycle.mode, 'v2');
-  assert.equal(upgraded.migrationRequired, false);
+  assert.equal(result.retiredWorkflowState, null);
+  assert.equal(summary.lifecycle.mode, 'v2');
+  assert.equal(summary.retiredWorkflowState, null);
 });
 
 test('[TC-02] 多插件 summary 有界且完整结果保留全部事实', (t) => {
@@ -300,9 +291,11 @@ test('[TC-06] 非插件项目保持现有工作流行为', (t) => {
   const legacyRoot = createVueFixture(t);
   runBootstrap({ target: legacyRoot, write: true });
   writeLegacyWorkflow(legacyRoot);
-  const legacy = checkProject(legacyRoot);
-  assert.equal(legacy.layout, 'legacy');
-  assert.equal('repositoryKind' in legacy, false);
+  const retired = checkProject(legacyRoot);
+  assert.equal(retired.ok, false);
+  assert.equal(retired.layout, 'retired');
+  assert.equal(retired.retiredWorkflowState.code, 'retired_workflow_state');
+  assert.equal('repositoryKind' in retired, false);
 
   const localManifestRoot = createVueFixture(t);
   writePlugin(localManifestRoot, 'isolated');

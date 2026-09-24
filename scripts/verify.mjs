@@ -60,16 +60,6 @@ export function parseVerificationArgs(argv = []) {
   return offline ? { scope, offline: true } : { scope };
 }
 
-function lifecycleMode(repositoryRoot) {
-  const configPath = path.join(repositoryRoot, '.frontend-workflow.json');
-  if (!fs.existsSync(configPath)) return 'legacy-readonly';
-  try {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8')).lifecycleMode || 'legacy-readonly';
-  } catch {
-    return 'invalid';
-  }
-}
-
 export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, { scope = 'all', requireLifecycleBase = false } = {}) {
   const selectedScope = resolveVerificationScope(scope);
   const pluginScripts = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
@@ -84,15 +74,6 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       id: 'footprint',
       label: '仓库体积与生命周期预算',
       args: [path.join(pluginScripts, 'repository-footprint.mjs'), '--target', repositoryRoot],
-    },
-    {
-      id: 'lifecycle',
-      label: '生命周期格式与追加历史',
-      args: [
-        path.join(pluginScripts, 'lifecycle-audit.mjs'),
-        '--target', repositoryRoot,
-        ...(requireLifecycleBase ? ['--require-base'] : []),
-      ],
     },
     {
       id: 'tests',
@@ -119,16 +100,6 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       ],
     },
     {
-      id: 'openspec-archived',
-      label: 'OpenSpec 归档任务校验',
-      args: [
-        path.join(pluginScripts, 'openspec-cli.mjs'),
-        'validate',
-        '--archived',
-        '--no-interactive',
-      ],
-    },
-    {
       id: 'runtime-version',
       label: 'OpenSpec 运行时版本',
       args: [path.join(pluginScripts, 'openspec-cli.mjs'), '--version'],
@@ -137,6 +108,11 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       id: 'runtime-integrity',
       label: 'OpenSpec 运行时完整性',
       args: [path.join(pluginScripts, 'runtime-integrity.mjs'), '--check'],
+    },
+    {
+      id: 'frontend-test-runtime-smoke',
+      label: '前端测试运行时离线最小测试',
+      args: [path.join(repositoryRoot, 'scripts', 'frontend-test-runtime-smoke.mjs')],
     },
     {
       id: 'playwright-integrity',
@@ -149,17 +125,14 @@ export function buildVerificationSteps(repositoryRoot = defaultRepositoryRoot, {
       args: [path.join(pluginScripts, 'playwright-runtime.mjs'), '--smoke'],
     },
   ];
-  const lifecycleAwareSteps = lifecycleMode(repositoryRoot) === 'v2'
-    ? steps.filter((step) => step.id !== 'openspec-archived')
-    : steps;
   if (selectedScope !== 'platform') {
     // 规范源码不再携带平台二进制；真实完整性与 Chromium 冒烟只在平台成品作用域执行。
-    return lifecycleAwareSteps.filter((step) => !['playwright-integrity', 'playwright-smoke'].includes(step.id));
+    return steps.filter((step) => !['frontend-test-runtime-smoke', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
   }
   if (selectedScope === 'platform') {
-    return lifecycleAwareSteps.filter((step) => ['tests', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
+    return steps.filter((step) => ['frontend-test-runtime-smoke', 'tests', 'playwright-integrity', 'playwright-smoke'].includes(step.id));
   }
-  return lifecycleAwareSteps;
+  return steps;
 }
 
 export function buildVerificationEnvironment(tempRoot, environment = process.env) {
@@ -197,8 +170,7 @@ export function runVerification({
 } = {}) {
   const root = fs.realpathSync(path.resolve(repositoryRoot));
   const selectedScope = resolveVerificationScope(scope);
-  const requireLifecycleBase = environment.LIFECYCLE_REQUIRE_BASE === '1';
-  const steps = buildVerificationSteps(root, { scope: selectedScope, requireLifecycleBase });
+  const steps = buildVerificationSteps(root, { scope: selectedScope });
   const completed = [];
   const { runtimeRoot, tempRoot } = resolveVerificationRuntime(root);
   const inheritedTempRoots = [environment.TMPDIR, environment.TMP, environment.TEMP]

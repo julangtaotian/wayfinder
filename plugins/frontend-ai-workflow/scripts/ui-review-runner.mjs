@@ -144,6 +144,37 @@ function blockedResult({ mode, write, error, phase = 'orchestration', state = nu
   };
 }
 
+export function summarizeUiReviewResult(completed, result = {}) {
+  const artifacts = completed?.artifacts || {};
+  const screenshots = [artifacts.actualScreenshot, artifacts.annotatedScreenshot, artifacts.diffScreenshot]
+    .filter(Boolean);
+  const consoleErrors = Array.isArray(result.consoleErrors)
+    ? result.consoleErrors
+    : Array.isArray(result.console?.errors) ? result.console.errors : [];
+  const failed = !['passed', 'ready'].includes(completed?.status);
+  return {
+    counts: {
+      observations: completed?.observations?.length || 0,
+      findings: completed?.findings?.length || 0,
+      repairCandidates: completed?.repairCandidates?.length || 0,
+    },
+    verification: completed?.verification ? {
+      resolved: completed.verification.resolved?.length || 0,
+      remaining: completed.verification.remaining?.length || 0,
+      new: completed.verification.new?.length || 0,
+    } : null,
+    screenshots,
+    console: { errorCount: consoleErrors.length, details: artifacts.reviewInput || null },
+    trace: {
+      created: false,
+      eligible: failed,
+      reason: failed ? 'failure-diagnostic-on-request' : 'not-needed',
+    },
+    state: artifacts.state || null,
+    report: artifacts.report || null,
+  };
+}
+
 export async function runUiReview({
   mode = 'review',
   target = process.cwd(),
@@ -196,10 +227,7 @@ export async function runUiReview({
       fallbackRequired: completed.fallbackRequired,
       runId: completed.runId,
       scenarioId: completed.scenarioId,
-      observations: completed.observations,
-      findings: completed.findings,
-      repairCandidates: completed.repairCandidates,
-      verification: completed.verification || null,
+      summary: summarizeUiReviewResult(completed, result),
       artifacts: completed.artifacts,
     };
   } catch (error) {

@@ -11,7 +11,6 @@ import {
   sha256,
 } from './lifecycle-contract.mjs';
 import { appendLifecycleEvent, projectLifecycleState } from './lifecycle-history.mjs';
-import { readExternalCiReceipt } from './external-ci-receipt.mjs';
 import {
   acquireLifecycleLock,
   completeLifecycleTransaction,
@@ -87,6 +86,13 @@ function normalizeMainSpecs(root) {
   }
 }
 
+function removeEmptyArchiveDirectory(root, archiveTarget) {
+  const archiveRoot = path.dirname(archiveTarget);
+  if (fs.existsSync(archiveRoot) && fs.readdirSync(archiveRoot).length === 0) {
+    removeProjectDirectory(root, archiveRoot, { label: '空 OpenSpec 归档目录' });
+  }
+}
+
 export function digestMainSpecs(root, capabilities) {
   const parts = [];
   for (const capability of capabilities) {
@@ -94,12 +100,6 @@ export function digestMainSpecs(root, capabilities) {
     if (fs.existsSync(file)) parts.push(`${capability}\n${fs.readFileSync(file, 'utf8')}`);
   }
   return sha256(parts.join('\n---\n'));
-}
-
-export function requirementId(requirementPath) {
-  const match = path.basename(requirementPath).match(/^(REQ-\d{4}-\d+)/u);
-  if (!match) throw new Error('需求文件名缺少稳定 REQ ID');
-  return match[1];
 }
 
 function archiveResultDetails(result, predictedTarget) {
@@ -112,9 +112,7 @@ function archiveResultDetails(result, predictedTarget) {
 export function finalizeLifecycleV2({
   check,
   write = false,
-  evidenceMode = 'default',
   scope = '.',
-  externalCiReceipt = null,
 }, services) {
   const normalizedScope = normalizeRepositoryPath(scope, 'scope', { allowRoot: true });
   const capabilities = listSpecCapabilities(check.changePath);
@@ -123,11 +121,10 @@ export function finalizeLifecycleV2({
     { action: 'validate', target: check.changeName },
     { action: 'sync-specs-temporarily', target: check.archive?.targetPath || null },
     { action: 'append-lifecycle-event', target: check.changeName },
-    { action: 'remove-active-requirement', target: path.relative(check.root, check.requirementPath).replaceAll('\\', '/') },
+    { action: 'remove-active-change', target: check.changeName },
     { action: 'remove-temporary-archive', target: check.archive?.targetPath || null },
   ];
   if (!gitState.ok) return { ok: false, code: 'lifecycle_git_blocked', status: 'blocked', write, check, gitState, actions: [] };
-  const externalCi = readExternalCiReceipt({ root: check.root, receiptPath: externalCiReceipt, baseRevision: gitState.baseRevision });
   const existing = projectLifecycleState({ root: check.root, scope: normalizedScope, changeId: check.changeName });
   if (existing.event?.type === 'accepted' && !existing.active) {
     return { ok: true, code: 'lifecycle_already_finalized', status: existing.status, write, check, event: existing.event, actions: [] };
@@ -154,9 +151,7 @@ export function finalizeLifecycleV2({
       check,
       gitState,
       capabilities,
-      evidenceMode,
       scope: normalizedScope,
-      externalCi: externalCi.receipt,
       actions,
     };
   }
@@ -172,15 +167,13 @@ export function finalizeLifecycleV2({
     scope: normalizedScope,
     changeId: check.changeName,
     changePath: path.relative(check.root, check.changePath).replaceAll('\\', '/'),
-    requirementPath: path.relative(check.root, check.requirementPath).replaceAll('\\', '/'),
     archivePath: path.relative(check.root, check.archive.targetPath).replaceAll('\\', '/'),
+    verificationSummaryPath: check.verificationSummary.projectPath,
     baseRevision: gitState.baseRevision,
     occurredAt: now,
     revision: nextRevision,
     supersedes,
     capabilities,
-    evidenceMode,
-    externalCiCheck: externalCi.check,
   });
   try {
     const archived = services.runOpenSpecSync(
@@ -211,20 +204,12 @@ export function finalizeLifecycleV2({
       eventId: createEventId({ changeId: check.changeName, revision: nextRevision, occurredAt: now, specDigest }),
       scope: normalizedScope,
       changeId: check.changeName,
-      requirementId: requirementId(check.requirementPath),
       type: 'accepted',
       revision: nextRevision,
       occurredAt: now,
       baseRevision: gitState.baseRevision,
       capabilities,
       specDigest,
-      checks: [
-        { name: 'requirement', status: 'passed' },
-        { name: 'openspec-strict', status: 'passed' },
-        { name: 'test-plan', status: check.testPlanRequired ? 'passed' : 'recorded' },
-        externalCi.check,
-      ],
-      trust: externalCi.check.status === 'recorded' ? 'external-recorded' : 'local-verified',
       supersedes,
     };
     transaction = writeLifecycleTransaction(check.root, {
@@ -233,20 +218,14 @@ export function finalizeLifecycleV2({
       archivePath: path.relative(check.root, archiveTarget).replaceAll('\\', '/'),
       event,
     });
-    const strictEvidence = evidenceMode === 'strict' ? {
-      schemaVersion: 1,
-      eventId: event.eventId,
-      requirementId: event.requirementId,
-      capabilities,
-      checks: event.checks,
-      baseRevision: event.baseRevision,
-      specDigest,
-    } : null;
-    const appended = appendLifecycleEvent({ root: check.root, event, strictEvidence });
+    const appended = appendLifecycleEvent({ root: check.root, event });
     transaction = writeLifecycleTransaction(check.root, { ...transaction, stage: 'event-written', eventId: event.eventId });
 
     if (fs.existsSync(archiveTarget)) removeProjectDirectory(check.root, archiveTarget, { label: 'OpenSpec 临时归档' });
-    if (fs.existsSync(check.requirementPath)) removeProjectFile(check.root, check.requirementPath, { label: '已完成活动需求' });
+    removeEmptyArchiveDirectory(check.root, archiveTarget);
+    if (fs.existsSync(check.verificationSummary.path)) {
+      removeProjectFile(check.root, check.verificationSummary.path, { label: '临时验证摘要' });
+    }
     transaction = writeLifecycleTransaction(check.root, { ...transaction, stage: 'cleaned', eventId: event.eventId });
     completeLifecycleTransaction(check.root, transactionId);
     return {
@@ -258,10 +237,8 @@ export function finalizeLifecycleV2({
       actions,
       event: appended.event,
       eventAppended: appended.appended,
-      evidencePath: appended.evidencePath,
       archiveResult: details.archive,
       archiveWarnings: details.parsed?.warnings || [],
-      requirementStatus: 'accepted-local',
     };
   } finally {
     releaseLifecycleLock(lock);
@@ -284,20 +261,12 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
         eventId: createEventId({ changeId: current.changeId, revision: current.revision, occurredAt: current.occurredAt, specDigest }),
         scope: current.scope || '.',
         changeId: current.changeId,
-        requirementId: requirementId(path.join(lock.layout.config.root, current.requirementPath)),
         type: 'accepted',
         revision: current.revision,
         occurredAt: current.occurredAt,
         baseRevision: current.baseRevision,
         capabilities: current.capabilities,
         specDigest,
-        checks: [
-          { name: 'requirement', status: 'passed' },
-          { name: 'openspec-strict', status: 'passed' },
-          { name: 'test-plan', status: 'recorded' },
-          current.externalCiCheck || { name: 'external-ci', status: 'pending' },
-        ],
-        trust: current.externalCiCheck?.status === 'recorded' ? 'external-recorded' : 'local-verified',
         supersedes: current.supersedes,
       };
       current = writeLifecycleTransaction(root, { ...current, stage: 'archived', event });
@@ -311,22 +280,16 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
       throw new Error('事务仍处于 prepare 且没有原生归档，需重新执行正常完成预览');
     }
     if (['prepare', 'archived'].includes(current.stage)) {
-      const strictEvidence = current.evidenceMode === 'strict' ? {
-        schemaVersion: 1,
-        eventId: event.eventId,
-        requirementId: event.requirementId,
-        capabilities: event.capabilities,
-        checks: event.checks,
-        baseRevision: event.baseRevision,
-        specDigest: event.specDigest,
-      } : null;
-      appendLifecycleEvent({ root, event, strictEvidence });
+      appendLifecycleEvent({ root, event });
       current = writeLifecycleTransaction(root, { ...current, stage: 'event-written', eventId: event.eventId, event });
     }
     if (current.stage === 'event-written') {
       if (fs.existsSync(archiveTarget)) removeProjectDirectory(root, archiveTarget, { label: 'OpenSpec 临时归档' });
-      const requirementPath = path.join(lock.layout.config.root, current.requirementPath);
-      if (fs.existsSync(requirementPath)) removeProjectFile(root, requirementPath, { label: '已完成活动需求' });
+      removeEmptyArchiveDirectory(root, archiveTarget);
+      if (current.verificationSummaryPath) {
+        const summaryPath = path.join(lock.layout.config.root, current.verificationSummaryPath);
+        if (fs.existsSync(summaryPath)) removeProjectFile(root, summaryPath, { label: '临时验证摘要' });
+      }
       current = writeLifecycleTransaction(root, { ...current, stage: 'cleaned', eventId: event.eventId, event });
     }
     completeLifecycleTransaction(root, transactionId);

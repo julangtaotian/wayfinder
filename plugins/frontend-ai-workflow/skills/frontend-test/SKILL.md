@@ -1,27 +1,20 @@
 ---
 name: frontend-test
-description: Analyze frontend test coverage, create a traceable test plan for an active change, implement project-native tests when explicitly requested, and run focused verification with auditable evidence. Use for read-only coverage analysis or managed test-case planning, implementation and verification tied to an active change.
+description: Analyze frontend test coverage or implement tests only when the user explicitly asks for test work. Do not use for ordinary product-code implementation, automatic verification, or lifecycle management.
 ---
 
 # Frontend Test
 
-Select the user's intent before reading references. Resolve `<plugin-root>` two directories above this skill folder.
+Use one of two explicit modes. Resolve `<plugin-root>` two directories above this Skill.
 
-## Analyze — read-only
+## Analyze — read-only coverage analysis
 
-For coverage, assertion or test-gap questions:
+Read the named test, its imported implementation, applicable project rules, and only the callers needed to answer the question. Report what existing assertions prove, consequential gaps, and the smallest useful check. Separate source-derived expectations from confirmed behavior and commands actually executed. Create no files.
 
-1. Read applicable project rules and the named test with its imported implementation, together when their paths are known. Follow another caller only to resolve a fact that affects the answer. Reuse already-read content while unchanged.
-2. Explain what the assertion proves, consequential gaps and the smallest useful check. Distinguish source-derived expectations from confirmed requirements and tests actually executed. Finish this mode after answering.
+For broader runner or directory facts, run `node "<plugin-root>/scripts/inspect-test-context.mjs" --target <repository-root>`. Use its bounded output directly; do not inspect its implementation unless diagnosing a concrete failure.
 
-A local assertion question does not need workflow guides, an inventory, runner discovery or an active change. Do not load the managed workflow below for Analyze. For broader coverage questions, read the relevant requirement and nearby tests if present. Only when runner, command, test-directory or Git facts are needed, run:
+## Implement — explicitly authorized test implementation
 
-```bash
-node "<plugin-root>/scripts/inspect-test-context.mjs" --target <repository-root>
-```
+Require an explicit request to add or change tests. Reuse the project's native runner, conventions, nearest handwritten tests, and existing command. Implement only the tests in scope and run the narrowest relevant command. Do not create planning or evidence files.
 
-Use its result directly; inspect the script implementation only to diagnose a concrete failure. Missing evidence calls for a targeted lookup or an explicit unknown, not a whole-project scan. Analysis creates no files and never installs dependencies.
-
-## Plan, Implement or Verify — managed operations
-
-Requests to persist a test plan, write tests or execute recorded verification use [the managed test workflow](../../references/managed-test-workflow.md). Read it before that operation and follow the selected stage's gates. Implementation requires explicit intent and a selected active change; analysis alone does not authorize it. A mixed request advances only into authorized stages.
+Before execution, confirm the local CLI, module, or repository wrapper exists. If missing, report it once; do not install dependencies and do not retry a known failure. A zero-test result is a failure. Never use generated baselines as a default destination for feature-specific assertions unless project rules require it. Visual behavior belongs to `frontend-ui-review` or `frontend-ui-verify`, not a second browser workflow here.

@@ -6,6 +6,7 @@
   "description": "Team marketplace and Codex plugin for reusable frontend AI workflows.",
   "scripts": {
     "prepare:test-runtime": "node scripts/prepare-frontend-test-runtime.mjs",
+    "smoke:test-runtime:offline": "node scripts/frontend-test-runtime-smoke.mjs",
     "cleanup:test-runtime": "node scripts/cleanup-frontend-test-runtime.mjs",
     "cleanup:test-cache": "node scripts/cleanup-frontend-test-runtime.mjs --cache",
     "test": "node scripts/test-groups.mjs all",
@@ -18,21 +19,12 @@
     "cleanup:official-validator-cache": "node scripts/official-validator-preflight.mjs --cleanup-cache",
     "openspec:version": "node plugins/frontend-ai-workflow/scripts/openspec-cli.mjs --version",
     "verify": "node scripts/verify.mjs",
-    "verify:receipt": "node scripts/collect-local-verification-receipt.mjs",
     "verify:shared": "node scripts/verify.mjs --scope shared",
     "verify:platform": "node scripts/verify.mjs --scope platform",
     "benchmark:developer-effectiveness": "node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs",
     "effectiveness:real-evidence": "node plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs",
-    "support:project-evidence": "node plugins/frontend-ai-workflow/scripts/real-project-support-evidence.mjs",
-    "support:matrix": "node plugins/frontend-ai-workflow/scripts/support-evidence-matrix.mjs",
-    "ci:receipt": "node plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs",
-    "requirements:archive": "node plugins/frontend-ai-workflow/scripts/requirement-archive.mjs",
-    "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs",
-    "lifecycle:audit": "node plugins/frontend-ai-workflow/scripts/lifecycle-audit.mjs",
-    "lifecycle:status": "node plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs",
-    "lifecycle:migrate": "node plugins/frontend-ai-workflow/scripts/lifecycle-migration.mjs",
-    "lifecycle:transition": "node plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs",
-    "context:stage": "node plugins/frontend-ai-workflow/scripts/stage-context.mjs"
+    "validate:real-projects": "node plugins/frontend-ai-workflow/scripts/real-project-validation.mjs",
+    "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs"
   },
   "engines": {
     "node": ">=20.19.0"

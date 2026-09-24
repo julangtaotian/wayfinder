@@ -10,7 +10,7 @@ import {
 } from '../scripts/static-check.mjs';
 
 const repositoryRoot = path.resolve('.');
-const fixtureRoot = path.join(repositoryRoot, 'outputs', 'static-check-tests');
+const fixtureRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'static-check-tests');
 
 function makeFixture(context, name) {
   fs.mkdirSync(fixtureRoot, { recursive: true });

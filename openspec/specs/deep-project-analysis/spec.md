@@ -1,7 +1,7 @@
 # deep-project-analysis Specification
 
 ## Purpose
-TBD - created by archiving change add-deep-project-analysis. Update Purpose after archive.
+定义深度项目分析的范围记账、依赖事实、覆盖报告与项目地图合同，要求每个纳入文件都有明确处理状态，并避免把有限识别信号误称为完整理解。
 
 ## Requirements
 

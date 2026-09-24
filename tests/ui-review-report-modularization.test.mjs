@@ -14,7 +14,7 @@ import {
 
 const repositoryRoot = path.resolve('.');
 const scriptsRoot = path.join(repositoryRoot, 'plugins', 'frontend-ai-workflow', 'scripts');
-const fixtureOutputRoot = path.join(repositoryRoot, 'outputs', 'ui-review-report-modularization');
+const fixtureOutputRoot = path.join(repositoryRoot, '.frontend-ai-workflow', 'runs', 'ui-review-report-modularization');
 const reportModuleNames = [
   'ui-review-report.mjs',
   'ui-review-report-contract.mjs',

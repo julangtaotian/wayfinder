@@ -100,16 +100,16 @@ export function writeLifecycleTransaction(root, transaction) {
     scope: normalizeRepositoryPath(transaction.scope ?? '.', 'scope', { allowRoot: true }),
     changeId: String(transaction.changeId || ''),
     changePath: transaction.changePath ? normalizeRepositoryPath(transaction.changePath, 'changePath') : null,
-    requirementPath: normalizeRepositoryPath(transaction.requirementPath, 'requirementPath'),
     archivePath: transaction.archivePath ? normalizeRepositoryPath(transaction.archivePath, 'archivePath') : null,
+    verificationSummaryPath: transaction.verificationSummaryPath
+      ? normalizeRepositoryPath(transaction.verificationSummaryPath, 'verificationSummaryPath')
+      : null,
     eventId: transaction.eventId || null,
     revision: Number.isSafeInteger(transaction.revision) ? transaction.revision : 1,
     supersedes: transaction.supersedes || null,
     baseRevision: transaction.baseRevision || null,
     occurredAt: transaction.occurredAt || null,
     capabilities: Array.isArray(transaction.capabilities) ? [...transaction.capabilities] : [],
-    evidenceMode: transaction.evidenceMode || 'default',
-    externalCiCheck: transaction.externalCiCheck || null,
     event: transaction.event || null,
     updatedAt: new Date().toISOString(),
   };

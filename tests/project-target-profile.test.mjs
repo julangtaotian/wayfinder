@@ -118,10 +118,10 @@ test('初始化、升级和检查共享终端画像并保留自定义内容', (t
   const agentsPath = path.join(root, 'AGENTS.md');
   const wayfinderPath = path.join(root, 'wayfinder/frontend.md');
   const openspecPath = path.join(root, 'openspec/config.yaml');
-  assert.match(fs.readFileSync(agentsPath, 'utf8'), /终端画像：`desktop`（来源：`package-dependencies`；证据：element-plus）/u);
+  assert.match(fs.readFileSync(agentsPath, 'utf8'), /终端：`desktop`/u);
   assert.match(fs.readFileSync(wayfinderPath, 'utf8'), /targetFormFactor: "desktop"/u);
   assert.match(fs.readFileSync(wayfinderPath, 'utf8'), /targetProfileEvidence: "element-plus"/u);
-  assert.match(fs.readFileSync(openspecPath, 'utf8'), /终端画像：desktop（来源：package-dependencies；证据：element-plus；有限兼容信号，unknown 不表示框架不存在）/u);
+  assert.match(fs.readFileSync(openspecPath, 'utf8'), /终端与平台：desktop \/ unknown（未识别）/u);
   assert.deepEqual(checkProject(root).targetProfile, initialized.inspection.targetProfile);
 
   fs.appendFileSync(agentsPath, '\n项目自定义 AGENTS 内容。\n', 'utf8');
@@ -135,9 +135,9 @@ test('初始化、升级和检查共享终端画像并保留自定义内容', (t
   const nextAgents = fs.readFileSync(agentsPath, 'utf8');
   const nextWayfinder = fs.readFileSync(wayfinderPath, 'utf8');
   const nextOpenSpec = fs.readFileSync(openspecPath, 'utf8');
-  assert.match(nextAgents, /终端画像：`mobile`（来源：`package-dependencies`；证据：vant）/u);
+  assert.match(nextAgents, /终端：`mobile`/u);
   assert.match(nextWayfinder, /targetFormFactor: "mobile"/u);
-  assert.match(nextOpenSpec, /终端画像：mobile（来源：package-dependencies；证据：vant；有限兼容信号，unknown 不表示框架不存在）/u);
+  assert.match(nextOpenSpec, /终端与平台：mobile \/ unknown（未识别）/u);
   assert.match(nextAgents, /项目自定义 AGENTS 内容/u);
   assert.match(nextWayfinder, /项目自定义 Wayfinder 内容/u);
   assert.match(nextOpenSpec, /项目自定义 OpenSpec 内容/u);

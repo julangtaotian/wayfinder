@@ -59,7 +59,7 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   const review = await runUiReview({ target: projectRoot, mode: 'review', scenarioId: 'home-desktop', runId: 'runner-review', write: true });
   assert.equal(review.status, 'needs-fix');
   assert.equal(review.exitCode, 1);
-  assert.equal(review.repairCandidates.length, 0);
+  assert.equal(review.summary.counts.repairCandidates, 0);
   assert.equal(fs.existsSync(path.join(projectRoot, review.artifacts.report)), true);
   assert.equal(fs.existsSync(path.join(projectRoot, review.artifacts.annotatedScreenshot)), true);
 
@@ -78,7 +78,7 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   fs.writeFileSync(path.join(projectRoot, 'design', 'home.png'), 'design-v1');
 
   const sourcePath = path.join(projectRoot, 'src/main.css');
-  const originalFindings = review.findings;
+  const originalFindings = JSON.parse(fs.readFileSync(path.join(projectRoot, review.artifacts.state), 'utf8')).findings;
   const proposal = {
     runId: review.runId,
     scenarioFingerprint: JSON.parse(fs.readFileSync(path.join(projectRoot, review.artifacts.state), 'utf8')).scenarioFingerprint,
@@ -124,7 +124,7 @@ test('统一入口完成预览、验收、同上下文复验并映射稳定退�
   });
   assert.equal(verify.status, 'passed');
   assert.equal(verify.exitCode, 0);
-  assert.equal(verify.verification.resolved.length, 1);
+  assert.equal(verify.summary.verification.resolved, 1);
 });
 
 test('统一入口对不确定、非内置适配器和产物冲突失败关闭', platformRuntimeOnly, async (context) => {
@@ -243,40 +243,25 @@ test('capture-plan CLI 输出跨工具可消费计划，start-review 显式记�
   assert.equal(JSON.parse(fallbackResult.stdout).state.capture, 'browser');
 });
 
-test('三个 Skill 的职责、显式修复门禁和共享合同随插件发布', () => {
+test('UI Review 与 UI Verify 的只读边界和共享合同随插件发布', () => {
   const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
   const reviewSkill = fs.readFileSync(path.join(pluginRoot, 'skills/frontend-ui-review/SKILL.md'), 'utf8');
-  const fixSkill = fs.readFileSync(path.join(pluginRoot, 'skills/frontend-ui-fix/SKILL.md'), 'utf8');
   const verifySkill = fs.readFileSync(path.join(pluginRoot, 'skills/frontend-ui-verify/SKILL.md'), 'utf8');
-  const fixMetadata = fs.readFileSync(path.join(pluginRoot, 'skills/frontend-ui-fix/agents/openai.yaml'), 'utf8');
   const sharedReference = fs.readFileSync(path.join(pluginRoot, 'references/ui-review-workflow.md'), 'utf8');
 
-  assert.match(reviewSkill, /不修改业务源码/u);
-  assert.match(reviewSkill, /ui-review-runner\.mjs review/u);
-  assert.match(reviewSkill, /结构化/u);
-  assert.match(reviewSkill, /新的运行 ID.*--capture browser/u);
-  assert.match(fixSkill, /repair-gate/u);
-  assert.match(fixSkill, /main.*master/u);
-  assert.match(fixSkill, /Playwright.*Browser.*不得扩大/u);
-  assert.match(fixMetadata, /allow_implicit_invocation: false/u);
-  assert.match(verifySkill, /相同.*页面.*视口/u);
-  assert.match(verifySkill, /不得切换/u);
+  assert.match(reviewSkill, /不修改业务源码|does not modify business source/iu);
+  assert.match(reviewSkill, /ignored `\.frontend-ui-review\/runs\/`/u);
+  assert.match(reviewSkill, /trace.*failure.*on request/iu);
+  assert.match(verifySkill, /same baseline/iu);
+  assert.match(verifySkill, /must not expand/iu);
+  assert.match(verifySkill, /不修改源码|does not modify source/iu);
   assert.match(sharedReference, /业务项目不安装 Playwright/u);
+  assert.match(sharedReference, /ui-review-runner\.mjs/u);
   const maintenance = fs.readFileSync(path.join(pluginRoot, 'references/ui-review-maintenance.md'), 'utf8');
   assert.match(sharedReference, /ui-review-maintenance\.md/u);
   assert.match(maintenance, /Playwright 1\.62\.1/u);
   assert.match(maintenance, /darwin-arm64/u);
   assert.match(maintenance, /linux-x64/u);
-  assert.match(reviewSkill, /bundled-adapter/u);
-  assert.match(reviewSkill, /readyToWrite: true/u);
-  assert.match(reviewSkill, /project-adapter/u);
-  assert.match(reviewSkill, /项目自有本地页面环境/u);
-  assert.match(reviewSkill, /受控故障/u);
-  assert.match(reviewSkill, /inconclusive/u);
-  assert.match(verifySkill, /适配器摘要/u);
-  assert.match(verifySkill, /受控故障/u);
-  assert.match(fixSkill, /验收环境事实/u);
-  assert.match(fixSkill, /不得.*业务源码.*验收环境/u);
   assert.match(sharedReference, /0=passed.*3=blocked/u);
   assert.match(sharedReference, /readyToWrite: false/u);
   assert.match(sharedReference, /版本 2 自定义适配器不能自动降级/u);
