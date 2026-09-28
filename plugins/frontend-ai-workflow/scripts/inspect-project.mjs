@@ -70,8 +70,6 @@ function majorVersion(value) {
 
 export function detectPreset(packageJson, platformProfile = null) {
   const deps = dependencyMap(packageJson);
-  const hasVite = Boolean(deps.vite);
-  const hasWebpack = Boolean(deps.webpack || deps['@vue/cli-service'] || deps['react-scripts']);
 
   if (
     platformProfile?.kind === 'native-mini-program'
@@ -83,15 +81,7 @@ export function detectPreset(packageJson, platformProfile = null) {
     return 'wechat-native';
   }
 
-  if (deps.vue) {
-    const vueMajor = majorVersion(deps.vue);
-    if (hasVite) return vueMajor === 2 ? 'vue2-vite' : 'vue3-vite';
-    return hasWebpack ? 'vue-webpack' : 'vue-webpack';
-  }
-
-  if (deps.react) {
-    return hasVite ? 'react-vite' : 'react-webpack';
-  }
+  if (deps.vue && deps.vite && majorVersion(deps.vue) === 3) return 'vue3-vite';
 
   return 'generic-frontend';
 }

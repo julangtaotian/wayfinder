@@ -105,9 +105,6 @@ function platformVerificationGuidance(inspection) {
   if (inspection.targetProfile.platform.frameworks.includes('wechat-native')) {
     return '原生微信小程序未提供显式平台脚本；开发、预览、上传与真机验证需记录微信开发者工具或外部 CI 的环境和结果。';
   }
-  if (inspection.targetProfile.platform.kind !== 'unknown') {
-    return '已识别平台框架但未提供显式平台脚本；需求与变更需记录人工开发工具或外部 CI 的环境和结果。';
-  }
   return '未识别额外平台命令；只按仓库实际存在的开发、构建和测试入口验证。';
 }
 

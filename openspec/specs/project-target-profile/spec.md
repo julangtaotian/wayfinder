@@ -40,7 +40,7 @@
 - **THEN** 检查结果返回当前终端画像，且不因 `unknown` 或 `mixed` 阻断工作流
 
 ### Requirement: 终端画像保持轻量兼容边界
-系统 MUST 在不增加公共命令、项目配置文件、第三方依赖、框架适配器或框架专用工作流分支的情况下提供终端与平台画像，并 MUST NOT 把这些有限规则描述为完整框架识别、构建、真机或发布支持。目标仓库仍 MUST 具有 `package.json`；完整直接依赖事实 MUST 独立保留，画像未命中或为 unknown 不得删除、覆盖或否定对应依赖存在。
+系统 MUST 在不增加公共命令、项目配置文件、第三方依赖、框架适配器或框架专用工作流分支的情况下提供终端与最小平台画像，并 MUST NOT 把这些有限规则描述为完整框架识别、构建、真机或发布支持。目标仓库仍 MUST 具有 `package.json`；完整直接依赖事实 MUST 独立保留，画像未命中或为 unknown 不得删除、覆盖或否定对应依赖存在。
 
 #### Scenario: 既有调用继续运行
 - **WHEN** 现有 Web 调用方不读取新增依赖画像字段
@@ -52,48 +52,14 @@
 - **THEN** 系统保持现有安全错误，不因存在小程序配置而绕过项目根契约
 
 #### Scenario: 遇到小程序框架项目
-- **WHEN** 项目匹配微信原生、uni-app、Taro 或 Remax 证据
-- **THEN** 系统报告平台框架画像和保守的已知项目事实，不安装工具、不选择构建命令、不生成框架代码，也不宣称具体平台已可运行
+- **WHEN** 项目只有 uni-app、Taro、Remax 或其他未预置框架依赖，而没有微信原生固定文件组合
+- **THEN** 系统返回 `platform.kind=unknown`，不安装工具、不选择构建命令、不生成框架代码，也不宣称具体平台已可运行
+- **AND** 完整动态依赖画像和显式平台脚本候选继续保留真实项目事实
 
 #### Scenario: 动态事实包含画像未预置的框架
 - **WHEN** 完整依赖画像存在终端或平台规则未匹配的框架依赖
 - **THEN** 系统 SHALL 保留该依赖事实并继续返回有限画像的 unknown 或已有结果
 - **AND** 受管说明 SHALL 要求 AI 结合配置与源码分析，而不得将未命中写成框架不存在
-
-### Requirement: 系统生成保守的平台框架画像
-系统 MUST 在现有 `targetProfile` 中增加包含稳定英文 `kind`、有序 `frameworks`、`source` 和 `evidence` 的 `platform` 对象，并 MUST 只使用已确认的固定文件组合或明确包依赖作为证据。
-
-#### Scenario: 微信原生固定配置组合
-- **WHEN** 有 `package.json` 的项目同时包含受支持位置的微信原生应用配置和项目配置
-- **THEN** 系统返回 `platform.kind=native-mini-program`、`frameworks=[wechat-native]` 和不含配置内容的相对文件证据
-- **AND** 当项目依赖中没有 Vue 或 React 时返回 `preset=wechat-native`，技术栈包含“微信原生小程序”
-
-#### Scenario: 单一跨端框架证据
-- **WHEN** 项目只匹配 uni-app、Taro 或 Remax 中一个框架的明确依赖，或匹配 uni-app 固定配置组合
-- **THEN** 系统返回 `platform.kind=cross-platform`、对应框架和有序证据，但不得宣称任何具体发布目标已配置或验证
-
-#### Scenario: 没有平台框架强证据
-- **WHEN** 项目没有匹配固定文件组合或明确框架依赖，即使项目名或任意普通目录包含小程序、微信、uni-app 或 Taro 字样
-- **THEN** 系统返回 `platform.kind=unknown`、未知来源、空框架和空证据
-
-#### Scenario: 多个框架证据冲突
-- **WHEN** 项目同时匹配两个或以上不同平台框架
-- **THEN** 系统返回 `platform.kind=conflict` 和全部有序框架与证据，不得自行选择实施框架或阻断现有工作流
-
-### Requirement: 平台画像服务于需求与变更上下文
-系统 MUST 让项目识别、初始化、显式升级和项目检查消费同一平台画像，并 MUST 让需求整理只在存在平台证据时核对相关生命周期、导航、权限、存储、网络和构建边界。
-
-#### Scenario: 初始化或检查平台项目
-- **WHEN** 用户对有平台框架证据的项目执行初始化预览、显式写入或项目检查
-- **THEN** 识别结果、AGENTS、Wayfinder 和 OpenSpec 上下文表达相同平台类型、框架、来源和证据，预览仍保持只读
-
-#### Scenario: 平台证据变化后显式升级
-- **WHEN** 已初始化项目的平台框架证据变化且用户执行显式升级
-- **THEN** 系统只更新受管区块的平台画像并保留项目自定义内容
-
-#### Scenario: 需求分析读取平台画像
-- **WHEN** 需求整理读取到 `native-mini-program`、`cross-platform` 或 `conflict`
-- **THEN** 系统要求核对适用的平台边界；对于 `unknown` 不得擅自补造小程序专项要求
 
 ### Requirement: 原生微信小程序报告可追溯的常用路径
 
@@ -109,3 +75,35 @@
 
 - **WHEN** 已确认的原生微信小程序存在 `app.js`，但没有同时确认 `App(...)` 和 `globalData`
 - **THEN** 系统保持状态管理或全局数据路径为未识别，不得仅凭文件存在推断职责
+
+### Requirement: 系统生成最小平台安全画像
+系统 MUST 在现有 `targetProfile` 中保留包含稳定英文 `kind`、有序 `frameworks`、`source` 和 `evidence` 的 `platform` 对象，并 MUST 只将根 `app.json` 与根 `project.config.json` 的固定组合识别为微信原生安全信号。其他框架依赖、目录名称或普通配置文件 MUST NOT 生成专用平台标签。
+
+#### Scenario: 微信原生固定配置组合
+- **WHEN** 有 `package.json` 的项目同时包含根 `app.json` 和根 `project.config.json`
+- **THEN** 系统返回 `platform.kind=native-mini-program`、`frameworks=[wechat-native]` 和不含配置内容的相对文件证据
+- **AND** 当项目依赖中没有 Vue 或 React 时返回 `preset=wechat-native`，技术栈包含“微信原生小程序”
+
+#### Scenario: 未预置框架依赖
+- **WHEN** 项目声明 uni-app、Taro、Remax、React、Vue 2、Webpack 或其他未形成安全分支的依赖，且没有微信原生固定文件组合
+- **THEN** 系统返回 `platform.kind=unknown`、未知来源、空框架和空证据
+- **AND** `dependencyProfile` 继续完整返回这些直接依赖
+
+#### Scenario: 名称与普通文件不形成平台证据
+- **WHEN** 项目名、目录名或非根位置文件包含小程序、微信、uni-app 或 Taro 字样
+- **THEN** 系统返回 `platform.kind=unknown`，不得从名称或递归文件扫描推断平台
+
+### Requirement: 最小平台画像服务于安全上下文
+系统 MUST 让项目识别、初始化、显式升级和项目检查消费同一最小平台画像，并 MUST 只在 `native-mini-program` 强证据存在时增加微信原生生命周期、导航、权限、存储、网络、路径和人工验证边界。`unknown` MUST NOT 触发框架专项要求。
+
+#### Scenario: 初始化或检查微信原生项目
+- **WHEN** 用户对存在微信原生固定文件组合的项目执行初始化预览、显式写入或项目检查
+- **THEN** 识别结果、AGENTS、Wayfinder 和 OpenSpec 上下文表达相同平台类型、框架、来源和证据，预览仍保持只读
+
+#### Scenario: 微信原生证据变化后显式升级
+- **WHEN** 已初始化项目的微信原生固定文件证据发生变化且用户执行显式升级
+- **THEN** 系统只更新受管区块中的平台画像并保留项目自定义内容
+
+#### Scenario: 未预置框架保持通用上下文
+- **WHEN** 需求整理读取到 `platform.kind=unknown` 且动态依赖画像包含未预置框架
+- **THEN** 系统保留依赖事实并要求结合真实配置与源码分析，不得擅自补造平台专项要求或宣称框架不存在

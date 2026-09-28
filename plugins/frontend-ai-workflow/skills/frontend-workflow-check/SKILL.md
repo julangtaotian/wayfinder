@@ -37,7 +37,7 @@ Perform a read-only audit of the target repository.
 - `dependencyProfile.packages` is the complete root direct-dependency declaration for this audit; its human summary may be truncated. Report declaration facts separately from usage, installation, compatibility, safety and execution evidence. It does not cover workspaces, transitive packages, registry metadata, vulnerabilities or licenses.
 - Missing optional lint or typecheck scripts are warnings, not invented commands.
 - `commandSemantics` separates the default build from the delivery-build candidate and marks known failing test placeholders as `placeholder`. `commandEvidence.status: detected` only proves the script was found; `placeholder` is unavailable, and a command is passed only when `executed: true` comes from an actual successful run.
-- `platformCommands.status: detected` only proves matching non-empty script names exist. Report their target, all development/build candidates, and evidence with `executed=false`; never describe a candidate as passed unless that exact command was run successfully. When an identified platform framework has no candidate, report the non-blocking warning and the need for a manual developer tool or external CI environment; for native WeChat mini programs, name WeChat DevTools explicitly.
+- `platformCommands.status: detected` only proves matching non-empty script names exist. Report their target, all development/build candidates, and evidence with `executed=false`; never describe a candidate as passed unless that exact command was run successfully. The finite platform profile only identifies native WeChat from its fixed root files; when that project has no candidate, report the non-blocking warning and name WeChat DevTools or an external CI environment. Other framework dependencies remain in `dependencyProfile` and do not create a platform label by themselves.
 - A lint status of `unverified` means the script name exists but its static-check behavior is not proven. Keep it as a warning and ask for project evidence before treating it as lint coverage.
 - A missing or mismatched bundled planning runtime is a plugin integrity error.
 - An unhealthy planning root is an error when its configuration exists.
@@ -48,7 +48,7 @@ Perform a read-only audit of the target repository.
 - Completed changes that remain active are workflow hygiene warnings; do not archive them without their selected requirement and delivery gate.
 - `retired_workflow_state` 是失败关闭结果。当前版本不得读取或迁移旧格式；说明应使用匹配的历史插件版本，或由用户确认后显式删除报告中的退役路径。
 - Existing business-code changes are context, not workflow failures.
-- Preset, target and platform profiles are finite compatibility signals. Unknown or private dependencies that are absent from those profiles still remain visible in the dynamic dependency profile.
+- Preset, target and platform profiles are finite safety signals, not a framework support matrix. Unknown, private or unlisted framework dependencies still remain visible in the dynamic dependency profile.
 
 ## Guardrails
 

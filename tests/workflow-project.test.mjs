@@ -16,9 +16,6 @@ import {
   expectedPublicSkills,
   writeFixtureFile,
   createVueFixture,
-  SUPPORTED_PROJECT_MATRIX,
-  expectedScriptCommand,
-  createMatrixFixture,
 } from './helpers/workflow-fixtures.mjs';
 
 const {
@@ -44,52 +41,61 @@ test('识别 Vue 3 + Vite 项目及真实命令', (t) => {
   assert.equal(result.paths.views, 'src/views');
 });
 
-test('受支持框架与包管理器矩阵完成识别、初始化、升级和检查', (t) => {
-  for (const fixture of SUPPORTED_PROJECT_MATRIX) {
-    const root = createMatrixFixture(t, fixture);
-    const inspection = inspectProject(root);
-    const expectedDevCommand = expectedScriptCommand(fixture.packageManager, 'dev');
+test('未预置框架无损回退并完成通用工作流', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'react-vite-webpack-project-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  writeFixtureFile(root, 'pnpm-lock.yaml', '# fixture lockfile\n');
+  writeFixtureFile(root, 'package.json', `${JSON.stringify({
+    name: 'generic-framework-project',
+    scripts: {
+      dev: 'vite',
+      build: 'vite build',
+      test: 'node --test',
+      lint: 'eslint .',
+    },
+    dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' },
+    devDependencies: { vite: '^6.0.0', webpack: '^5.95.0' },
+  }, null, 2)}\n`);
+  writeFixtureFile(root, 'src/pages/Home.jsx', "export function Home() { return 'Fixture'; }\n");
 
-    assert.equal(inspection.preset, fixture.preset, fixture.id);
-    assert.equal(inspection.packageManager, fixture.packageManager, fixture.id);
-    assert.equal(inspection.commands.dev, expectedDevCommand, fixture.id);
-    assert.equal(inspection.commandSemantics.lint.status, 'verified', fixture.id);
+  const inspection = inspectProject(root);
+  assert.equal(inspection.preset, 'generic-frontend');
+  assert.equal(inspection.packageManager, 'pnpm');
+  assert.equal(inspection.commands.dev, 'pnpm run dev');
+  assert.equal(inspection.commandSemantics.lint.status, 'verified');
+  assert.deepEqual(
+    inspection.dependencyProfile.packages.map(({ name }) => name),
+    ['react', 'react-dom', 'vite', 'webpack'],
+  );
 
-    const preview = runBootstrap({ target: root });
-    assert.equal(preview.ok, true, fixture.id);
-    assert.equal(preview.write, false, fixture.id);
-    assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false, fixture.id);
+  const preview = runBootstrap({ target: root });
+  assert.equal(preview.ok, true);
+  assert.equal(preview.write, false);
+  assert.equal(fs.existsSync(path.join(root, 'AGENTS.md')), false);
 
-    const applied = runBootstrap({ target: root, write: true });
-    assert.equal(applied.ok, true, fixture.id);
-    const agentsPath = path.join(root, 'AGENTS.md');
-    const customized = fs.readFileSync(agentsPath, 'utf8')
-      .replace('## 工作流', '## 临时旧工作流')
-      .concat(`\n项目保留内容：${fixture.id}\n`);
-    fs.writeFileSync(agentsPath, customized, 'utf8');
+  const applied = runBootstrap({ target: root, write: true });
+  assert.equal(applied.ok, true);
+  const agentsPath = path.join(root, 'AGENTS.md');
+  const customized = fs.readFileSync(agentsPath, 'utf8')
+    .replace('## 工作流', '## 临时旧工作流')
+    .concat('\n项目保留内容：generic-framework-project\n');
+  fs.writeFileSync(agentsPath, customized, 'utf8');
 
-    const repeated = runBootstrap({ target: root, write: true });
-    assert.equal(repeated.actions.find((item) => item.file === 'AGENTS.md').action, 'skip', fixture.id);
-    assert.match(fs.readFileSync(agentsPath, 'utf8'), /## 临时旧工作流/, fixture.id);
+  const repeated = runBootstrap({ target: root, write: true });
+  assert.equal(repeated.actions.find((item) => item.file === 'AGENTS.md').action, 'skip');
+  assert.match(fs.readFileSync(agentsPath, 'utf8'), /## 临时旧工作流/u);
 
-    const upgraded = runUpdate({ target: root, write: true });
-    assert.equal(upgraded.ok, true, fixture.id);
-    const nextAgents = fs.readFileSync(agentsPath, 'utf8');
-    assert.match(nextAgents, /## 工作流/, fixture.id);
-    assert.doesNotMatch(nextAgents, /## 临时旧工作流/, fixture.id);
-    assert.match(nextAgents, new RegExp(`项目保留内容：${fixture.id}`), fixture.id);
+  const upgraded = runUpdate({ target: root, write: true });
+  assert.equal(upgraded.ok, true);
+  const nextAgents = fs.readFileSync(agentsPath, 'utf8');
+  assert.match(nextAgents, /## 工作流/u);
+  assert.doesNotMatch(nextAgents, /## 临时旧工作流/u);
+  assert.match(nextAgents, /项目保留内容：generic-framework-project/u);
 
-    const checked = checkProject(root);
-    assert.equal(checked.ok, true, fixture.id);
-    assert.equal(checked.preset, fixture.preset, fixture.id);
-    assert.equal(checked.commands.dev, expectedDevCommand, fixture.id);
-  }
-
-  const misleadingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vue-vite-project-'));
-  t.after(() => fs.rmSync(misleadingRoot, { recursive: true, force: true }));
-  writeFixtureFile(misleadingRoot, 'package.json', '{"name":"plain-project","scripts":{"build":"node --check index.js"}}\n');
-  writeFixtureFile(misleadingRoot, 'index.js', "export default 'plain';\n");
-  assert.equal(inspectProject(misleadingRoot).preset, 'generic-frontend');
+  const checked = checkProject(root);
+  assert.equal(checked.ok, true);
+  assert.equal(checked.preset, 'generic-frontend');
+  assert.equal(checked.commands.dev, 'pnpm run dev');
 });
 
 test('命令语义区分默认构建、交付构建和未验证 lint', (t) => {

@@ -397,13 +397,10 @@ export function checkProject(target = process.cwd()) {
     }
     if (!inspection.scriptNames.typecheck) warnings.push('package.json 未配置类型检查脚本');
     if (
-      inspection.targetProfile.platform.kind !== 'unknown'
+      inspection.targetProfile.platform.kind === 'native-mini-program'
       && inspection.platformCommands.status === 'missing'
     ) {
-      const environment = inspection.targetProfile.platform.frameworks.includes('wechat-native')
-        ? '微信开发者工具或外部 CI 的验证环境'
-        : '人工开发工具或外部 CI 的验证环境';
-      warnings.push(`已识别平台框架，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录${environment}。`);
+      warnings.push('已识别微信原生项目，但 package.json 未配置受支持的显式平台脚本；需求与变更必须记录微信开发者工具或外部 CI 的验证环境。');
     }
   }
 
