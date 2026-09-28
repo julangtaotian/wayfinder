@@ -27,6 +27,14 @@ const RETIRED_PATHS = Object.freeze([
 const RETIRED_SOURCE_PATHS = Object.freeze([
   'scripts/collect-local-verification-receipt.mjs',
   'plugins/frontend-ai-workflow/scripts/collect-external-ci-receipt.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-case-bundle.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-cases.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-contract.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-execution.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-foundation.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-metrics.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark-process.mjs',
+  'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs',
   'plugins/frontend-ai-workflow/scripts/external-ci-receipt.mjs',
   'plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs',
   'plugins/frontend-ai-workflow/scripts/finalize-change-references.mjs',
@@ -36,6 +44,8 @@ const RETIRED_SOURCE_PATHS = Object.freeze([
   'plugins/frontend-ai-workflow/scripts/lifecycle-status.mjs',
   'plugins/frontend-ai-workflow/scripts/lifecycle-transition.mjs',
   'plugins/frontend-ai-workflow/scripts/preview-requirement-upgrade.mjs',
+  'plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs',
+  'plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-statistics.mjs',
   'plugins/frontend-ai-workflow/scripts/real-project-support-evidence.mjs',
   'plugins/frontend-ai-workflow/scripts/requirement-decision-parser.mjs',
   'plugins/frontend-ai-workflow/scripts/requirement-delivery-validation.mjs',
@@ -49,6 +59,8 @@ const RETIRED_SOURCE_PATHS = Object.freeze([
   'plugins/frontend-ai-workflow/scripts/verification-semantics.mjs',
 ]);
 const RETIRED_PACKAGE_SCRIPTS = Object.freeze([
+  'benchmark:developer-effectiveness',
+  'effectiveness:real-evidence',
   'verify:receipt',
   'ci:receipt',
   'support:project-evidence',

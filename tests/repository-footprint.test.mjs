@@ -100,9 +100,11 @@ test('[TC-22] 退役资产与空目录不回流', (context) => {
   write(root, 'tests/.DS_Store', 'junk');
   write(root, 'plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs', 'export {};\n');
   write(root, 'plugins/frontend-ai-workflow/scripts/verification-evidence.mjs', 'export {};\n');
+  write(root, 'plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs', 'export {};\n');
+  write(root, 'plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs', 'export {};\n');
   write(root, 'openspec/changes/demo/evidence/V-01.json', '{}\n');
   write(root, 'openspec/changes/demo/test-plan.md', '# 退役测试方案\n');
-  write(root, 'package.json', '{"scripts":{"verify:receipt":"node legacy.mjs"}}\n');
+  write(root, 'package.json', '{"scripts":{"verify:receipt":"node legacy.mjs","benchmark:developer-effectiveness":"node legacy.mjs","effectiveness:real-evidence":"node legacy.mjs"}}\n');
   write(root, 'plugins/frontend-ai-workflow/scripts/orphan.mjs', 'export {};\n');
   fs.mkdirSync(path.join(root, 'plugins/frontend-ai-workflow/references/empty'), { recursive: true });
 
@@ -117,6 +119,10 @@ test('[TC-22] 退役资产与空目录不回流', (context) => {
     'empty_managed_directory:plugins/frontend-ai-workflow/references/empty',
     'retired_source_present:plugins/frontend-ai-workflow/scripts/finalize-change-archive.mjs',
     'retired_source_present:plugins/frontend-ai-workflow/scripts/verification-evidence.mjs',
+    'retired_source_present:plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs',
+    'retired_source_present:plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs',
+    'retired_package_script:package.json#scripts.benchmark:developer-effectiveness',
+    'retired_package_script:package.json#scripts.effectiveness:real-evidence',
     'retired_package_script:package.json#scripts.verify:receipt',
     'retired_change_evidence:openspec/changes/demo/evidence/V-01.json',
     'retired_change_evidence:openspec/changes/demo/test-plan.md',

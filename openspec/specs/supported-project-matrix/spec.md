@@ -101,12 +101,12 @@
 
 #### Scenario: 没有真实开发者效果样本
 
-- **WHEN** 只有合成配对基准或没有三个真实项目的有效配对数据
-- **THEN** 矩阵把真实开发者、团队和生产收益标记为 unmeasured，不生成收益百分比
+- **WHEN** 调用方只有合成研究记录或没有真实开发者效果样本
+- **THEN** 支持矩阵不接收、不投影也不声明开发者、团队或生产收益
 
 ### Requirement: 支持矩阵必须直接聚合标准证据并区分旧输入信任
 
-支持证据矩阵 MUST 直接消费标准本地统一验证回执、标准真实项目支持证据和既有 GitHub CI 回执，并 MUST 要求全部已提供输入与调用方指定的同一 40 位 revision 一致。矩阵 MUST 分别呈现各层来源、信任和有效项目；只有生成器可验证的标准本地回执与标准真实项目证据才能参与 `certified` 提升。第二阶段的手工 schema v1 输入 MUST 继续可读，但 MUST 标记为旧式记录且不得单独形成认证。缺少任何可选输入时，默认组合状态、已知缺口和真实效益 `unmeasured`/`null` MUST 保持不变。
+支持证据矩阵 MUST 直接消费标准本地统一验证回执、标准真实项目支持证据和既有 GitHub CI 回执，并 MUST 要求全部已提供输入与调用方指定的同一 40 位 revision 一致。矩阵 MUST 分别呈现各层来源、信任和有效项目；只有生成器可验证的标准本地回执与标准真实项目证据才能参与 `certified` 提升。第二阶段的手工 schema v1 输入 MUST 继续可读，但 MUST 标记为旧式记录且不得单独形成认证。缺少任何可选输入时，默认组合状态和已知缺口 MUST 保持不变。
 
 #### Scenario: 三类标准证据同提交聚合
 
@@ -122,32 +122,11 @@
 
 #### Scenario: 没有新增真实证据
 
-- **WHEN** 调用方不提供标准本地回执、真实项目证据或真实开发者配对样本
+- **WHEN** 调用方不提供标准本地回执或真实项目证据
 - **THEN** 默认矩阵继续返回 0 个 `certified`、6 个 `limited` 和 1 个 `uncovered`
-- **AND** 真实开发者、团队和生产效益保持 `unmeasured`，收益百分比保持 `null`
 
 #### Scenario: 标准输入不一致或损坏
 
 - **WHEN** 任一已提供输入的 schema、revision、生成器身份、来源摘要、任务状态或组合标识无效
 - **THEN** 系统以稳定 `code`、`status` 和 `target` 失败关闭
 - **AND** 系统不得回退旧证据、忽略无效层或输出提升后的矩阵
-
-### Requirement: 支持矩阵必须保守消费标准真实开发者效果证据
-
-支持矩阵 MUST 接受可选的标准真实开发者效果证据，并 MUST 校验 schema、固定生成器身份、调用方指定的插件 40 位提交、研究状态、样本摘要和输入来源的相对路径、字节数及 SHA-256。没有输入时真实开发者效果 MUST 保持 `unmeasured` 且 `benefitPercent` 为 null；有效但未达到证明门槛的证据 MUST 保留其真实结论并保持收益为空；只有标准证据为 `demonstrated-improvement` 时才能投影非空收益百分比。旧式手工文件、合成基准、损坏摘要或提交不匹配 MUST NOT 形成提升结论。
-
-#### Scenario: 不提供真实效果证据
-- **WHEN** 调用方按现有参数生成支持矩阵
-- **THEN** 系统维持既有支持组合计数、`developerEffectiveness.status=unmeasured` 和 `benefitPercent=null`
-
-#### Scenario: 同提交标准证据证明改善
-- **WHEN** 调用方提供同一插件提交、来源摘要可复算且状态为 `demonstrated-improvement` 的标准真实效果证据
-- **THEN** 系统投影生成信任、研究别名、项目数、配对数和真实收益百分比，并且不改变框架支持组合认证状态
-
-#### Scenario: 标准证据未证明改善
-- **WHEN** 标准证据状态为 `inconclusive`、`no-demonstrated-improvement` 或 `regressed`
-- **THEN** 系统保留对应状态、样本与阻断原因，但收益百分比保持 null
-
-#### Scenario: 证据伪造或来源漂移
-- **WHEN** 输入不是标准生成器结果、revision 不匹配、字段越界或来源文件大小与摘要改变
-- **THEN** 系统返回稳定失败并且不得回退为旧式信任、忽略该层或输出部分提升矩阵

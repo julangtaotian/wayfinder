@@ -21,8 +21,6 @@
     "verify": "node scripts/verify.mjs",
     "verify:shared": "node scripts/verify.mjs --scope shared",
     "verify:platform": "node scripts/verify.mjs --scope platform",
-    "benchmark:developer-effectiveness": "node plugins/frontend-ai-workflow/scripts/developer-effectiveness-benchmark.mjs",
-    "effectiveness:real-evidence": "node plugins/frontend-ai-workflow/scripts/real-developer-effectiveness-evidence.mjs",
     "validate:real-projects": "node plugins/frontend-ai-workflow/scripts/real-project-validation.mjs",
     "footprint": "node plugins/frontend-ai-workflow/scripts/repository-footprint.mjs"
   },
