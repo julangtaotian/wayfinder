@@ -83,7 +83,6 @@ test('公开环境模板、内置运行时和 v2 持久交付物保持可提交'
     'plugins/frontend-ai-workflow/runtime/playwright/package-lock.json',
     'plugins/frontend-ai-workflow/runtime/playwright/node_modules/playwright/package.json',
     'plugins/frontend-ai-workflow/runtime/playwright/platforms/linux-x64.json',
-    'design/lanhu-ai-ui-spec/README.md',
     '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
   ];
@@ -141,7 +140,6 @@ test('根职责地图只覆盖当前路径且 outputs 保留单一退役安全�
     'openspec/specs/',
     'openspec/changes/',
     'requirements/',
-    'design/',
     'scripts/',
     'tests/',
     '.frontend-ai-workflow/',
@@ -168,7 +166,7 @@ test('根职责地图只覆盖当前路径且 outputs 保留单一退役安全�
   );
 
   for (const relativePath of [
-    'design/lanhu-ai-ui-spec/README.md',
+    'design/example/reference.png',
     '.workflow-history/2026.jsonl',
     'openspec/specs/bundled-openspec-runtime/spec.md',
   ]) {

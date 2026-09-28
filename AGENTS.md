@@ -15,7 +15,7 @@
 - 日常插件源码：`plugins/frontend-ai-workflow/scripts`、`skills`、`assets/templates` 和 `references`；根 `scripts` 只负责编排仓库级测试运行时、官方校验、静态检查和统一验证。
 - 固定运行时：`plugins/frontend-ai-workflow/runtime`；只在运行时、完整性或平台发布任务中读取，不把生成的平台二进制回写规范源码。
 - 生命周期与规划资产：只有 Complex 变更写入 `openspec/changes`，正式合同位于 `openspec/specs`，完成状态由 `.workflow-history` 的 schema v2 紧凑事件投影；Direct 与 Light 不创建管理资产。
-- 持久设计输入位于 `design`，长期测试位于 `tests`，跨平台 CI 位于 `.github/workflows`；项目级 `.frontend-ui-review` 只有在受跟踪页面与设计事实可复现时才保留。
+- 项目明确保留的持久设计输入必须可追溯且受体积门禁约束，长期测试位于 `tests`，跨平台 CI 位于 `.github/workflows`；项目级 `.frontend-ui-review` 只有在受跟踪页面与设计事实可复现时才保留。
 - 本地运行、缓存和事务只进入 `.frontend-ai-workflow`，单平台成品只进入被忽略的 `dist`；`outputs`、生命周期证据 sidecar 和永久 OpenSpec 归档均已退役，仓库中不得重新创建。
 
 ## AI 读取路由

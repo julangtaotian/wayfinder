@@ -69,8 +69,8 @@ test('根项目规则禁止生成 AI 行数统计注释', () => {
 
 test('已退役验证材料不再留在日常仓库入口', () => {
   const legacyDocuments = [
-    'outputs/lanhu-design-spec/validation-evidence/isolation-prompt.md',
-    'outputs/lanhu-design-spec/validation-evidence/isolation-run.md',
+    'outputs/legacy-ui-review/validation-evidence/isolation-prompt.md',
+    'outputs/legacy-ui-review/validation-evidence/isolation-run.md',
   ];
   for (const relativePath of legacyDocuments) {
     assert.equal(fs.existsSync(path.join(projectRoot, relativePath)), false, `${relativePath} 不应继续保留`);

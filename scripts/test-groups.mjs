@@ -9,7 +9,6 @@ export const TEST_GROUPS = Object.freeze({
   repository: [
     'tests/ai-code-marker-policy.test.mjs',
     'tests/ai-context-efficiency.test.mjs',
-    'tests/lanhu-ai-spec.test.mjs',
     'tests/repository-footprint.test.mjs',
     'tests/repository-hygiene.test.mjs',
     'tests/lifecycle-history.test.mjs',

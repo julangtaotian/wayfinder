@@ -110,7 +110,6 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 | `scripts/` | 仓库级测试运行时、静态检查、官方校验和统一验证编排 |
 | `.github/workflows/` | Shared 与五平台 Native 两层 CI |
 | `.frontend-ai-workflow/` | 被忽略的 runs、cache 和 transactions |
-| `design/` | 可复现的持久设计输入 |
 | `requirements/` | 退役路径；当前架构不得重新创建需求台账 |
 | `dist/` | 被忽略的本地单平台成品，不进入规范源码 |
 

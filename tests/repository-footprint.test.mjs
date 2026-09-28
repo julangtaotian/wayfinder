@@ -127,7 +127,7 @@ test('[TC-22] 退役资产与空目录不回流', (context) => {
 
 test('[V-03] 仓库体积与统一验证治理合同：各类预算违规稳定失败', (context) => {
   const root = createFixture(context);
-  write(root, 'outputs/lanhu-design-spec/legacy.png', 'legacy');
+  write(root, 'outputs/legacy-ui-review/legacy.png', 'legacy');
   for (let index = 0; index < 6; index += 1) {
     write(root, `requirements/REQ-2026-10${index}-active.md`, '# 活跃需求\n\n- 状态：已确认\n');
   }
@@ -138,7 +138,7 @@ test('[V-03] 仓库体积与统一验证治理合同：各类预算违规稳定�
     write(root, relativePath, 'x');
     return relativePath;
   });
-  trackedFiles.push('outputs/lanhu-design-spec/legacy.png');
+  trackedFiles.push('outputs/legacy-ui-review/legacy.png');
 
   const result = auditRepositoryFootprint({ root, trackedFiles });
   assert.equal(result.ok, false);
