@@ -28,7 +28,6 @@ export const TEST_GROUPS = Object.freeze({
     'tests/real-project-validation.test.mjs',
   ],
   platform: [
-    'tests/platform-marketplace-install.test.mjs',
     'tests/platform-package-runtime.test.mjs',
     'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',

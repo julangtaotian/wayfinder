@@ -2,7 +2,7 @@
 
 ## Purpose
 
-定义仓库本地验证与 GitHub Actions 的分层职责，使平台无关检查只执行一次，五个原生平台专注路径、子进程、打包与浏览器差异，并把真实 Codex 安装限制在同一发布候选提交的手动 smoke 中。
+定义仓库本地验证与 GitHub Actions 的分层职责，使平台无关检查只执行一次，五个原生平台专注路径、子进程、打包与浏览器差异，并只保留能够确定性复现的自动化结论。
 
 ## Requirements
 
@@ -26,16 +26,6 @@ Native Platform MUST 先使用锁定输入预热缓存并删除在线运行时�
 - **THEN** smoke 离线重建运行时、只运行 `TC-03` 并成功清理
 - **AND** 缓存缺失、零测试或运行失败均失败关闭
 
-### Requirement: CI 固定为三层依赖
-
-GitHub Actions MUST 使用 Node.js 20.19.0，并固定 Shared Validation、Native Platform Matrix、Release Install Smoke 三个 job 层级。Shared MUST 只在 `ubuntu-24.04` 执行一次；Native MUST `needs: shared`；Release MUST `needs` 前两层且只在手动 `workflow_dispatch` 布尔开关启用时运行。普通 push 和 pull request MUST NOT 下载或执行 Codex CLI。
-
-#### Scenario: 普通提交触发 CI
-
-- **WHEN** push 或 pull request 触发 Validate
-- **THEN** Shared 执行一次且成功后启动 Native 五平台矩阵
-- **AND** Release Install Smoke 被跳过，工作流没有 Codex CLI 安装步骤进入日常路径
-
 ### Requirement: Native Platform 保留五个原生 runner
 
 Native MUST 固定使用 `macos-15/darwin-arm64`、`macos-15-intel/darwin-x64`、`ubuntu-24.04/linux-x64`、`ubuntu-24.04-arm/linux-arm64` 与 `windows-2025/win32-x64`。每个平台 MUST 运行路径、临时目录、子进程、清理、安装视图和 Windows junction 等适用合同，随后在源码目录外构建唯一目标 marketplace，并验证平台包完整性与浏览器启动。
@@ -46,23 +36,13 @@ Native MUST 固定使用 `macos-15/darwin-arm64`、`macos-15-intel/darwin-x64`�
 - **THEN** 该矩阵任务失败且不伪造其他平台状态
 - **AND** 同一提交不得标记 Native 五平台通过
 
-### Requirement: Release Install Smoke 绑定同一候选提交
-
-Release MUST 在相同五个平台使用固定 Codex CLI 版本，对最终 marketplace 验证真实安装、启用、Skill 在新会话可见、断网运行和 Playwright smoke。入口 MUST 接受并校验 40 位小写 Git revision，报告 MUST 包含该 revision，且五个任务都绑定 `${{ github.sha }}`。入口不得使用登录态、API key 或模型调用。
-
-#### Scenario: 手动验证最终候选
-
-- **WHEN** 用户对一个候选提交启用 Release Install Smoke
-- **THEN** 五个平台都以同一 40 位提交、固定 CLI 和本地 marketplace 执行
-- **AND** 只有五个平台全部成功时才可标记跨平台发布就绪
-
 ### Requirement: CI 报告只作为临时 artifact
 
-Native 的 `package-report.json` 与 Release 的安装报告 MUST 由 GitHub Actions 上传并固定保留 14 天。工作流 MUST NOT 写 `.workflow-history`、生成 receipt、support evidence 或第二个状态提交，也 MUST NOT 上传完整大型 marketplace。
+Native 的 `package-report.json` MUST 由 GitHub Actions 上传并固定保留 14 天。工作流 MUST NOT 写 `.workflow-history`、生成 receipt、support evidence 或第二个状态提交，也 MUST NOT 上传完整大型 marketplace。
 
 #### Scenario: CI 完成报告上传
 
-- **WHEN** Native 或 Release 的目标任务成功
+- **WHEN** Native 的目标任务成功
 - **THEN** 只上传对应小型 JSON 报告并设置 `retention-days: 14`
 - **AND** 仓库工作树与生命周期历史保持不变
 
@@ -85,3 +65,13 @@ Native 的 `package-report.json` 与 Release 的安装报告 MUST 由 GitHub Act
 - **WHEN** marketplace、manifest、生命周期配置与历史都有效
 - **THEN** 精简检查返回插件健康、v2、事件计数和运行时忽略状态
 - **AND** `retiredWorkflowState` 为 null
+
+### Requirement: CI 固定为两层依赖
+
+GitHub Actions MUST 使用 Node.js 20.19.0，并固定 Shared Validation 与 Native Platform Matrix 两个 job 层级。Shared MUST 只在 `ubuntu-24.04` 执行一次；Native MUST `needs: shared`。push 和 pull request MUST 触发这两层验证，工作流 MUST NOT 下载或执行 Codex CLI，也 MUST NOT 通过会话元数据或提示词输出推断 Skill 激活状态。
+
+#### Scenario: 普通提交触发 CI
+
+- **WHEN** push 或 pull request 触发 Validate
+- **THEN** Shared 执行一次且成功后启动 Native 五平台矩阵
+- **AND** 工作流不存在 Release Install job、Codex CLI 安装步骤或 Skill 激活探测

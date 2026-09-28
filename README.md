@@ -95,7 +95,7 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 | `.frontend-workflow.json` | 当前仓库的工作流 schema 与受管版本配置 |
 | `.agents/` | 本地 marketplace 声明；不承载业务实现 |
 | `.agents/plugins/marketplace.json` | 本地 marketplace 入口，不承载业务实现 |
-| `.github/` | Shared、五平台 Native、手动 Release Install 三层 CI |
+| `.github/` | Shared 与五平台 Native 两层 CI |
 | `plugins/frontend-ai-workflow/.codex-plugin/plugin.json` | 发布 manifest 和公开能力声明 |
 | `plugins/frontend-ai-workflow/` | 插件源码、模板、参考资料和固定运行时的发布根目录 |
 | `plugins/frontend-ai-workflow/skills/` | 七个公开 Skill |
@@ -108,7 +108,7 @@ codex plugin add frontend-ai-workflow@frontend-ai-workflow
 | `.workflow-history/` | schema v2 紧凑年度完成事件 |
 | `tests/` | 长期确定性回归测试 |
 | `scripts/` | 仓库级测试运行时、静态检查、官方校验和统一验证编排 |
-| `.github/workflows/` | Shared、五平台 Native、手动 Release Install 三层 CI |
+| `.github/workflows/` | Shared 与五平台 Native 两层 CI |
 | `.frontend-ai-workflow/` | 被忽略的 runs、cache 和 transactions |
 | `design/` | 可复现的持久设计输入 |
 | `requirements/` | 退役路径；当前架构不得重新创建需求台账 |
@@ -134,7 +134,7 @@ npm run verify:platform
 npm run footprint
 ```
 
-`npm run validate` 检查插件结构、文档引用、运行时和体积预算；`npm run validate:official` 使用 Codex 官方 Skill/Plugin validators；`npm run verify` 是本地完整门禁。GitHub Actions 将平台无关验证只运行一次，再在五个原生 runner 上验证平台合同、单平台 marketplace 完整性和真实 Chromium smoke。真实安装 smoke 仅由手动触发，并使用固定 Codex CLI；普通 push 和 pull request 不安装 Codex CLI。CI 临时报告保留 14 天，不写回生命周期或仓库历史。
+`npm run validate` 检查插件结构、文档引用、运行时和体积预算；`npm run validate:official` 使用 Codex 官方 Skill/Plugin validators；`npm run verify` 是本地完整门禁。GitHub Actions 将平台无关验证只运行一次，再在五个原生 runner 上验证平台合同、单平台 marketplace 完整性和真实 Chromium smoke。CI 不下载或运行 Codex CLI，也不把新会话中的 Skill 激活状态作为自动化结论。Native 临时报告保留 14 天，不写回生命周期或仓库历史。
 
 跨平台高风险改动必须先阅读 `plugins/frontend-ai-workflow/references/cross-platform-ci-checklist.md`。本地聚焦测试、完整验证和真实五平台 CI 是独立结论；本地通过不能替代五平台发布状态。
 

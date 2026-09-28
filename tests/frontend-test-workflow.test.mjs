@@ -287,7 +287,6 @@ test('[TC-14] 统一验证传播离线选项', (t) => {
   fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
   for (const name of [
     'ordinary.test.mjs',
-    'platform-marketplace-install.test.mjs',
     'platform-package-runtime.test.mjs',
     'project-platform-profile.test.mjs',
     'ui-review-automation.test.mjs',

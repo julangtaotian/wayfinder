@@ -453,10 +453,7 @@ test('[TC-04] 平台 marketplace 原子升级与旧包保留', async (context) =
 });
 test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
-  const platformJob = workflow.slice(
-    workflow.indexOf('\n  native-platform:'),
-    workflow.indexOf('\n  release-install:'),
-  );
+  const platformJob = workflow.slice(workflow.indexOf('\n  native-platform:'));
   assert.match(platformJob, /prepare-platform-marketplace\.mjs --write --platform \$\{\{ matrix\.platform \}\}/u);
   assert.match(platformJob, /UI_REVIEW_RUNTIME_ROOT:/u);
   assert.equal([...platformJob.matchAll(/npm run verify:platform/gmu)].length, 1);
@@ -466,6 +463,7 @@ test('[TC-05] CI 平台 marketplace 准备与小型报告合同', (context) => {
   assert.equal([...platformJob.matchAll(/retention-days:\s*14/gmu)].length, 1);
   assert.match(platformJob, /dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\/package-report\.json/u);
   assert.doesNotMatch(platformJob, /path:\s*dist\/frontend-ai-workflow-\$\{\{ matrix\.platform \}\}\s*$/mu);
+  assert.doesNotMatch(workflow, /workflow_dispatch|release-install|@openai\/codex|verify-platform-marketplace-install/u);
   const previewRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playwright-marketplace-preview-'));
   context.after(() => fs.rmSync(previewRoot, { recursive: true, force: true }));
   const previewOutput = path.join(previewRoot, 'marketplace');

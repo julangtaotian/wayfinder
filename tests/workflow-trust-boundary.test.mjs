@@ -38,7 +38,6 @@ test('统一验证不再包含独立生命周期入口并保持子进程隔离',
   fs.mkdirSync(path.join(root, 'tests'), { recursive: true });
   for (const name of [
     'ordinary.test.mjs',
-    'platform-marketplace-install.test.mjs',
     'platform-package-runtime.test.mjs',
     'project-platform-profile.test.mjs',
     'ui-review-automation.test.mjs',

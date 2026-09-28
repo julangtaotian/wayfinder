@@ -246,7 +246,7 @@ test('[TC-03] CI 共享验证前置门禁', (context) => {
   assert.notEqual(sharedStart, -1);
   assert.ok(platformStart > sharedStart);
   const sharedJob = workflow.slice(sharedStart, platformStart);
-  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
+  const platformJob = workflow.slice(platformStart);
   assert.match(sharedJob, /runs-on:\s*ubuntu-24\.04/u);
   assert.match(sharedJob, /lfs:\s*false/u);
   assert.match(sharedJob, /node-version:\s*20\.19\.0/u);
@@ -276,7 +276,7 @@ test('[TC-04] CI 五平台专属验证与产物合同', () => {
   const attributes = fs.readFileSync(path.resolve('.gitattributes'), 'utf8');
   const platformStart = workflow.indexOf('\n  native-platform:');
   assert.notEqual(platformStart, -1);
-  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
+  const platformJob = workflow.slice(platformStart);
   assert.match(workflow, /lfs:\s*false/u);
   assert.doesNotMatch(workflow, /lfs:\s*true/u);
   assert.match(platformJob, /needs:\s*shared/u);
@@ -316,7 +316,7 @@ test('[TC-06] CI 平台矩阵验证运行时离线复验', () => {
   const workflow = fs.readFileSync(path.resolve('.github/workflows/validate.yml'), 'utf8');
   const platformStart = workflow.indexOf('\n  native-platform:');
   assert.notEqual(platformStart, -1);
-  const platformJob = workflow.slice(platformStart, workflow.indexOf('\n  release-install:'));
+  const platformJob = workflow.slice(platformStart);
   const setupNode = platformJob.indexOf('actions/setup-node@v6');
   const warmCache = platformJob.indexOf('Warm locked frontend test cache');
   const clearRuntime = platformJob.indexOf('Remove online frontend test runtime');
@@ -346,7 +346,8 @@ test('[TC-05] CI 同引用在途运行治理', () => {
     workflow,
     /^concurrency:\r?\n\s+group:\s*\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\r?\n\s+cancel-in-progress:\s*true$/mu,
   );
-  assert.match(workflow, /^on:\r?\n\s+push:\s*\r?\n\s+pull_request:\s*\r?\n\s+workflow_dispatch:/mu);
+  assert.match(workflow, /^on:\r?\n\s+push:\s*\r?\n\s+pull_request:\s*$/mu);
+  assert.doesNotMatch(workflow, /^\s+workflow_dispatch:/mu);
   assert.match(workflow, /^permissions:\r?\n\s+contents:\s*read$/mu);
   assert.doesNotMatch(workflow, /github\.head_ref|github\.ref_name/u);
   assert.doesNotMatch(workflow, /^\s*(?:schedule|paths|paths-ignore):/mu);

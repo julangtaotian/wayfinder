@@ -151,7 +151,6 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   for (const name of [
     'ordinary.test.mjs',
     'new-feature.test.mjs',
-    'platform-marketplace-install.test.mjs',
     'platform-package-runtime.test.mjs',
     'project-platform-profile.test.mjs',
     'ui-review-automation.test.mjs',
@@ -167,7 +166,6 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   assert.deepEqual(all, [
     'tests/new-feature.test.mjs',
     'tests/ordinary.test.mjs',
-    'tests/platform-marketplace-install.test.mjs',
     'tests/platform-package-runtime.test.mjs',
     'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',
@@ -176,7 +174,6 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   ]);
   assert.deepEqual(shared, ['tests/new-feature.test.mjs', 'tests/ordinary.test.mjs']);
   assert.deepEqual(platform, [
-    'tests/platform-marketplace-install.test.mjs',
     'tests/platform-package-runtime.test.mjs',
     'tests/project-platform-profile.test.mjs',
     'tests/ui-review-automation.test.mjs',
@@ -197,7 +194,6 @@ test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   );
   fs.rmSync(path.join(verificationRoot, 'tests', 'ui-review-platform-runtime.test.mjs'));
   for (const name of [
-    'platform-marketplace-install.test.mjs',
     'platform-package-runtime.test.mjs',
     'project-platform-profile.test.mjs',
     'workflow-trust-boundary.test.mjs',
@@ -218,7 +214,6 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
   fs.mkdirSync(path.join(verificationRoot, 'tests'), { recursive: true });
   for (const name of [
     'ordinary.test.mjs',
-    'platform-marketplace-install.test.mjs',
     'platform-package-runtime.test.mjs',
     'project-platform-profile.test.mjs',
     'ui-review-automation.test.mjs',
