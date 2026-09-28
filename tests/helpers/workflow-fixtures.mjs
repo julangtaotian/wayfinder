@@ -5,6 +5,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { runBootstrap, WORKFLOW_VERSION } from '../../plugins/frontend-ai-workflow/scripts/bootstrap-project.mjs';
 
+export const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
+
 export function writeFixtureFile(root, file, content) {
   const filePath = path.join(root, file);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
