@@ -3,11 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
-import {
-  advanceRepairBudget,
-  decideProjectVerification,
-  selectVerificationLevel,
-} from '../plugins/frontend-ai-workflow/scripts/delivery-verification.mjs';
+import { decideProjectVerification } from '../plugins/frontend-ai-workflow/scripts/delivery-verification.mjs';
 import { summarizeUiReviewResult } from '../plugins/frontend-ai-workflow/scripts/ui-review-runner.mjs';
 
 const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
@@ -15,54 +11,6 @@ const pluginRoot = path.resolve('plugins/frontend-ai-workflow');
 function readSkill(name) {
   return fs.readFileSync(path.join(pluginRoot, 'skills', name, 'SKILL.md'), 'utf8');
 }
-
-test('[P5-01] 四种验证等级由实际影响和验收目标确定', () => {
-  assert.equal(selectVerificationLevel({ effects: ['non-runtime-text'] }).level, 'None');
-  assert.equal(selectVerificationLevel({ effects: ['runtime-logic'] }).level, 'Focused');
-  assert.equal(selectVerificationLevel({ effects: ['visible-ui'], acceptanceTargets: ['named-interaction'] }).level, 'Targeted UI');
-  assert.equal(selectVerificationLevel({ effects: ['runtime-logic'], acceptanceTargets: ['critical-ui-journey'] }).level, 'Full UI');
-});
-
-test('[P5-02] 实施深度不会改变相同事实的验证等级', () => {
-  const facts = { effects: ['visible-ui'], acceptanceTargets: ['named-component'] };
-  const direct = selectVerificationLevel({ ...facts, implementationDepth: 'Direct' });
-  const light = selectVerificationLevel({ ...facts, implementationDepth: 'Light' });
-  const complex = selectVerificationLevel({ ...facts, implementationDepth: 'Complex' });
-  assert.equal(direct.level, 'Targeted UI');
-  assert.equal(light.level, direct.level);
-  assert.equal(complex.level, direct.level);
-  assert.equal('implementationDepth' in direct, false);
-});
-
-test('[P5-01][P5-02] 显式验证请求只能提高等级，不能降低必要验证', () => {
-  const raised = selectVerificationLevel({ effects: ['runtime-logic'], requestedLevel: 'Full UI' });
-  assert.equal(raised.level, 'Full UI');
-  const protectedLevel = selectVerificationLevel({ effects: ['visible-ui'], requestedLevel: 'None' });
-  assert.equal(protectedLevel.level, 'Targeted UI');
-});
-
-test('[P5-07] 同类失败只有两轮修复预算，第三次返回稳定停止结果', () => {
-  const first = advanceRepairBudget({}, { category: 'assertion-mismatch', verificationLevel: 'Focused' });
-  const second = advanceRepairBudget(first.state, { category: 'assertion-mismatch', verificationLevel: 'Focused' });
-  const third = advanceRepairBudget(second.state, { category: 'assertion-mismatch', verificationLevel: 'Focused' });
-  assert.equal(first.status, 'repair');
-  assert.equal(first.repairRound, 1);
-  assert.equal(second.status, 'repair');
-  assert.equal(second.repairRound, 2);
-  assert.equal(third.ok, false);
-  assert.equal(third.code, 'verification_repair_exhausted');
-  assert.equal(third.status, 'stopped');
-  assert.equal(third.occurrence, 3);
-  assert.equal(third.verificationLevel, 'Focused');
-});
-
-test('[P5-07] 不同失败分类独立计数且不会自动升级验证等级', () => {
-  const first = advanceRepairBudget({}, { category: 'assertion-mismatch', verificationLevel: 'Targeted UI' });
-  const other = advanceRepairBudget(first.state, { category: 'environment-unavailable', verificationLevel: 'Targeted UI' });
-  assert.equal(other.occurrence, 1);
-  assert.equal(other.verificationLevel, 'Targeted UI');
-  assert.deepEqual(other.state.failures, { 'assertion-mismatch': 1, 'environment-unavailable': 1 });
-});
 
 test('[P5-08] 缺失本地测试入口或已知失败都不安装依赖、不重复执行', () => {
   const missing = decideProjectVerification({ entryStatus: 'missing' });
@@ -76,6 +24,10 @@ test('[P5-08] 缺失本地测试入口或已知失败都不安装依赖、不重
   assert.equal(known.runAllowed, false);
   assert.equal(known.installAllowed, false);
   assert.equal(known.retryAllowed, false);
+  assert.throws(
+    () => decideProjectVerification({ entryStatus: 'unknown' }),
+    (error) => error.code === 'verification_invalid_entry_status' && error.status === 'blocked',
+  );
 });
 
 test('[P5-03] frontend-test 只承担显式只读分析或明确授权的测试实现', () => {

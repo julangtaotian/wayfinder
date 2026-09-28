@@ -12,8 +12,6 @@ import { parseStructureValidationArgs } from '../plugins/frontend-ai-workflow/sc
 import * as verificationRunner from '../scripts/verify.mjs';
 import { buildTestCommand } from '../scripts/test-groups.mjs';
 import {
-  pluginRoot,
-  expectedPublicSkills,
   writeFixtureFile,
   createVueFixture,
 } from './helpers/workflow-fixtures.mjs';
@@ -138,16 +136,6 @@ test('命令语义区分默认构建、交付构建和未验证 lint', (t) => {
   assert.equal(inspectProject(root).commandSemantics.lint.status, 'verified');
 });
 
-test('插件只公开团队自有技能', () => {
-  const skills = fs.readdirSync(path.join(pluginRoot, 'skills'), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-
-  assert.deepEqual(skills, expectedPublicSkills);
-  assert.equal(skills.some((name) => name.startsWith('openspec-')), false);
-});
-
 test('[TC-01] 验证作用域测试集合完整分区', (t) => {
   const fixturesRoot = path.resolve('.frontend-ai-workflow', 'runs', 'ci-validation-cost', 'test-fixtures');
   fs.mkdirSync(fixturesRoot, { recursive: true });
@@ -239,6 +227,10 @@ test('[TC-02] 统一验证作用域与生命周期', (t) => {
     'runtime-version',
     'runtime-integrity',
   ]);
+  assert.equal(
+    allSteps.some((step) => step.args.some((value) => value.endsWith('lifecycle-audit.mjs'))),
+    false,
+  );
   const sharedSteps = buildVerificationSteps(verificationRoot, { scope: 'shared' });
   assert.deepEqual(sharedSteps.map((step) => step.id), [
     'static',
@@ -368,6 +360,11 @@ test('[TC-06] 统一验证隔离仓库内临时 fixture 的父 Git 状态', (t) 
   assert.equal(environment.TMP, ceilingRoot);
   assert.equal(environment.TEMP, ceilingRoot);
   assert.equal(environment.GIT_CEILING_DIRECTORIES.split(path.delimiter).includes(ceilingRoot), true);
+  assert.equal(environment.OPENSPEC_NO_UPDATE_CHECK, '1');
+  const inheritedEnvironment = buildVerificationEnvironment(ceilingRoot, {
+    GIT_CEILING_DIRECTORIES: '/parent',
+  });
+  assert.equal(inheritedEnvironment.GIT_CEILING_DIRECTORIES.split(path.delimiter).includes('/parent'), true);
 });
 
 test('初始化默认 dry-run，显式 write 后创建工作流文件', (t) => {

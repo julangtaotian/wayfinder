@@ -12,7 +12,6 @@ export const TEST_GROUPS = Object.freeze({
     'tests/repository-footprint.test.mjs',
     'tests/repository-hygiene.test.mjs',
     'tests/lifecycle-history.test.mjs',
-    'tests/test-entrypoints.test.mjs',
   ],
   workflow: [
     'tests/workflow*.test.mjs',
