@@ -17,7 +17,7 @@ function summaryFailure(code, target, message) {
 }
 
 // 完成门禁只读取单个有界临时摘要，不把命令日志、截图或证据路径复制进生命周期事件。
-export function readTemporaryVerificationSummary(root, changeName) {
+export function readTemporaryVerificationSummary(root, changeName, expectedAcceptanceIds = []) {
   const target = verificationSummaryTarget(root, changeName);
   const checked = resolveSafeProjectPath(root, target, '临时验证摘要', {
     allowAbsolute: true,
@@ -49,13 +49,13 @@ export function readTemporaryVerificationSummary(root, changeName) {
   if (!Array.isArray(value.outcomes) || value.outcomes.length === 0 || value.outcomes.length > 64) {
     return summaryFailure('verification_summary_invalid', checked.projectPath, 'Outcome Gate 必须包含 1 到 64 个验收结果');
   }
+  const actualAcceptanceIds = [];
   for (const [index, outcome] of value.outcomes.entries()) {
     const valid = outcome
       && typeof outcome === 'object'
       && !Array.isArray(outcome)
-      && typeof outcome.acceptance === 'string'
-      && outcome.acceptance.trim().length > 0
-      && outcome.acceptance.length <= 300
+      && typeof outcome.acceptanceId === 'string'
+      && /^AC-\d{2,}$/u.test(outcome.acceptanceId)
       && outcome.status === 'passed'
       && typeof outcome.observation === 'string'
       && outcome.observation.trim().length > 0
@@ -67,6 +67,18 @@ export function readTemporaryVerificationSummary(root, changeName) {
         `Outcome Gate 第 ${index + 1} 项未通过或缺少可观察结果`,
       );
     }
+    actualAcceptanceIds.push(outcome.acceptanceId);
+  }
+  const expected = [...new Set(expectedAcceptanceIds)].sort();
+  const actual = [...new Set(actualAcceptanceIds)].sort();
+  const duplicate = actual.length !== actualAcceptanceIds.length;
+  const sameSet = expected.length === actual.length && expected.every((id, index) => id === actual[index]);
+  if (duplicate || !sameSet) {
+    return summaryFailure(
+      'outcome_gate_mismatch',
+      checked.projectPath,
+      `Outcome Gate 与规格 Acceptance ID 集合不一致：expected=${expected.join(',') || 'none'} actual=${actual.join(',') || 'none'}`,
+    );
   }
   return {
     ok: true,
@@ -101,7 +113,11 @@ export function checkChange({ target = process.cwd(), change, stage = 'implement
     const available = !fs.existsSync(archivePath);
     if (!available) errors.push(`临时归档目标已存在：${archivePath}`);
     if (validation.progress.remaining > 0) errors.push(`仍有 ${validation.progress.remaining} 项任务未完成`);
-    verificationSummary = (injected.readTemporaryVerificationSummary || readTemporaryVerificationSummary)(validation.root, change);
+    verificationSummary = (injected.readTemporaryVerificationSummary || readTemporaryVerificationSummary)(
+      validation.root,
+      change,
+      validation.acceptanceIds,
+    );
     if (!verificationSummary.ok) errors.push(verificationSummary.message);
     archive = { available, targetPath: archivePath };
   }

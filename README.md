@@ -6,11 +6,11 @@ Frontend AI Workflow 是一套可复用的 Codex 前端交付插件。它把日�
 
 ### 日常交付
 
-`frontend-delivery` 只在用户明确要求修改或实现前端代码时触发。它先建立最多 4 KB 的项目上下文，再按风险选择执行深度：
+`frontend-delivery` 只在用户明确要求修改或实现前端代码时触发。它先建立最多 4 KB 的项目上下文；三种深度都保留目标、范围、可观察验收、实现方案、实施和逐项验证，只改变表达深度与持久化方式：
 
-- Direct：目标明确、局部行为清晰，直接实施并做最低充分验证。
-- Light：影响链可界定，先在会话内保留 3～7 步 Execution Brief，再实施。
-- Complex：涉及架构、鉴权、安全、持久化、公共契约、依赖、构建、部署、CI、平台或影响无法界定时，创建一个 OpenSpec change。
+- Direct：目标明确、局部行为清晰，使用紧凑会话上下文完成最小修改和逐项验证。
+- Light：影响链可界定，在会话内保留包含方案与 3～7 步计划的 Execution Brief，再实施和逐项验证。
+- Complex：涉及架构、鉴权、安全、持久化、公共契约、依赖、构建、部署、CI、平台、跨会话或影响无法界定时，创建一个 OpenSpec change，并持久化需求、设计、任务与验收身份。
 
 Direct 和 Light 不写 `requirements/`、`openspec/changes/`、`.workflow-history/` 或证据文件。Complex 只使用 `workflow-cli.mjs` 的四个公共命令：
 
@@ -21,7 +21,7 @@ node plugins/frontend-ai-workflow/scripts/workflow-cli.mjs validate --target <re
 node plugins/frontend-ai-workflow/scripts/workflow-cli.mjs complete --target <repository> --change <name>
 ```
 
-`create` 和 `complete` 默认只预览；需要写入时显式追加 `--write`。完成后同步正式规格、删除活动 change，并只向 `.workflow-history/<year>.jsonl` 追加紧凑 schema v2 事件。
+`create` 和 `complete` 默认只预览；需要写入时显式追加 `--write`。`create` 只建立带显式占位的未完成骨架，Skill 必须根据项目事实完善 proposal、spec、design 和 tasks，并在实施前通过 `validate`。Complex 的每个规格场景使用一个 `AC-*` 身份，tasks 和临时验证摘要引用同一身份；完成门禁要求验收集合完全一致。完成后同步正式规格、删除活动 change，并只向 `.workflow-history/<year>.jsonl` 追加紧凑 schema v2 事件。
 
 验证深度与规划深度独立选择：None、Focused、Targeted UI 或 Full UI。Outcome Gate 必须逐项对照用户原始目标和可观察结果；同类失败最多修复两轮，第三次停止并报告根因。
 

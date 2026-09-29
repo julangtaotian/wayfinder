@@ -56,15 +56,17 @@ test('[P1-02] Delivery Core 固定 Direct、Light、Complex 三档实施合同',
   assert.match(deliverySkill, /Complex[^\n]*OpenSpec/iu);
   assert.match(deliverySkill, /文件数|file count/iu);
   assert.match(deliverySkill, /不能|must not|cannot[^\n]*(单独|alone)|(单独|alone)[^\n]*cannot/iu);
+  assertContainsAll(deliverySkill, ['goal', 'scope', 'acceptance', 'approach'], '共享交付语义');
+  assert.match(deliverySkill, /Every depth keeps the same delivery core/iu);
 });
 
 test('[P1-04][P1-05] Direct 与 Light 零管理文件，只有 Complex 使用 OpenSpec', () => {
-  assert.match(deliverySkill, /Direct[^\n]*(不创建|do(?:es)? not create)[^\n]*(requirement|管理文件)/iu);
+  assert.match(deliverySkill, /Direct[^\n]*(no|不创建)[^\n]*(management files|管理文件)/iu);
   assert.match(deliverySkill, /Light[^\n]*(不创建|do(?:es)? not create)[^\n]*(requirement|管理文件)/iu);
   assert.match(deliverySkill, /Direct[\s\S]*Light[\s\S]*(不写入|must not write|do not write)[^\n]*(openspec|\.workflow-history|evidence)/iu);
   assert.match(deliverySkill, /只有|only[^\n]*Complex[^\n]*(创建|create)[^\n]*OpenSpec/iu);
-  assert.match(deliverySkill, /exactly one change is required/iu);
-  assert.match(deliverySkill, /create before implementation/iu);
+  assert.match(deliverySkill, /exactly one OpenSpec change/iu);
+  assert.match(deliverySkill, /validate[^\n]*before implementation/iu);
 });
 
 test('[P1-06] 规划深度与验证深度独立选择', () => {
@@ -78,7 +80,7 @@ test('[P1-06] 规划深度与验证深度独立选择', () => {
 test('[P1-02] Project Context 与 Execution Brief 保持有界且不落盘', () => {
   assertContainsAll(
     deliverySkill,
-    ['Project Context', 'Execution Brief', 'goal', 'scope', 'outOfScope', 'acceptance', 'verificationLevel'],
+    ['Project Context', 'Execution Brief', 'goal', 'scope', 'outOfScope', 'acceptance', 'approach', 'verificationLevel'],
     '轻量交付上下文',
   );
   assert.match(deliverySkill, /Execution Brief[^\n]*(会话|conversation|in-memory)/iu);
@@ -147,9 +149,16 @@ test('[P3] Project Context 复用现有事实并限制模型可见结果', () =>
 });
 
 test('[P3] Light 在会话内闭环并可无损升级同一任务', () => {
-  assert.match(deliverySkill, /Light[^\n]*in-session plan of 3–7 steps/u);
-  assert.match(deliverySkill, /Preserve safe investigation and edits[^\n]*escalates the same task/u);
+  assert.match(deliverySkill, /Light[^\n]*Execution Brief[^\n]*in-session plan of 3–7 steps/u);
+  assert.match(deliverySkill, /Preserve safe work[^\n]*same task escalates/u);
   assert.doesNotMatch(deliverySkill, /context fingerprint|\broute\b|\bbegin\b|\bnext\b|managed profile/iu);
+});
+
+test('[P3] Complex 由 Skill 完善语义并以 Acceptance ID 闭环', () => {
+  assert.match(deliverySkill, /replace every TODO[^\n]*proposal[^\n]*spec[^\n]*design[^\n]*tasks/iu);
+  assert.match(deliverySkill, /AC-\*/u);
+  assert.match(deliverySkill, /validate[^\n]*before implementation/iu);
+  assert.match(deliverySkill, /verification-summary\.json[^\n]*exact spec[^\n]*acceptanceId/iu);
 });
 
 test('[P10-02] 主 Skill 不重复无变化的成功检查', () => {

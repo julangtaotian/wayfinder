@@ -21,9 +21,9 @@ const HELP = `frontend-ai-workflow 复杂变更入口
 所有执行命令输出 JSON。create 与 complete 默认只预览，只有显式 --write 才写入。`;
 
 const COMMAND_HELP = {
-  create: '用法：workflow-cli.mjs create --target <project-root> --change <kebab-id> --title <title> [--goal <goal>] [--design <architecture-decision>] [--write]\n默认只预览；写入时只创建一个 OpenSpec 活动变更。design 仅用于确有架构决策的变更。',
+  create: '用法：workflow-cli.mjs create --target <project-root> --change <kebab-id> --title <title> [--goal <goal>] [--design <architecture-context>] [--write]\n默认只预览；写入时只创建一个待完善的 OpenSpec 活动变更。实施前必须根据项目事实清除显式占位并通过 validate。',
   status: '用法：workflow-cli.mjs status --target <project-root> --change <kebab-id>\n只返回产物完整性、任务进度与阻塞项，不返回正文。',
-  validate: '用法：workflow-cli.mjs validate --target <project-root> --change <kebab-id>\n执行必要结构检查与插件内置 OpenSpec strict 校验。',
+  validate: '用法：workflow-cli.mjs validate --target <project-root> --change <kebab-id>\n执行规划完整性、Acceptance ID 引用关系与插件内置 OpenSpec strict 校验。',
   complete: '用法：workflow-cli.mjs complete --target <project-root> --change <kebab-id> [--write]\n默认预览；写入时同步正式规格、追加紧凑事件并删除活动变更。恢复中断事务：complete --target <project-root> --recover <transaction-id> --write。',
 };
 

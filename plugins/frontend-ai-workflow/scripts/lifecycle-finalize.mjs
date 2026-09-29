@@ -5,6 +5,7 @@ import {
   removeProjectDirectory,
   removeProjectFile,
 } from './project-path-safety.mjs';
+import { hasSpecPlaceholder, specPurposeIssue } from './complex-change.mjs';
 import {
   createEventId,
   normalizeRepositoryPath,
@@ -102,6 +103,66 @@ export function digestMainSpecs(root, capabilities) {
   return sha256(parts.join('\n---\n'));
 }
 
+function inspectSpecContent(root, file, content, prefix) {
+  const target = path.relative(root, file).replaceAll('\\', '/');
+  const diagnostics = [];
+  const purposeIssue = specPurposeIssue(content);
+  if (purposeIssue) {
+    diagnostics.push({
+      code: `${prefix}_purpose_invalid`,
+      target,
+      message: purposeIssue === 'missing'
+        ? `规格缺少非空 Purpose：${target}`
+        : `规格的 Purpose 仍是占位内容：${target}`,
+    });
+  }
+  if (hasSpecPlaceholder(content)) {
+    diagnostics.push({
+      code: `${prefix}_placeholder_present`,
+      target,
+      message: `规格仍包含 TODO/TBD 占位内容：${target}`,
+    });
+  }
+  return diagnostics;
+}
+
+export function inspectFormalSpecs(root, capabilities) {
+  const diagnostics = [];
+  for (const capability of capabilities) {
+    const file = path.join(root, 'openspec', 'specs', capability, 'spec.md');
+    if (!fs.existsSync(file)) {
+      diagnostics.push({
+        code: 'formal_spec_missing',
+        target: path.relative(root, file).replaceAll('\\', '/'),
+        message: `正式规格不存在：openspec/specs/${capability}/spec.md`,
+      });
+      continue;
+    }
+    diagnostics.push(...inspectSpecContent(root, file, fs.readFileSync(file, 'utf8'), 'formal_spec'));
+  }
+  return { ok: diagnostics.length === 0, diagnostics };
+}
+
+function inspectCompletionSources(root, changePath, capabilities) {
+  const diagnostics = [];
+  for (const capability of capabilities) {
+    const mainSpec = path.join(root, 'openspec', 'specs', capability, 'spec.md');
+    const source = fs.existsSync(mainSpec)
+      ? mainSpec
+      : path.join(changePath, 'specs', capability, 'spec.md');
+    if (!fs.existsSync(source)) {
+      diagnostics.push({
+        code: 'formal_spec_source_missing',
+        target: path.relative(root, source).replaceAll('\\', '/'),
+        message: `无法找到待同步的规格来源：${path.relative(root, source).replaceAll('\\', '/')}`,
+      });
+      continue;
+    }
+    diagnostics.push(...inspectSpecContent(root, source, fs.readFileSync(source, 'utf8'), 'formal_spec'));
+  }
+  return { ok: diagnostics.length === 0, diagnostics };
+}
+
 function archiveResultDetails(result, predictedTarget) {
   const parsed = parseEngineJson(result.stdout);
   const archive = parsed?.archive || parsed;
@@ -116,6 +177,18 @@ export function finalizeLifecycleV2({
 }, services) {
   const normalizedScope = normalizeRepositoryPath(scope, 'scope', { allowRoot: true });
   const capabilities = listSpecCapabilities(check.changePath);
+  const sourceInspection = inspectCompletionSources(check.root, check.changePath, capabilities);
+  if (!sourceInspection.ok) {
+    return {
+      ok: false,
+      code: 'formal_spec_invalid',
+      status: 'blocked',
+      write,
+      check,
+      diagnostics: sourceInspection.diagnostics,
+      actions: [],
+    };
+  }
   const gitState = inspectGitCompletionState(check.root);
   const actions = [
     { action: 'validate', target: check.changeName },
@@ -197,7 +270,27 @@ export function finalizeLifecycleV2({
     }
     const details = archiveResultDetails(archived, check.archive.targetPath);
     const archiveTarget = path.join(check.root, 'openspec', 'changes', 'archive', details.archiveName);
+    transaction = writeLifecycleTransaction(check.root, {
+      ...transaction,
+      stage: 'archived',
+      archivePath: path.relative(check.root, archiveTarget).replaceAll('\\', '/'),
+    });
     normalizeMainSpecs(check.root);
+    const formalInspection = inspectFormalSpecs(check.root, capabilities);
+    if (!formalInspection.ok) {
+      return {
+        ok: false,
+        code: 'formal_spec_invalid',
+        status: 'blocked',
+        write,
+        check,
+        diagnostics: formalInspection.diagnostics,
+        actions,
+        transactionId,
+        recoveryRequired: true,
+        archiveWarnings: details.parsed?.warnings || [],
+      };
+    }
     const specDigest = digestMainSpecs(check.root, capabilities);
     const event = {
       schemaVersion: 2,
@@ -212,12 +305,7 @@ export function finalizeLifecycleV2({
       specDigest,
       supersedes,
     };
-    transaction = writeLifecycleTransaction(check.root, {
-      ...transaction,
-      stage: 'archived',
-      archivePath: path.relative(check.root, archiveTarget).replaceAll('\\', '/'),
-      event,
-    });
+    transaction = writeLifecycleTransaction(check.root, { ...transaction, stage: 'archived', event });
     const appended = appendLifecycleEvent({ root: check.root, event });
     transaction = writeLifecycleTransaction(check.root, { ...transaction, stage: 'event-written', eventId: event.eventId });
 
@@ -255,6 +343,17 @@ export function recoverLifecycleV2({ root = process.cwd(), transactionId } = {})
     let event = current.event;
     if (!event && fs.existsSync(archiveTarget)) {
       normalizeMainSpecs(lock.layout.config.root);
+      const formalInspection = inspectFormalSpecs(lock.layout.config.root, current.capabilities);
+      if (!formalInspection.ok) {
+        return {
+          ok: false,
+          code: 'formal_spec_invalid',
+          status: 'blocked',
+          transactionId,
+          recoveryRequired: true,
+          diagnostics: formalInspection.diagnostics,
+        };
+      }
       const specDigest = digestMainSpecs(lock.layout.config.root, current.capabilities);
       event = {
         schemaVersion: 2,
