@@ -1,6 +1,6 @@
 {
   "name": "frontend-ai-workflow",
-  "version": "0.19.0+codex.20260929062924",
+  "version": "0.19.0+codex.20260930002400",
   "description": "Lightweight frontend delivery with project-grounded requirements, proportional design, implementation, and per-acceptance verification.",
   "author": {
     "name": "lvshuai"

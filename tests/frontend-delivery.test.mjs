@@ -52,18 +52,17 @@ test('[P1-02][P1-03] frontend-delivery 只匹配明确实施，不匹配只读�
 test('[P1-02] Delivery Core 固定 Direct、Light、Complex 三档实施合同', () => {
   assertContainsAll(deliverySkill, ['Direct', 'Light', 'Complex'], '实施深度合同');
   assert.match(deliverySkill, /Direct[^\n]*目标明确|Direct[^\n]*clear/iu);
-  assert.match(deliverySkill, /Light[^\n]*(会话内|in-session)/iu);
+  assert.match(deliverySkill, /Light[^\n]*(会话内|in-session|user-visible message)/iu);
   assert.match(deliverySkill, /Complex[^\n]*OpenSpec/iu);
   assert.match(deliverySkill, /文件数|file count/iu);
   assert.match(deliverySkill, /不能|must not|cannot[^\n]*(单独|alone)|(单独|alone)[^\n]*cannot/iu);
   assertContainsAll(deliverySkill, ['goal', 'scope', 'acceptance', 'approach'], '共享交付语义');
-  assert.match(deliverySkill, /Every depth keeps the same delivery core/iu);
+  assert.match(deliverySkill, /every depth(?: keeps|['’]s)[^\n]*delivery core/iu);
 });
 
 test('[P1-04][P1-05] Direct 与 Light 零管理文件，只有 Complex 使用 OpenSpec', () => {
-  assert.match(deliverySkill, /Direct[^\n]*(no|不创建)[^\n]*(management files|管理文件)/iu);
-  assert.match(deliverySkill, /Light[^\n]*(不创建|do(?:es)? not create)[^\n]*(requirement|管理文件)/iu);
-  assert.match(deliverySkill, /Direct[\s\S]*Light[\s\S]*(不写入|must not write|do not write)[^\n]*(openspec|\.workflow-history|evidence)/iu);
+  const directLightBoundary = deliverySkill.split(/\r?\n/u).find((line) => line.startsWith('- Direct and Light')) || '';
+  assert.match(directLightBoundary, /create no[^\n]*requirement[^\n]*OpenSpec[^\n]*evidence[^\n]*\.workflow-history[^\n]*management files/iu);
   assert.match(deliverySkill, /只有|only[^\n]*Complex[^\n]*(创建|create)[^\n]*OpenSpec/iu);
   assert.match(deliverySkill, /exactly one OpenSpec change/iu);
   assert.match(deliverySkill, /validate[^\n]*before implementation/iu);
@@ -83,8 +82,8 @@ test('[P1-02] Project Context 与 Execution Brief 保持有界且不落盘', () 
     ['Project Context', 'Execution Brief', 'goal', 'scope', 'outOfScope', 'acceptance', 'approach', 'verificationLevel'],
     '轻量交付上下文',
   );
-  assert.match(deliverySkill, /Execution Brief[^\n]*(会话|conversation|in-memory)/iu);
-  assert.match(deliverySkill, /不落盘|must not be written|do not write/iu);
+  assert.match(deliverySkill, /conversational[^\n]*Execution Brief|Execution Brief[^\n]*(会话|conversation|in-memory)/iu);
+  assert.match(deliverySkill, /Direct and Light[^\n]*(?:create|write) no[^\n]*(OpenSpec|management files)/iu);
   assert.match(deliverySkill, /完整源码|full source|完整日志|full log/iu);
 });
 
@@ -149,7 +148,14 @@ test('[P3] Project Context 复用现有事实并限制模型可见结果', () =>
 });
 
 test('[P3] Light 在会话内闭环并可无损升级同一任务', () => {
-  assert.match(deliverySkill, /Light[^\n]*Execution Brief[^\n]*in-session plan of 3–7 steps/u);
+  const directContract = deliverySkill.split(/\r?\n/u).find((line) => line.startsWith('- Direct —')) || '';
+  const lightContract = deliverySkill.split(/\r?\n/u).find((line) => line.startsWith('- Light —')) || '';
+  assert.match(directContract, /no forced plan block/iu);
+  assert.match(lightContract, /before[^\n]*code edits/iu);
+  assert.match(lightContract, /one[^\n]*user-visible message/iu);
+  assert.match(lightContract, /MUST contain[^\n]*complete[^\n]*Execution Brief/iu);
+  assert.match(lightContract, /plus[^\n]*numbered[^\n]*3–7-step plan/iu);
+  assert.match(lightContract, /otherwise stop/iu);
   assert.match(deliverySkill, /Preserve safe work[^\n]*same task escalates/u);
   assert.doesNotMatch(deliverySkill, /context fingerprint|\broute\b|\bbegin\b|\bnext\b|managed profile/iu);
 });

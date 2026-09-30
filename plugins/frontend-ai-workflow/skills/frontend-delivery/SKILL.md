@@ -8,13 +8,13 @@ description: Implement explicit frontend changes with bounded context. Do not us
 ## Context
 
 - Project Context is at most 4096 bytes: `stack`, `scope`, `entrypoints`, `similarImplementations`, `testCandidates`, `commands`. Reuse Wayfinder, project detection, and dependency profile; read only direct targets, callers, and nearest tests. Never include full source, full logs, plans, or evidence bodies.
-- Every depth keeps the same delivery core: goal, scope, observable acceptance, approach, implementation, and per-item verification. Keep the Execution Brief in conversation: `goal`, `scope`, `outOfScope`, `acceptance`, `approach`, `verificationLevel`, `riskEscalation`.
+- One conversational Execution Brief carries every depth's delivery core: `goal`, `scope`, `outOfScope`, observable `acceptance`, `approach`, implementation, per-item verification, `verificationLevel`, and `riskEscalation`.
 
 ## Depth
 
-- Direct — clear local behavior; keep the brief compact with no forced plan block or management files.
-- Light — surface the Execution Brief and an in-session plan of 3–7 steps; do not create requirement or management files.
-- Direct and Light do not write OpenSpec, evidence, or `.workflow-history`.
+- Direct — clear local behavior; keep the brief compact with no forced plan block.
+- Light — before code edits, one user-visible message MUST contain the complete Execution Brief plus a numbered 3–7-step plan; otherwise stop.
+- Direct and Light create no requirement, OpenSpec, evidence, `.workflow-history`, or other management files.
 - Complex — architecture/security, persistence, public/dependency/build/deploy/CI/platform contracts, unbounded impact, multi-session, or formal spec. Only Complex creates exactly one OpenSpec change. Run `node "<plugin-root>/scripts/workflow-cli.mjs" create`; replace every TODO in proposal, spec, design, and tasks from project facts, give each scenario one `AC-*`, link tasks, then run `validate` before implementation.
 - File count, directory name, or shared location alone cannot select Complex. Preserve safe work when the same task escalates.
 
